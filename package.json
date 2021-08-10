@@ -1,0 +1,61 @@
+{
+    "name": "@netless/app-docs-viewer",
+    "version": "0.1.0",
+    "private": false,
+    "description": "Netless App Docs Viewer",
+    "homepage": "https://github.com/netless-io/netless-app-docs-viewer",
+    "license": "MIT",
+    "author": "CRIMX <straybugs@gmail.com> (https://github.com/crimx/)",
+    "sideEffects": [
+        "*.css"
+    ],
+    "main": "./dist/main.cjs.js",
+    "module": "./dist/main.es.js",
+    "types": "./dist/index.d.ts",
+    "files": [
+        "src",
+        "build"
+    ],
+    "scripts": {
+        "start": "vite ./playground --open --host",
+        "lint": "lint-staged",
+        "types": "cross-env NODE_ENV=production tsc --declaration --emitDeclarationOnly --jsx react --esModuleInterop --outDir dist",
+        "build": "vite build && yarn run types",
+        "build:dev": "vite build --mode development && yarn run types",
+        "cleanup": "rimraf ./build"
+    },
+    "devDependencies": {
+        "@babel/plugin-proposal-class-properties": "^7.13.0",
+        "@netless/eslint-plugin": "^1.1.2",
+        "@netless/window-manager": "^0.0.0-beta.35",
+        "@rollup/plugin-commonjs": "^17.1.0",
+        "@rollup/plugin-node-resolve": "^11.2.0",
+        "@rollup/plugin-url": "^6.0.0",
+        "@types/node": "^14.14.16",
+        "@typescript-eslint/eslint-plugin": "^4.11.0",
+        "@typescript-eslint/parser": "^4.11.0",
+        "cross-env": "^7.0.2",
+        "eslint": "^7.31.0",
+        "eslint-config-prettier": "^6.11.0",
+        "eslint-config-react-app": "^6.0.0",
+        "eslint-loader": "^4.0.2",
+        "eslint-plugin-jsx-a11y": "^6.3.1",
+        "eslint-plugin-prettier": "^3.1.4",
+        "eslint-plugin-react": "^7.20.6",
+        "eslint-plugin-react-app": "^6.2.2",
+        "fork-ts-checker-webpack-plugin": "^6.0.4",
+        "lint-staged": "^10.5.4",
+        "minimist": "^1.2.5",
+        "prettier": "^2.0.5",
+        "rimraf": "^3.0.0",
+        "sass": "^1.36.0",
+        "typescript": "^4.1.2",
+        "vite": "^2.4.4"
+    },
+    "peerDependencies": {
+        "@netless/window-manager": ">=1"
+    },
+    "dependencies": {
+        "vanilla-lazyload": "^17.4.0"
+    }
+}
