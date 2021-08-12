@@ -2,15 +2,16 @@ import type { Plugin, PluginContext } from "@netless/window-manager";
 import { DocsViewer } from "./DocsViewer";
 
 export interface NetlessAppDocsViewerAttributes {
-    scrollPosition: 0;
+    scrollTop: number;
 }
 
-export const NetlessAppDocsViewer: Plugin<NetlessAppDocsViewerAttributes> = {
+const NetlessAppDocsViewer: Plugin<NetlessAppDocsViewerAttributes> = {
     kind: "DocsViewer",
     config: {
         enableView: true,
     },
     setup(context: PluginContext<NetlessAppDocsViewerAttributes>): void {
+        // context.displayer.
         context.emitter.on("create", () => {
             const initScenePath = context.initScenePath;
             if (initScenePath == null) {
@@ -25,8 +26,14 @@ export const NetlessAppDocsViewer: Plugin<NetlessAppDocsViewerAttributes> = {
             }
 
             const docsViewer = new DocsViewer({
+                isWritable: context.isWritable,
                 box,
                 pages: context.displayer.entireScenes()[initScenePath],
+                onScroll: (scrollTop) => {
+                    if (context.isWritable) {
+                        context.updateAttributes(["scrollTop"], scrollTop);
+                    }
+                },
             }).mount();
 
             if (import.meta.env.DEV) {
@@ -34,8 +41,9 @@ export const NetlessAppDocsViewer: Plugin<NetlessAppDocsViewerAttributes> = {
             }
 
             context.emitter.on("attributesUpdate", (attributes) => {
-                console.log("attributesUpdate", attributes);
-                // @TODO sync scrolling position
+                if (attributes.scrollTop != null) {
+                    docsViewer.syncScrollTop(attributes.scrollTop);
+                }
             });
         });
     },

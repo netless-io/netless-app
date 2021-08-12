@@ -56,6 +56,7 @@
         "@netless/window-manager": ">=1"
     },
     "dependencies": {
+        "debounce-fn": "^5.0.0",
         "vanilla-lazyload": "^17.4.0"
     }
 }
