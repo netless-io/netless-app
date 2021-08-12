@@ -373,7 +373,10 @@ export class DocsViewer {
                     top: $page.offsetTop,
                 });
             }
-            this.setPageIndex(index);
+            // @TODO recalibrate intersection observer calculation
+            setTimeout(() => {
+                this.setPageIndex(index);
+            }, 0);
         }
     }
 
