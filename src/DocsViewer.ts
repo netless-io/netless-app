@@ -44,6 +44,7 @@ export class DocsViewer {
     public $content: HTMLElement | undefined;
     public $pages: HTMLElement | undefined;
     public $preview: HTMLElement | undefined;
+    public $previewMask: HTMLElement | undefined;
     public $footer: HTMLElement | undefined;
     public $pageNumberInput: HTMLInputElement | undefined;
 
@@ -153,8 +154,8 @@ export class DocsViewer {
             this.intersectionObserver.disconnect();
             this.intersectionObserver = void 0;
         }
-        this.removeListeners.forEach((fn) => fn());
-        this.removeListeners.length = 0;
+        this.sideEffectDisposers.forEach((fn) => fn());
+        this.sideEffectDisposers.length = 0;
         this.onScroll = void 0;
         this.unmount();
     }
@@ -212,6 +213,7 @@ export class DocsViewer {
             });
 
             $content.appendChild($pages);
+            $content.appendChild(this.renderPreviewMask());
             $content.appendChild(this.renderPreview());
         }
         return this.$content;
@@ -262,6 +264,19 @@ export class DocsViewer {
         }
 
         return this.$preview;
+    }
+
+    protected renderPreviewMask(): HTMLElement {
+        if (!this.$previewMask) {
+            this.$previewMask = document.createElement("div");
+            this.$previewMask.className = this.wrapClassName("preview-mask");
+            this.addEventListener(this.$previewMask, "click", (ev) => {
+                if (ev.target === this.$previewMask) {
+                    this.togglePreview(false);
+                }
+            });
+        }
+        return this.$previewMask;
     }
 
     protected renderFooter(): HTMLElement {
@@ -350,7 +365,7 @@ export class DocsViewer {
     ): this {
         el.addEventListener(type, listener, options);
 
-        this.removeListeners.push(() => {
+        this.sideEffectDisposers.push(() => {
             el.removeEventListener(type, listener);
         });
 
@@ -358,11 +373,11 @@ export class DocsViewer {
     }
 
     protected togglePreview(isShowPreview?: boolean): void {
-        if (!this.$preview) {
+        if (!this.$preview || !this.$content) {
             return;
         }
         this.isShowPreview = isShowPreview ?? !this.isShowPreview;
-        this.$preview.classList.toggle(
+        this.$content.classList.toggle(
             this.wrapClassName("preview-active"),
             this.isShowPreview
         );
@@ -415,5 +430,5 @@ export class DocsViewer {
     protected previewLazyLoad: ILazyLoadInstance | undefined;
     protected intersectionObserver: IntersectionObserver | undefined;
 
-    protected removeListeners: Array<() => void> = [];
+    protected sideEffectDisposers: Array<() => void> = [];
 }
