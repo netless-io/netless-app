@@ -5,14 +5,21 @@ import sidebarSVG from "./icons/sidebar.svg";
 import arrowLeftSVG from "./icons/arrow-left.svg";
 import arrowRightSVG from "./icons/arrow-right.svg";
 
-import { ReadonlyTeleBox, WhiteScene } from "@netless/window-manager";
+import { ReadonlyTeleBox } from "@netless/window-manager";
 import LazyLoad, { ILazyLoadInstance } from "vanilla-lazyload";
 import debounceFn from "debounce-fn";
+
+export interface DocsViewerPage {
+    src: string;
+    height: number;
+    width: number;
+    thumbnail?: string;
+}
 
 export interface DocsViewerConfig {
     isWritable: boolean;
     box: ReadonlyTeleBox;
-    pages: WhiteScene[];
+    pages: DocsViewerPage[];
     scrollTop?: number;
     onScroll?: (scrollTop: number) => void;
 }
@@ -105,7 +112,7 @@ export class DocsViewer {
                             }
                         }
                     },
-                    { wait: 100 }
+                    { wait: 50 }
                 )
             );
         }
@@ -118,6 +125,19 @@ export class DocsViewer {
             this.$content.remove();
         }
         return this;
+    }
+
+    public setWritable(isWritable: boolean): void {
+        if (this.isWritable !== isWritable) {
+            this.isWritable = isWritable;
+
+            if (this.$content) {
+                this.$content.classList.toggle(
+                    this.wrapClassName("readonly"),
+                    !isWritable
+                );
+            }
+        }
     }
 
     public destroy(): void {
@@ -141,10 +161,10 @@ export class DocsViewer {
 
     /** Sync scrollTop from writable user */
     public syncScrollTop(scrollTop: number): void {
-        if (!this.isWritable) {
+        if (Math.abs(this.scrollTop - scrollTop) > 10) {
             this.scrollTop = scrollTop;
-            if (this.$content) {
-                this.$content.scrollTo({ top: scrollTop, behavior: "smooth" });
+            if (this.$pages) {
+                this.$pages.scrollTo({ top: scrollTop, behavior: "smooth" });
             }
         }
     }
@@ -179,18 +199,16 @@ export class DocsViewer {
 
             const pageClassName = this.wrapClassName("page");
             this.pages.forEach((page, i) => {
-                if (page.ppt) {
-                    const $img = document.createElement("img");
-                    $img.className =
-                        pageClassName + " " + this.wrapClassName(`page-${i}`);
-                    $img.draggable = false;
-                    $img.width = page.ppt.width;
-                    $img.height = page.ppt.height;
-                    $img.dataset.src = page.ppt.src;
-                    $img.dataset.pageIndex = String(i);
+                const $img = document.createElement("img");
+                $img.className =
+                    pageClassName + " " + this.wrapClassName(`page-${i}`);
+                $img.draggable = false;
+                $img.width = page.width;
+                $img.height = page.height;
+                $img.dataset.src = page.src;
+                $img.dataset.pageIndex = String(i);
 
-                    $pages.appendChild($img);
-                }
+                $pages.appendChild($img);
             });
 
             $content.appendChild($pages);
@@ -209,32 +227,30 @@ export class DocsViewer {
             const pageClassName = this.wrapClassName("preview-page");
             const pageNameClassName = this.wrapClassName("preview-page-name");
             this.pages.forEach((page, i) => {
-                if (page.ppt) {
-                    const pageIndex = String(i);
+                const pageIndex = String(i);
 
-                    const $page = document.createElement("a");
-                    $page.className =
-                        pageClassName +
-                        " " +
-                        this.wrapClassName(`preview-page-${i}`);
-                    $page.setAttribute("href", "#");
-                    $page.dataset.pageIndex = pageIndex;
+                const $page = document.createElement("a");
+                $page.className =
+                    pageClassName +
+                    " " +
+                    this.wrapClassName(`preview-page-${i}`);
+                $page.setAttribute("href", "#");
+                $page.dataset.pageIndex = pageIndex;
 
-                    const $name = document.createElement("span");
-                    $name.className = pageNameClassName;
-                    $name.textContent = page.name;
-                    $name.dataset.pageIndex = pageIndex;
+                const $name = document.createElement("span");
+                $name.className = pageNameClassName;
+                $name.textContent = String(i + 1);
+                $name.dataset.pageIndex = pageIndex;
 
-                    const $img = document.createElement("img");
-                    $img.width = page.ppt.width;
-                    $img.height = page.ppt.height;
-                    $img.dataset.src = page.ppt.previewURL || page.ppt.src;
-                    $img.dataset.pageIndex = pageIndex;
+                const $img = document.createElement("img");
+                $img.width = page.width;
+                $img.height = page.height;
+                $img.dataset.src = page.thumbnail ?? page.src;
+                $img.dataset.pageIndex = pageIndex;
 
-                    $page.appendChild($img);
-                    $page.appendChild($name);
-                    $preview.appendChild($page);
-                }
+                $page.appendChild($img);
+                $page.appendChild($name);
+                $preview.appendChild($page);
             });
 
             this.addEventListener($preview, "click", (ev) => {
@@ -371,12 +387,13 @@ export class DocsViewer {
             if ($page) {
                 this.$pages.scrollTo({
                     top: $page.offsetTop,
+                    behavior: "smooth",
                 });
             }
             // @TODO recalibrate intersection observer calculation
             setTimeout(() => {
                 this.setPageIndex(index);
-            }, 0);
+            }, 20);
         }
     }
 
@@ -391,7 +408,7 @@ export class DocsViewer {
     protected scrollTop: number;
 
     protected isWritable: boolean;
-    protected pages: WhiteScene[];
+    protected pages: DocsViewerPage[];
     protected box: ReadonlyTeleBox;
 
     protected contentLazyLoad: ILazyLoadInstance | undefined;
