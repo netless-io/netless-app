@@ -6,7 +6,7 @@ import arrowLeftSVG from "./icons/arrow-left.svg";
 import arrowRightSVG from "./icons/arrow-right.svg";
 
 import { ReadonlyTeleBox } from "@netless/window-manager";
-import LazyLoad, { ILazyLoadInstance } from "vanilla-lazyload";
+import LazyLoad from "vanilla-lazyload";
 import debounceFn from "debounce-fn";
 
 export interface DocsViewerPage {
@@ -57,21 +57,19 @@ export class DocsViewer {
         this.box.mountContent(this.renderContent());
         this.box.mountFooter(this.renderFooter());
 
-        if (!this.contentLazyLoad) {
-            this.contentLazyLoad = new LazyLoad({
-                container: this.$pages,
-                elements_selector: `.${this.wrapClassName("page")}`,
-            });
-        }
+        const contentLazyLoad = new LazyLoad({
+            container: this.$pages,
+            elements_selector: `.${this.wrapClassName("page")}`,
+        });
+        this.sideEffectDisposers.push(() => contentLazyLoad.destroy());
 
-        if (!this.previewLazyLoad) {
-            this.previewLazyLoad = new LazyLoad({
-                container: this.$preview,
-                elements_selector: `.${this.wrapClassName("preview-page>img")}`,
-            });
-        }
+        const previewLazyLoad = new LazyLoad({
+            container: this.$preview,
+            elements_selector: `.${this.wrapClassName("preview-page>img")}`,
+        });
+        this.sideEffectDisposers.push(() => previewLazyLoad.destroy());
 
-        if (!this.intersectionObserver && this.$pages) {
+        if (this.$pages) {
             const intersectionObserver = new IntersectionObserver(
                 (entries) => {
                     const entry = entries[0];
@@ -92,7 +90,9 @@ export class DocsViewer {
                 .forEach(($page) => {
                     intersectionObserver.observe($page);
                 });
-            this.intersectionObserver = intersectionObserver;
+            this.sideEffectDisposers.push(() =>
+                intersectionObserver.disconnect()
+            );
         }
 
         if (this.scrollTop !== 0 && this.$content) {
@@ -101,21 +101,19 @@ export class DocsViewer {
 
         // add event listener after scrollTop is set
         if (this.$pages) {
-            this.addEventListener(
-                this.$pages,
-                "scroll",
-                debounceFn(
-                    () => {
-                        if (this.isWritable && this.$pages) {
-                            this.scrollTop = this.$pages.scrollTop;
-                            if (this.onScroll) {
-                                this.onScroll(this.scrollTop);
-                            }
+            const handleScroll = debounceFn(
+                () => {
+                    if (this.isWritable && this.$pages) {
+                        this.scrollTop = this.$pages.scrollTop;
+                        if (this.onScroll) {
+                            this.onScroll(this.scrollTop);
                         }
-                    },
-                    { wait: 50 }
-                )
+                    }
+                },
+                { wait: 100 }
             );
+            this.sideEffectDisposers.push(() => handleScroll.cancel());
+            this.addEventListener(this.$pages, "scroll", handleScroll);
         }
 
         return this;
@@ -142,18 +140,6 @@ export class DocsViewer {
     }
 
     public destroy(): void {
-        if (this.contentLazyLoad) {
-            this.contentLazyLoad.destroy();
-            this.contentLazyLoad = void 0;
-        }
-        if (this.previewLazyLoad) {
-            this.previewLazyLoad.destroy();
-            this.previewLazyLoad = void 0;
-        }
-        if (this.intersectionObserver) {
-            this.intersectionObserver.disconnect();
-            this.intersectionObserver = void 0;
-        }
         this.sideEffectDisposers.forEach((fn) => fn());
         this.sideEffectDisposers.length = 0;
         this.onScroll = void 0;
@@ -425,10 +411,6 @@ export class DocsViewer {
     protected isWritable: boolean;
     protected pages: DocsViewerPage[];
     protected box: ReadonlyTeleBox;
-
-    protected contentLazyLoad: ILazyLoadInstance | undefined;
-    protected previewLazyLoad: ILazyLoadInstance | undefined;
-    protected intersectionObserver: IntersectionObserver | undefined;
 
     protected sideEffectDisposers: Array<() => void> = [];
 }
