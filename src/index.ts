@@ -1,36 +1,34 @@
-import type { Plugin, PluginContext } from "@netless/window-manager";
-import { DocsViewer } from "./DocsViewer";
+import type { App } from "@netless/window-manager";
+import { DocsViewer, DocsViewerPage } from "./DocsViewer";
 
 export interface NetlessAppDocsViewerAttributes {
-    scrollTop: number;
+    scrollTop?: number;
+    pages?: DocsViewerPage[];
 }
 
-const NetlessAppDocsViewer: Plugin<NetlessAppDocsViewerAttributes> = {
+const NetlessAppDocsViewer: App<NetlessAppDocsViewerAttributes> = {
     kind: "DocsViewer",
-    config: {
-        enableView: true,
-    },
-    setup(context: PluginContext<NetlessAppDocsViewerAttributes>): void {
-        // context.displayer.
+    setup(context): void {
         context.emitter.on("create", () => {
-            const initScenePath = context.initScenePath;
-            if (initScenePath == null) {
-                throw new Error("[DocsViewer]: PPT Init Scene Path missing.");
-            }
-
-            const box = context.box;
+            const box = context.getBox();
             if (!box) {
                 throw new Error(
                     "[DocsViewer]: Missing `box` after `create` event."
                 );
             }
 
+            const attrs = context.getAttributes() || {};
+
             const docsViewer = new DocsViewer({
-                isWritable: context.isWritable,
+                isWritable: context.getIsWritable(),
                 box,
-                pages: context.displayer.entireScenes()[initScenePath],
+                pages: attrs.pages || [],
+                scrollTop: attrs.scrollTop,
                 onScroll: (scrollTop) => {
-                    if (context.isWritable) {
+                    if (
+                        attrs.scrollTop !== scrollTop &&
+                        context.getIsWritable()
+                    ) {
                         context.updateAttributes(["scrollTop"], scrollTop);
                     }
                 },
@@ -44,6 +42,10 @@ const NetlessAppDocsViewer: Plugin<NetlessAppDocsViewerAttributes> = {
                 if (attributes.scrollTop != null) {
                     docsViewer.syncScrollTop(attributes.scrollTop);
                 }
+            });
+
+            context.emitter.on("writableChange", (isWritable) => {
+                docsViewer.setWritable(isWritable);
             });
         });
     },
