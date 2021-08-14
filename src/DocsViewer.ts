@@ -5,7 +5,7 @@ import sidebarSVG from "./icons/sidebar.svg";
 import arrowLeftSVG from "./icons/arrow-left.svg";
 import arrowRightSVG from "./icons/arrow-right.svg";
 
-import { ReadonlyTeleBox } from "@netless/window-manager";
+import { AnimationMode, ReadonlyTeleBox, View } from "@netless/window-manager";
 import LazyLoad from "vanilla-lazyload";
 import debounceFn from "debounce-fn";
 
@@ -17,29 +17,34 @@ export interface DocsViewerPage {
 }
 
 export interface DocsViewerConfig {
+    whiteboardView: View;
     isWritable: boolean;
     box: ReadonlyTeleBox;
     pages: DocsViewerPage[];
     scrollTop?: number;
-    onScroll?: (scrollTop: number) => void;
+    onUserScroll?: (scrollTop: number) => void;
 }
 
 export class DocsViewer {
     public constructor({
+        whiteboardView,
         isWritable,
         box,
         pages,
         scrollTop = 0,
-        onScroll,
+        onUserScroll,
     }: DocsViewerConfig) {
+        this.whiteboardView = whiteboardView;
         this.isWritable = isWritable;
         this.box = box;
         this.pages = pages;
         this.scrollTop = scrollTop;
-        this.onScroll = onScroll;
+        this.onUserScroll = onUserScroll;
     }
 
-    public onScroll?: (scrollTop: number) => void;
+    public scrollTop: number;
+
+    public onUserScroll?: (scrollTop: number) => void;
 
     public $content: HTMLElement | undefined;
     public $pages: HTMLElement | undefined;
@@ -47,6 +52,7 @@ export class DocsViewer {
     public $previewMask: HTMLElement | undefined;
     public $footer: HTMLElement | undefined;
     public $pageNumberInput: HTMLInputElement | undefined;
+    public $whiteboardView: HTMLDivElement | undefined;
 
     public mount(): this {
         if (this.pages.length <= 0) {
@@ -69,52 +75,14 @@ export class DocsViewer {
         });
         this.sideEffectDisposers.push(() => previewLazyLoad.destroy());
 
-        if (this.$pages) {
-            const intersectionObserver = new IntersectionObserver(
-                (entries) => {
-                    const entry = entries[0];
-                    if (entry) {
-                        if (entry.intersectionRatio > 0) {
-                            const pageIndex = (entry.target as HTMLElement)
-                                .dataset?.pageIndex;
-                            if (pageIndex) {
-                                this.setPageIndex(Number(pageIndex));
-                            }
-                        }
-                    }
-                },
-                { root: this.$content, threshold: [0] }
-            );
-            this.$pages
-                .querySelectorAll("." + this.wrapClassName("page"))
-                .forEach(($page) => {
-                    intersectionObserver.observe($page);
-                });
-            this.sideEffectDisposers.push(() =>
-                intersectionObserver.disconnect()
-            );
-        }
+        this.setupWhiteboardCamera();
 
-        if (this.scrollTop !== 0 && this.$content) {
-            this.$content.scrollTop = this.scrollTop;
+        if (this.scrollTop !== 0) {
+            this.scrollTo(this.scrollTop);
         }
 
         // add event listener after scrollTop is set
-        if (this.$pages) {
-            const handleScroll = debounceFn(
-                () => {
-                    if (this.isWritable && this.$pages) {
-                        this.scrollTop = this.$pages.scrollTop;
-                        if (this.onScroll) {
-                            this.onScroll(this.scrollTop);
-                        }
-                    }
-                },
-                { wait: 100 }
-            );
-            this.sideEffectDisposers.push(() => handleScroll.cancel());
-            this.addEventListener(this.$pages, "scroll", handleScroll);
-        }
+        this.setupScrollTopEvent();
 
         return this;
     }
@@ -142,16 +110,15 @@ export class DocsViewer {
     public destroy(): void {
         this.sideEffectDisposers.forEach((fn) => fn());
         this.sideEffectDisposers.length = 0;
-        this.onScroll = void 0;
+        this.onUserScroll = void 0;
         this.unmount();
     }
 
     /** Sync scrollTop from writable user */
     public syncScrollTop(scrollTop: number): void {
-        if (Math.abs(this.scrollTop - scrollTop) > 10) {
-            this.scrollTop = scrollTop;
+        if (scrollTop >= 0 && Math.abs(this.scrollTop - scrollTop) > 10) {
             if (this.$pages) {
-                this.$pages.scrollTo({ top: scrollTop, behavior: "smooth" });
+                this.scrollTo(scrollTop);
             }
         }
     }
@@ -198,11 +165,87 @@ export class DocsViewer {
                 $pages.appendChild($img);
             });
 
+            $content.appendChild(this.renderWhiteboardView());
+
             $content.appendChild($pages);
             $content.appendChild(this.renderPreviewMask());
             $content.appendChild(this.renderPreview());
         }
         return this.$content;
+    }
+
+    protected renderWhiteboardView(): HTMLElement {
+        if (!this.$whiteboardView) {
+            this.$whiteboardView = document.createElement("div");
+            this.$whiteboardView.className = this.wrapClassName("wb-view");
+            this.whiteboardView.divElement = this.$whiteboardView;
+            this.addEventListener(
+                this.$whiteboardView,
+                "wheel",
+                (ev) => {
+                    ev.preventDefault();
+                    ev.stopPropagation();
+                    ev.stopImmediatePropagation();
+                    if (this.isWritable) {
+                        const scrollTop = Math.max(
+                            0,
+                            this.scrollTop + ev.deltaY
+                        );
+                        this.scrollTo(scrollTop);
+                        if (this.onUserScroll) {
+                            this.onUserScroll(scrollTop);
+                        }
+                    }
+                },
+                { passive: false, capture: true }
+            );
+            this.addEventListener(
+                this.$whiteboardView,
+                "touchstart",
+                (ev) => {
+                    if (ev.touches.length > 1) {
+                        ev.preventDefault();
+                        ev.stopPropagation();
+                        ev.stopImmediatePropagation();
+                        if (this.isWritable) {
+                            // @TODO
+                        }
+                    }
+                },
+                { passive: false, capture: true }
+            );
+            this.addEventListener(
+                this.$whiteboardView,
+                "touchmove",
+                (ev) => {
+                    if (ev.touches.length > 1) {
+                        ev.preventDefault();
+                        ev.stopPropagation();
+                        ev.stopImmediatePropagation();
+                        if (this.isWritable) {
+                            // @TODO
+                        }
+                    }
+                },
+                { passive: false, capture: true }
+            );
+            this.addEventListener(
+                this.$whiteboardView,
+                "touchend",
+                (ev) => {
+                    if (ev.touches.length > 1) {
+                        ev.preventDefault();
+                        ev.stopPropagation();
+                        ev.stopImmediatePropagation();
+                        if (this.isWritable) {
+                            // @TODO
+                        }
+                    }
+                },
+                { passive: false, capture: true }
+            );
+        }
+        return this.$whiteboardView;
     }
 
     protected renderPreview(): HTMLElement {
@@ -379,23 +422,98 @@ export class DocsViewer {
         }
     }
 
+    protected scrollTo(scrollTop: number): void {
+        if (this.$pages) {
+            this.whiteboardView.moveCamera({
+                centerY: scrollTop / this.whiteboardView.camera.scale,
+                animationMode: "immediately" as AnimationMode,
+            });
+            this.$pages.scrollTo({
+                top: scrollTop,
+            });
+        }
+    }
+
     protected scrollToPage(index: number): void {
-        if (this.$pages && !Number.isNaN(index)) {
+        if (this.isWritable && this.$pages && !Number.isNaN(index)) {
             index = Math.max(0, Math.min(this.pages.length - 1, index));
             const $page = this.$pages.querySelector<HTMLElement>(
                 "." + this.wrapClassName(`page-${index}`)
             );
             if ($page) {
-                this.$pages.scrollTo({
-                    top: $page.offsetTop,
-                    behavior: "smooth",
-                });
+                const offsetTop = $page.offsetTop;
+                this.scrollTo($page.offsetTop);
+                if (this.onUserScroll) {
+                    this.onUserScroll(offsetTop);
+                }
             }
-            // @TODO recalibrate intersection observer calculation
-            setTimeout(() => {
-                this.setPageIndex(index);
-            }, 20);
         }
+    }
+
+    protected setupScrollTopEvent(): void {
+        const updatePageIndex = this.debounce(() => {
+            if (this.pages.length > 0 && this.$pages) {
+                const scrollTop =
+                    this.scrollTop *
+                    (this.pages[0].width /
+                        this.$pages.getBoundingClientRect().width);
+                let pageTop = 0;
+                for (let i = 0; i < this.pages.length; i += 1) {
+                    pageTop += this.pages[i].height;
+                    if (scrollTop <= pageTop) {
+                        this.setPageIndex(i);
+                        return;
+                    }
+                }
+                this.setPageIndex(this.pages.length - 1);
+            }
+        }, 100);
+
+        if (this.$pages) {
+            this.addEventListener(this.$pages, "scroll", () => {
+                if (this.$pages) {
+                    this.scrollTop = this.$pages.scrollTop;
+                }
+                updatePageIndex();
+            });
+        }
+    }
+
+    protected setupWhiteboardCamera(): void {
+        const fixCamera = this.debounce(() => {
+            if (this.$pages) {
+                this.scrollTo(this.$pages.scrollTop);
+            }
+        }, 100);
+
+        const handleSizeUpdate = (): void => {
+            if (this.$content && this.pages.length > 0) {
+                const { width, height } = this.$content.getBoundingClientRect();
+                // @FIXME calc originY on size changes
+                this.whiteboardView.moveCameraToContain({
+                    originX: 0,
+                    originY: this.$pages
+                        ? this.$pages.scrollTop * (this.pages[0].width / width)
+                        : 0,
+                    width: this.pages[0].width,
+                    height: (this.pages[0].width / width) * height,
+                    animationMode: "immediately" as AnimationMode,
+                });
+                fixCamera();
+            }
+        };
+
+        this.whiteboardView.callbacks.on("onSizeUpdated", handleSizeUpdate);
+
+        this.sideEffectDisposers.push(() =>
+            this.whiteboardView.callbacks.off("onSizeUpdated", handleSizeUpdate)
+        );
+    }
+
+    protected debounce(fn: () => void, wait: number): () => void {
+        const dFn = debounceFn(fn, { wait });
+        this.sideEffectDisposers.push(() => dFn.cancel());
+        return dFn;
     }
 
     protected wrapClassName(className: string): string {
@@ -406,11 +524,10 @@ export class DocsViewer {
 
     protected isShowPreview = false;
 
-    protected scrollTop: number;
-
     protected isWritable: boolean;
     protected pages: DocsViewerPage[];
     protected box: ReadonlyTeleBox;
+    protected whiteboardView: View;
 
     protected sideEffectDisposers: Array<() => void> = [];
 }
