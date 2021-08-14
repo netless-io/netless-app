@@ -423,7 +423,7 @@ export class DocsViewer {
     }
 
     protected scrollTo(scrollTop: number): void {
-        if (this.$pages) {
+        if (this.$pages && this.whiteboardView.camera.scale > 0) {
             this.whiteboardView.moveCamera({
                 centerY: scrollTop / this.whiteboardView.camera.scale,
                 animationMode: "immediately" as AnimationMode,
@@ -453,19 +453,20 @@ export class DocsViewer {
     protected setupScrollTopEvent(): void {
         const updatePageIndex = this.debounce(() => {
             if (this.pages.length > 0 && this.$pages) {
-                const scrollTop =
-                    this.scrollTop *
-                    (this.pages[0].width /
-                        this.$pages.getBoundingClientRect().width);
-                let pageTop = 0;
-                for (let i = 0; i < this.pages.length; i += 1) {
-                    pageTop += this.pages[i].height;
-                    if (scrollTop <= pageTop) {
-                        this.setPageIndex(i);
-                        return;
+                const pagesWidth = this.$pages.getBoundingClientRect().width;
+                if (pagesWidth > 0) {
+                    const scrollTop =
+                        this.scrollTop * (this.pages[0].width / pagesWidth);
+                    let pageTop = 0;
+                    for (let i = 0; i < this.pages.length; i += 1) {
+                        pageTop += this.pages[i].height;
+                        if (scrollTop <= pageTop) {
+                            this.setPageIndex(i);
+                            return;
+                        }
                     }
+                    this.setPageIndex(this.pages.length - 1);
                 }
-                this.setPageIndex(this.pages.length - 1);
             }
         }, 100);
 
@@ -489,17 +490,20 @@ export class DocsViewer {
         const handleSizeUpdate = (): void => {
             if (this.$content && this.pages.length > 0) {
                 const { width, height } = this.$content.getBoundingClientRect();
-                // @FIXME calc originY on size changes
-                this.whiteboardView.moveCameraToContain({
-                    originX: 0,
-                    originY: this.$pages
-                        ? this.$pages.scrollTop * (this.pages[0].width / width)
-                        : 0,
-                    width: this.pages[0].width,
-                    height: (this.pages[0].width / width) * height,
-                    animationMode: "immediately" as AnimationMode,
-                });
-                fixCamera();
+                if (width > 0 && height > 0) {
+                    // @FIXME calc originY on size changes
+                    this.whiteboardView.moveCameraToContain({
+                        originX: 0,
+                        originY: this.$pages
+                            ? this.$pages.scrollTop *
+                              (this.pages[0].width / width)
+                            : 0,
+                        width: this.pages[0].width,
+                        height: (this.pages[0].width / width) * height,
+                        animationMode: "immediately" as AnimationMode,
+                    });
+                    fixCamera();
+                }
             }
         };
 
