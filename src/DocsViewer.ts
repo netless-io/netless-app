@@ -287,6 +287,9 @@ export class DocsViewer {
             this.addEventListener($preview, "click", (ev) => {
                 const pageIndex = (ev.target as HTMLElement).dataset?.pageIndex;
                 if (pageIndex) {
+                    ev.preventDefault();
+                    ev.stopPropagation();
+                    ev.stopImmediatePropagation();
                     this.scrollToPage(Number(pageIndex));
                 }
             });
