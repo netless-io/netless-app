@@ -18,6 +18,20 @@ const NetlessAppDocsViewer: NetlessApp<NetlessAppDocsViewerAttributes> = {
         }
 
         const attrs = context.getAttributes() || {};
+        const pages = attrs.pages || [];
+
+        if (pages.length <= 0) {
+            throw new Error("[DocsViewer]: Missing pages.");
+        }
+
+        const pagesSize = {
+            width: pages[0].width,
+            height: pages.reduce(
+                (height, page) =>
+                    height + page.height * (pages[0].width / page.width),
+                0
+            ),
+        };
 
         const whiteboardView = context.getView();
         whiteboardView.disableCameraTransform = true;
@@ -27,11 +41,14 @@ const NetlessAppDocsViewer: NetlessApp<NetlessAppDocsViewerAttributes> = {
             isWritable: context.getIsWritable(),
             box,
             pages: attrs.pages || [],
-            scrollTop: (attrs.scrollTop ?? 0) * box.height,
+            pagesSize,
+            scrollTop: attrs.scrollTop,
             onUserScroll: (scrollTop) => {
-                const ratio = scrollTop / box.height;
-                if (attrs.scrollTop !== ratio && context.getIsWritable()) {
-                    context.updateAttributes(["scrollTop"], ratio);
+                if (
+                    context.getAttributes()?.scrollTop !== scrollTop &&
+                    context.getIsWritable()
+                ) {
+                    context.updateAttributes(["scrollTop"], scrollTop);
                 }
             },
         }).mount();
@@ -42,7 +59,7 @@ const NetlessAppDocsViewer: NetlessApp<NetlessAppDocsViewerAttributes> = {
 
         context.emitter.on("attributesUpdate", (attributes) => {
             if (attributes?.scrollTop != null) {
-                docsViewer.syncScrollTop(attributes.scrollTop * box.height);
+                docsViewer.syncScrollTop(attributes.scrollTop);
             }
         });
 

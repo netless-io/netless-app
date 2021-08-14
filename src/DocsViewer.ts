@@ -21,6 +21,8 @@ export interface DocsViewerConfig {
     isWritable: boolean;
     box: ReadonlyTeleBox;
     pages: DocsViewerPage[];
+    pagesSize: { width: number; height: number };
+    /** Scroll Top of the original doc */
     scrollTop?: number;
     onUserScroll?: (scrollTop: number) => void;
 }
@@ -31,6 +33,7 @@ export class DocsViewer {
         isWritable,
         box,
         pages,
+        pagesSize,
         scrollTop = 0,
         onUserScroll,
     }: DocsViewerConfig) {
@@ -38,11 +41,14 @@ export class DocsViewer {
         this.isWritable = isWritable;
         this.box = box;
         this.pages = pages;
-        this.scrollTop = scrollTop;
+        this.pageScrollTop = scrollTop;
         this.onUserScroll = onUserScroll;
+        this.pagesSize = pagesSize;
     }
 
-    public scrollTop: number;
+    public pageScrollTop: number;
+
+    public pagesSize: { width: number; height: number };
 
     public onUserScroll?: (scrollTop: number) => void;
 
@@ -77,8 +83,8 @@ export class DocsViewer {
 
         this.setupWhiteboardCamera();
 
-        if (this.scrollTop !== 0) {
-            this.scrollTo(this.scrollTop);
+        if (this.pageScrollTop !== 0) {
+            this.pageScrollTo(this.pageScrollTop);
         }
 
         // add event listener after scrollTop is set
@@ -115,11 +121,12 @@ export class DocsViewer {
     }
 
     /** Sync scrollTop from writable user */
-    public syncScrollTop(scrollTop: number): void {
-        if (scrollTop >= 0 && Math.abs(this.scrollTop - scrollTop) > 10) {
-            if (this.$pages) {
-                this.scrollTo(scrollTop);
-            }
+    public syncScrollTop(pageScrollTop: number): void {
+        if (
+            pageScrollTop >= 0 &&
+            Math.abs(this.pageScrollTop - pageScrollTop) > 10
+        ) {
+            this.pageScrollTo(pageScrollTop);
         }
     }
 
@@ -189,9 +196,9 @@ export class DocsViewer {
                     if (this.isWritable) {
                         const scrollTop = Math.max(
                             0,
-                            this.scrollTop + ev.deltaY
+                            this.pageScrollTop + ev.deltaY
                         );
-                        this.scrollTo(scrollTop);
+                        this.pageScrollTo(scrollTop);
                         if (this.onUserScroll) {
                             this.onUserScroll(scrollTop);
                         }
@@ -425,14 +432,53 @@ export class DocsViewer {
         }
     }
 
-    protected scrollTo(scrollTop: number): void {
-        if (this.$pages && this.whiteboardView.camera.scale > 0) {
+    protected scrollTopPageToEl(scrollTop: number): number | null {
+        if (this.$pages) {
+            const height = this.$pages.scrollHeight;
+            if (height > 0) {
+                return scrollTop * (height / this.pagesSize.height);
+            }
+        }
+        return null;
+    }
+
+    protected scrollTopElToPage(scrollTop: number): number | null {
+        if (this.$pages) {
+            const height = this.$pages.scrollHeight;
+            if (height > 0) {
+                return scrollTop * (this.pagesSize.height / height);
+            }
+        }
+        return null;
+    }
+
+    /** Scroll base on docs size */
+    protected pageScrollTo(pageScrollTop: number): void {
+        const elScrollTo = this.scrollTopPageToEl(pageScrollTop);
+        if (
+            elScrollTo !== null &&
+            this.$pages &&
+            this.whiteboardView.camera.scale > 0
+        ) {
             this.whiteboardView.moveCamera({
-                centerY: scrollTop / this.whiteboardView.camera.scale,
+                centerY: elScrollTo / this.whiteboardView.camera.scale,
                 animationMode: "immediately" as AnimationMode,
             });
             this.$pages.scrollTo({
-                top: scrollTop,
+                top: elScrollTo,
+            });
+        }
+    }
+
+    /** Scroll base on DOM rect */
+    protected elScrollTo(elScrollTop: number): void {
+        if (this.$pages && this.whiteboardView.camera.scale > 0) {
+            this.whiteboardView.moveCamera({
+                centerY: elScrollTop / this.whiteboardView.camera.scale,
+                animationMode: "immediately" as AnimationMode,
+            });
+            this.$pages.scrollTo({
+                top: elScrollTop,
             });
         }
     }
@@ -445,7 +491,7 @@ export class DocsViewer {
             );
             if ($page) {
                 const offsetTop = $page.offsetTop;
-                this.scrollTo($page.offsetTop);
+                this.elScrollTo($page.offsetTop);
                 if (this.onUserScroll) {
                     this.onUserScroll(offsetTop);
                 }
@@ -458,12 +504,10 @@ export class DocsViewer {
             if (this.pages.length > 0 && this.$pages) {
                 const pagesWidth = this.$pages.getBoundingClientRect().width;
                 if (pagesWidth > 0) {
-                    const scrollTop =
-                        this.scrollTop * (this.pages[0].width / pagesWidth);
                     let pageTop = 0;
                     for (let i = 0; i < this.pages.length; i += 1) {
                         pageTop += this.pages[i].height;
-                        if (scrollTop <= pageTop) {
+                        if (this.pageScrollTop <= pageTop) {
                             this.setPageIndex(i);
                             return;
                         }
@@ -476,7 +520,12 @@ export class DocsViewer {
         if (this.$pages) {
             this.addEventListener(this.$pages, "scroll", () => {
                 if (this.$pages) {
-                    this.scrollTop = this.$pages.scrollTop;
+                    const pageScrollTop = this.scrollTopElToPage(
+                        this.$pages.scrollTop
+                    );
+                    if (pageScrollTop !== null) {
+                        this.pageScrollTop = pageScrollTop;
+                    }
                 }
                 updatePageIndex();
             });
@@ -486,7 +535,7 @@ export class DocsViewer {
     protected setupWhiteboardCamera(): void {
         const fixCamera = this.debounce(() => {
             if (this.$pages) {
-                this.scrollTo(this.$pages.scrollTop);
+                this.elScrollTo(this.$pages.scrollTop);
             }
         }, 100);
 
