@@ -6,13 +6,13 @@ import type { DocsViewerPage } from "./DocsViewer";
 
 export type { DocsViewerPage } from "./DocsViewer";
 
-export interface NetlessAppDocsViewerAttributes {
+export interface NetlessAppStaticDocsViewerAttributes {
     /** ScrollTop base on the real page size */
     pageScrollTop?: number;
     pages?: DocsViewerPage[];
 }
 
-const NetlessAppDocsViewer: NetlessApp<NetlessAppDocsViewerAttributes> = {
+const NetlessAppDocsViewer: NetlessApp<NetlessAppStaticDocsViewerAttributes> = {
     kind: "DocsViewer",
     setup(context): void {
         const box = context.getBox();
@@ -53,7 +53,7 @@ const NetlessAppDocsViewer: NetlessApp<NetlessAppDocsViewerAttributes> = {
             onUserScroll: (pageScrollTop) => {
                 if (
                     context.getAttributes()?.pageScrollTop !== pageScrollTop &&
-                    context.getIsWritable()
+                    !box.readonly
                 ) {
                     context.updateAttributes(["pageScrollTop"], pageScrollTop);
                 }
@@ -65,8 +65,10 @@ const NetlessAppDocsViewer: NetlessApp<NetlessAppDocsViewerAttributes> = {
         }
 
         context.emitter.on("attributesUpdate", (attributes) => {
-            if (attributes?.pageScrollTop != null) {
-                docsViewer.syncPageScrollTop(attributes.pageScrollTop);
+            if (attributes) {
+                if (attributes.pageScrollTop != null) {
+                    docsViewer.syncPageScrollTop(attributes.pageScrollTop);
+                }
             }
         });
 
