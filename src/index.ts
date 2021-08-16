@@ -1,10 +1,10 @@
 import styles from "./style.scss?inline";
 
 import type { NetlessApp } from "@netless/window-manager";
-import { DocsViewer } from "./DocsViewer";
-import { ViewerPage } from "./Viewer";
+import { StaticDocsViewer } from "./StaticDocsViewer";
+import type { DocsViewerPage } from "./DocsViewer";
 
-export type DocsViewerPage = ViewerPage;
+export type { DocsViewerPage } from "./DocsViewer";
 
 export interface NetlessAppDocsViewerAttributes {
     /** ScrollTop base on the real page size */
@@ -43,9 +43,9 @@ const NetlessAppDocsViewer: NetlessApp<NetlessAppDocsViewerAttributes> = {
         const whiteboardView = context.getView();
         whiteboardView.disableCameraTransform = true;
 
-        const docsViewer = new DocsViewer({
+        const docsViewer = new StaticDocsViewer({
             whiteboardView,
-            isWritable: context.getIsWritable(),
+            readonly: box.readonly,
             box,
             pages: attrs.pages || [],
             pagesSize,
@@ -70,8 +70,8 @@ const NetlessAppDocsViewer: NetlessApp<NetlessAppDocsViewerAttributes> = {
             }
         });
 
-        context.emitter.on("writableChange", (isWritable) => {
-            docsViewer.setWritable(isWritable);
+        box.events.on("readonly", (readonly) => {
+            docsViewer.setReadonly(readonly);
         });
     },
 };

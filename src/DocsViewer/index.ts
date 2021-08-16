@@ -7,32 +7,32 @@ import LazyLoad from "vanilla-lazyload";
 import debounceFn from "debounce-fn";
 import { SideEffectManager } from "../utils/SideEffectManager";
 
-export interface ViewerPage {
+export interface DocsViewerPage {
     src: string;
     height: number;
     width: number;
     thumbnail?: string;
 }
 
-export interface ViewerConfig {
-    isWritable: boolean;
+export interface DocsViewerConfig {
+    readonly: boolean;
     box: ReadonlyTeleBox;
-    pages: ViewerPage[];
+    pages: DocsViewerPage[];
     onNewPageIndex: (index: number) => void;
 }
 
-export class Viewer {
+export class DocsViewer {
     public constructor({
-        isWritable,
+        readonly,
         box,
         pages,
         onNewPageIndex,
-    }: ViewerConfig) {
+    }: DocsViewerConfig) {
         if (pages.length <= 0) {
             throw new Error("[DocsViewer] Empty pages.");
         }
 
-        this.isWritable = isWritable;
+        this.readonly = readonly;
         this.box = box;
         this.pages = pages;
         this.onNewPageIndex = onNewPageIndex;
@@ -40,8 +40,8 @@ export class Viewer {
         this.render();
     }
 
-    protected isWritable: boolean;
-    protected pages: ViewerPage[];
+    protected readonly: boolean;
+    protected pages: DocsViewerPage[];
     protected box: ReadonlyTeleBox;
     protected onNewPageIndex: (index: number) => void;
 
@@ -69,21 +69,21 @@ export class Viewer {
         this.$footer.remove();
     }
 
-    public setWritable(isWritable: boolean): void {
-        if (this.isWritable !== isWritable) {
-            this.isWritable = isWritable;
+    public setReadonly(readonly: boolean): void {
+        if (this.readonly !== readonly) {
+            this.readonly = readonly;
 
             this.$content.classList.toggle(
                 this.wrapClassName("readonly"),
-                !isWritable
+                readonly
             );
 
             this.$footer.classList.toggle(
                 this.wrapClassName("readonly"),
-                !isWritable
+                readonly
             );
 
-            this.$pageNumberInput.disabled = !this.isWritable;
+            this.$pageNumberInput.disabled = readonly;
         }
     }
 
@@ -111,7 +111,7 @@ export class Viewer {
             $content.className = this.wrapClassName("content");
             this.$content = $content;
 
-            if (!this.isWritable) {
+            if (this.readonly) {
                 $content.classList.add(this.wrapClassName("readonly"));
             }
 
@@ -158,7 +158,7 @@ export class Viewer {
             });
 
             this.sideEffect.addEventListener($preview, "click", (ev) => {
-                if (!this.isWritable) {
+                if (this.readonly) {
                     return;
                 }
                 const pageIndex = (ev.target as HTMLElement).dataset?.pageIndex;
@@ -182,7 +182,7 @@ export class Viewer {
                 this.$previewMask,
                 "click",
                 (ev) => {
-                    if (!this.isWritable) {
+                    if (this.readonly) {
                         return;
                     }
                     if (ev.target === this.$previewMask) {
@@ -200,13 +200,13 @@ export class Viewer {
             $footer.className = this.wrapClassName("footer");
             this.$footer = $footer;
 
-            if (!this.isWritable) {
+            if (this.readonly) {
                 $footer.classList.add(this.wrapClassName("readonly"));
             }
 
             const $btnSidebar = this.renderFooterBtn("btn-sidebar", sidebarSVG);
             this.sideEffect.addEventListener($btnSidebar, "click", () => {
-                if (!this.isWritable) {
+                if (this.readonly) {
                     return;
                 }
                 this.togglePreview();
@@ -220,7 +220,7 @@ export class Viewer {
                 arrowLeftSVG
             );
             this.sideEffect.addEventListener($btnPageBack, "click", () => {
-                if (!this.isWritable) {
+                if (this.readonly) {
                     return;
                 }
                 this.onNewPageIndex(this.pageIndex - 1);
@@ -231,7 +231,7 @@ export class Viewer {
                 arrowRightSVG
             );
             this.sideEffect.addEventListener($btnPageNext, "click", () => {
-                if (!this.isWritable) {
+                if (this.readonly) {
                     return;
                 }
                 this.onNewPageIndex(this.pageIndex + 1);
@@ -244,12 +244,12 @@ export class Viewer {
             $pageNumberInput.className =
                 this.wrapClassName("page-number-input");
             $pageNumberInput.value = String(this.pageIndex + 1);
-            if (!this.isWritable) {
+            if (this.readonly) {
                 $pageNumberInput.disabled = true;
             }
             this.$pageNumberInput = $pageNumberInput;
             this.sideEffect.addEventListener($pageNumberInput, "change", () => {
-                if (!this.isWritable) {
+                if (this.readonly) {
                     return;
                 }
                 if ($pageNumberInput.value) {

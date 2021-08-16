@@ -2,39 +2,39 @@ import { AnimationMode, ReadonlyTeleBox, View } from "@netless/window-manager";
 import LazyLoad from "vanilla-lazyload";
 import debounceFn from "debounce-fn";
 import { SideEffectManager } from "../utils/SideEffectManager";
-import { Viewer, ViewerPage } from "../Viewer";
+import { DocsViewer, DocsViewerPage } from "../DocsViewer";
 
-export interface DocsViewerConfig {
+export interface StaticDocsViewerConfig {
     whiteboardView: View;
-    isWritable: boolean;
+    readonly: boolean;
     box: ReadonlyTeleBox;
-    pages: ViewerPage[];
+    pages: DocsViewerPage[];
     pagesSize: { width: number; height: number };
     /** Scroll Top of the original page */
     pageScrollTop?: number;
     onUserScroll?: (pageScrollTop: number) => void;
 }
 
-export class DocsViewer {
+export class StaticDocsViewer {
     public constructor({
         whiteboardView,
-        isWritable,
+        readonly,
         box,
         pages,
         pagesSize,
         pageScrollTop = 0,
         onUserScroll,
-    }: DocsViewerConfig) {
+    }: StaticDocsViewerConfig) {
         this.whiteboardView = whiteboardView;
-        this.isWritable = isWritable;
+        this.readonly = readonly;
         this.box = box;
         this.pages = pages;
         this.pageScrollTop = pageScrollTop;
         this.pagesSize = pagesSize;
         this.onUserScroll = onUserScroll;
 
-        this.viewer = new Viewer({
-            isWritable,
+        this.viewer = new DocsViewer({
+            readonly,
             box,
             pages,
             onNewPageIndex: this.onNewPageIndex,
@@ -43,8 +43,8 @@ export class DocsViewer {
         this.render();
     }
 
-    protected isWritable: boolean;
-    protected pages: ViewerPage[];
+    protected readonly: boolean;
+    protected pages: DocsViewerPage[];
     protected box: ReadonlyTeleBox;
     protected whiteboardView: View;
 
@@ -52,7 +52,7 @@ export class DocsViewer {
     public pagesSize: { width: number; height: number };
     public onUserScroll?: (pageScrollTop: number) => void;
 
-    public viewer: Viewer;
+    public viewer: DocsViewer;
 
     public $pages!: HTMLElement;
     public $whiteboardView!: HTMLDivElement;
@@ -85,11 +85,11 @@ export class DocsViewer {
         return this;
     }
 
-    public setWritable(isWritable: boolean): void {
-        if (this.isWritable !== isWritable) {
-            this.isWritable = isWritable;
+    public setReadonly(readonly: boolean): void {
+        if (this.readonly !== readonly) {
+            this.readonly = readonly;
 
-            this.viewer.setWritable(isWritable);
+            this.viewer.setReadonly(readonly);
         }
     }
 
@@ -150,7 +150,7 @@ export class DocsViewer {
                     ev.preventDefault();
                     ev.stopPropagation();
                     ev.stopImmediatePropagation();
-                    if (this.isWritable) {
+                    if (!this.readonly) {
                         const scrollTop = Math.min(
                             this.pagesSize.height,
                             Math.max(0, this.pageScrollTop + ev.deltaY)
@@ -171,7 +171,7 @@ export class DocsViewer {
                         ev.preventDefault();
                         ev.stopPropagation();
                         ev.stopImmediatePropagation();
-                        if (this.isWritable) {
+                        if (!this.readonly) {
                             // @TODO
                         }
                     }
@@ -214,7 +214,7 @@ export class DocsViewer {
     }
 
     protected scrollToPage(index: number): void {
-        if (this.isWritable && this.$pages && !Number.isNaN(index)) {
+        if (!this.readonly && this.$pages && !Number.isNaN(index)) {
             index = Math.max(0, Math.min(this.pages.length - 1, index));
             const $page = this.$pages.querySelector<HTMLElement>(
                 "." + this.wrapClassName(`page-${index}`)
