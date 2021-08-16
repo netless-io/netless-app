@@ -326,7 +326,7 @@ export class DocsViewer {
     }
 
     protected wrapClassName(className: string): string {
-        return "netless-app-docs-viewer-" + className;
+        return "netless-app-docs-viewer-static-" + className;
     }
 
     protected onNewPageIndex = (index: number): void => {

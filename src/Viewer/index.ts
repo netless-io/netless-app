@@ -1,4 +1,3 @@
-import styles from "./style.scss?inline";
 import sidebarSVG from "./icons/sidebar.svg";
 import arrowLeftSVG from "./icons/arrow-left.svg";
 import arrowRightSVG from "./icons/arrow-right.svg";
@@ -108,10 +107,6 @@ export class Viewer {
             if (!this.isWritable) {
                 $content.classList.add(this.wrapClassName("readonly"));
             }
-
-            const $style = document.createElement("style");
-            $style.textContent = styles;
-            $content.appendChild($style);
 
             $content.appendChild(this.renderPreviewMask());
             $content.appendChild(this.renderPreview());

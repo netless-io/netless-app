@@ -1,3 +1,5 @@
+import styles from "./style.scss?inline";
+
 import type { NetlessApp } from "@netless/window-manager";
 import { DocsViewer } from "./DocsViewer";
 import { ViewerPage } from "./Viewer";
@@ -19,6 +21,8 @@ const NetlessAppDocsViewer: NetlessApp<NetlessAppDocsViewerAttributes> = {
                 "[DocsViewer]: Missing `box` after `create` event."
             );
         }
+
+        box.mountStyles(styles);
 
         const attrs = context.getAttributes() || {};
         const pages = attrs.pages || [];
