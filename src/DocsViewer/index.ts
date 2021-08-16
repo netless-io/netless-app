@@ -1,6 +1,8 @@
 import sidebarSVG from "./icons/sidebar.svg";
 import arrowLeftSVG from "./icons/arrow-left.svg";
 import arrowRightSVG from "./icons/arrow-right.svg";
+import playSVG from "./icons/play.svg";
+import pauseSVG from "./icons/pause.svg";
 
 import { ReadonlyTeleBox } from "@netless/window-manager";
 import LazyLoad from "vanilla-lazyload";
@@ -19,6 +21,7 @@ export interface DocsViewerConfig {
     box: ReadonlyTeleBox;
     pages: DocsViewerPage[];
     onNewPageIndex: (index: number) => void;
+    onPlay?: () => void;
 }
 
 export class DocsViewer {
@@ -27,6 +30,7 @@ export class DocsViewer {
         box,
         pages,
         onNewPageIndex,
+        onPlay,
     }: DocsViewerConfig) {
         if (pages.length <= 0) {
             throw new Error("[DocsViewer] Empty pages.");
@@ -36,6 +40,7 @@ export class DocsViewer {
         this.box = box;
         this.pages = pages;
         this.onNewPageIndex = onNewPageIndex;
+        this.onPlay = onPlay;
 
         this.render();
     }
@@ -44,12 +49,15 @@ export class DocsViewer {
     protected pages: DocsViewerPage[];
     protected box: ReadonlyTeleBox;
     protected onNewPageIndex: (index: number) => void;
+    protected onPlay?: () => void;
 
     public $content!: HTMLElement;
     public $preview!: HTMLElement;
     public $previewMask!: HTMLElement;
     public $footer!: HTMLElement;
     public $pageNumberInput!: HTMLInputElement;
+
+    public pageIndex = 0;
 
     public mount(): void {
         this.box.mountContent(this.$content);
@@ -225,6 +233,32 @@ export class DocsViewer {
                 }
                 this.onNewPageIndex(this.pageIndex - 1);
             });
+            $pageJumps.appendChild($btnPageBack);
+
+            if (this.onPlay) {
+                const $btnPlay = this.renderFooterBtn("btn-page-play", playSVG);
+                const returnPlay = this.debounce(() => {
+                    const img = $btnPlay.querySelector("img");
+                    if (img) {
+                        img.src = playSVG;
+                    }
+                }, 500);
+                this.sideEffect.addEventListener($btnPlay, "click", () => {
+                    if (this.readonly) {
+                        return;
+                    }
+                    const img = $btnPlay.querySelector("img");
+                    if (img) {
+                        img.src = pauseSVG;
+                    }
+                    if (this.onPlay) {
+                        this.onPlay();
+                    }
+                    returnPlay();
+                });
+
+                $pageJumps.appendChild($btnPlay);
+            }
 
             const $btnPageNext = this.renderFooterBtn(
                 "btn-page-next",
@@ -236,6 +270,7 @@ export class DocsViewer {
                 }
                 this.onNewPageIndex(this.pageIndex + 1);
             });
+            $pageJumps.appendChild($btnPageNext);
 
             const $pageNumber = document.createElement("div");
             $pageNumber.className = this.wrapClassName("page-number");
@@ -259,9 +294,6 @@ export class DocsViewer {
 
             const $totalPage = document.createElement("span");
             $totalPage.textContent = " / " + this.pages.length;
-
-            $pageJumps.appendChild($btnPageBack);
-            $pageJumps.appendChild($btnPageNext);
 
             $pageNumber.appendChild($pageNumberInput);
             $pageNumber.appendChild($totalPage);
@@ -318,8 +350,6 @@ export class DocsViewer {
     protected wrapClassName(className: string): string {
         return "netless-app-docs-viewer-" + className;
     }
-
-    protected pageIndex = 0;
 
     protected isShowPreview = false;
 

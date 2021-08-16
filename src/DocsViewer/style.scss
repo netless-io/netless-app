@@ -115,6 +115,10 @@ $namespace: "netless-app-docs-viewer";
     & > img {
         width: 100%;
     }
+
+    & ~ & {
+        margin-left: 15px;
+    }
 }
 
 .#{$namespace}-page-jumps {
@@ -122,10 +126,6 @@ $namespace: "netless-app-docs-viewer";
     display: flex;
     justify-content: center;
     align-items: center;
-}
-
-.#{$namespace}-btn-page-back {
-    margin-right: 15px;
 }
 
 .#{$namespace}-page-number {
