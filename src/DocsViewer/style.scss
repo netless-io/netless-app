@@ -1,6 +1,7 @@
 $namespace: "netless-app-docs-viewer-static";
 
 .#{$namespace}-pages {
+    overflow: hidden;
     position: relative;
     height: 100%;
     user-select: none;

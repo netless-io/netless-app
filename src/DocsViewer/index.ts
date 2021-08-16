@@ -118,8 +118,7 @@ export class DocsViewer {
     protected renderPages(): HTMLElement {
         if (!this.$pages) {
             const $pages = document.createElement("div");
-            $pages.className =
-                this.wrapClassName("pages") + " tele-fancy-scrollbar";
+            $pages.className = this.wrapClassName("pages");
             this.$pages = $pages;
 
             const pageClassName = this.wrapClassName("page");
