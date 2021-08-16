@@ -77,6 +77,13 @@ export class Viewer {
                 this.wrapClassName("readonly"),
                 !isWritable
             );
+
+            this.$footer.classList.toggle(
+                this.wrapClassName("readonly"),
+                !isWritable
+            );
+
+            this.$pageNumberInput.disabled = !this.isWritable;
         }
     }
 
@@ -151,6 +158,9 @@ export class Viewer {
             });
 
             this.sideEffect.addEventListener($preview, "click", (ev) => {
+                if (!this.isWritable) {
+                    return;
+                }
                 const pageIndex = (ev.target as HTMLElement).dataset?.pageIndex;
                 if (pageIndex) {
                     ev.preventDefault();
@@ -172,6 +182,9 @@ export class Viewer {
                 this.$previewMask,
                 "click",
                 (ev) => {
+                    if (!this.isWritable) {
+                        return;
+                    }
                     if (ev.target === this.$previewMask) {
                         this.togglePreview(false);
                     }
@@ -187,8 +200,15 @@ export class Viewer {
             $footer.className = this.wrapClassName("footer");
             this.$footer = $footer;
 
+            if (!this.isWritable) {
+                $footer.classList.add(this.wrapClassName("readonly"));
+            }
+
             const $btnSidebar = this.renderFooterBtn("btn-sidebar", sidebarSVG);
             this.sideEffect.addEventListener($btnSidebar, "click", () => {
+                if (!this.isWritable) {
+                    return;
+                }
                 this.togglePreview();
             });
 
@@ -200,6 +220,9 @@ export class Viewer {
                 arrowLeftSVG
             );
             this.sideEffect.addEventListener($btnPageBack, "click", () => {
+                if (!this.isWritable) {
+                    return;
+                }
                 this.onNewPageIndex(this.pageIndex - 1);
             });
 
@@ -208,6 +231,9 @@ export class Viewer {
                 arrowRightSVG
             );
             this.sideEffect.addEventListener($btnPageNext, "click", () => {
+                if (!this.isWritable) {
+                    return;
+                }
                 this.onNewPageIndex(this.pageIndex + 1);
             });
 
@@ -218,8 +244,14 @@ export class Viewer {
             $pageNumberInput.className =
                 this.wrapClassName("page-number-input");
             $pageNumberInput.value = String(this.pageIndex + 1);
+            if (!this.isWritable) {
+                $pageNumberInput.disabled = true;
+            }
             this.$pageNumberInput = $pageNumberInput;
             this.sideEffect.addEventListener($pageNumberInput, "change", () => {
+                if (!this.isWritable) {
+                    return;
+                }
                 if ($pageNumberInput.value) {
                     this.onNewPageIndex(Number($pageNumberInput.value) - 1);
                 }
