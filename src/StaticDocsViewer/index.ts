@@ -3,6 +3,7 @@ import LazyLoad from "vanilla-lazyload";
 import debounceFn from "debounce-fn";
 import { SideEffectManager } from "../utils/SideEffectManager";
 import { DocsViewer, DocsViewerPage } from "../DocsViewer";
+import { clamp } from "../utils/helpers";
 
 export interface StaticDocsViewerConfig {
     whiteboardView: View;
@@ -151,9 +152,10 @@ export class StaticDocsViewer {
                     ev.stopPropagation();
                     ev.stopImmediatePropagation();
                     if (!this.readonly) {
-                        const scrollTop = Math.min(
-                            this.pagesSize.height,
-                            Math.max(0, this.pageScrollTop + ev.deltaY)
+                        const scrollTop = clamp(
+                            this.pageScrollTop + ev.deltaY,
+                            0,
+                            this.pagesSize.height
                         );
                         this.pageScrollTo(scrollTop);
                         if (this.onUserScroll) {
@@ -215,7 +217,7 @@ export class StaticDocsViewer {
 
     protected scrollToPage(index: number): void {
         if (!this.readonly && this.$pages && !Number.isNaN(index)) {
-            index = Math.max(0, Math.min(this.pages.length - 1, index));
+            index = clamp(index, 0, this.pages.length - 1);
             const $page = this.$pages.querySelector<HTMLElement>(
                 "." + this.wrapClassName(`page-${index}`)
             );
