@@ -1,6 +1,6 @@
 {
     "name": "@netless/app-docs-viewer",
-    "version": "0.1.2",
+    "version": "0.1.3",
     "private": false,
     "description": "Netless App Docs Viewer",
     "homepage": "https://github.com/netless-io/netless-app-docs-viewer",
