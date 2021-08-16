@@ -175,6 +175,7 @@ export class DocsViewer {
                     ev.stopPropagation();
                     ev.stopImmediatePropagation();
                     this.onNewPageIndex(Number(pageIndex));
+                    this.togglePreview(false);
                 }
             });
         }
