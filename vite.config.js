@@ -12,6 +12,7 @@ export default ({ command, mode }) => {
                 fileName: "main",
                 name: "NetlessAppDocsViewer",
             },
+            sourcemap: isProd,
             outDir: "dist",
             rollupOptions: {
                 external: ["@netless/window-manager"],
