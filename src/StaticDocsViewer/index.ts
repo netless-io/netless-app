@@ -1,6 +1,7 @@
-import { AnimationMode, ReadonlyTeleBox, View } from "@netless/window-manager";
+import type { AnimationMode, ReadonlyTeleBox } from "@netless/window-manager";
+import type { View, Size } from "white-web-sdk";
 import LazyLoad from "vanilla-lazyload";
-import debounceFn from "debounce-fn";
+import debounceFn, { DebouncedFunction } from "debounce-fn";
 import { SideEffectManager } from "../utils/SideEffectManager";
 import { DocsViewer, DocsViewerPage } from "../DocsViewer";
 import { clamp } from "../utils/helpers";
@@ -57,6 +58,7 @@ export class StaticDocsViewer {
 
     public $pages!: HTMLElement;
     public $whiteboardView!: HTMLDivElement;
+    public $scrollbar!: HTMLElement;
 
     public mount(): this {
         this.viewer.mount();
@@ -114,6 +116,12 @@ export class StaticDocsViewer {
     public render(): void {
         this.viewer.$content.appendChild(this.renderPages());
         this.viewer.$content.appendChild(this.renderWhiteboardView());
+        if (this.box.$titleBar) {
+            this.box.$titleBar.style.height = `${(26 / 320) * 100}%`;
+        }
+        if (this.box.$footer) {
+            this.box.$footer.style.height = `${(26 / 320) * 100}%`;
+        }
     }
 
     protected renderPages(): HTMLElement {
@@ -184,20 +192,31 @@ export class StaticDocsViewer {
         return this.$whiteboardView;
     }
 
-    protected scrollTopPageToEl(pageScrollTop: number): number | null {
-        const height = this.$pages.scrollHeight;
-        if (height > 0) {
-            return pageScrollTop * (height / this.pagesSize.height);
+    protected renderScrollbar(): HTMLElement {
+        if (!this.$scrollbar) {
+            const $track = document.createElement("div");
+            $track.className = this.wrapClassName("scrollbar-track");
+
+            this.$scrollbar = document.createElement("div");
+            this.$scrollbar.className = this.wrapClassName("scrollbar");
+
+            $track.appendChild(this.$scrollbar);
         }
-        return null;
+        return this.$scrollbar.parentElement!;
     }
 
-    protected scrollTopElToPage(elScrollTop: number): number | null {
-        const height = this.$pages.scrollHeight;
-        if (height > 0) {
-            return elScrollTop * (this.pagesSize.height / height);
-        }
-        return null;
+    protected scrollTopPageToEl(pageScrollTop: number): number {
+        return (
+            pageScrollTop *
+            (this.whiteboardView.size.width / this.pagesSize.width)
+        );
+    }
+
+    protected scrollTopElToPage(elScrollTop: number): number {
+        return (
+            elScrollTop /
+            (this.whiteboardView.size.width / this.pagesSize.width)
+        );
     }
 
     /** Scroll base on DOM rect */
@@ -209,10 +228,7 @@ export class StaticDocsViewer {
 
     /** Scroll base on docs size */
     protected pageScrollTo(pageScrollTop: number): void {
-        const elScrollTop = this.scrollTopPageToEl(pageScrollTop);
-        if (elScrollTop !== null) {
-            this.elScrollTo(elScrollTop);
-        }
+        this.elScrollTo(this.scrollTopPageToEl(pageScrollTop));
     }
 
     protected scrollToPage(index: number): void {
@@ -225,10 +241,7 @@ export class StaticDocsViewer {
                 const elOffsetTop = $page.offsetTop;
                 this.elScrollTo(elOffsetTop);
                 if (this.onUserScroll) {
-                    const pageOffsetTop = this.scrollTopElToPage(elOffsetTop);
-                    if (pageOffsetTop !== null) {
-                        this.onUserScroll(pageOffsetTop);
-                    }
+                    this.onUserScroll(this.scrollTopElToPage(elOffsetTop));
                 }
             }
         }
@@ -261,17 +274,13 @@ export class StaticDocsViewer {
             this.sideEffect.addEventListener(this.$pages, "scroll", () => {
                 const elScrollTop = this.$pages.scrollTop;
                 const pageScrollTop = this.scrollTopElToPage(elScrollTop);
-                if (pageScrollTop !== null) {
-                    this.pageScrollTop = pageScrollTop;
-                }
-
-                const cameraScale = this.whiteboardView.camera.scale;
-                if (cameraScale > 0) {
-                    this.whiteboardView.moveCamera({
-                        centerY: elScrollTop / cameraScale,
-                        animationMode: "immediately" as AnimationMode,
-                    });
-                }
+                this.pageScrollTop = pageScrollTop;
+                this.whiteboardView.moveCamera({
+                    centerY: this.scrollTopElToPage(
+                        elScrollTop + this.whiteboardView.size.height / 2
+                    ),
+                    animationMode: "immediately" as AnimationMode,
+                });
 
                 updatePageIndex();
             });
@@ -279,31 +288,18 @@ export class StaticDocsViewer {
     }
 
     protected setupWhiteboardCamera(): void {
-        const fixCamera = this.debounce(() => {
-            if (this.$pages) {
-                this.elScrollTo(this.$pages.scrollTop);
-            }
-        }, 100);
-
         this.sideEffect.add(() => {
-            const handleSizeUpdate = (): void => {
-                if (this.pages.length > 0) {
-                    const { width, height } =
-                        this.viewer.$content.getBoundingClientRect();
-                    if (width > 0 && height > 0) {
-                        // @FIXME calc originY on size changes
-                        this.whiteboardView.moveCameraToContain({
-                            originX: 0,
-                            originY: this.$pages
-                                ? this.$pages.scrollTop *
-                                  (this.pages[0].width / width)
-                                : 0,
-                            width: this.pages[0].width,
-                            height: (this.pages[0].width / width) * height,
-                            animationMode: "immediately" as AnimationMode,
-                        });
-                        fixCamera();
-                    }
+            const handleSizeUpdate = ({ width, height }: Size): void => {
+                if (width > 0 && height > 0) {
+                    const pageWidth = this.pagesSize.width;
+                    const ratio = pageWidth / width;
+                    this.whiteboardView.moveCameraToContain({
+                        originX: 0,
+                        originY: this.$pages.scrollTop * ratio,
+                        width: pageWidth,
+                        height: height * ratio,
+                        animationMode: "immediately" as AnimationMode,
+                    });
                 }
             };
             this.whiteboardView.callbacks.on("onSizeUpdated", handleSizeUpdate);
@@ -316,11 +312,11 @@ export class StaticDocsViewer {
         }, "whiteboard-size-update");
     }
 
-    protected debounce(
-        fn: () => void,
+    protected debounce<ArgumentsType extends unknown[], ReturnType>(
+        fn: (...args: ArgumentsType) => ReturnType,
         wait: number,
         disposerID?: string
-    ): () => void {
+    ): DebouncedFunction<ArgumentsType, ReturnType | undefined> {
         const dFn = debounceFn(fn, { wait });
         this.sideEffect.addDisposer(() => dFn.cancel(), disposerID);
         return dFn;

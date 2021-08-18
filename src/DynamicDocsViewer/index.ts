@@ -152,18 +152,6 @@ export class DynamicDocsViewer {
             this.$whiteboardView = document.createElement("div");
             this.$whiteboardView.className = this.wrapClassName("wb-view");
             this.whiteboardView.divElement = this.$whiteboardView;
-
-            this.sideEffect.addEventListener(
-                this.$whiteboardView,
-                "wheel",
-                (ev) => {
-                    ev.preventDefault();
-                    ev.stopPropagation();
-                    ev.stopImmediatePropagation();
-                    console.log("scroll", ev.deltaY, ev.deltaX);
-                },
-                { passive: false, capture: true }
-            );
             // @TODO support swipe
         }
         return this.$whiteboardView;
