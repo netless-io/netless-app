@@ -4,7 +4,9 @@ import LazyLoad from "vanilla-lazyload";
 import debounceFn, { DebouncedFunction } from "debounce-fn";
 import { SideEffectManager } from "../utils/SideEffectManager";
 import { DocsViewer, DocsViewerPage } from "../DocsViewer";
-import { clamp } from "../utils/helpers";
+import { clamp, flattenEvent, preventEvent } from "../utils/helpers";
+
+const SCROLLBAR_MIN_HEIGHT = 30;
 
 export interface StaticDocsViewerConfig {
     whiteboardView: View;
@@ -91,7 +93,6 @@ export class StaticDocsViewer {
     public setReadonly(readonly: boolean): void {
         if (this.readonly !== readonly) {
             this.readonly = readonly;
-
             this.viewer.setReadonly(readonly);
         }
     }
@@ -116,6 +117,7 @@ export class StaticDocsViewer {
     public render(): void {
         this.viewer.$content.appendChild(this.renderPages());
         this.viewer.$content.appendChild(this.renderWhiteboardView());
+        this.viewer.$content.appendChild(this.renderScrollbar());
         if (this.box.$titleBar) {
             this.box.$titleBar.style.height = `${(26 / 320) * 100}%`;
         }
@@ -194,15 +196,69 @@ export class StaticDocsViewer {
 
     protected renderScrollbar(): HTMLElement {
         if (!this.$scrollbar) {
-            const $track = document.createElement("div");
-            $track.className = this.wrapClassName("scrollbar-track");
+            const $scrollbar = document.createElement("button");
+            this.$scrollbar = $scrollbar;
+            $scrollbar.className = this.wrapClassName("scrollbar");
+            $scrollbar.style.minHeight = `${SCROLLBAR_MIN_HEIGHT}px`;
 
-            this.$scrollbar = document.createElement("div");
-            this.$scrollbar.className = this.wrapClassName("scrollbar");
+            const trackStart = (ev: MouseEvent | TouchEvent): void => {
+                if (this.readonly) {
+                    return;
+                }
 
-            $track.appendChild(this.$scrollbar);
+                preventEvent(ev);
+
+                this.setIsDragScrollbar(true);
+
+                const startTop = this.scrollTopPageToEl(this.pageScrollTop);
+                const elScrollHeight =
+                    (this.whiteboardView.size.width / this.pagesSize.width) *
+                    this.pagesSize.height;
+                const { clientY: startY } = flattenEvent(ev);
+
+                const tracking = (ev: MouseEvent | TouchEvent): void => {
+                    const { clientY } = flattenEvent(ev);
+                    const { height: wbHeight } = this.whiteboardView.size;
+                    this.elScrollTo(
+                        clamp(
+                            startTop +
+                                (clientY - startY) *
+                                    (elScrollHeight / wbHeight),
+                            0,
+                            elScrollHeight -
+                                this.scrollbarHeight *
+                                    (elScrollHeight / wbHeight)
+                        )
+                    );
+                };
+
+                const trackEnd = (): void => {
+                    this.setIsDragScrollbar(false);
+                    window.removeEventListener("mousemove", tracking, true);
+                    window.removeEventListener("touchmove", tracking, true);
+                    window.removeEventListener("mouseup", trackEnd, true);
+                    window.removeEventListener("touchend", trackEnd, true);
+                    window.removeEventListener("touchcancel", trackEnd, true);
+                };
+
+                window.addEventListener("mousemove", tracking, true);
+                window.addEventListener("touchmove", tracking, true);
+                window.addEventListener("mouseup", trackEnd, true);
+                window.addEventListener("touchend", trackEnd, true);
+                window.addEventListener("touchcancel", trackEnd, true);
+            };
+            this.sideEffect.addEventListener(
+                $scrollbar,
+                "mousedown",
+                trackStart
+            );
+            this.sideEffect.addEventListener(
+                $scrollbar,
+                "touchstart",
+                trackStart
+            );
         }
-        return this.$scrollbar.parentElement!;
+        return this.$scrollbar;
     }
 
     protected scrollTopPageToEl(pageScrollTop: number): number {
@@ -270,21 +326,29 @@ export class StaticDocsViewer {
             "debounce-updatePageIndex"
         );
 
-        if (this.$pages) {
-            this.sideEffect.addEventListener(this.$pages, "scroll", () => {
-                const elScrollTop = this.$pages.scrollTop;
-                const pageScrollTop = this.scrollTopElToPage(elScrollTop);
-                this.pageScrollTop = pageScrollTop;
-                this.whiteboardView.moveCamera({
-                    centerY: this.scrollTopElToPage(
-                        elScrollTop + this.whiteboardView.size.height / 2
-                    ),
-                    animationMode: "immediately" as AnimationMode,
-                });
+        this.sideEffect.addEventListener(this.$pages, "scroll", () => {
+            const elScrollTop = this.$pages.scrollTop;
+            const pageScrollTop = this.scrollTopElToPage(elScrollTop);
+            this.pageScrollTop = pageScrollTop;
 
-                updatePageIndex();
+            const { width: wbWidth, height: wbHeight } =
+                this.whiteboardView.size;
+            const { width: pageWidth, height: pageHeight } = this.pagesSize;
+
+            this.whiteboardView.moveCamera({
+                centerY: this.scrollTopElToPage(elScrollTop + wbHeight / 2),
+                animationMode: "immediately" as AnimationMode,
             });
-        }
+
+            this.setScrollbarHeight(
+                wbHeight / ((wbWidth / pageWidth) * pageHeight)
+            );
+            this.$scrollbar.style.transform = `translateY(${
+                (pageScrollTop / pageHeight) * wbHeight
+            }px)`;
+
+            updatePageIndex();
+        });
     }
 
     protected setupWhiteboardCamera(): void {
@@ -331,4 +395,30 @@ export class StaticDocsViewer {
     };
 
     protected sideEffect = new SideEffectManager();
+
+    protected isDragScrollbar = false;
+
+    protected setIsDragScrollbar(isDragScrollbar: boolean): void {
+        if (this.isDragScrollbar !== isDragScrollbar) {
+            this.isDragScrollbar = isDragScrollbar;
+            this.$scrollbar.classList.toggle(
+                this.wrapClassName("scrollbar-dragging"),
+                isDragScrollbar
+            );
+        }
+    }
+
+    protected scrollbarHeight = SCROLLBAR_MIN_HEIGHT;
+
+    protected setScrollbarHeight(elScrollbarHeight: number): void {
+        elScrollbarHeight = clamp(
+            elScrollbarHeight,
+            SCROLLBAR_MIN_HEIGHT,
+            this.whiteboardView.size.height
+        );
+        if (this.scrollbarHeight !== elScrollbarHeight) {
+            this.scrollbarHeight = elScrollbarHeight;
+            this.$scrollbar.style.height = `${elScrollbarHeight}px`;
+        }
+    }
 }

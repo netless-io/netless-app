@@ -1,4 +1,6 @@
-$namespace: "netless-app-docs-viewer";
+@import "./variables.scss";
+
+$namespace: $docs-viewer-namespace;
 
 .#{$namespace}-content {
     position: relative;
