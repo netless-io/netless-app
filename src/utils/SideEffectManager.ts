@@ -34,6 +34,21 @@ export class SideEffectManager {
         return disposerID;
     }
 
+    public setTimeout(
+        handler: () => void,
+        timeout: number,
+        disposerID: string = this.genDisposerID()
+    ): void {
+        const timeoutHandler = (): void => {
+            handler();
+            this.remove(disposerID);
+        };
+        const ticket = window.setTimeout(timeoutHandler, timeout);
+        this.disposers.set(disposerID, () => {
+            window.clearTimeout(ticket);
+        });
+    }
+
     /**
      * remove but not run the disposer
      * @param disposerID

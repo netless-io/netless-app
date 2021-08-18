@@ -75,7 +75,7 @@ export class StaticDocsViewer {
 
         this.setupWhiteboardCamera();
 
-        setTimeout(() => {
+        this.sideEffect.setTimeout(() => {
             if (this.pageScrollTop !== 0) {
                 this.pageScrollTo(this.pageScrollTop);
             }
