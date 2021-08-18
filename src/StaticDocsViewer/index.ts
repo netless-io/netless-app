@@ -75,9 +75,11 @@ export class StaticDocsViewer {
 
         this.setupWhiteboardCamera();
 
-        if (this.pageScrollTop !== 0) {
-            this.pageScrollTo(this.pageScrollTop);
-        }
+        setTimeout(() => {
+            if (this.pageScrollTop !== 0) {
+                this.pageScrollTo(this.pageScrollTop);
+            }
+        }, 100);
 
         // add event listener after scrollTop is set
         this.setupScrollTopEvent();
@@ -119,10 +121,10 @@ export class StaticDocsViewer {
         this.viewer.$content.appendChild(this.renderWhiteboardView());
         this.viewer.$content.appendChild(this.renderScrollbar());
         if (this.box.$titleBar) {
-            this.box.$titleBar.style.height = `${(26 / 320) * 100}%`;
+            this.box.$titleBar.style.height = `${(26 / 200) * 100}%`;
         }
         if (this.box.$footer) {
-            this.box.$footer.style.height = `${(26 / 320) * 100}%`;
+            this.box.$footer.style.height = `${(26 / 200) * 100}%`;
         }
     }
 
