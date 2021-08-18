@@ -1,7 +1,7 @@
 import type { AnimationMode, ReadonlyTeleBox } from "@netless/window-manager";
 import type { View, Size } from "white-web-sdk";
 import LazyLoad from "vanilla-lazyload";
-import debounceFn, { DebouncedFunction } from "debounce-fn";
+import debounceFn, { DebouncedFunction, Options } from "debounce-fn";
 import { SideEffectManager } from "../utils/SideEffectManager";
 import { DocsViewer, DocsViewerPage } from "../DocsViewer";
 import { clamp, flattenEvent, preventEvent } from "../utils/helpers";
@@ -79,7 +79,7 @@ export class StaticDocsViewer {
             if (this.pageScrollTop !== 0) {
                 this.pageScrollTo(this.pageScrollTop);
             }
-        }, 100);
+        }, 1000);
 
         // add event listener after scrollTop is set
         this.setupScrollTopEvent();
@@ -327,7 +327,7 @@ export class StaticDocsViewer {
                     }
                 }
             },
-            100,
+            { wait: 5, maxWait: 100 },
             "debounce-updatePageIndex"
         );
 
@@ -360,15 +360,17 @@ export class StaticDocsViewer {
         this.sideEffect.add(() => {
             const handleSizeUpdate = ({ width, height }: Size): void => {
                 if (width > 0 && height > 0) {
+                    const elScrollTop = this.$pages.scrollTop;
                     const pageWidth = this.pagesSize.width;
                     const ratio = pageWidth / width;
                     this.whiteboardView.moveCameraToContain({
                         originX: 0,
-                        originY: this.$pages.scrollTop * ratio,
+                        originY: elScrollTop * ratio,
                         width: pageWidth,
                         height: height * ratio,
                         animationMode: "immediately" as AnimationMode,
                     });
+                    this.elScrollTo(elScrollTop);
                 }
             };
             this.whiteboardView.callbacks.on("onSizeUpdated", handleSizeUpdate);
@@ -383,10 +385,10 @@ export class StaticDocsViewer {
 
     protected debounce<ArgumentsType extends unknown[], ReturnType>(
         fn: (...args: ArgumentsType) => ReturnType,
-        wait: number,
+        options: Options,
         disposerID?: string
     ): DebouncedFunction<ArgumentsType, ReturnType | undefined> {
-        const dFn = debounceFn(fn, { wait });
+        const dFn = debounceFn(fn, options);
         this.sideEffect.addDisposer(() => dFn.cancel(), disposerID);
         return dFn;
     }
