@@ -23,6 +23,10 @@ const NetlessAppDocsViewer: NetlessApp<
     NetlessAppStaticDocsViewerAttributes | NetlessAppDynamicDocsViewerAttributes
 > = {
     kind: "DocsViewer",
+    config: {
+        minwidth: 320,
+        minheight: 200,
+    },
     setup(context) {
         const box = context.getBox();
 
