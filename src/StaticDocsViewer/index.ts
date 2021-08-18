@@ -158,9 +158,7 @@ export class StaticDocsViewer {
                 this.$whiteboardView,
                 "wheel",
                 (ev) => {
-                    ev.preventDefault();
-                    ev.stopPropagation();
-                    ev.stopImmediatePropagation();
+                    preventEvent(ev);
                     if (!this.readonly) {
                         const scrollTop = clamp(
                             this.pageScrollTop + ev.deltaY,
@@ -180,12 +178,11 @@ export class StaticDocsViewer {
                 "touchstart",
                 (ev) => {
                     if (ev.touches.length > 1) {
-                        ev.preventDefault();
-                        ev.stopPropagation();
-                        ev.stopImmediatePropagation();
-                        if (!this.readonly) {
-                            // @TODO
+                        preventEvent(ev);
+                        if (this.readonly) {
+                            return;
                         }
+                        this.handleSwipeScroll(ev);
                     }
                 },
                 { passive: false, capture: true }
@@ -420,5 +417,32 @@ export class StaticDocsViewer {
             this.scrollbarHeight = elScrollbarHeight;
             this.$scrollbar.style.height = `${elScrollbarHeight}px`;
         }
+    }
+
+    protected handleSwipeScroll(ev: TouchEvent): void {
+        const startTop = this.scrollTopPageToEl(this.pageScrollTop);
+        const elScrollHeight =
+            (this.whiteboardView.size.width / this.pagesSize.width) *
+            this.pagesSize.height;
+        let { clientY: startY } = ev.touches[0];
+
+        const tracking = (ev: TouchEvent): void => {
+            const { clientY } = ev.touches[0];
+            this.elScrollTo(
+                clamp(startTop + (startY - clientY), 0, elScrollHeight)
+            );
+        };
+
+        const trackEnd = (ev: TouchEvent): void => {
+            ({ clientY: startY } = ev.touches[0]);
+            this.setIsDragScrollbar(false);
+            window.removeEventListener("touchmove", tracking, true);
+            window.removeEventListener("touchend", trackEnd, true);
+            window.removeEventListener("touchcancel", trackEnd, true);
+        };
+
+        window.addEventListener("touchmove", tracking, true);
+        window.addEventListener("touchend", trackEnd, true);
+        window.addEventListener("touchcancel", trackEnd, true);
     }
 }
