@@ -205,7 +205,10 @@ export class StaticDocsViewer {
 
                 preventEvent(ev);
 
-                this.setIsDragScrollbar(true);
+                this.$scrollbar.classList.toggle(
+                    this.wrapClassName("scrollbar-dragging"),
+                    true
+                );
 
                 const startTop = this.scrollTopPageToEl(this.pageScrollTop);
                 const elScrollHeight =
@@ -230,7 +233,10 @@ export class StaticDocsViewer {
                 };
 
                 const trackEnd = (): void => {
-                    this.setIsDragScrollbar(false);
+                    this.$scrollbar.classList.toggle(
+                        this.wrapClassName("scrollbar-dragging"),
+                        false
+                    );
                     window.removeEventListener("mousemove", tracking, true);
                     window.removeEventListener("touchmove", tracking, true);
                     window.removeEventListener("mouseup", trackEnd, true);
@@ -393,18 +399,6 @@ export class StaticDocsViewer {
 
     protected sideEffect = new SideEffectManager();
 
-    protected isDragScrollbar = false;
-
-    protected setIsDragScrollbar(isDragScrollbar: boolean): void {
-        if (this.isDragScrollbar !== isDragScrollbar) {
-            this.isDragScrollbar = isDragScrollbar;
-            this.$scrollbar.classList.toggle(
-                this.wrapClassName("scrollbar-dragging"),
-                isDragScrollbar
-            );
-        }
-    }
-
     protected scrollbarHeight = SCROLLBAR_MIN_HEIGHT;
 
     protected setScrollbarHeight(elScrollbarHeight: number): void {
@@ -435,7 +429,6 @@ export class StaticDocsViewer {
 
         const trackEnd = (ev: TouchEvent): void => {
             ({ clientY: startY } = ev.touches[0]);
-            this.setIsDragScrollbar(false);
             window.removeEventListener("touchmove", tracking, true);
             window.removeEventListener("touchend", trackEnd, true);
             window.removeEventListener("touchcancel", trackEnd, true);

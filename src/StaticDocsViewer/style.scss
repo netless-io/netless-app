@@ -7,6 +7,12 @@ $namespace: "netless-app-docs-viewer-static";
     position: relative;
     height: 100%;
     user-select: none;
+
+    &:hover {
+        .#{$namespace}-scrollbar {
+            opacity: 1;
+        }
+    }
 }
 
 .#{$namespace}-page {
@@ -45,12 +51,15 @@ $static-scrollbar-color-active: rgba(68, 78, 96, 0.2);
     outline: none;
     border-radius: $static-scrollbar-size * 0.5;
     background: $static-scrollbar-color;
-    transition: background 0.4s, transform 0.2s;
+    opacity: 0;
+    transition: background 0.4s, opacity 0.4s, transform 0.2s;
     will-change: transform, height;
     user-select: none;
 
     &.#{$namespace}-scrollbar-dragging {
-        transition: background 0.4s;
+        background: $static-scrollbar-color-active;
+        opacity: 1;
+        transition: background 0.4s, opacity 0.4s;
     }
 
     &:hover,
@@ -60,6 +69,14 @@ $static-scrollbar-color-active: rgba(68, 78, 96, 0.2);
 
     &:active {
         background: $static-scrollbar-color-active;
+    }
+}
+
+.#{$docs-viewer-namespace}-content {
+    &:hover {
+        .#{$namespace}-scrollbar {
+            opacity: 1;
+        }
     }
 }
 
