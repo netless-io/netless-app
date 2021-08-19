@@ -205,6 +205,14 @@ export class StaticDocsViewer {
                     return;
                 }
 
+                if (
+                    (ev as MouseEvent).button != null &&
+                    (ev as MouseEvent).button !== 0
+                ) {
+                    // Not left mouse
+                    return;
+                }
+
                 preventEvent(ev);
 
                 this.$scrollbar.classList.toggle(
@@ -222,15 +230,8 @@ export class StaticDocsViewer {
                     const { clientY } = flattenEvent(ev);
                     const { height: wbHeight } = this.whiteboardView.size;
                     this.elScrollTo(
-                        clamp(
-                            startTop +
-                                (clientY - startY) *
-                                    (elScrollHeight / wbHeight),
-                            0,
-                            elScrollHeight -
-                                this.scrollbarHeight *
-                                    (elScrollHeight / wbHeight)
-                        )
+                        startTop +
+                            (clientY - startY) * (elScrollHeight / wbHeight)
                     );
                 };
 
@@ -339,17 +340,17 @@ export class StaticDocsViewer {
             const { width: wbWidth, height: wbHeight } =
                 this.whiteboardView.size;
             const { width: pageWidth, height: pageHeight } = this.pagesSize;
+            const elScrollHeight = (wbWidth / pageWidth) * pageHeight;
 
             this.whiteboardView.moveCamera({
                 centerY: this.scrollTopElToPage(elScrollTop + wbHeight / 2),
                 animationMode: "immediately" as AnimationMode,
             });
 
-            this.setScrollbarHeight(
-                wbHeight / ((wbWidth / pageWidth) * pageHeight)
-            );
+            this.setScrollbarHeight((wbHeight / elScrollHeight) * wbHeight);
             this.$scrollbar.style.transform = `translateY(${
-                (pageScrollTop / pageHeight) * wbHeight
+                (elScrollTop / (elScrollHeight - wbHeight)) *
+                (wbHeight - this.scrollbarHeight)
             }px)`;
 
             updatePageIndex();
