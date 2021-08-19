@@ -300,7 +300,7 @@ export class StaticDocsViewer {
                 "." + this.wrapClassName(`page-${index}`)
             );
             if ($page) {
-                const elOffsetTop = $page.offsetTop;
+                const elOffsetTop = $page.offsetTop + 5;
                 this.elScrollTo(elOffsetTop);
                 if (this.onUserScroll) {
                     this.onUserScroll(this.scrollTopElToPage(elOffsetTop));
