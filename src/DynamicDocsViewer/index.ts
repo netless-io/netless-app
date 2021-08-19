@@ -110,6 +110,7 @@ export class DynamicDocsViewer {
             const room = this.getWhiteboardRoom();
             if (room) {
                 room.setSceneIndex(index);
+                this.scaleDocsToFit();
             }
         }
         if (index !== this.viewer.pageIndex) {
