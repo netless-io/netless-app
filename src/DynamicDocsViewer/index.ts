@@ -15,6 +15,7 @@ export interface DynamicDocsViewerConfig {
     readonly: boolean;
     box: ReadonlyTeleBox;
     pages: DocsViewerPage[];
+    mountWhiteboard: (dom: HTMLDivElement) => void;
 }
 
 export class DynamicDocsViewer {
@@ -25,6 +26,7 @@ export class DynamicDocsViewer {
         readonly,
         box,
         pages,
+        mountWhiteboard,
     }: DynamicDocsViewerConfig) {
         this.whiteboardView = whiteboardView;
         this.readonly = readonly;
@@ -32,6 +34,7 @@ export class DynamicDocsViewer {
         this.pages = pages;
         this.displayer = displayer;
         this.getWhiteboardRoom = getRoom;
+        this.mountWhiteboard = mountWhiteboard;
 
         this.viewer = new DocsViewer({
             readonly,
@@ -50,6 +53,7 @@ export class DynamicDocsViewer {
     protected whiteboardView: View;
     protected displayer: Displayer;
     protected getWhiteboardRoom: () => Room | undefined;
+    protected mountWhiteboard: (dom: HTMLDivElement) => void;
 
     public viewer: DocsViewer;
 
@@ -152,8 +156,7 @@ export class DynamicDocsViewer {
         if (!this.$whiteboardView) {
             this.$whiteboardView = document.createElement("div");
             this.$whiteboardView.className = this.wrapClassName("wb-view");
-            this.whiteboardView.divElement = this.$whiteboardView;
-            // @TODO support swipe
+            this.mountWhiteboard(this.$whiteboardView);
         }
         return this.$whiteboardView;
     }

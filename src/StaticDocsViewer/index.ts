@@ -14,6 +14,7 @@ export interface StaticDocsViewerConfig {
     box: ReadonlyTeleBox;
     pages: DocsViewerPage[];
     pagesSize: { width: number; height: number };
+    mountWhiteboard: (dom: HTMLDivElement) => void;
     /** Scroll Top of the original page */
     pageScrollTop?: number;
     onUserScroll?: (pageScrollTop: number) => void;
@@ -27,6 +28,7 @@ export class StaticDocsViewer {
         pages,
         pagesSize,
         pageScrollTop = 0,
+        mountWhiteboard,
         onUserScroll,
     }: StaticDocsViewerConfig) {
         this.whiteboardView = whiteboardView;
@@ -35,6 +37,7 @@ export class StaticDocsViewer {
         this.pages = pages;
         this.pageScrollTop = pageScrollTop;
         this.pagesSize = pagesSize;
+        this.mountWhiteboard = mountWhiteboard;
         this.onUserScroll = onUserScroll;
 
         this.viewer = new DocsViewer({
@@ -51,6 +54,7 @@ export class StaticDocsViewer {
     protected pages: DocsViewerPage[];
     protected box: ReadonlyTeleBox;
     protected whiteboardView: View;
+    protected mountWhiteboard: (dom: HTMLDivElement) => void;
 
     public pageScrollTop: number;
     public pagesSize: { width: number; height: number };
@@ -155,7 +159,7 @@ export class StaticDocsViewer {
         if (!this.$whiteboardView) {
             this.$whiteboardView = document.createElement("div");
             this.$whiteboardView.className = this.wrapClassName("wb-view");
-            this.whiteboardView.divElement = this.$whiteboardView;
+            this.mountWhiteboard(this.$whiteboardView);
             this.sideEffect.addEventListener(
                 this.$whiteboardView,
                 "wheel",

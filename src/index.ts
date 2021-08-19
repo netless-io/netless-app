@@ -96,6 +96,7 @@ function setupStaticDocsViewer(
         pages: pages,
         pagesSize,
         pageScrollTop: context.getAttributes()?.pageScrollTop,
+        mountWhiteboard: context.mountView.bind(context),
         onUserScroll: (pageScrollTop) => {
             if (
                 context.getAttributes()?.pageScrollTop !== pageScrollTop &&
@@ -143,7 +144,10 @@ function setupDynamicDocsViewer(
         readonly: box.readonly,
         box,
         pages,
+        mountWhiteboard: context.mountView.bind(context),
     }).mount();
+
+    context.mountView(docsViewer.$whiteboardView);
 
     if (import.meta.env.DEV) {
         (window as any).docsViewer = docsViewer;
