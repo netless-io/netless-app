@@ -134,6 +134,8 @@ $namespace: $docs-viewer-namespace;
     margin-left: auto;
     font-size: 13px;
     user-select: none;
+    white-space: nowrap;
+    word-break: keep-all;
 }
 
 .#{$namespace}-page-number-input {
