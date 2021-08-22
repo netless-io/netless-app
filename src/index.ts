@@ -6,6 +6,7 @@ import type {
     ReadonlyTeleBox,
     Room,
 } from "@netless/window-manager";
+import type { View } from "white-web-sdk";
 import { StaticDocsViewer } from "./StaticDocsViewer";
 import { DocsViewerPage } from "./DocsViewer";
 import { DynamicDocsViewer } from "./DynamicDocsViewer";
@@ -23,10 +24,6 @@ const NetlessAppDocsViewer: NetlessApp<
     NetlessAppStaticDocsViewerAttributes | NetlessAppDynamicDocsViewerAttributes
 > = {
     kind: "DocsViewer",
-    config: {
-        minwidth: 320,
-        minheight: 200,
-    },
     setup(context) {
         const box = context.getBox();
 
@@ -34,6 +31,13 @@ const NetlessAppDocsViewer: NetlessApp<
         if (!scenes) {
             throw new Error("[Docs Viewer]: scenes not found.");
         }
+
+        const whiteboardView = context.getView();
+        if (!whiteboardView) {
+            throw new Error("[Docs Viewer]: no whiteboard view.");
+        }
+
+        whiteboardView.disableCameraTransform = true;
 
         const pages = scenes
             .map(({ ppt }): DocsViewerPage | null =>
@@ -57,12 +61,14 @@ const NetlessAppDocsViewer: NetlessApp<
         if (pages[0].src.startsWith("ppt")) {
             setupDynamicDocsViewer(
                 context as AppContext<NetlessAppDynamicDocsViewerAttributes>,
+                whiteboardView,
                 box,
                 pages
             );
         } else {
             setupStaticDocsViewer(
                 context as AppContext<NetlessAppStaticDocsViewerAttributes>,
+                whiteboardView,
                 box,
                 pages
             );
@@ -74,6 +80,7 @@ export default NetlessAppDocsViewer;
 
 function setupStaticDocsViewer(
     context: AppContext<NetlessAppStaticDocsViewerAttributes>,
+    whiteboardView: View,
     box: ReadonlyTeleBox,
     pages: DocsViewerPage[]
 ): void {
@@ -85,9 +92,6 @@ function setupStaticDocsViewer(
             0
         ),
     };
-
-    const whiteboardView = context.getView();
-    whiteboardView.disableCameraTransform = true;
 
     const docsViewer = new StaticDocsViewer({
         whiteboardView,
@@ -126,13 +130,11 @@ function setupStaticDocsViewer(
 
 function setupDynamicDocsViewer(
     context: AppContext<NetlessAppDynamicDocsViewerAttributes>,
+    whiteboardView: View,
     box: ReadonlyTeleBox,
     pages: DocsViewerPage[]
 ): void {
     const displayer = context.getDisplayer();
-
-    const whiteboardView = context.getView();
-    whiteboardView.disableCameraTransform = true;
 
     const docsViewer = new DynamicDocsViewer({
         displayer,
