@@ -139,6 +139,13 @@ export class DocsViewer {
             const pageClassName = this.wrapClassName("preview-page");
             const pageNameClassName = this.wrapClassName("preview-page-name");
             this.pages.forEach((page, i) => {
+                const previewSRC =
+                    page.thumbnail ??
+                    (page.src.startsWith("ppt") ? void 0 : page.src);
+                if (!previewSRC) {
+                    return;
+                }
+
                 const pageIndex = String(i);
 
                 const $page = document.createElement("a");
@@ -157,7 +164,7 @@ export class DocsViewer {
                 const $img = document.createElement("img");
                 $img.width = page.width;
                 $img.height = page.height;
-                $img.dataset.src = page.thumbnail ?? page.src;
+                $img.dataset.src = previewSRC;
                 $img.dataset.pageIndex = pageIndex;
 
                 $page.appendChild($img);
@@ -213,13 +220,23 @@ export class DocsViewer {
                 $footer.classList.add(this.wrapClassName("readonly"));
             }
 
-            const $btnSidebar = this.renderFooterBtn("btn-sidebar", sidebarSVG);
-            this.sideEffect.addEventListener($btnSidebar, "click", () => {
-                if (this.readonly) {
-                    return;
-                }
-                this.togglePreview();
-            });
+            if (
+                this.pages.some(
+                    (page) => page.thumbnail || !page.src.startsWith("ppt")
+                )
+            ) {
+                const $btnSidebar = this.renderFooterBtn(
+                    "btn-sidebar",
+                    sidebarSVG
+                );
+                this.sideEffect.addEventListener($btnSidebar, "click", () => {
+                    if (this.readonly) {
+                        return;
+                    }
+                    this.togglePreview();
+                });
+                this.$footer.appendChild($btnSidebar);
+            }
 
             const $pageJumps = document.createElement("div");
             $pageJumps.className = this.wrapClassName("page-jumps");
@@ -299,7 +316,6 @@ export class DocsViewer {
             $pageNumber.appendChild($pageNumberInput);
             $pageNumber.appendChild($totalPage);
 
-            this.$footer.appendChild($btnSidebar);
             this.$footer.appendChild($pageJumps);
             this.$footer.appendChild($pageNumber);
         }
