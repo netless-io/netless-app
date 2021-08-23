@@ -107,6 +107,15 @@ export class DocsViewer {
         }
     }
 
+    public setSmallBox(isSmallBox: boolean): void {
+        if (this.isSmallBox !== isSmallBox) {
+            this.$footer.classList.toggle(
+                this.wrapClassName("float-footer"),
+                isSmallBox
+            );
+        }
+    }
+
     public render(): HTMLElement {
         this.renderContent();
         this.renderFooter();
@@ -218,6 +227,10 @@ export class DocsViewer {
 
             if (this.readonly) {
                 $footer.classList.add(this.wrapClassName("readonly"));
+            }
+
+            if (this.isSmallBox) {
+                $footer.classList.add(this.wrapClassName("float-footer"));
             }
 
             if (
@@ -369,6 +382,8 @@ export class DocsViewer {
     }
 
     protected isShowPreview = false;
+
+    protected isSmallBox = false;
 
     protected sideEffect = new SideEffectManager();
 }

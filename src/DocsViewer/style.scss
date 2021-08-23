@@ -95,6 +95,22 @@ $namespace: $docs-viewer-namespace;
     border-top: 1px solid #eeeef7;
 }
 
+.#{$namespace}-float-footer {
+    width: 100%;
+    min-height: 26px;
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    z-index: 2000;
+    background: rgba(249, 249, 252, 0.9);
+    opacity: 0;
+    transition: opacity 0.4s;
+
+    &:hover {
+        opacity: 1;
+    }
+}
+
 .#{$namespace}-footer-btn {
     box-sizing: border-box;
     width: 26px;

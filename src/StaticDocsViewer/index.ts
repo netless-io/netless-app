@@ -8,6 +8,8 @@ import { clamp, flattenEvent, preventEvent } from "../utils/helpers";
 
 const SCROLLBAR_MIN_HEIGHT = 30;
 
+const RATIO_BASE_CONTAINER_HEIGHT = 640;
+
 export interface StaticDocsViewerConfig {
     whiteboardView: View;
     readonly: boolean;
@@ -88,6 +90,10 @@ export class StaticDocsViewer {
         // add event listener after scrollTop is set
         this.setupScrollTopEvent();
 
+        this.whiteboardView.callbacks.on("onSizeUpdated", () => {
+            this.renderRatioHeight();
+        });
+
         return this;
     }
 
@@ -124,11 +130,54 @@ export class StaticDocsViewer {
         this.viewer.$content.appendChild(this.renderPages());
         this.viewer.$content.appendChild(this.renderWhiteboardView());
         this.viewer.$content.appendChild(this.renderScrollbar());
-        if (this.box.$titleBar) {
-            this.box.$titleBar.style.height = `${(26 / 200) * 100}%`;
-        }
-        if (this.box.$footer) {
-            this.box.$footer.style.height = `${(26 / 200) * 100}%`;
+        this.renderRatioHeight();
+    }
+
+    protected renderRatioHeight(): void {
+        const boxHeight = this.box.absoluteHeight;
+        const isSmallBox = boxHeight <= RATIO_BASE_CONTAINER_HEIGHT;
+
+        this.viewer.setSmallBox(isSmallBox);
+
+        if (isSmallBox) {
+            const titleBarSupposedHeight = 26 / RATIO_BASE_CONTAINER_HEIGHT;
+            const titleBarActualHeight = 26 / boxHeight;
+            const footerSupposedHeight = 26 / RATIO_BASE_CONTAINER_HEIGHT;
+            const footerActualHeight = 0;
+
+            const emptySpace = Math.max(
+                (titleBarSupposedHeight +
+                    footerSupposedHeight -
+                    (titleBarActualHeight + footerActualHeight)) /
+                    2,
+                0
+            );
+
+            if (this.box.$titleBar) {
+                const titleBarHeight = titleBarActualHeight + emptySpace;
+                this.box.$titleBar.style.height = `${titleBarHeight * 100}%`;
+            }
+
+            if (this.box.$footer) {
+                const footerHeight = footerActualHeight + emptySpace;
+                this.box.$footer.style.height = `${footerHeight * 100}%`;
+            }
+        } else {
+            if (this.box.$titleBar) {
+                const titleBarHeight = Math.max(
+                    26 / RATIO_BASE_CONTAINER_HEIGHT,
+                    26 / boxHeight
+                );
+                this.box.$titleBar.style.height = `${titleBarHeight * 100}%`;
+            }
+
+            if (this.box.$footer) {
+                const footerHeight = Math.max(
+                    26 / RATIO_BASE_CONTAINER_HEIGHT,
+                    26 / boxHeight
+                );
+                this.box.$footer.style.height = `${footerHeight * 100}%`;
+            }
         }
     }
 
