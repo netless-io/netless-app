@@ -120,6 +120,13 @@ export class DynamicDocsViewer {
         if (index !== this.viewer.pageIndex) {
             this.viewer.setPageIndex(index);
         }
+        if (this.shouldResetPPT) {
+            const room = this.getWhiteboardRoom();
+            if (room) {
+                room.setGlobalState({ __pptState: undefined });
+            }
+            this.shouldResetPPT = false;
+        }
     }
 
     public onPlayPPT = (): void => {
@@ -174,6 +181,7 @@ export class DynamicDocsViewer {
     };
 
     protected onNewPageIndex = (index: number): void => {
+        this.shouldResetPPT = true;
         this.jumpToPage(index);
     };
 
@@ -182,4 +190,6 @@ export class DynamicDocsViewer {
     }
 
     protected sideEffect = new SideEffectManager();
+
+    protected shouldResetPPT = false;
 }
