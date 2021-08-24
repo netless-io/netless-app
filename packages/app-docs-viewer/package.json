@@ -10,7 +10,7 @@
   ],
   "main": "./dist/main.cjs.js",
   "module": "./dist/main.es.js",
-  "types": "./src/index.ts",
+  "types": "./dist/index.d.ts",
   "files": [
     "src",
     "dist"

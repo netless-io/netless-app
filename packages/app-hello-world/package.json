@@ -2,7 +2,7 @@
   "name": "@netless/app-hello-world",
   "main": "dist/main.cjs.js",
   "module": "dist/main.es.js",
-  "types": "src/index.ts",
+  "types": "dist/index.d.ts",
   "version": "0.1.0",
   "private": true,
   "scripts": {
