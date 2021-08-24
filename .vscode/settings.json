@@ -1,0 +1,11 @@
+{
+  "editor.tabSize": 2,
+  "editor.formatOnSave": true,
+  "editor.codeActionsOnSave": {
+    "source.addMissingImports": true
+  },
+  "prettier.tabWidth": 2,
+  "prettier.endOfLine": "auto",
+  "prettier.arrowParens": "avoid",
+  "prettier.printWidth": 100
+}

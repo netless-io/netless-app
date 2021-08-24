@@ -1,4 +1,7 @@
 {
-  "extends": "./tsconfig.base.json",
-  "include": ["src/**/*.ts", "src/**/*.tsx"]
+  "compilerOptions": {
+    "module": "ESNext",
+    "types": ["vite/client"],
+    "moduleResolution": "Node"
+  }
 }

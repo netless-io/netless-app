@@ -1,0 +1,12 @@
+{
+  "name": "playground",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "vite"
+  },
+  "dependencies": {
+    "@netless/app-hello-world": "workspace:*",
+    "white-web-sdk": "^2.13.18"
+  }
+}
