@@ -4,9 +4,7 @@ import "@netless/window-manager/dist/style.css";
 import { WindowManager } from "@netless/window-manager";
 
 import HelloWorld from "@netless/app-hello-world";
-
 import DocsViewer from "@netless/app-docs-viewer";
-
 WindowManager.register(HelloWorld);
 WindowManager.register(DocsViewer);
 
@@ -19,6 +17,7 @@ const env = import.meta.env;
 
 const $ = <T extends string>(sel: T) => document.querySelector(sel);
 let $whiteboard = $("#whiteboard")! as HTMLDivElement;
+let $actions = $("#actions")! as HTMLDivElement;
 
 let sdk = new WhiteWebSdk({ appIdentifier: env.VITE_APPID });
 
@@ -28,11 +27,19 @@ function setup() {
 
   document.title += " - loaded.";
 
-  $("#btn-hello-world")!.addEventListener("click", () => {
+  const createBtn = (name: string, callback: () => void) => {
+    let btn = document.createElement("button");
+    btn.textContent = name;
+    btn.dataset.app = name;
+    btn.addEventListener("click", callback);
+    $actions.append(btn);
+  };
+
+  createBtn("Hello, world!", () => {
     manager.addApp({ kind: HelloWorld.kind });
   });
 
-  $("#btn-docs-viewer")!.addEventListener("click", () => {
+  createBtn("Docs Viewer", () => {
     manager.addApp({
       kind: DocsViewer.kind,
       options: {
@@ -67,6 +74,7 @@ sdk.joinRoom({
   uuid: env.VITE_ROOM_UUID,
   invisiblePlugins: [WindowManager],
   useMultiViews: true,
+  disableNewPencil: false
 }).then(room => {
   window.room = room;
   window.manager = room.getInvisiblePlugin(WindowManager.kind) as WindowManager;

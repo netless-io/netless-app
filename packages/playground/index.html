@@ -20,15 +20,16 @@
       border: 1px solid;
       margin-bottom: .5em;
     }
+    #actions {
+      display: flex;
+      gap: .5em;
+    }
   </style>
 </head>
 <body>
   <div id="app">
     <div id="whiteboard"></div>
-    <div class="actions">
-      <button id="btn-hello-world">Hello world!</button>
-      <button id="btn-docs-viewer">Docs Viewer</button>
-    </div>
+    <div id="actions"></div>
   </div>
   <script type="module" src="/src/main.ts"></script>
 </body>
