@@ -6,6 +6,7 @@
     "dev": "vite"
   },
   "dependencies": {
+    "@netless/app-docs-viewer": "workspace:^0.1.11",
     "@netless/app-hello-world": "workspace:*",
     "white-web-sdk": "^2.13.18"
   }

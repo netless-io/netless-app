@@ -5,7 +5,10 @@ import { WindowManager } from "@netless/window-manager";
 
 import HelloWorld from "@netless/app-hello-world";
 
+import DocsViewer from "@netless/app-docs-viewer";
+
 WindowManager.register(HelloWorld);
+WindowManager.register(DocsViewer);
 
 declare global {
   var room: Room;
@@ -25,8 +28,36 @@ function setup() {
 
   document.title += " - loaded.";
 
-  $("#btn-hello-world").addEventListener("click", () => {
+  $("#btn-hello-world")!.addEventListener("click", () => {
     manager.addApp({ kind: HelloWorld.kind });
+  });
+
+  $("#btn-docs-viewer")!.addEventListener("click", () => {
+    manager.addApp({
+      kind: DocsViewer.kind,
+      options: {
+        scenePath: "/test4",
+        title: "ppt1",
+        scenes: [
+          {
+            name: "1",
+            ppt: {
+              height: 1010,
+              src: "https://convertcdn.netless.link/staticConvert/18140800fe8a11eb8cb787b1c376634e/1.png",
+              width: 714,
+            },
+          },
+          {
+            name: "2",
+            ppt: {
+              height: 1010,
+              src: "https://convertcdn.netless.link/staticConvert/18140800fe8a11eb8cb787b1c376634e/2.png",
+              width: 714,
+            },
+          },
+        ],
+      },
+    });
   });
 }
 
