@@ -1,6 +1,6 @@
 import { NetlessApp } from "@netless/window-manager";
 
-const HelloWorld: NetlessApp = {
+const HelloWorld: NetlessApp<{ text: string }> = {
   kind: "HelloWorld",
   setup(context) {
     context.getBox().mountStyles(`
@@ -22,8 +22,13 @@ const HelloWorld: NetlessApp = {
       context.updateAttributes(["text"], textarea.value);
     };
 
+    // @ts-ignore
     context.emitter.on("attributesUpdate", ({ text } = {}) => {
       text !== undefined && (textarea.value = text);
+    });
+
+    context.emitter.on("destroy", () => {
+      textarea.remove();
     });
   },
 };

@@ -4,8 +4,8 @@ importers:
 
   .:
     specifiers:
-      '@netless/window-manager': ^0.1.27
-      '@types/node': ^14.14.16
+      '@netless/window-manager': ^0.1.28
+      '@types/node': ^16.7.1
       cross-env: ^7.0.2
       esbuild: ^0.12.22
       rimraf: ^3.0.0
@@ -15,8 +15,8 @@ importers:
       vite: ^2.5.0
       white-web-sdk: ^2.13.18
     devDependencies:
-      '@netless/window-manager': 0.1.27_white-web-sdk@2.13.18
-      '@types/node': 14.17.11
+      '@netless/window-manager': 0.1.28_white-web-sdk@2.13.18
+      '@types/node': 16.7.1
       cross-env: 7.0.3
       esbuild: 0.12.22
       rimraf: 3.0.2
@@ -61,7 +61,7 @@ packages:
       vanilla-lazyload: 17.4.0
     dev: true
 
-  /@netless/app-media-player/0.1.0-beta.1_fd8ea05689aa32fd7b0f481d8599c917:
+  /@netless/app-media-player/0.1.0-beta.1_66a4083985e0a5ad48c3f2fb082b7a8c:
     resolution: {integrity: sha512-WYyvmyIb2KrVA+AbiCz94yJdBXCfwLlKjMiuquw7ojRX80sFrqb/Wp1wbTd+I2HNIY/LPORYQju1gCO3N9w1Iw==}
     peerDependencies:
       '@netless/window-manager': '*'
@@ -70,7 +70,7 @@ packages:
       video.js: ^7
       white-web-sdk: ^2.13.8
     dependencies:
-      '@netless/window-manager': 0.1.27_white-web-sdk@2.13.18
+      '@netless/window-manager': 0.1.28_white-web-sdk@2.13.18
       video.js: 7.14.3
       white-web-sdk: 2.13.18
     dev: true
@@ -86,15 +86,15 @@ packages:
       stylefire: 7.0.3
     dev: true
 
-  /@netless/window-manager/0.1.27_white-web-sdk@2.13.18:
-    resolution: {integrity: sha512-LuMN2yumLrJgGlsoyWdym4lO2tKK/HwUuRGfrdYuaqtGO+jp2EBDutSnbQd4v9eSWeSZ40JoR8coBkzuU2BfBQ==}
+  /@netless/window-manager/0.1.28_white-web-sdk@2.13.18:
+    resolution: {integrity: sha512-265CLCIYyTNS+HwZsfYpetpXfBWfzoxFx4AnKUteB4ATdWvqkJ3kLW2X+X2x/D8b5BHdSm4qIWRFZsJy9lZfEg==}
     peerDependencies:
       react: '>=16'
       react-dom: '>=16'
       white-web-sdk: ^2.13.16
     dependencies:
       '@netless/app-docs-viewer': 0.1.11
-      '@netless/app-media-player': 0.1.0-beta.1_fd8ea05689aa32fd7b0f481d8599c917
+      '@netless/app-media-player': 0.1.0-beta.1_66a4083985e0a5ad48c3f2fb082b7a8c
       '@netless/telebox-insider': 0.1.10
       emittery: 0.9.2
       lodash-es: 4.17.21
@@ -167,10 +167,6 @@ packages:
 
   /@types/long/4.0.1:
     resolution: {integrity: sha512-5tXH6Bx/kNGd3MgffdmP4dy2Z+G4eaXw0SE81Tq3BNadtnMR5/ySMzX4SLEzHJzSmPNn4HIdpQsBvXMUykr58w==}
-    dev: true
-
-  /@types/node/14.17.11:
-    resolution: {integrity: sha512-n2OQ+0Bz6WEsUjrvcHD1xZ8K+Kgo4cn9/w94s1bJS690QMUWfJPW/m7CCb7gPkA1fcYwL2UpjXP/rq/Eo41m6w==}
     dev: true
 
   /@types/node/16.7.1:
