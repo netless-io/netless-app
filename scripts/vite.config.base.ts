@@ -7,7 +7,7 @@ export function createViteConfig({
 }: {
   entry?: string;
   name?: string;
-}) {
+} = {}) {
   return defineConfig(({ mode }) => {
     const isProd = mode === "production";
     const pkgName = (entry.match(/packages[\/\\]([^\/\\]+)/) || [, ""])[1];
@@ -18,7 +18,6 @@ export function createViteConfig({
 
     const varName = pkgName
       .split(/-+/)
-      .filter((e: string) => !e.startsWith("@"))
       .map((e: string) => e[0].toUpperCase() + e.slice(1))
       .join("");
 
