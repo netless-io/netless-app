@@ -3,9 +3,28 @@ import { NetlessApp } from "@netless/window-manager";
 const HelloWorld: NetlessApp = {
   kind: "HelloWorld",
   setup(context) {
-    let h1 = document.createElement("h1");
-    h1.textContent = "Hello world!";
-    context.getBox().mountContent(h1);
+    context.getBox().mountStyles(`
+      .netless-app-hello-world {
+        display: block;
+        width: 100%; height: 100%;
+        overflow: hidden;
+        border: 0; resize: none;
+        background: #fafbfc;
+      }
+   `);
+
+    let textarea = document.createElement("textarea");
+    textarea.classList.add("netless-app-hello-world");
+    textarea.value = context.getAttributes()?.text ?? "Hello world!";
+    context.getBox().mountContent(textarea);
+
+    textarea.oninput = () => {
+      context.updateAttributes(["text"], textarea.value);
+    };
+
+    context.emitter.on("attributesUpdate", ({ text } = {}) => {
+      text !== undefined && (textarea.value = text);
+    });
   },
 };
 

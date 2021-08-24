@@ -2,6 +2,18 @@
 
 ## Develop
 
+Setup:
+
+```bash
+gh repo clone netless-io/netless-app
+cd netless-app
+pnpm i
+pnpm build -r
+pnpm dev
+```
+
+Common:
+
 ```bash
 # install dev dependencies in top-level package.json
 pnpm add -DW vite
@@ -24,6 +36,9 @@ pnpm dev --filter playground
 
 # build all packages
 pnpm build -r
+
+# build one package
+pnpm build --filter @netless/app-hello-world
 ```
 
 ## License
