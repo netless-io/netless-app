@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
@@ -16,16 +17,20 @@
       flex-flow: column nowrap;
       gap: .5em;
     }
+
     #whiteboard {
       flex-grow: 1;
       border: 1px solid;
     }
-    #tools, #actions {
+
+    #tools,
+    #actions {
       display: flex;
       gap: .5em;
     }
   </style>
 </head>
+
 <body>
   <div id="app">
     <div id="tools"></div>
@@ -34,4 +39,5 @@
   </div>
   <script type="module" src="/src/main.ts"></script>
 </body>
+
 </html>
