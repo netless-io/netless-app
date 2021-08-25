@@ -139,6 +139,25 @@ export class DynamicDocsViewer {
     public render(): void {
         this.viewer.$content.appendChild(this.renderMask());
         this.viewer.$content.appendChild(this.renderWhiteboardView());
+        this.sideEffect.addEventListener(window, 'keydown', (ev) => {
+            if (this.box.focus) {
+                switch (ev.key) {
+                    case 'ArrowUp':
+                    case 'ArrowLeft': {
+                        this.jumpToPage(this.getPageIndex() - 1)
+                        break;
+                    }
+                    case 'ArrowRight':
+                    case 'ArrowDown': {
+                        this.getWhiteboardRoom()?.pptNextStep();
+                        break;
+                    }
+                    default: {
+                        break;
+                    }
+                }
+            }
+        })
     }
 
     protected renderMask(): HTMLElement {

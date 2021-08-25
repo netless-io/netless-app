@@ -17,10 +17,28 @@ export class SideEffectManager {
         return this.add(() => disposer, disposerID);
     }
 
+    public addEventListener<K extends keyof WindowEventMap>(
+        el: Window,
+        type: K,
+        listener: (this: Window, ev: WindowEventMap[K]) => any,
+        options?: boolean | AddEventListenerOptions
+    ): string
+    public addEventListener<K extends keyof DocumentEventMap>(
+        el: Document,
+        type: K,
+        listener: (this: Document, ev: DocumentEventMap[K]) => any,
+        options?: boolean | AddEventListenerOptions
+    ): string
     public addEventListener<K extends keyof HTMLElementEventMap>(
         el: HTMLElement,
         type: K,
         listener: (this: HTMLElement, ev: HTMLElementEventMap[K]) => any,
+        options?: boolean | AddEventListenerOptions
+    ): string
+    public addEventListener(
+        el: HTMLElement | Window | Document,
+        type: string,
+        listener: (this: HTMLElement | Window | Document, ev: Event) => any,
         options?: boolean | AddEventListenerOptions
     ): string {
         el.addEventListener(type, listener, options);
