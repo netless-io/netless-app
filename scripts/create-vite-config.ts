@@ -1,3 +1,4 @@
+import { svelte } from "@sveltejs/vite-plugin-svelte";
 import { defineConfig } from "vite";
 import path from "path";
 
@@ -22,6 +23,7 @@ export function createViteConfig({
       .join("");
 
     return {
+      plugins: [svelte()],
       build: {
         lib: {
           entry,

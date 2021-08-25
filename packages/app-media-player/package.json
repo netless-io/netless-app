@@ -1,0 +1,21 @@
+{
+  "name": "@netless/app-media-player",
+  "version": "0.1.0",
+  "description": "Netless App Media Player",
+  "repository": "netless-io/netless-app",
+  "license": "MIT",
+  "author": "hyrious <hyrious@outlook.com>",
+  "main": "./dist/main.cjs.js",
+  "module": "./dist/main.es.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "src",
+    "dist"
+  ],
+  "scripts": {
+    "types": "cross-env NODE_ENV=production tsc --declaration --emitDeclarationOnly --outDir dist",
+    "build": "vite build && npm run types",
+    "build:dev": "vite build --mode development && npm run types",
+    "cleanup": "rimraf ./build"
+  }
+}
