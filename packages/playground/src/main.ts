@@ -15,6 +15,7 @@ const $ = <T extends string>(sel: T) => document.querySelector(sel);
 let $tools = $("#tools")! as HTMLDivElement;
 let $whiteboard = $("#whiteboard")! as HTMLDivElement;
 let $actions = $("#actions")! as HTMLDivElement;
+let store = sessionStorage;
 
 let sdk = new WhiteWebSdk({
   appIdentifier: env.VITE_APPID,
@@ -40,6 +41,7 @@ function setupTools() {
     btn.textContent = name;
     btn.dataset.name = name;
     btn.addEventListener("click", () => {
+      store.setItem("currentApplianceName", name);
       room.setMemberState({ currentApplianceName: name });
       refresh();
     });
@@ -50,6 +52,9 @@ function setupTools() {
   for (let name of Object.values(ApplianceNames)) {
     createBtn(name);
   }
+
+  let saved = store.getItem("currentApplianceName") as ApplianceNames;
+  if (saved) room.setMemberState({ currentApplianceName: saved });
   refresh();
 }
 
