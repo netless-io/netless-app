@@ -3,12 +3,9 @@ const config = {
   root: true,
   parser: "@typescript-eslint/parser",
   plugins: ["svelte3", "@typescript-eslint"],
-  extends: [
-    "eslint:recommended",
-    "plugin:@typescript-eslint/recommended",
-    "prettier",
-  ],
+  extends: ["eslint:recommended", "plugin:@typescript-eslint/recommended", "prettier"],
   rules: {
+    "max-len": ["warn", { code: 100 }],
     "@typescript-eslint/consistent-type-imports": ["warn"],
   },
   overrides: [

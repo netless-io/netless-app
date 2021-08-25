@@ -4,9 +4,5 @@
   "editor.codeActionsOnSave": {
     "source.fixAll": true,
     "source.addMissingImports": true
-  },
-  "prettier.tabWidth": 2,
-  "prettier.endOfLine": "auto",
-  "prettier.arrowParens": "avoid",
-  "prettier.printWidth": 100
+  }
 }

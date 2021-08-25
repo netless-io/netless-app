@@ -4,7 +4,7 @@ import arrowRightSVG from "./icons/arrow-right.svg";
 import playSVG from "./icons/play.svg";
 import pauseSVG from "./icons/pause.svg";
 
-import { ReadonlyTeleBox } from "@netless/window-manager";
+import type { ReadonlyTeleBox } from "@netless/window-manager";
 import LazyLoad from "vanilla-lazyload";
 import debounceFn from "debounce-fn";
 import { SideEffectManager } from "../utils/SideEffectManager";

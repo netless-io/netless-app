@@ -19,6 +19,7 @@
     "cleanup": "rimraf ./build"
   },
   "devDependencies": {
-    "plyr": "^3.6.8"
+    "plyr": "^3.6.8",
+    "hls.js": "^1.0.10"
   }
 }

@@ -5,7 +5,8 @@ import type {
     Room,
 } from "@netless/window-manager";
 import { SideEffectManager } from "../utils/SideEffectManager";
-import { DocsViewer, DocsViewerPage } from "../DocsViewer";
+import type { DocsViewerPage } from "../DocsViewer";
+import { DocsViewer } from "../DocsViewer";
 import { clamp } from "../utils/helpers";
 
 export interface DynamicDocsViewerConfig {

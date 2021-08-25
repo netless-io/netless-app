@@ -1,9 +1,11 @@
 import type { AnimationMode, ReadonlyTeleBox } from "@netless/window-manager";
 import type { View, Size } from "white-web-sdk";
 import LazyLoad from "vanilla-lazyload";
-import debounceFn, { DebouncedFunction, Options } from "debounce-fn";
+import type { DebouncedFunction, Options } from "debounce-fn";
+import debounceFn from "debounce-fn";
 import { SideEffectManager } from "../utils/SideEffectManager";
-import { DocsViewer, DocsViewerPage } from "../DocsViewer";
+import type { DocsViewerPage } from "../DocsViewer";
+import { DocsViewer } from "../DocsViewer";
 import { clamp, flattenEvent, preventEvent } from "../utils/helpers";
 
 const SCROLLBAR_MIN_HEIGHT = 30;

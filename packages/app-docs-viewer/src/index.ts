@@ -8,7 +8,7 @@ import type {
 } from "@netless/window-manager";
 import type { View } from "white-web-sdk";
 import { StaticDocsViewer } from "./StaticDocsViewer";
-import { DocsViewerPage } from "./DocsViewer";
+import type { DocsViewerPage } from "./DocsViewer";
 import { DynamicDocsViewer } from "./DynamicDocsViewer";
 
 export type { DocsViewerPage } from "./DocsViewer";

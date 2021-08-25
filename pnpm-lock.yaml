@@ -58,8 +58,10 @@ importers:
 
   packages/app-media-player:
     specifiers:
+      hls.js: ^1.0.10
       plyr: ^3.6.8
     devDependencies:
+      hls.js: 1.0.10
       plyr: 3.6.8
 
   packages/app-shared:
@@ -1083,6 +1085,10 @@ packages:
 
   /hey-listen/1.0.8:
     resolution: {integrity: sha512-COpmrF2NOg4TBWUJ5UVyaCU2A88wEMkUPK4hNqyCkqHbxT92BbvfjoSozkAIIm6XhicGlJHhFdullInrdhwU8Q==}
+    dev: true
+
+  /hls.js/1.0.10:
+    resolution: {integrity: sha512-P+o/wjGJsnqwdXXYfWvopOceXEXFV0H8vs/T+ApsscP/GlpUtdIRWie7qc+jbml95ThjE6+FVci9VGaD51r/6Q==}
     dev: true
 
   /hoist-non-react-statics/3.3.2:

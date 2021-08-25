@@ -1,4 +1,5 @@
 import { svelte } from "@sveltejs/vite-plugin-svelte";
+import type { UserConfig } from "vite";
 import { defineConfig } from "vite";
 import path from "path";
 
@@ -8,10 +9,10 @@ export function createViteConfig({
 }: {
   entry?: string;
   name?: string;
-} = {}) {
+} = {}): UserConfig {
   return defineConfig(({ mode }) => {
     const isProd = mode === "production";
-    const pkgName = (entry.match(/packages[\/\\]([^\/\\]+)/) || [, ""])[1];
+    const pkgName = (entry.match(/packages[/\\]([^/\\]+)/) || ["", ""])[1];
 
     if (!pkgName) {
       throw new Error(`can not find package from ${entry}`);
@@ -23,7 +24,14 @@ export function createViteConfig({
       .join("");
 
     return {
-      plugins: [svelte()],
+      plugins: [
+        svelte({
+          emitCss: false,
+          experimental: {
+            useVitePreprocess: true,
+          },
+        }),
+      ],
       build: {
         lib: {
           entry,
@@ -39,5 +47,5 @@ export function createViteConfig({
         minify: isProd,
       },
     };
-  });
+  }) as UserConfig;
 }
