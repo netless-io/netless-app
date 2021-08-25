@@ -1,0 +1,27 @@
+{
+  "private": true,
+  "name": "@netless/app-shared",
+  "main": "./dist/main.es.js",
+  "module": "./dist/main.es.js",
+  "types": "./dist/index.d.ts",
+  "version": "0.1.0",
+  "description": "Netless App Shared Utils",
+  "repository": "netless-io/netless-app",
+  "license": "MIT",
+  "contributors": [
+    {
+      "name": "hyrious",
+      "email": "hyrious@outlook.com"
+    },
+    {
+      "name": "CRIMX",
+      "email": "straybugs@gmail.com"
+    }
+  ],
+  "scripts": {
+    "types": "tsc --declaration --emitDeclarationOnly --outDir dist",
+    "build": "vite build && npm run types",
+    "build:dev": "vite build --mode development && npm run types",
+    "cleanup": "rimraf ./build"
+  }
+}

@@ -17,5 +17,8 @@
     "build": "vite build && npm run types",
     "build:dev": "vite build --mode development && npm run types",
     "cleanup": "rimraf ./build"
+  },
+  "devDependencies": {
+    "plyr": "^3.6.8"
   }
 }

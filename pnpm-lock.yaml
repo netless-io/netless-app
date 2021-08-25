@@ -30,22 +30,29 @@ importers:
 
   packages/app-docs-viewer:
     specifiers:
+      '@netless/app-shared': workspace:*
       debounce-fn: ^5.0.0
       vanilla-lazyload: ^17.4.0
     dependencies:
       debounce-fn: 5.0.0
       vanilla-lazyload: 17.4.0
+    devDependencies:
+      '@netless/app-shared': link:../app-shared
 
   packages/app-hello-world:
     specifiers: {}
 
-  packages/playground:
+  packages/app-media-player:
     specifiers:
-      '@netless/app-docs-viewer': workspace:*
-      '@netless/app-hello-world': workspace:*
-    dependencies:
-      '@netless/app-docs-viewer': link:../app-docs-viewer
-      '@netless/app-hello-world': link:../app-hello-world
+      plyr: ^3.6.8
+    devDependencies:
+      plyr: 3.6.8
+
+  packages/app-shared:
+    specifiers: {}
+
+  packages/playground:
+    specifiers: {}
 
 packages:
 
@@ -354,6 +361,10 @@ packages:
       which: 2.0.2
     dev: true
 
+  /custom-event-polyfill/1.0.7:
+    resolution: {integrity: sha512-TDDkd5DkaZxZFM8p+1I3yAlvM3rSr1wbrOliG4yJiwinMZN8z/iGL7BTlDkrJcYTmgUSb4ywVCc3ZaUtOtC76w==}
+    dev: true
+
   /debounce-fn/5.0.0:
     resolution: {integrity: sha512-y0u25m4GMdDJ1oHX4ziszas15E4ryNoeFkQuZM/Z6yTy8jB8ity/jqSNWnQUi/csBBaQIad6Zd8eI1xKwtbFzw==}
     engines: {node: '>=12'}
@@ -582,6 +593,10 @@ packages:
     engines: {node: '>=6'}
     dev: true
 
+  /loadjs/4.2.0:
+    resolution: {integrity: sha512-AgQGZisAlTPbTEzrHPb6q+NYBMD+DP9uvGSIjSUM5uG+0jG15cb8axWpxuOIqrmQjn6scaaH8JwloiP27b2KXA==}
+    dev: true
+
   /lodash-es/4.17.21:
     resolution: {integrity: sha512-mKnC+QJ9pWVzv+C4/U3rRsHapFfHvQFoFB92e52xeyGMcX6/OlIl78je1u8vePzYZSkkogMPJ2yjxxsb89cxyw==}
     dev: true
@@ -732,6 +747,16 @@ packages:
       '@babel/runtime': 7.15.3
     dev: true
 
+  /plyr/3.6.8:
+    resolution: {integrity: sha512-Iu9KKsH+/HH6PBGAag57KswjXRXyJ9TeMlcMiwLCGC9foqSIb+crPi6wTmyFr9AFmTr8QZuFrYEL+SlnXT+vBw==}
+    dependencies:
+      core-js: 3.16.2
+      custom-event-polyfill: 1.0.7
+      loadjs: 4.2.0
+      rangetouch: 2.0.1
+      url-polyfill: 1.1.12
+    dev: true
+
   /postcss/8.3.6:
     resolution: {integrity: sha512-wG1cc/JhRgdqB6WHEuyLTedf3KIRuD0hG6ldkFEZNCjRxiC+3i6kkWUUbiJQayP28iwG35cEmAbe98585BYV0A==}
     engines: {node: ^10 || ^12 || >=14}
@@ -785,6 +810,10 @@ packages:
 
   /querystringify/2.2.0:
     resolution: {integrity: sha512-FIqgj2EUvTa7R50u0rGsyTftzjYmv/a3hO345bZNrqabNqjtgiDMgmo4mkUjd+nzU5oF3dClKqFIPUKybUyqoQ==}
+    dev: true
+
+  /rangetouch/2.0.1:
+    resolution: {integrity: sha512-sln+pNSc8NGaHoLzwNBssFSf/rSYkqeBXzX1AtJlkJiUaVSJSbRAWJk+4omsXkN+EJalzkZhWQ3th1m0FpR5xA==}
     dev: true
 
   /react-dom/16.14.0_react@16.14.0:
@@ -993,6 +1022,10 @@ packages:
     dependencies:
       querystringify: 2.2.0
       requires-port: 1.0.0
+    dev: true
+
+  /url-polyfill/1.1.12:
+    resolution: {integrity: sha512-mYFmBHCapZjtcNHW0MDq9967t+z4Dmg5CJ0KqysK3+ZbyoNOWQHksGCTWwDhxGXllkWlOc10Xfko6v4a3ucM6A==}
     dev: true
 
   /url-toolkit/2.2.3:

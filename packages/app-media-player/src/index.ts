@@ -1,30 +1,29 @@
 import type { NetlessApp } from "@netless/window-manager";
 import Slider from "./slider.svelte";
+import styles from "plyr/dist/plyr.css?inline";
 
-interface Attributes {
+export interface Attributes {
   volume: number;
 }
 
 const MediaPlayer: NetlessApp<Attributes> = {
   kind: "MediaPlayer",
   setup(context) {
-    let attrs: Attributes | undefined = {
-      volume: 100,
-      ...context.getAttributes(),
-    };
-
     let box = context.getBox();
+    box.mountStyles(styles);
+
     let app = new Slider({
       target: box.$content!,
-      props: { ...attrs },
+      props: context.getAttributes(),
     });
 
     app.$on("update:attrs", ({ detail }) => {
-      attrs = context.getAttributes();
+      let attrs = context.getAttributes();
       if (attrs?.volume !== detail.volume) {
         context.updateAttributes(["volume"], detail.volume);
       }
     });
+
     context.emitter.on("attributesUpdate", (other) => {
       app.$set(other);
     });

@@ -6,4 +6,4 @@
   $: dispatch("update:attrs", { volume })
 </script>
 
-<input type="range" bind:value={volume}>
+<code>{JSON.stringify({ volume })}</code>

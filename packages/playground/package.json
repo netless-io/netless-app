@@ -4,9 +4,5 @@
   "private": true,
   "scripts": {
     "dev": "vite --open"
-  },
-  "dependencies": {
-    "@netless/app-docs-viewer": "workspace:*",
-    "@netless/app-hello-world": "workspace:*"
   }
 }
