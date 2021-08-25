@@ -14,9 +14,6 @@
     "moduleResolution": "Node",
     "esModuleInterop": true,
     "resolveJsonModule": true,
-    "skipLibCheck": true,
-    "paths": {
-      "@netless/*": ["./packages/*/src", "./node_modules/@netless/*"]
-    }
+    "skipLibCheck": true
   }
 }
