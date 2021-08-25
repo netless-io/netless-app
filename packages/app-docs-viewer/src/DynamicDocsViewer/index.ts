@@ -187,7 +187,6 @@ export class DynamicDocsViewer {
                 if (room && room.state.memberState.currentApplianceName === 'clicker') {
                     for (let el = ev.target as HTMLElement | null; el; el = el.parentElement) {
                         if (el.classList?.contains('ppt-event-source')) {
-                            console.log(el)
                             return
                         }
                     }
