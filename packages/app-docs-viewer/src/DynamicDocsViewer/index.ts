@@ -182,6 +182,18 @@ export class DynamicDocsViewer {
         if (!this.$whiteboardView) {
             this.$whiteboardView = document.createElement("div");
             this.$whiteboardView.className = this.wrapClassName("wb-view");
+            this.sideEffect.addEventListener(this.$whiteboardView, 'click', ev => {
+                const room = this.getWhiteboardRoom()
+                if (room && room.state.memberState.currentApplianceName === 'clicker') {
+                    for (let el = ev.target as HTMLElement | null; el; el = el.parentElement) {
+                        if (el.classList?.contains('ppt-event-source')) {
+                            console.log(el)
+                            return
+                        }
+                    }
+                    room.pptNextStep()
+                }
+            })
             this.mountWhiteboard(this.$whiteboardView);
         }
         return this.$whiteboardView;

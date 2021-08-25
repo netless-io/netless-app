@@ -4,7 +4,7 @@ import DocsViewer from "./src";
 const options: PlaygroundConfigs = [{
   app: DocsViewer,
   options: {
-    scenePath: "/test4",
+    scenePath: `/${DocsViewer.kind}/1`,
     title: "Static PDF",
     scenes: [
       {
@@ -29,7 +29,7 @@ const options: PlaygroundConfigs = [{
 {
   app: DocsViewer,
   options: {
-    scenePath: "/test5",
+    scenePath: `/${DocsViewer.kind}/2`,
     title: "Dynamic PPT",
     scenes: [
       {
@@ -304,6 +304,203 @@ const options: PlaygroundConfigs = [{
       }
     ]
   }
+}, {
+  app: DocsViewer,
+  options: {
+    scenePath: `/${DocsViewer.kind}/7`,
+    title: "Click PPT",
+    scenes: [
+      {
+        "name": "1",
+        "ppt": {
+          "height": 720,
+          "previewURL": "https://convertcdn.netless.link/dynamicConvert/aaf14800057311ec8936c3bb220fc543/preview/1.png",
+          "src": "pptx://convertcdn.netless.link/dynamicConvert/aaf14800057311ec8936c3bb220fc543/1.slide",
+          "width": 960
+        }
+      },
+      {
+        "name": "2",
+        "ppt": {
+          "height": 720,
+          "previewURL": "https://convertcdn.netless.link/dynamicConvert/aaf14800057311ec8936c3bb220fc543/preview/2.png",
+          "src": "pptx://convertcdn.netless.link/dynamicConvert/aaf14800057311ec8936c3bb220fc543/2.slide",
+          "width": 960
+        }
+      },
+      {
+        "name": "3",
+        "ppt": {
+          "height": 720,
+          "previewURL": "https://convertcdn.netless.link/dynamicConvert/aaf14800057311ec8936c3bb220fc543/preview/3.png",
+          "src": "pptx://convertcdn.netless.link/dynamicConvert/aaf14800057311ec8936c3bb220fc543/3.slide",
+          "width": 960
+        }
+      },
+      {
+        "name": "4",
+        "ppt": {
+          "height": 720,
+          "previewURL": "https://convertcdn.netless.link/dynamicConvert/aaf14800057311ec8936c3bb220fc543/preview/4.png",
+          "src": "pptx://convertcdn.netless.link/dynamicConvert/aaf14800057311ec8936c3bb220fc543/4.slide",
+          "width": 960
+        }
+      },
+      {
+        "name": "5",
+        "ppt": {
+          "height": 720,
+          "previewURL": "https://convertcdn.netless.link/dynamicConvert/aaf14800057311ec8936c3bb220fc543/preview/5.png",
+          "src": "pptx://convertcdn.netless.link/dynamicConvert/aaf14800057311ec8936c3bb220fc543/5.slide",
+          "width": 960
+        }
+      },
+      {
+        "name": "6",
+        "ppt": {
+          "height": 720,
+          "previewURL": "https://convertcdn.netless.link/dynamicConvert/aaf14800057311ec8936c3bb220fc543/preview/6.png",
+          "src": "pptx://convertcdn.netless.link/dynamicConvert/aaf14800057311ec8936c3bb220fc543/6.slide",
+          "width": 960
+        }
+      },
+      {
+        "name": "7",
+        "ppt": {
+          "height": 720,
+          "previewURL": "https://convertcdn.netless.link/dynamicConvert/aaf14800057311ec8936c3bb220fc543/preview/7.png",
+          "src": "pptx://convertcdn.netless.link/dynamicConvert/aaf14800057311ec8936c3bb220fc543/7.slide",
+          "width": 960
+        }
+      },
+      {
+        "name": "8",
+        "ppt": {
+          "height": 720,
+          "previewURL": "https://convertcdn.netless.link/dynamicConvert/aaf14800057311ec8936c3bb220fc543/preview/8.png",
+          "src": "pptx://convertcdn.netless.link/dynamicConvert/aaf14800057311ec8936c3bb220fc543/8.slide",
+          "width": 960
+        }
+      },
+      {
+        "name": "9",
+        "ppt": {
+          "height": 720,
+          "previewURL": "https://convertcdn.netless.link/dynamicConvert/aaf14800057311ec8936c3bb220fc543/preview/9.png",
+          "src": "pptx://convertcdn.netless.link/dynamicConvert/aaf14800057311ec8936c3bb220fc543/9.slide",
+          "width": 960
+        }
+      },
+      {
+        "name": "10",
+        "ppt": {
+          "height": 720,
+          "previewURL": "https://convertcdn.netless.link/dynamicConvert/aaf14800057311ec8936c3bb220fc543/preview/10.png",
+          "src": "pptx://convertcdn.netless.link/dynamicConvert/aaf14800057311ec8936c3bb220fc543/10.slide",
+          "width": 960
+        }
+      },
+      {
+        "name": "11",
+        "ppt": {
+          "height": 720,
+          "previewURL": "https://convertcdn.netless.link/dynamicConvert/aaf14800057311ec8936c3bb220fc543/preview/11.png",
+          "src": "pptx://convertcdn.netless.link/dynamicConvert/aaf14800057311ec8936c3bb220fc543/11.slide",
+          "width": 960
+        }
+      },
+      {
+        "name": "12",
+        "ppt": {
+          "height": 720,
+          "previewURL": "https://convertcdn.netless.link/dynamicConvert/aaf14800057311ec8936c3bb220fc543/preview/12.png",
+          "src": "pptx://convertcdn.netless.link/dynamicConvert/aaf14800057311ec8936c3bb220fc543/12.slide",
+          "width": 960
+        }
+      },
+      {
+        "name": "13",
+        "ppt": {
+          "height": 720,
+          "previewURL": "https://convertcdn.netless.link/dynamicConvert/aaf14800057311ec8936c3bb220fc543/preview/13.png",
+          "src": "pptx://convertcdn.netless.link/dynamicConvert/aaf14800057311ec8936c3bb220fc543/13.slide",
+          "width": 960
+        }
+      },
+      {
+        "name": "14",
+        "ppt": {
+          "height": 720,
+          "previewURL": "https://convertcdn.netless.link/dynamicConvert/aaf14800057311ec8936c3bb220fc543/preview/14.png",
+          "src": "pptx://convertcdn.netless.link/dynamicConvert/aaf14800057311ec8936c3bb220fc543/14.slide",
+          "width": 960
+        }
+      },
+      {
+        "name": "15",
+        "ppt": {
+          "height": 720,
+          "previewURL": "https://convertcdn.netless.link/dynamicConvert/aaf14800057311ec8936c3bb220fc543/preview/15.png",
+          "src": "pptx://convertcdn.netless.link/dynamicConvert/aaf14800057311ec8936c3bb220fc543/15.slide",
+          "width": 960
+        }
+      },
+      {
+        "name": "16",
+        "ppt": {
+          "height": 720,
+          "previewURL": "https://convertcdn.netless.link/dynamicConvert/aaf14800057311ec8936c3bb220fc543/preview/16.png",
+          "src": "pptx://convertcdn.netless.link/dynamicConvert/aaf14800057311ec8936c3bb220fc543/16.slide",
+          "width": 960
+        }
+      },
+      {
+        "name": "17",
+        "ppt": {
+          "height": 720,
+          "previewURL": "https://convertcdn.netless.link/dynamicConvert/aaf14800057311ec8936c3bb220fc543/preview/17.png",
+          "src": "pptx://convertcdn.netless.link/dynamicConvert/aaf14800057311ec8936c3bb220fc543/17.slide",
+          "width": 960
+        }
+      },
+      {
+        "name": "18",
+        "ppt": {
+          "height": 720,
+          "previewURL": "https://convertcdn.netless.link/dynamicConvert/aaf14800057311ec8936c3bb220fc543/preview/18.png",
+          "src": "pptx://convertcdn.netless.link/dynamicConvert/aaf14800057311ec8936c3bb220fc543/18.slide",
+          "width": 960
+        }
+      },
+      {
+        "name": "19",
+        "ppt": {
+          "height": 720,
+          "previewURL": "https://convertcdn.netless.link/dynamicConvert/aaf14800057311ec8936c3bb220fc543/preview/19.png",
+          "src": "pptx://convertcdn.netless.link/dynamicConvert/aaf14800057311ec8936c3bb220fc543/19.slide",
+          "width": 960
+        }
+      },
+      {
+        "name": "20",
+        "ppt": {
+          "height": 720,
+          "previewURL": "https://convertcdn.netless.link/dynamicConvert/aaf14800057311ec8936c3bb220fc543/preview/20.png",
+          "src": "pptx://convertcdn.netless.link/dynamicConvert/aaf14800057311ec8936c3bb220fc543/20.slide",
+          "width": 960
+        }
+      },
+      {
+        "name": "21",
+        "ppt": {
+          "height": 720,
+          "previewURL": "https://convertcdn.netless.link/dynamicConvert/aaf14800057311ec8936c3bb220fc543/preview/21.png",
+          "src": "pptx://convertcdn.netless.link/dynamicConvert/aaf14800057311ec8936c3bb220fc543/21.slide",
+          "width": 960
+        }
+      }
+    ],
+  },
 }
 
 ];
