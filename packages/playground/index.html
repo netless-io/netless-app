@@ -14,13 +14,13 @@
       padding: 1em;
       display: flex;
       flex-flow: column nowrap;
+      gap: .5em;
     }
     #whiteboard {
       flex-grow: 1;
       border: 1px solid;
-      margin-bottom: .5em;
     }
-    #actions {
+    #tools, #actions {
       display: flex;
       gap: .5em;
     }
@@ -28,6 +28,7 @@
 </head>
 <body>
   <div id="app">
+    <div id="tools"></div>
     <div id="whiteboard"></div>
     <div id="actions"></div>
   </div>

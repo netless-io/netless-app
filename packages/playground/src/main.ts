@@ -1,4 +1,4 @@
-import { WhiteWebSdk, Room } from "white-web-sdk";
+import { WhiteWebSdk, Room, ApplianceNames } from "white-web-sdk";
 
 import "@netless/window-manager/dist/style.css";
 import { WindowManager } from "@netless/window-manager";
@@ -12,12 +12,48 @@ const env = import.meta.env;
 
 const log = console.debug.bind(console);
 const $ = <T extends string>(sel: T) => document.querySelector(sel);
+let $tools = $("#tools")! as HTMLDivElement;
 let $whiteboard = $("#whiteboard")! as HTMLDivElement;
 let $actions = $("#actions")! as HTMLDivElement;
 
-let sdk = new WhiteWebSdk({ appIdentifier: env.VITE_APPID });
+let sdk = new WhiteWebSdk({
+  appIdentifier: env.VITE_APPID,
+  useMobXState: false,
+});
 
-async function setup() {
+function setupTools() {
+  let btns: HTMLButtonElement[] = [];
+
+  const refresh = () => {
+    let current = room.state.memberState.currentApplianceName;
+    for (let btn of btns) {
+      if (btn.dataset.name === current) {
+        btn.style.color = "red";
+      } else {
+        btn.style.color = "";
+      }
+    }
+  };
+
+  const createBtn = (name: ApplianceNames) => {
+    let btn = document.createElement("button");
+    btn.textContent = name;
+    btn.dataset.name = name;
+    btn.addEventListener("click", () => {
+      room.setMemberState({ currentApplianceName: name });
+      refresh();
+    });
+    $tools.append(btn);
+    btns.push(btn);
+  };
+
+  for (let name of Object.values(ApplianceNames)) {
+    createBtn(name);
+  }
+  refresh();
+}
+
+async function setupApps() {
   const createBtn = (name: string, kind: string, callback: () => void) => {
     let btn = document.createElement("button");
     btn.textContent = name;
@@ -33,8 +69,8 @@ async function setup() {
       a = [a];
     }
     let i = 1;
+    log("[register]", a[0].app.kind);
     for (let { app, ...restOptions } of a) {
-      log("register", app.kind);
       WindowManager.register(app);
       createBtn(
         restOptions.options?.title || `${app.kind} ${i++}`,
@@ -46,6 +82,7 @@ async function setup() {
 
   room.setScenePath("/init");
   WindowManager.mount(room, $whiteboard);
+  manager.switchMainViewToWriter();
 
   document.title += " - loaded.";
 }
@@ -56,9 +93,10 @@ sdk.joinRoom({
   uuid: env.VITE_ROOM_UUID,
   invisiblePlugins: [WindowManager],
   useMultiViews: true,
-  disableNewPencil: false
+  disableNewPencil: false,
+  floatBar: true,
 }).then(room => {
   window.room = room;
   window.manager = room.getInvisiblePlugin(WindowManager.kind) as WindowManager;
-  setup()
+  return setupTools(), setupApps();
 });
