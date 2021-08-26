@@ -6,6 +6,7 @@ importers:
     specifiers:
       '@netless/window-manager': ^0.1.35
       '@sveltejs/vite-plugin-svelte': ^1.0.0-next.19
+      '@tsconfig/svelte': ^2.0.1
       '@types/node': ^16.7.1
       '@typescript-eslint/eslint-plugin': ^4.29.3
       '@typescript-eslint/parser': ^4.29.3
@@ -24,6 +25,7 @@ importers:
     devDependencies:
       '@netless/window-manager': 0.1.35_white-web-sdk@2.13.18
       '@sveltejs/vite-plugin-svelte': 1.0.0-next.19_svelte@3.42.3+vite@2.5.1
+      '@tsconfig/svelte': 2.0.1
       '@types/node': 16.7.1
       '@typescript-eslint/eslint-plugin': 4.29.3_fd14c0002fbbfb85b8a0070d0dffb93d
       '@typescript-eslint/parser': 4.29.3_eslint@7.32.0+typescript@4.3.5
@@ -42,7 +44,7 @@ importers:
 
   packages/app-docs-viewer:
     specifiers:
-      '@netless/app-shared': workspace:*
+      '@netless/app-shared': workspace:^0.1.0
       debounce-fn: ^5.0.0
       vanilla-lazyload: ^17.4.0
     dependencies:
@@ -61,7 +63,10 @@ importers:
       plyr: 3.6.8
 
   packages/app-shared:
-    specifiers: {}
+    specifiers:
+      debounce-fn: ^5.0.0
+    dependencies:
+      debounce-fn: 5.0.0
 
   packages/playground:
     specifiers: {}
@@ -278,6 +283,10 @@ packages:
       vite: 2.5.1
     transitivePeerDependencies:
       - supports-color
+    dev: true
+
+  /@tsconfig/svelte/2.0.1:
+    resolution: {integrity: sha512-aqkICXbM1oX5FfgZd2qSSAGdyo/NRxjWCamxoyi3T8iVQnzGge19HhDYzZ6NrVOW7bhcWNSq9XexWFtMzbB24A==}
     dev: true
 
   /@types/json-schema/7.0.9:

@@ -1,9 +1,21 @@
 {
   "private": true,
   "name": "@netless/app-shared",
-  "main": "./dist/main.es.js",
-  "module": "./dist/main.es.js",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
+  "exports": {
+    ".": "./dist/index.js",
+    "./*": "./dist/*"
+  },
+  "typesVersions": {
+    "*": {
+      "*": [
+        "dist/*",
+        "dist/*/index.d.ts"
+      ]
+    }
+  },
   "version": "0.1.0",
   "description": "Netless App Shared Utils",
   "repository": "netless-io/netless-app",
@@ -19,9 +31,9 @@
     }
   ],
   "scripts": {
-    "types": "tsc --declaration --emitDeclarationOnly --outDir dist",
-    "build": "vite build && npm run types",
-    "build:dev": "vite build --mode development && npm run types",
-    "cleanup": "rimraf ./build"
+    "build": "rimraf ./dist && tsc --declaration --outDir dist"
+  },
+  "dependencies": {
+    "debounce-fn": "^5.0.0"
   }
 }

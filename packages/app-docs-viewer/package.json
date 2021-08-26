@@ -24,5 +24,8 @@
   "dependencies": {
     "debounce-fn": "^5.0.0",
     "vanilla-lazyload": "^17.4.0"
+  },
+  "devDependencies": {
+    "@netless/app-shared": "workspace:^0.1.0"
   }
 }

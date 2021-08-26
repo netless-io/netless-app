@@ -1,4 +1,5 @@
 {
+  "extends": "@tsconfig/svelte/tsconfig.json",
   "compilerOptions": {
     "noEmit": true,
     "strict": true,
@@ -10,7 +11,7 @@
     "noImplicitOverride": true,
     "module": "ESNext",
     "lib": ["DOM", "ESNext"],
-    "types": ["vite/client"],
+    "types": ["vite/client", "svelte"],
     "moduleResolution": "Node",
     "esModuleInterop": true,
     "resolveJsonModule": true,
