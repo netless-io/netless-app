@@ -9,9 +9,8 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sanitize.css@12.0.1/evergreen.css">
   <style>
     #app {
-      position: absolute;
-      width: 100%;
-      height: 100%;
+      box-sizing: border-box;
+      height: 100vh;
       padding: 1em;
       display: flex;
       flex-flow: column nowrap;
@@ -29,22 +28,20 @@
     }
 
     #actions {
-      position: fixed;
-      left: 1em;
-      height: calc(100vh - 60px);
+      height: 100%;
       overflow-y: auto;
       display: flex;
       flex-flow: column nowrap;
       align-items: flex-start;
       gap: .25em;
-      width: 150px;
+      padding-right: 1em;
     }
 
     .two-side {
-      flex-grow: 1;
+      flex: 1;
       display: flex;
       flex-flow: row nowrap;
-      padding-left: 150px;
+      overflow: hidden;
     }
   </style>
 </head>
