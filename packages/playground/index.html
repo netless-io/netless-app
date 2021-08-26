@@ -20,13 +20,31 @@
 
     #whiteboard {
       flex-grow: 1;
-      border: 1px solid;
+      border: 1px solid;;
     }
 
-    #tools,
-    #actions {
+    #tools {
       display: flex;
       gap: .5em;
+    }
+
+    #actions {
+      position: fixed;
+      left: 1em;
+      height: calc(100vh - 60px);
+      overflow-y: auto;
+      display: flex;
+      flex-flow: column nowrap;
+      align-items: flex-start;
+      gap: .25em;
+      width: 150px;
+    }
+
+    .two-side {
+      flex-grow: 1;
+      display: flex;
+      flex-flow: row nowrap;
+      padding-left: 150px;
     }
   </style>
 </head>
@@ -34,8 +52,10 @@
 <body>
   <div id="app">
     <div id="tools"></div>
-    <div id="whiteboard"></div>
-    <div id="actions"></div>
+    <div class="two-side">
+      <div id="actions"></div>
+      <div id="whiteboard"></div>
+    </div>
   </div>
   <script type="module" src="/src/main.ts"></script>
 </body>

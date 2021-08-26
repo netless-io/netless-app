@@ -1,4 +1,5 @@
-import { WhiteWebSdk, Room, ApplianceNames } from "white-web-sdk";
+import type { Room } from "white-web-sdk";
+import { WhiteWebSdk, ApplianceNames } from "white-web-sdk";
 
 import "@netless/window-manager/dist/style.css";
 import { WindowManager } from "@netless/window-manager";
@@ -70,19 +71,20 @@ async function setupApps() {
   };
 
   const configs = import.meta.glob("../../*/playground.ts");
-  const apps = await Promise.all(Object.values(configs).map((p) => p()));
+  const apps = await Promise.all(Object.values(configs).map(p => p()));
   for (let { default: a } of apps) {
     if (!Array.isArray(a)) {
       a = [a];
     }
     let i = 1;
     log("[register]", a[0].app.kind);
+    const caption = document.createElement("strong");
+    caption.textContent = a[0].app.kind;
+    $actions.append(caption);
     for (const { app, ...restOptions } of a) {
       WindowManager.register(app);
-      createBtn(
-        restOptions.options?.title || `${app.kind} ${i++}`,
-        app.kind,
-        () => manager.addApp({ kind: app.kind, ...restOptions })
+      createBtn(restOptions.options?.title || `${app.kind} ${i++}`, app.kind, () =>
+        manager.addApp({ kind: app.kind, ...restOptions })
       );
     }
   }
