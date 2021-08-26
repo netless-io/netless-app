@@ -23,7 +23,8 @@
   },
   "scripts": {
     "preinstall": "npx only-allow pnpm",
-    "build": "pnpm build -r",
+    "build": "pnpm build -r --filter ./packages",
+    "build:dev": "pnpm build:dev -r --filter ./packages",
     "dev": "pnpm dev --filter playground"
   }
 }

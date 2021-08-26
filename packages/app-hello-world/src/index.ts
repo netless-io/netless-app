@@ -1,4 +1,4 @@
-import { NetlessApp } from "@netless/window-manager";
+import type { NetlessApp } from "@netless/window-manager";
 
 const HelloWorld: NetlessApp<{ text: string }> = {
   kind: "HelloWorld",
@@ -13,7 +13,7 @@ const HelloWorld: NetlessApp<{ text: string }> = {
       }
    `);
 
-    let textarea = document.createElement("textarea");
+    const textarea = document.createElement("textarea");
     textarea.classList.add("netless-app-hello-world");
     textarea.value = context.getAttributes()?.text ?? "Hello world!";
     context.getBox().mountContent(textarea);
@@ -22,9 +22,8 @@ const HelloWorld: NetlessApp<{ text: string }> = {
       context.updateAttributes(["text"], textarea.value);
     };
 
-    // @ts-ignore
-    context.emitter.on("attributesUpdate", ({ text } = {}) => {
-      text !== undefined && (textarea.value = text);
+    context.emitter.on("attributesUpdate", (attrs) => {
+      attrs && (textarea.value = attrs.text);
     });
 
     context.emitter.on("destroy", () => {

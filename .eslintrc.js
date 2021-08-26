@@ -1,5 +1,5 @@
-// eslint-disable-next-line no-undef
-module.exports = {
+/** @type {import("eslint").Linter.Config */
+const config = {
   root: true,
   parser: "@typescript-eslint/parser",
   plugins: ["svelte3", "@typescript-eslint"],
@@ -8,6 +8,9 @@ module.exports = {
     "plugin:@typescript-eslint/recommended",
     "prettier",
   ],
+  rules: {
+    "@typescript-eslint/consistent-type-imports": ["warn"],
+  },
   overrides: [
     {
       files: ["*.svelte"],
@@ -18,3 +21,6 @@ module.exports = {
     "svelte3/typescript": true,
   },
 };
+
+// eslint-disable-next-line no-undef
+module.exports = config;
