@@ -4,7 +4,7 @@ importers:
 
   .:
     specifiers:
-      '@netless/window-manager': ^0.1.43
+      '@netless/window-manager': ^0.1.46
       '@sveltejs/vite-plugin-svelte': ^1.0.0-next.19
       '@tsconfig/svelte': ^2.0.1
       '@types/node': ^16.7.2
@@ -23,7 +23,7 @@ importers:
       vite: ^2.5.1
       white-web-sdk: ^2.13.19
     devDependencies:
-      '@netless/window-manager': 0.1.43_white-web-sdk@2.13.19
+      '@netless/window-manager': 0.1.46_white-web-sdk@2.13.19
       '@sveltejs/vite-plugin-svelte': 1.0.0-next.19_svelte@3.42.3+vite@2.5.1
       '@tsconfig/svelte': 2.0.1
       '@types/node': 16.7.2
@@ -140,8 +140,8 @@ packages:
     resolution: {integrity: sha512-zMM9Ds+SawiUkakS7y94Ymqx+S0ORzpG3frZirN3l+UlXUmSUR7hF4wxCVqW+ei94JzV5kt0uXBcoOEAuiydrw==}
     dev: true
 
-  /@netless/app-docs-viewer/0.1.16:
-    resolution: {integrity: sha512-k5EnIbrHuYGHbVXPLP369CYu4/WfslduvsQgDgOQ0bYQWLet3JVgfrJ+Q+10jasOUyEshxWGVKe2X9YEkRRyyg==}
+  /@netless/app-docs-viewer/0.1.17:
+    resolution: {integrity: sha512-p1/gccT1T/JFIAPMhbrck6CZxrVwgYxCFVMoGzvmtIQI2qJY4jIagtlY1eZqLYeeUY4exynfGp//FmGmeVL/Ag==}
     dependencies:
       debounce-fn: 5.0.0
       vanilla-lazyload: 17.4.0
@@ -162,13 +162,13 @@ packages:
       stylefire: 7.0.3
     dev: true
 
-  /@netless/window-manager/0.1.43_white-web-sdk@2.13.19:
-    resolution: {integrity: sha512-WA2aLPw+8PQEGreCScQx2de9d+iqNmIQR9lieFzTHoEC+Yb7Lre0ZymZ+C9zzpGZ0Soa3g/2lwPXAFgf4LJVbA==}
+  /@netless/window-manager/0.1.46_white-web-sdk@2.13.19:
+    resolution: {integrity: sha512-Fmt1SOHVh/zSEFmw8ExXuNkgLVo5hYNwTdt/FLaJLqVxPPk7/JvIy1E9ocsSA4sjy4QqeTJj5tw+uu66jLcg6g==}
     peerDependencies:
       white-web-sdk: ^2.13.16
     dependencies:
       '@juggle/resize-observer': 3.3.1
-      '@netless/app-docs-viewer': 0.1.16
+      '@netless/app-docs-viewer': 0.1.17
       '@netless/app-media-player': 0.1.0-beta.4
       '@netless/telebox-insider': 0.1.15
       emittery: 0.9.2
