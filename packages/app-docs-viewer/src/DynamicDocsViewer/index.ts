@@ -109,7 +109,7 @@ export class DynamicDocsViewer {
         return this.displayer.state.sceneState.index;
     }
 
-    public jumpToPage(index: number): void {
+    public jumpToPage(index: number, reset?: boolean): void {
         index = clamp(index, 0, this.pages.length - 1);
         if (index !== this.getPageIndex()) {
             const room = this.getWhiteboardRoom();
@@ -121,12 +121,11 @@ export class DynamicDocsViewer {
         if (index !== this.viewer.pageIndex) {
             this.viewer.setPageIndex(index);
         }
-        if (this.shouldResetPPT) {
+        if (reset) {
             const room = this.getWhiteboardRoom();
             if (room) {
                 room.setGlobalState({ __pptState: undefined });
             }
-            this.shouldResetPPT = false;
         }
     }
 
@@ -145,7 +144,7 @@ export class DynamicDocsViewer {
                 switch (ev.key) {
                     case 'ArrowUp':
                     case 'ArrowLeft': {
-                        this.jumpToPage(this.getPageIndex() - 1)
+                        this.jumpToPage(this.getPageIndex() - 1, true)
                         break;
                     }
                     case 'ArrowRight':
@@ -212,8 +211,7 @@ export class DynamicDocsViewer {
     };
 
     protected onNewPageIndex = (index: number): void => {
-        this.shouldResetPPT = true;
-        this.jumpToPage(index);
+        this.jumpToPage(index, true);
     };
 
     protected wrapClassName(className: string): string {
@@ -221,6 +219,4 @@ export class DynamicDocsViewer {
     }
 
     protected sideEffect = new SideEffectManager();
-
-    protected shouldResetPPT = false;
 }
