@@ -67,10 +67,7 @@ importers:
       prepend-http: 4.0.0
 
   packages/app-shared:
-    specifiers:
-      debounce-fn: ^5.0.0
-    dependencies:
-      debounce-fn: 5.0.0
+    specifiers: {}
 
   packages/playground:
     specifiers: {}

@@ -8,7 +8,7 @@ Setup:
 gh repo clone netless-io/netless-app
 cd netless-app
 pnpm i
-pnpm build -r
+pnpm build
 pnpm dev
 ```
 
@@ -24,9 +24,9 @@ pnpm add lodash --filter playground
 # install packages/app-hello-world to packages/playground
 pnpm add @netless/app-hello-world --workspace --filter playground
 # it updates packages/app/package.json
-# : dependencies->@netless/app-hello-world-> "workspace:^0.1.0"
+# dependencies -> @netless/app-hello-world -> "workspace:^0.1.0"
 
-# learn more about workspace in https://pnpm.io/workspaces
+'learn more about workspace in https://pnpm.io/workspaces'
 
 # update dependencies (-L = latest, -i = interactive)
 pnpm up -Li
@@ -35,10 +35,13 @@ pnpm up -Li
 pnpm dev --filter playground
 
 # build all packages
-pnpm build -r
+pnpm build -r --filter ./packages
 
 # build one package
 pnpm build --filter @netless/app-hello-world
+
+# publish one package (note: it updates "workspace:..." in package.json)
+pnpm publish --filter @netless/app-hello-world
 ```
 
 ## License

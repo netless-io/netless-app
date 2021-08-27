@@ -31,8 +31,5 @@
   ],
   "scripts": {
     "build": "rimraf ./dist && tsc --declaration --outDir dist"
-  },
-  "dependencies": {
-    "debounce-fn": "^5.0.0"
   }
 }
