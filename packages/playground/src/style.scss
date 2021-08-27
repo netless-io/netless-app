@@ -49,3 +49,8 @@
     filter: brightness(1.5);
   }
 }
+
+.netless-window-manager-sizer::before,
+.netless-window-manager-sizer::after {
+  background: #f4f4f4;
+}

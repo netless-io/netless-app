@@ -124,7 +124,7 @@ async function setupApps() {
   }
 
   room.setScenePath("/init");
-  WindowManager.mount(room, $whiteboard);
+  WindowManager.mount({ room, container: $whiteboard, chessboard: false });
   manager.switchMainViewToWriter();
 
   document.title += " - loaded.";
