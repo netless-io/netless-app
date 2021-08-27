@@ -30,7 +30,7 @@ const options: PlaygroundConfigs<Attributes> = [
       title: "M3U8",
     },
     attributes: {
-      src: "https://flat-storage.oss-cn-hangzhou.aliyuncs.com/agoraCloudRecording/0161a2a88de04a53b4ae1fa1489057a1/7ad747817e4caddcef19399f2625feb5_0161a2a8-8de0-4a53-b4ae-1fa1489057a1.m3u8",
+      src: "https://flat-storage.oss-cn-hangzhou.aliyuncs.com/agoraCloudRecording/0e36cd1e110a45ee82f21fd4c5f5b3d3/534a5e19ff4e7a1807a540b386ad4162_0e36cd1e-110a-45ee-82f2-1fd4c5f5b3d3.m3u8",
     },
   },
 ];

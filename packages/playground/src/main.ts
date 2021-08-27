@@ -86,8 +86,6 @@ async function setupApps() {
     if (!Array.isArray(a)) a = [a];
     sorted.push(a);
   }
-  sorted.sort((a, b) => a[0].app.kind.localeCompare(b[0].app.kind));
-
   for (const a of sorted) {
     log("[register]", a[0].app.kind);
     createCaption(a[0].app.kind);

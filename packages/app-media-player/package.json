@@ -19,7 +19,8 @@
     "cleanup": "rimraf ./build"
   },
   "devDependencies": {
+    "hls.js": "^1.0.10",
     "plyr": "^3.6.8",
-    "hls.js": "^1.0.10"
+    "prepend-http": "^4.0.0"
   }
 }

@@ -3,14 +3,15 @@
 <script lang="ts">
   import Plyr from "plyr";
   import { createEventDispatcher, onDestroy, onMount } from "svelte";
-  import { guessTypeFromSrc } from "./mime";
-  import { safePlay } from "./utils";
+  import { guessTypeFromSrc, hlsTypes } from "./mime";
+  import { importScript, loadHLS, safePlay } from "./utils";
   const dispatch = createEventDispatcher();
 
   export let src: string;
   export let type: string | undefined = undefined;
   export let poster: string | undefined = undefined;
   const computedType = type || guessTypeFromSrc(src);
+  const useHLS = hlsTypes.includes(String(computedType).toLowerCase());
 
   let playerEl: HTMLAudioElement | HTMLVideoElement | undefined;
   let player: Plyr | undefined;
@@ -41,6 +42,14 @@
 
     player.once("canplay", () => {
       player.currentTime = currentTime;
+    });
+
+    player.on("ended", () => {
+      player.stop();
+      dispatch("update:attrs", {
+        paused: true,
+        currentTime: 0,
+      });
     });
 
     let playBtn: HTMLButtonElement | undefined;
@@ -92,13 +101,22 @@
     });
   }
 
-  onMount(() => {
+  function setupPlayer(playerEl: HTMLAudioElement | HTMLVideoElement) {
+    player = new Plyr(playerEl, {
+      fullscreen: { enabled: false },
+      controls: ["play", "progress", "current-time", "mute", "volume"],
+    });
+    setup(player);
+  }
+
+  onMount(async () => {
     if (playerEl) {
-      player = new Plyr(playerEl, {
-        fullscreen: { enabled: false },
-        controls: ["play", "progress", "current-time", "mute", "volume"],
-      });
-      setup(player);
+      if (useHLS && !playerEl.canPlayType("application/vnd.apple.mpegurl")) {
+        const hls = await loadHLS();
+        hls.loadSource(src);
+        hls.attachMedia(playerEl);
+      }
+      setupPlayer(playerEl);
     }
   });
 

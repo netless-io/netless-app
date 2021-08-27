@@ -4,7 +4,7 @@ importers:
 
   .:
     specifiers:
-      '@netless/window-manager': ^0.1.41
+      '@netless/window-manager': ^0.1.43
       '@sveltejs/vite-plugin-svelte': ^1.0.0-next.19
       '@tsconfig/svelte': ^2.0.1
       '@types/node': ^16.7.2
@@ -23,7 +23,7 @@ importers:
       vite: ^2.5.1
       white-web-sdk: ^2.13.19
     devDependencies:
-      '@netless/window-manager': 0.1.41_white-web-sdk@2.13.19
+      '@netless/window-manager': 0.1.43_white-web-sdk@2.13.19
       '@sveltejs/vite-plugin-svelte': 1.0.0-next.19_svelte@3.42.3+vite@2.5.1
       '@tsconfig/svelte': 2.0.1
       '@types/node': 16.7.2
@@ -60,9 +60,11 @@ importers:
     specifiers:
       hls.js: ^1.0.10
       plyr: ^3.6.8
+      prepend-http: ^4.0.0
     devDependencies:
       hls.js: 1.0.10
       plyr: 3.6.8
+      prepend-http: 4.0.0
 
   packages/app-shared:
     specifiers:
@@ -134,8 +136,12 @@ packages:
     resolution: {integrity: sha512-wdppn25U8z/2yiaT6YGquE6X8sSv7hNMWSXYSSU1jGv/yd6XqjXgTDJ8KP4NgjTXfJ3GbRjeeb8RTV7a/VpM+w==}
     dev: true
 
-  /@netless/app-docs-viewer/0.1.15:
-    resolution: {integrity: sha512-GZuevbDpU4sIyhN8SNrXW247dJmp5OsI18tiHFEU12fXDixwamKqCA3TNiuWD6+C8GmEcs/NvGeAI/yDui9WrA==}
+  /@juggle/resize-observer/3.3.1:
+    resolution: {integrity: sha512-zMM9Ds+SawiUkakS7y94Ymqx+S0ORzpG3frZirN3l+UlXUmSUR7hF4wxCVqW+ei94JzV5kt0uXBcoOEAuiydrw==}
+    dev: true
+
+  /@netless/app-docs-viewer/0.1.16:
+    resolution: {integrity: sha512-k5EnIbrHuYGHbVXPLP369CYu4/WfslduvsQgDgOQ0bYQWLet3JVgfrJ+Q+10jasOUyEshxWGVKe2X9YEkRRyyg==}
     dependencies:
       debounce-fn: 5.0.0
       vanilla-lazyload: 17.4.0
@@ -156,12 +162,13 @@ packages:
       stylefire: 7.0.3
     dev: true
 
-  /@netless/window-manager/0.1.41_white-web-sdk@2.13.19:
-    resolution: {integrity: sha512-FIJEYIP3yzAqJwFnGCunD70+2iVs8RpVEhWV1uqS05XyH+IWpgBFplmZzB4vAcVOuOWn4mGoGClcMfuUFUL/Nw==}
+  /@netless/window-manager/0.1.43_white-web-sdk@2.13.19:
+    resolution: {integrity: sha512-WA2aLPw+8PQEGreCScQx2de9d+iqNmIQR9lieFzTHoEC+Yb7Lre0ZymZ+C9zzpGZ0Soa3g/2lwPXAFgf4LJVbA==}
     peerDependencies:
       white-web-sdk: ^2.13.16
     dependencies:
-      '@netless/app-docs-viewer': 0.1.15
+      '@juggle/resize-observer': 3.3.1
+      '@netless/app-docs-viewer': 0.1.16
       '@netless/app-media-player': 0.1.0-beta.4
       '@netless/telebox-insider': 0.1.15
       emittery: 0.9.2
@@ -1487,6 +1494,11 @@ packages:
   /prelude-ls/1.2.1:
     resolution: {integrity: sha512-vkcDPrRZo1QZLbn5RLGPpg/WmIQ65qoWWhcGKf/b5eplkkarX0m9z8ppCat4mlOqUsWpyNuYgO3VRyrYHSzX5g==}
     engines: {node: '>= 0.8.0'}
+    dev: true
+
+  /prepend-http/4.0.0:
+    resolution: {integrity: sha512-s6SRDuOuRo7JXWh7115pmJdh53sX0Azuk/3znjVxSoD4GusXzzBDrLQgH0rspeHNs5f+Yihz7JIT3UBMwFEn6Q==}
+    engines: {node: ^12.20.0 || ^14.13.1 || >=16.0.0}
     dev: true
 
   /prettier/2.3.2:

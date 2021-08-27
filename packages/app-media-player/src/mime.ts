@@ -112,10 +112,24 @@ export const FileExtToMimeTypes: Record<string, string> = {
   m3u8: "application/vnd.apple.mpegurl",
 };
 
+export const hlsTypes = ["application/x-mpegurl", "application/vnd.apple.mpegurl"];
+
 export function guessTypeFromSrc(src: string): string | undefined {
   if (!src) return undefined;
   const i = src.lastIndexOf(".");
   if (!~i) return undefined;
   const ext = src.slice(i + 1);
   return FileExtToMimeTypes[ext];
+}
+
+import prependHttp from "prepend-http";
+
+export function isM3U8(src: string): boolean {
+  const href = prependHttp(src);
+  try {
+    const url = new URL(href);
+    return url.pathname.endsWith(".m3u8");
+  } catch {
+    return false;
+  }
 }
