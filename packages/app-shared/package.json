@@ -1,5 +1,5 @@
 {
-  "private": true,
+  "version": "0.1.0",
   "name": "@netless/app-shared",
   "main": "./dist/index.js",
   "module": "./dist/index.js",
@@ -16,7 +16,6 @@
       ]
     }
   },
-  "version": "0.1.0",
   "description": "Netless App Shared Utils",
   "repository": "netless-io/netless-app",
   "license": "MIT",
