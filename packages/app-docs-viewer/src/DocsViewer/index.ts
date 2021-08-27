@@ -109,6 +109,7 @@ export class DocsViewer {
 
     public setSmallBox(isSmallBox: boolean): void {
         if (this.isSmallBox !== isSmallBox) {
+            this.isSmallBox = isSmallBox
             this.$footer.classList.toggle(
                 this.wrapClassName("float-footer"),
                 isSmallBox

@@ -103,12 +103,7 @@ $namespace: $docs-viewer-namespace;
     bottom: 0;
     z-index: 2000;
     background: rgba(249, 249, 252, 0.9);
-    opacity: 0;
     transition: opacity 0.4s;
-
-    &:hover {
-        opacity: 1;
-    }
 }
 
 .#{$namespace}-footer-btn {
@@ -194,5 +189,9 @@ $namespace: $docs-viewer-namespace;
         &:disabled {
             color: inherit;
         }
+    }
+    
+    &.#{$namespace}-float-footer {
+        display: none;
     }
 }
