@@ -1,17 +1,17 @@
 $namespace: "netless-app-docs-viewer-dynamic";
 
 .#{$namespace}-wb-view {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    z-index: 100;
-    overflow: hidden;
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 100;
+  overflow: hidden;
 
-    .cursor-clicker {
-        .ppt-event-source {
-            cursor: pointer;
-        }
+  .cursor-clicker {
+    .ppt-event-source {
+      cursor: pointer;
     }
+  }
 }

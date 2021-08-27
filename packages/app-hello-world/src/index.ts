@@ -22,7 +22,7 @@ const HelloWorld: NetlessApp<{ text: string }> = {
       context.updateAttributes(["text"], textarea.value);
     };
 
-    context.emitter.on("attributesUpdate", (attrs) => {
+    context.emitter.on("attributesUpdate", attrs => {
       attrs && (textarea.value = attrs.text);
     });
 

@@ -1,12 +1,15 @@
 /** @type {import("eslint").Linter.Config */
 const config = {
   root: true,
+  env: {
+    browser: true,
+  },
   parser: "@typescript-eslint/parser",
   plugins: ["svelte3", "@typescript-eslint"],
   extends: ["eslint:recommended", "plugin:@typescript-eslint/recommended", "prettier"],
   rules: {
-    "max-len": ["warn", { code: 100 }],
     "@typescript-eslint/consistent-type-imports": ["warn"],
+    "@typescript-eslint/no-empty-interface": "off",
   },
   overrides: [
     {

@@ -22,19 +22,19 @@ export class SideEffectManager {
     type: K,
     listener: (this: Window, ev: WindowEventMap[K]) => unknown,
     options?: boolean | AddEventListenerOptions
-  ): string
+  ): string;
   public addEventListener<K extends keyof DocumentEventMap>(
     el: Document,
     type: K,
     listener: (this: Document, ev: DocumentEventMap[K]) => unknown,
     options?: boolean | AddEventListenerOptions
-  ): string
+  ): string;
   public addEventListener<K extends keyof HTMLElementEventMap>(
     el: HTMLElement,
     type: K,
     listener: (this: HTMLElement, ev: HTMLElementEventMap[K]) => unknown,
     options?: boolean | AddEventListenerOptions
-  ): string
+  ): string;
   public addEventListener(
     el: HTMLElement | Window | Document,
     type: string,
@@ -92,7 +92,7 @@ export class SideEffectManager {
         }
       }
     } else {
-      this.disposers.forEach((disposer) => {
+      this.disposers.forEach(disposer => {
         try {
           disposer();
         } catch (e) {

@@ -4,7 +4,7 @@
   import Plyr from "plyr";
   import { createEventDispatcher, onDestroy, onMount } from "svelte";
   import { guessTypeFromSrc, hlsTypes } from "./mime";
-  import { importScript, loadHLS, safePlay } from "./utils";
+  import { loadHLS, safePlay } from "./utils";
   const dispatch = createEventDispatcher();
 
   export let src: string;
@@ -37,6 +37,7 @@
 
   function setup(player: Plyr) {
     if (import.meta.env.DEV) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (window as any).player = player;
     }
 
@@ -124,7 +125,9 @@
   onDestroy(() => {
     try {
       player?.destroy();
-    } catch {}
+    } catch (e) {
+      console.debug(e);
+    }
   });
 </script>
 
