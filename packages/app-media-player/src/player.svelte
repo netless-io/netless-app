@@ -105,6 +105,7 @@
     player = new Plyr(playerEl, {
       fullscreen: { enabled: false },
       controls: ["play", "progress", "current-time", "mute", "volume"],
+      clickToPlay: false,
     });
     setup(player);
   }
