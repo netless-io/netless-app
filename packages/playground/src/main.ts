@@ -3,6 +3,7 @@ import { WhiteWebSdk, ApplianceNames } from "white-web-sdk";
 
 import "@netless/window-manager/dist/style.css";
 import { WindowManager } from "@netless/window-manager";
+import type { PlaygroundConfig, PlaygroundConfigs } from "../typings";
 
 declare global {
   // eslint-disable-next-line no-var
@@ -70,17 +71,27 @@ async function setupApps() {
     $actions.append(btn);
   };
 
-  const configs = import.meta.glob("../../*/playground.ts");
-  const apps = await Promise.all(Object.values(configs).map(p => p()));
-  for (let { default: a } of apps) {
-    if (!Array.isArray(a)) {
-      a = [a];
-    }
-    let i = 1;
-    log("[register]", a[0].app.kind);
+  const createCaption = (name: string) => {
     const caption = document.createElement("strong");
-    caption.textContent = a[0].app.kind;
+    caption.textContent = name;
     $actions.append(caption);
+  };
+
+  const configs = import.meta.glob("../../*/playground.ts");
+  const apps = (await Promise.all(Object.values(configs).map(p => p()))) as {
+    default: PlaygroundConfig | PlaygroundConfigs;
+  }[];
+  const sorted: PlaygroundConfigs[] = [];
+  for (let { default: a } of apps) {
+    if (!Array.isArray(a)) a = [a];
+    sorted.push(a);
+  }
+  sorted.sort((a, b) => a[0].app.kind.localeCompare(b[0].app.kind));
+
+  for (const a of sorted) {
+    log("[register]", a[0].app.kind);
+    createCaption(a[0].app.kind);
+    let i = 1;
     for (const { app, ...restOptions } of a) {
       WindowManager.register(app);
       createBtn(restOptions.options?.title || `${app.kind} ${i++}`, app.kind, () =>

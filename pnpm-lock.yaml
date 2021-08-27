@@ -4,14 +4,14 @@ importers:
 
   .:
     specifiers:
-      '@netless/window-manager': ^0.1.35
+      '@netless/window-manager': ^0.1.41
       '@sveltejs/vite-plugin-svelte': ^1.0.0-next.19
       '@tsconfig/svelte': ^2.0.1
-      '@types/node': ^16.7.1
+      '@types/node': ^16.7.2
       '@typescript-eslint/eslint-plugin': ^4.29.3
       '@typescript-eslint/parser': ^4.29.3
       cross-env: ^7.0.3
-      esbuild: ^0.12.22
+      esbuild: ^0.12.23
       eslint: ^7.32.0
       eslint-config-prettier: ^8.3.0
       eslint-plugin-svelte3: ^3.2.0
@@ -19,18 +19,18 @@ importers:
       rimraf: ^3.0.2
       sass: ^1.38.1
       svelte: ^3.42.3
-      typescript: ^4.3.5
+      typescript: ^4.4.2
       vite: ^2.5.1
-      white-web-sdk: ^2.13.18
+      white-web-sdk: ^2.13.19
     devDependencies:
-      '@netless/window-manager': 0.1.35_white-web-sdk@2.13.18
+      '@netless/window-manager': 0.1.41_white-web-sdk@2.13.19
       '@sveltejs/vite-plugin-svelte': 1.0.0-next.19_svelte@3.42.3+vite@2.5.1
       '@tsconfig/svelte': 2.0.1
-      '@types/node': 16.7.1
-      '@typescript-eslint/eslint-plugin': 4.29.3_fd14c0002fbbfb85b8a0070d0dffb93d
-      '@typescript-eslint/parser': 4.29.3_eslint@7.32.0+typescript@4.3.5
+      '@types/node': 16.7.2
+      '@typescript-eslint/eslint-plugin': 4.29.3_5b13bab190e8051f191796d8c4619073
+      '@typescript-eslint/parser': 4.29.3_eslint@7.32.0+typescript@4.4.2
       cross-env: 7.0.3
-      esbuild: 0.12.22
+      esbuild: 0.12.23
       eslint: 7.32.0
       eslint-config-prettier: 8.3.0_eslint@7.32.0
       eslint-plugin-svelte3: 3.2.0_eslint@7.32.0+svelte@3.42.3
@@ -38,9 +38,9 @@ importers:
       rimraf: 3.0.2
       sass: 1.38.1
       svelte: 3.42.3
-      typescript: 4.3.5
+      typescript: 4.4.2
       vite: 2.5.1
-      white-web-sdk: 2.13.18
+      white-web-sdk: 2.13.19
 
   packages/app-docs-viewer:
     specifiers:
@@ -149,28 +149,26 @@ packages:
     resolution: {integrity: sha512-7NzsJrba0R/mq/l10SkIZQwbrNVJyPxZYrjK6xL3Ts732iWAVuS2UB0u3s6iGeUVcqV39A679yva8APWRl4M0A==}
     dev: true
 
-  /@netless/telebox-insider/0.1.13:
-    resolution: {integrity: sha512-CzgejfkS+MKssokIFVDxHEwYY8+l1S0MXj2kqiFOmREm1FHWJsGSMvxNZ7h1wW5JDO/7PfFuPLiofbIMFYEvuQ==}
+  /@netless/telebox-insider/0.1.15:
+    resolution: {integrity: sha512-1IYwXYNjnhXaqn/749qEkxIYXI5H/4eLtjPEIAjd826uMV4JXKeg8egNB/LLzeSqSvN+nH1aVj09uYbWOML4wg==}
     dependencies:
       eventemitter3: 4.0.7
       stylefire: 7.0.3
     dev: true
 
-  /@netless/window-manager/0.1.35_white-web-sdk@2.13.18:
-    resolution: {integrity: sha512-u3DJ+YZ2Qbc57FXdnlMKkHGtNOKDnZX0AKK7j1eYGz8a7+Vui9WfVdzvEph2gE2tdj/X1KAQUZ+3XOpWde3aAw==}
+  /@netless/window-manager/0.1.41_white-web-sdk@2.13.19:
+    resolution: {integrity: sha512-FIJEYIP3yzAqJwFnGCunD70+2iVs8RpVEhWV1uqS05XyH+IWpgBFplmZzB4vAcVOuOWn4mGoGClcMfuUFUL/Nw==}
     peerDependencies:
-      react: '>=16'
-      react-dom: '>=16'
       white-web-sdk: ^2.13.16
     dependencies:
       '@netless/app-docs-viewer': 0.1.15
       '@netless/app-media-player': 0.1.0-beta.4
-      '@netless/telebox-insider': 0.1.13
+      '@netless/telebox-insider': 0.1.15
       emittery: 0.9.2
       lodash-es: 4.17.21
       nanoid: 3.1.25
       video.js: 7.14.3
-      white-web-sdk: 2.13.18
+      white-web-sdk: 2.13.19
     dev: true
 
   /@netless/xml-js/1.6.15:
@@ -299,11 +297,11 @@ packages:
     resolution: {integrity: sha512-5tXH6Bx/kNGd3MgffdmP4dy2Z+G4eaXw0SE81Tq3BNadtnMR5/ySMzX4SLEzHJzSmPNn4HIdpQsBvXMUykr58w==}
     dev: true
 
-  /@types/node/16.7.1:
-    resolution: {integrity: sha512-ncRdc45SoYJ2H4eWU9ReDfp3vtFqDYhjOsKlFFUDEn8V1Bgr2RjYal8YT5byfadWIRluhPFU6JiDOl0H6Sl87A==}
+  /@types/node/16.7.2:
+    resolution: {integrity: sha512-TbG4TOx9hng8FKxaVrCisdaxKxqEwJ3zwHoCWXZ0Jw6mnvTInpaB99/2Cy4+XxpXtjNv9/TgfGSvZFyfV/t8Fw==}
     dev: true
 
-  /@typescript-eslint/eslint-plugin/4.29.3_fd14c0002fbbfb85b8a0070d0dffb93d:
+  /@typescript-eslint/eslint-plugin/4.29.3_5b13bab190e8051f191796d8c4619073:
     resolution: {integrity: sha512-tBgfA3K/3TsZY46ROGvoRxQr1wBkclbVqRQep97MjVHJzcRBURRY3sNFqLk0/Xr//BY5hM9H2p/kp+6qim85SA==}
     engines: {node: ^10.12.0 || >=12.0.0}
     peerDependencies:
@@ -314,21 +312,21 @@ packages:
       typescript:
         optional: true
     dependencies:
-      '@typescript-eslint/experimental-utils': 4.29.3_eslint@7.32.0+typescript@4.3.5
-      '@typescript-eslint/parser': 4.29.3_eslint@7.32.0+typescript@4.3.5
+      '@typescript-eslint/experimental-utils': 4.29.3_eslint@7.32.0+typescript@4.4.2
+      '@typescript-eslint/parser': 4.29.3_eslint@7.32.0+typescript@4.4.2
       '@typescript-eslint/scope-manager': 4.29.3
       debug: 4.3.2
       eslint: 7.32.0
       functional-red-black-tree: 1.0.1
       regexpp: 3.2.0
       semver: 7.3.5
-      tsutils: 3.21.0_typescript@4.3.5
-      typescript: 4.3.5
+      tsutils: 3.21.0_typescript@4.4.2
+      typescript: 4.4.2
     transitivePeerDependencies:
       - supports-color
     dev: true
 
-  /@typescript-eslint/experimental-utils/4.29.3_eslint@7.32.0+typescript@4.3.5:
+  /@typescript-eslint/experimental-utils/4.29.3_eslint@7.32.0+typescript@4.4.2:
     resolution: {integrity: sha512-ffIvbytTVWz+3keg+Sy94FG1QeOvmV9dP2YSdLFHw/ieLXWCa3U1TYu8IRCOpMv2/SPS8XqhM1+ou1YHsdzKrg==}
     engines: {node: ^10.12.0 || >=12.0.0}
     peerDependencies:
@@ -337,7 +335,7 @@ packages:
       '@types/json-schema': 7.0.9
       '@typescript-eslint/scope-manager': 4.29.3
       '@typescript-eslint/types': 4.29.3
-      '@typescript-eslint/typescript-estree': 4.29.3_typescript@4.3.5
+      '@typescript-eslint/typescript-estree': 4.29.3_typescript@4.4.2
       eslint: 7.32.0
       eslint-scope: 5.1.1
       eslint-utils: 3.0.0_eslint@7.32.0
@@ -346,7 +344,7 @@ packages:
       - typescript
     dev: true
 
-  /@typescript-eslint/parser/4.29.3_eslint@7.32.0+typescript@4.3.5:
+  /@typescript-eslint/parser/4.29.3_eslint@7.32.0+typescript@4.4.2:
     resolution: {integrity: sha512-jrHOV5g2u8ROghmspKoW7pN8T/qUzk0+DITun0MELptvngtMrwUJ1tv5zMI04CYVEUsSrN4jV7AKSv+I0y0EfQ==}
     engines: {node: ^10.12.0 || >=12.0.0}
     peerDependencies:
@@ -358,10 +356,10 @@ packages:
     dependencies:
       '@typescript-eslint/scope-manager': 4.29.3
       '@typescript-eslint/types': 4.29.3
-      '@typescript-eslint/typescript-estree': 4.29.3_typescript@4.3.5
+      '@typescript-eslint/typescript-estree': 4.29.3_typescript@4.4.2
       debug: 4.3.2
       eslint: 7.32.0
-      typescript: 4.3.5
+      typescript: 4.4.2
     transitivePeerDependencies:
       - supports-color
     dev: true
@@ -379,7 +377,7 @@ packages:
     engines: {node: ^8.10.0 || ^10.13.0 || >=11.10.1}
     dev: true
 
-  /@typescript-eslint/typescript-estree/4.29.3_typescript@4.3.5:
+  /@typescript-eslint/typescript-estree/4.29.3_typescript@4.4.2:
     resolution: {integrity: sha512-45oQJA0bxna4O5TMwz55/TpgjX1YrAPOI/rb6kPgmdnemRZx/dB0rsx+Ku8jpDvqTxcE1C/qEbVHbS3h0hflag==}
     engines: {node: ^10.12.0 || >=12.0.0}
     peerDependencies:
@@ -394,8 +392,8 @@ packages:
       globby: 11.0.4
       is-glob: 4.0.1
       semver: 7.3.5
-      tsutils: 3.21.0_typescript@4.3.5
-      typescript: 4.3.5
+      tsutils: 3.21.0_typescript@4.4.2
+      typescript: 4.4.2
     transitivePeerDependencies:
       - supports-color
     dev: true
@@ -650,6 +648,11 @@ packages:
     requiresBuild: true
     dev: true
 
+  /core-js/3.16.3:
+    resolution: {integrity: sha512-lM3GftxzHNtPNUJg0v4pC2RC6puwMd6VZA7vXUczi+SKmCWSf4JwO89VJGMqbzmB7jlK7B5hr3S64PqwFL49cA==}
+    requiresBuild: true
+    dev: true
+
   /cross-env/7.0.3:
     resolution: {integrity: sha512-+/HKd6EgcQCJGh2PSjZuUitQBQynKor4wrFbRg4DtAgS1aWO+gU52xpH7M9ScGgXSYmAVS9bIJ8EzuaGw0oNAw==}
     engines: {node: '>=10.14', npm: '>=6', yarn: '>=1'}
@@ -763,6 +766,12 @@ packages:
 
   /esbuild/0.12.22:
     resolution: {integrity: sha512-yWCr9RoFehpqoe/+MwZXJpYOEIt7KOEvNnjIeMZpMSyQt+KCBASM3y7yViiN5dJRphf1wGdUz1+M4rTtWd/ulA==}
+    hasBin: true
+    requiresBuild: true
+    dev: true
+
+  /esbuild/0.12.23:
+    resolution: {integrity: sha512-qvS4aKnmKikoWGscd5lVAzgobMovlH/JhaWitRiQ8xJx0x1Fym0pqVjMFs43Nvff8WpibeWm+fWoLK88T1U0Xw==}
     hasBin: true
     requiresBuild: true
     dev: true
@@ -1091,12 +1100,6 @@ packages:
     resolution: {integrity: sha512-P+o/wjGJsnqwdXXYfWvopOceXEXFV0H8vs/T+ApsscP/GlpUtdIRWie7qc+jbml95ThjE6+FVci9VGaD51r/6Q==}
     dev: true
 
-  /hoist-non-react-statics/3.3.2:
-    resolution: {integrity: sha512-/gGivxi8JPKWNm/W0jSmzcMPpfpPLc3dY/6GxhX2hQ9iGj3aDfklV4ET7NjKpSinLpJ5vafa9iiGIEZg10SfBw==}
-    dependencies:
-      react-is: 16.13.1
-    dev: true
-
   /ignore/4.0.6:
     resolution: {integrity: sha512-cyFDKrqc/YdcWFniJhzI42+AzS+gNwmUzOSFcRCQYwySuBBBy/KjuxWLZ/FHEH6Moq1NizMOBWyTcv8O4OZIMg==}
     engines: {node: '>= 4'}
@@ -1323,20 +1326,45 @@ packages:
       brace-expansion: 1.1.11
     dev: true
 
-  /mobx-react/5.4.4_mobx@4.15.7+react@16.14.0:
-    resolution: {integrity: sha512-2mTzpyEjVB/RGk2i6KbcmP4HWcAUFox5ZRCrGvSyz49w20I4C4qql63grPpYrS9E9GKwgydBHQlA4y665LuRCQ==}
+  /mobx-react-lite/3.2.0_0729acb4a737c8184c6fffb74f5b1c86:
+    resolution: {integrity: sha512-q5+UHIqYCOpBoFm/PElDuOhbcatvTllgRp3M1s+Hp5j0Z6XNgDbgqxawJ0ZAUEyKM8X1zs70PCuhAIzX1f4Q/g==}
     peerDependencies:
-      mobx: ^4.0.0 || ^5.0.0
-      react: ^0.13.0 || ^0.14.0 || ^15.0.0 || ^16.0.0
+      mobx: ^6.1.0
+      react: ^16.8.0 || ^17
+      react-dom: '*'
+      react-native: '*'
+    peerDependenciesMeta:
+      react-dom:
+        optional: true
+      react-native:
+        optional: true
     dependencies:
-      hoist-non-react-statics: 3.3.2
-      mobx: 4.15.7
+      mobx: 6.3.2
       react: 16.14.0
-      react-lifecycles-compat: 3.0.4
+      react-dom: 16.14.0_react@16.14.0
     dev: true
 
-  /mobx/4.15.7:
-    resolution: {integrity: sha512-X4uQvuf2zYKHVO5kRT5Utmr+J9fDnRgxWWnSqJ4oiccPTQU38YG+/O3nPmOhUy4jeHexl7XJJpWDBgEnEfp+8w==}
+  /mobx-react/7.2.0_0729acb4a737c8184c6fffb74f5b1c86:
+    resolution: {integrity: sha512-KHUjZ3HBmZlNnPd1M82jcdVsQRDlfym38zJhZEs33VxyVQTvL77hODCArq6+C1P1k/6erEeo2R7rpE7ZeOL7dg==}
+    peerDependencies:
+      mobx: ^6.1.0
+      react: ^16.8.0 || ^17
+      react-dom: '*'
+      react-native: '*'
+    peerDependenciesMeta:
+      react-dom:
+        optional: true
+      react-native:
+        optional: true
+    dependencies:
+      mobx: 6.3.2
+      mobx-react-lite: 3.2.0_0729acb4a737c8184c6fffb74f5b1c86
+      react: 16.14.0
+      react-dom: 16.14.0_react@16.14.0
+    dev: true
+
+  /mobx/6.3.2:
+    resolution: {integrity: sha512-xGPM9dIE1qkK9Nrhevp0gzpsmELKU4MFUJRORW/jqxVFIHHWIoQrjDjL8vkwoJYY3C2CeVJqgvl38hgKTalTWg==}
     dev: true
 
   /mpd-parser/0.17.0:
@@ -1374,10 +1402,6 @@ packages:
   /normalize-path/3.0.0:
     resolution: {integrity: sha512-6eZs5Ls3WtCisHWp9S2GUy8dqkpGi4BVSz3GaqiE6ezub0512ESztXUwUB6C6IKbQkY2Pnb/mD4WYojCRwcwLA==}
     engines: {node: '>=0.10.0'}
-    dev: true
-
-  /numeric/1.2.6:
-    resolution: {integrity: sha1-dlsCvvl5iPz4gNTrPza4D6MTNao=}
     dev: true
 
   /object-assign/4.1.1:
@@ -1505,7 +1529,7 @@ packages:
       '@protobufjs/pool': 1.1.0
       '@protobufjs/utf8': 1.1.0
       '@types/long': 4.0.1
-      '@types/node': 16.7.1
+      '@types/node': 16.7.2
       long: 4.0.0
     dev: true
 
@@ -1549,10 +1573,6 @@ packages:
 
   /react-is/16.13.1:
     resolution: {integrity: sha512-24e6ynE2H+OKt4kqsOvNd8kBpV65zoxbA4BVsEOB3ARVWQki/DHzaUoC5KuON/BiccDaCCTZBuOcfZs70kR8bQ==}
-    dev: true
-
-  /react-lifecycles-compat/3.0.4:
-    resolution: {integrity: sha512-fBASbA6LnOU9dOU2eW7aQ8xmYBSXUIWr+UmF9b1efZBazGNO+rcXT/icdKnYm2pTwcRylVUYwW7H1PHfLekVzA==}
     dev: true
 
   /react/16.14.0:
@@ -1715,8 +1735,8 @@ packages:
     resolution: {integrity: sha512-9NykojV5Uih4lgo5So5dtw+f0JgJX30KCNI8gwhz2J9A15wD0Ml6tjHKwf6fTSa6fAdVBdZeNOs9eJ71qCk8vA==}
     dev: true
 
-  /spark-md5/3.0.1:
-    resolution: {integrity: sha512-0tF3AGSD1ppQeuffsLDIOWlKUd3lS92tFxcsrh5Pe3ZphhnoK+oXIBTzOAThZCiuINZLvpiLH/1VS1/ANEJVig==}
+  /spark-md5/3.0.2:
+    resolution: {integrity: sha512-wcFzz9cDfbuqe0FZzfi2or1sgyIrsDwmPwfZC4hiNidPdPINjeUwNfv5kldczoEAcjl9Y1L3SM7Uz2PUEQzxQw==}
     dev: true
 
   /sprintf-js/1.0.3:
@@ -1828,14 +1848,14 @@ packages:
     resolution: {integrity: sha512-Xni35NKzjgMrwevysHTCArtLDpPvye8zV/0E4EyYn43P7/7qvQwPh9BGkHewbMulVntbigmcT7rdX3BNo9wRJg==}
     dev: true
 
-  /tsutils/3.21.0_typescript@4.3.5:
+  /tsutils/3.21.0_typescript@4.4.2:
     resolution: {integrity: sha512-mHKK3iUXL+3UF6xL5k0PEhKRUBKPBCv/+RkEOpjRWxxx27KKRBmmA60A9pgOUvMi8GKhRMPEmjBRPzs2W7O1OA==}
     engines: {node: '>= 6'}
     peerDependencies:
       typescript: '>=2.8.0 || >= 3.2.0-dev || >= 3.3.0-dev || >= 3.4.0-dev || >= 3.5.0-dev || >= 3.6.0-dev || >= 3.6.0-beta || >= 3.7.0-dev || >= 3.7.0-beta'
     dependencies:
       tslib: 1.14.1
-      typescript: 4.3.5
+      typescript: 4.4.2
     dev: true
 
   /type-check/0.4.0:
@@ -1855,8 +1875,8 @@ packages:
     engines: {node: '>= 6'}
     dev: true
 
-  /typescript/4.3.5:
-    resolution: {integrity: sha512-DqQgihaQ9cUrskJo9kIyW/+g0Vxsk8cDtZ52a3NGh0YNTfpUSArXSohyUGnvbPazEPLu398C0UxmKSOrPumUzA==}
+  /typescript/4.4.2:
+    resolution: {integrity: sha512-gzP+t5W4hdy4c+68bfcv0t400HVJMMd2+H9B7gae1nQlBzCqvrXX+6GL/b3GAgyTH966pzrZ70/fRjwAtZksSQ==}
     engines: {node: '>=4.2.0'}
     hasBin: true
     dev: true
@@ -1943,30 +1963,31 @@ packages:
       isexe: 2.0.0
     dev: true
 
-  /white-web-sdk/2.13.18:
-    resolution: {integrity: sha512-+6bifhfIY5HSO/12E5oB8eaemLN+GNqUPsj+AZMQhF/ER4B0d7OGX05FDsgEL0AGNVMa48Gsa7SjvokU3PauNQ==}
+  /white-web-sdk/2.13.19:
+    resolution: {integrity: sha512-hIV59tvIPUOeGVlqDIp7bb7HilPYJfvMH6Op3Od6yauOR3ss18E1ftaDN+qPn3Ys7A+FkvP1BwKNkYezHiQ5mw==}
     dependencies:
       '@netless/canvas-polyfill': 0.0.4
       '@netless/xml-js': 1.6.15
       atob: 2.1.2
       bezier-js: 2.6.1
       color: 3.2.1
-      core-js: 3.16.2
+      core-js: 3.16.3
       detect-it: 3.0.7
       eventemitter3: 4.0.7
       mathjs: 6.6.5
-      mobx: 4.15.7
-      mobx-react: 5.4.4_mobx@4.15.7+react@16.14.0
-      numeric: 1.2.6
+      mobx: 6.3.2
+      mobx-react: 7.2.0_0729acb4a737c8184c6fffb74f5b1c86
       protobufjs: 6.11.2
       query-string: 5.1.1
       react: 16.14.0
       react-dom: 16.14.0_react@16.14.0
       resize-observer-polyfill: 1.5.1
-      spark-md5: 3.0.1
+      spark-md5: 3.0.2
       textarea-caret-ts: 4.1.1
       url-parse: 1.5.3
       uuid: 7.0.3
+    transitivePeerDependencies:
+      - react-native
     dev: true
 
   /word-wrap/1.2.3:

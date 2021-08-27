@@ -2,14 +2,14 @@
   "name": "netless-app-monorepo",
   "private": true,
   "devDependencies": {
-    "@netless/window-manager": "^0.1.35",
+    "@netless/window-manager": "^0.1.41",
     "@sveltejs/vite-plugin-svelte": "^1.0.0-next.19",
     "@tsconfig/svelte": "^2.0.1",
-    "@types/node": "^16.7.1",
+    "@types/node": "^16.7.2",
     "@typescript-eslint/eslint-plugin": "^4.29.3",
     "@typescript-eslint/parser": "^4.29.3",
     "cross-env": "^7.0.3",
-    "esbuild": "^0.12.22",
+    "esbuild": "^0.12.23",
     "eslint": "^7.32.0",
     "eslint-config-prettier": "^8.3.0",
     "eslint-plugin-svelte3": "^3.2.0",
@@ -17,9 +17,9 @@
     "rimraf": "^3.0.2",
     "sass": "^1.38.1",
     "svelte": "^3.42.3",
-    "typescript": "^4.3.5",
+    "typescript": "^4.4.2",
     "vite": "^2.5.1",
-    "white-web-sdk": "^2.13.18"
+    "white-web-sdk": "^2.13.19"
   },
   "scripts": {
     "preinstall": "npx only-allow pnpm",
