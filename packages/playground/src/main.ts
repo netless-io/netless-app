@@ -60,6 +60,31 @@ function setupTools() {
   const saved = store.getItem("currentApplianceName") as ApplianceNames;
   if (saved) room.setMemberState({ currentApplianceName: saved });
   refresh();
+
+  const createEmergencyBtn = () => {
+    const btn = document.createElement("button");
+    btn.classList.add("reset-btn");
+    btn.textContent = "RESET";
+    btn.title = "remove all apps, reset camera";
+    btn.addEventListener("click", async () => {
+      // close all apps
+      await Promise.all(Object.keys(manager.apps || {}).map(appId => manager.closeApp(appId)));
+      // clear attributes
+      Object.keys(manager.attributes).forEach(key => {
+        // {kind}-{nanoid(8)}
+        if (/-[-_a-zA-Z0-9]{8}$/.test(key)) {
+          manager.updateAttributes([key], undefined);
+        } else if (key === "apps") {
+          manager.updateAttributes([key], {});
+        }
+      });
+      // reset camera
+      manager.mainView.moveCamera({ centerX: 0, centerY: 0, scale: 1 });
+    });
+    $tools.append(btn);
+  };
+
+  createEmergencyBtn();
 }
 
 async function setupApps() {
