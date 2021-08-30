@@ -16,6 +16,7 @@ importers:
       eslint-config-prettier: ^8.3.0
       eslint-plugin-svelte3: ^3.2.0
       prettier: ^2.3.2
+      prettier-plugin-svelte: ^2.4.0
       rimraf: ^3.0.2
       sass: ^1.38.1
       svelte: ^3.42.3
@@ -35,6 +36,7 @@ importers:
       eslint-config-prettier: 8.3.0_eslint@7.32.0
       eslint-plugin-svelte3: 3.2.0_eslint@7.32.0+svelte@3.42.3
       prettier: 2.3.2
+      prettier-plugin-svelte: 2.4.0_prettier@2.3.2+svelte@3.42.3
       rimraf: 3.0.2
       sass: 1.38.1
       svelte: 3.42.3
@@ -67,7 +69,10 @@ importers:
       prepend-http: 4.0.0
 
   packages/app-shared:
-    specifiers: {}
+    specifiers:
+      debounce-fn: ^5.0.0
+    dependencies:
+      debounce-fn: 5.0.0
 
   packages/playground:
     specifiers: {}
@@ -1496,6 +1501,16 @@ packages:
   /prepend-http/4.0.0:
     resolution: {integrity: sha512-s6SRDuOuRo7JXWh7115pmJdh53sX0Azuk/3znjVxSoD4GusXzzBDrLQgH0rspeHNs5f+Yihz7JIT3UBMwFEn6Q==}
     engines: {node: ^12.20.0 || ^14.13.1 || >=16.0.0}
+    dev: true
+
+  /prettier-plugin-svelte/2.4.0_prettier@2.3.2+svelte@3.42.3:
+    resolution: {integrity: sha512-JwJ9bOz4XHLQtiLnX4mTSSDUdhu12WH8sTwy/XTDCSyPlah6IcV7NWeYBZscPEcceu2YnW8Y9sJCP40Z2UH9GA==}
+    peerDependencies:
+      prettier: ^1.16.4 || ^2.0.0
+      svelte: ^3.2.0
+    dependencies:
+      prettier: 2.3.2
+      svelte: 3.42.3
     dev: true
 
   /prettier/2.3.2:
