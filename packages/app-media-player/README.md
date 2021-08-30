@@ -1,8 +1,10 @@
 ## @netless/app-media-player
 
+Netless App for playing video and audio files.
+
 ### Usage
 
-See [playground.ts](./playground.ts).
+See [playground](https://github.com/netless-io/netless-app/tree/master/packages/playground).
 
 ### `m3u8` support
 
