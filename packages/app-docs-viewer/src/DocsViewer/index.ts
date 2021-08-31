@@ -1,8 +1,8 @@
-import sidebarSVG from "./icons/sidebar.svg";
-import arrowLeftSVG from "./icons/arrow-left.svg";
-import arrowRightSVG from "./icons/arrow-right.svg";
-import playSVG from "./icons/play.svg";
-import pauseSVG from "./icons/pause.svg";
+import { sidebarSVG } from "./icons/sidebar";
+import { arrowLeftSVG } from "./icons/arrow-left";
+import { arrowRightSVG } from "./icons/arrow-right";
+import { playSVG } from "./icons/play";
+import { pauseSVG } from "./icons/pause";
 
 import type { ReadonlyTeleBox } from "@netless/window-manager";
 import LazyLoad from "vanilla-lazyload";
@@ -210,7 +210,7 @@ export class DocsViewer {
       }
 
       if (this.pages.some(page => page.thumbnail || !page.src.startsWith("ppt"))) {
-        const $btnSidebar = this.renderFooterBtn("btn-sidebar", sidebarSVG);
+        const $btnSidebar = this.renderFooterBtn("btn-sidebar", sidebarSVG(this.namespace));
         this.sideEffect.addEventListener($btnSidebar, "click", () => {
           if (this.readonly) {
             return;
@@ -223,7 +223,7 @@ export class DocsViewer {
       const $pageJumps = document.createElement("div");
       $pageJumps.className = this.wrapClassName("page-jumps");
 
-      const $btnPageBack = this.renderFooterBtn("btn-page-back", arrowLeftSVG);
+      const $btnPageBack = this.renderFooterBtn("btn-page-back", arrowLeftSVG(this.namespace));
       this.sideEffect.addEventListener($btnPageBack, "click", () => {
         if (this.readonly) {
           return;
@@ -233,21 +233,19 @@ export class DocsViewer {
       $pageJumps.appendChild($btnPageBack);
 
       if (this.onPlay) {
-        const $btnPlay = this.renderFooterBtn("btn-page-play", playSVG);
+        const $btnPlay = this.renderFooterBtn(
+          "btn-page-play",
+          playSVG(this.namespace),
+          pauseSVG(this.namespace)
+        );
         const returnPlay = this.debounce(() => {
-          const img = $btnPlay.querySelector("img");
-          if (img) {
-            img.src = playSVG;
-          }
+          $btnPlay.classList.toggle(this.wrapClassName("footer-btn-playing"), false);
         }, 500);
         this.sideEffect.addEventListener($btnPlay, "click", () => {
           if (this.readonly) {
             return;
           }
-          const img = $btnPlay.querySelector("img");
-          if (img) {
-            img.src = pauseSVG;
-          }
+          $btnPlay.classList.toggle(this.wrapClassName("footer-btn-playing"), true);
           if (this.onPlay) {
             this.onPlay();
           }
@@ -257,7 +255,7 @@ export class DocsViewer {
         $pageJumps.appendChild($btnPlay);
       }
 
-      const $btnPageNext = this.renderFooterBtn("btn-page-next", arrowRightSVG);
+      const $btnPageNext = this.renderFooterBtn("btn-page-next", arrowRightSVG(this.namespace));
       this.sideEffect.addEventListener($btnPageNext, "click", () => {
         if (this.readonly) {
           return;
@@ -297,14 +295,19 @@ export class DocsViewer {
     return this.$footer;
   }
 
-  protected renderFooterBtn(className: string, icon: string): HTMLButtonElement {
+  protected renderFooterBtn(
+    className: string,
+    $icon: SVGElement,
+    $iconActive?: SVGElement
+  ): HTMLButtonElement {
     const $btn = document.createElement("button");
     $btn.className = this.wrapClassName("footer-btn") + " " + this.wrapClassName(className);
 
-    const $img = document.createElement("img");
-    $img.src = icon;
+    $btn.appendChild($icon);
 
-    $btn.appendChild($img);
+    if ($iconActive) {
+      $btn.appendChild($iconActive);
+    }
 
     return $btn;
   }
@@ -331,8 +334,10 @@ export class DocsViewer {
   }
 
   protected wrapClassName(className: string): string {
-    return "netless-app-docs-viewer-" + className;
+    return `${this.namespace}-${className}`;
   }
+
+  protected namespace = "netless-app-docs-viewer";
 
   protected isShowPreview = false;
 

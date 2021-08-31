@@ -93,6 +93,7 @@ $namespace: $docs-viewer-namespace;
   align-items: center;
   padding: 0 16px;
   border-top: 1px solid #eeeef7;
+  color: #191919;
 }
 
 .#{$namespace}-float-footer {
@@ -116,6 +117,7 @@ $namespace: $docs-viewer-namespace;
   border: none;
   border-radius: 1px;
   outline: none;
+  color: currentColor;
   background: transparent;
   transition: background 0.4s;
   cursor: pointer;
@@ -125,8 +127,23 @@ $namespace: $docs-viewer-namespace;
     background: rgba(237, 237, 240, 0.9);
   }
 
-  & > img {
+  & > svg {
     width: 100%;
+    height: 100%;
+  }
+
+  & > svg:nth-of-type(2) {
+    display: none;
+  }
+
+  &.#{$namespace}-footer-btn-playing {
+    & > svg:nth-of-type(1) {
+      display: none;
+    }
+
+    & > svg:nth-of-type(2) {
+      display: initial;
+    }
   }
 
   & ~ & {
@@ -155,6 +172,7 @@ $namespace: $docs-viewer-namespace;
   width: 1.5em;
   text-align: right;
   border-radius: 2px;
+  color: currentColor;
   background: transparent;
   transition: background 0.4s;
   user-select: text;
