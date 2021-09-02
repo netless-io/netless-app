@@ -116,7 +116,7 @@ async function setupApps() {
     createCaption(a[0].app.kind);
     let i = 1;
     for (const { app, ...restOptions } of a) {
-      WindowManager.register(app);
+      WindowManager.register({ kind: app.kind, src: app });
       createBtn(restOptions.options?.title || `${app.kind} ${i++}`, app.kind, () =>
         manager.addApp({ kind: app.kind, ...restOptions })
       );

@@ -1,7 +1,7 @@
 import styles from "./style.scss?inline";
 
 import type { NetlessApp, AppContext, ReadonlyTeleBox, Room } from "@netless/window-manager";
-import type { View } from "white-web-sdk";
+import type { View, Size } from "white-web-sdk";
 import { StaticDocsViewer } from "./StaticDocsViewer";
 import type { DocsViewerPage } from "./DocsViewer";
 import { DynamicDocsViewer } from "./DynamicDocsViewer";
@@ -136,6 +136,25 @@ function setupDynamicDocsViewer(
   }).mount();
 
   context.mountView(docsViewer.$whiteboardView);
+
+  if (context.isAddApp) {
+    whiteboardView.callbacks.once(
+      "onSizeUpdated",
+      ({ width: contentWidth, height: contentHeight }: Size) => {
+        if (pages.length > 0) {
+          const { width: pageWidth, height: pageHeight } = pages[0];
+          const preferHeight = (pageHeight / pageWidth) * contentWidth;
+          const diff = preferHeight - contentHeight;
+          if (diff !== 0 && context.getIsWritable()) {
+            context.emitter.emit("setBoxSize", {
+              width: box.width,
+              height: box.height + diff / box.containerRect.height,
+            });
+          }
+        }
+      }
+    );
+  }
 
   if (import.meta.env.DEV) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
