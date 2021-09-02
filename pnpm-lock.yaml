@@ -4,7 +4,7 @@ importers:
 
   .:
     specifiers:
-      '@netless/window-manager': ^0.1.55-canary.2
+      '@netless/window-manager': ^0.1.55-canary.3
       '@sveltejs/vite-plugin-svelte': ^1.0.0-next.21
       '@tsconfig/svelte': ^2.0.1
       '@types/node': ^16.7.10
@@ -24,7 +24,7 @@ importers:
       vite: ^2.5.3
       white-web-sdk: ^2.13.19
     devDependencies:
-      '@netless/window-manager': 0.1.55-canary.2_white-web-sdk@2.13.19
+      '@netless/window-manager': 0.1.55-canary.3_white-web-sdk@2.13.19
       '@sveltejs/vite-plugin-svelte': 1.0.0-next.21_svelte@3.42.4+vite@2.5.3
       '@tsconfig/svelte': 2.0.1
       '@types/node': 16.7.10
@@ -164,8 +164,8 @@ packages:
       stylefire: 7.0.3
     dev: true
 
-  /@netless/window-manager/0.1.55-canary.2_white-web-sdk@2.13.19:
-    resolution: {integrity: sha512-OvmNG3s3XouaKCMHC036fiOR7Hmk3HKQ1wLTAT+5Ri8OEPQZf9jfPAKD/3DyMH34gSRumLBB2ydjJsjtoczz/g==}
+  /@netless/window-manager/0.1.55-canary.3_white-web-sdk@2.13.19:
+    resolution: {integrity: sha512-20Bf8yUnooKa76sYqryubU8PpPry4PFlln88SRm5sOlxaTDHFmdSCImDkc9YtIYCwyvPYmlX0M5XCB3bSvAe1w==}
     peerDependencies:
       white-web-sdk: ^2.13.16
     dependencies:
