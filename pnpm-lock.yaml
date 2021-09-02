@@ -68,6 +68,27 @@ importers:
       plyr: 3.6.8
       prepend-http: 4.0.0
 
+  packages/app-monaco:
+    specifiers:
+      '@netless/app-shared': workspace:^0.1.0
+      debounce-fn: ^5.0.0
+      js-base64: ^3.6.1
+      monaco-editor: ^0.27.0
+      vanilla-lazyload: ^17.4.0
+      y-monaco: ^0.1.2
+      y-protocols: ^1.0.5
+      yjs: ^13.5.12
+    dependencies:
+      debounce-fn: 5.0.0
+      js-base64: 3.6.1
+      monaco-editor: 0.27.0
+      vanilla-lazyload: 17.4.0
+      y-monaco: 0.1.2_eb8bbaf3fb9ccc47feb1ebcdf9284ee8
+      y-protocols: 1.0.5
+      yjs: 13.5.12
+    devDependencies:
+      '@netless/app-shared': link:../app-shared
+
   packages/app-shared:
     specifiers:
       debounce-fn: ^5.0.0
@@ -1192,9 +1213,17 @@ packages:
     resolution: {integrity: sha1-6PvzdNxVb/iUehDcsFctYz8s+hA=}
     dev: true
 
+  /isomorphic.js/0.2.4:
+    resolution: {integrity: sha512-Y4NjZceAwaPXctwsHgNsmfuPxR8lJ3f8X7QTAkhltrX4oGIv+eTlgHLXn4tWysC9zGTi929gapnPp+8F8cg7nA==}
+    dev: false
+
   /javascript-natural-sort/0.7.1:
     resolution: {integrity: sha1-+eIwPUUH9tdDVac2ZNFED7Wg71k=}
     dev: true
+
+  /js-base64/3.6.1:
+    resolution: {integrity: sha512-Frdq2+tRRGLQUIQOgsIGSCd1VePCS2fsddTG5dTCqR0JHgltXWfsxnY0gIXPoMeRmdom6Oyq+UMOFg5suduOjQ==}
+    dev: false
 
   /js-tokens/4.0.0:
     resolution: {integrity: sha512-RdJUflcE3cUzKiMqQgsCu06FPu9UdIJO0beYbPhHN4k6apgJtifcoCtT9bcxOpYBtpD2kCM6Sbzg4CausW/PKQ==}
@@ -1236,6 +1265,13 @@ packages:
       prelude-ls: 1.2.1
       type-check: 0.4.0
     dev: true
+
+  /lib0/0.2.42:
+    resolution: {integrity: sha512-8BNM4MiokEKzMvSxTOC3gnCBisJH+jL67CnSnqzHv3jli3pUvGC8wz+0DQ2YvGr4wVQdb2R2uNNPw9LEpVvJ4Q==}
+    engines: {node: '>=12'}
+    dependencies:
+      isomorphic.js: 0.2.4
+    dev: false
 
   /loadjs/4.2.0:
     resolution: {integrity: sha512-AgQGZisAlTPbTEzrHPb6q+NYBMD+DP9uvGSIjSUM5uG+0jG15cb8axWpxuOIqrmQjn6scaaH8JwloiP27b2KXA==}
@@ -1373,6 +1409,10 @@ packages:
   /mobx/6.3.2:
     resolution: {integrity: sha512-xGPM9dIE1qkK9Nrhevp0gzpsmELKU4MFUJRORW/jqxVFIHHWIoQrjDjL8vkwoJYY3C2CeVJqgvl38hgKTalTWg==}
     dev: true
+
+  /monaco-editor/0.27.0:
+    resolution: {integrity: sha512-UhwP78Wb8w0ZSYoKXQNTV/0CHObp6NS3nCt51QfKE6sKyBo5PBsvuDOHoI2ooBakc6uIwByRLHVeT7+yXQe2fQ==}
+    dev: false
 
   /mpd-parser/0.17.0:
     resolution: {integrity: sha512-oKS5G0jCcHHJ3sHYlcLeM9Xcbuixl08eAx7QW0Th7ChlZiI0YvLtGaHE/L0aKUBJFNvtkeksIr8XgJgSBBsS4g==}
@@ -2026,6 +2066,32 @@ packages:
     engines: {node: '>=10.0.0'}
     dev: true
 
+  /y-monaco/0.1.2_eb8bbaf3fb9ccc47feb1ebcdf9284ee8:
+    resolution: {integrity: sha512-8VkmPsSbj4JZlLW8/su1O4ULZEGeS22VAvAXawpHlh2BoyeNy5AIwSl5eam+soEuyWHpktQSmxYOBOvQuu6mpQ==}
+    peerDependencies:
+      monaco-editor: '>=0.20.0'
+      y-protocols: '>=1.0.1'
+      yjs: ^13.3.1 && >=13.3.1
+    dependencies:
+      lib0: 0.2.42
+      monaco-editor: 0.27.0
+      y-protocols: 1.0.5
+      yjs: 13.5.12
+    dev: false
+
+  /y-protocols/1.0.5:
+    resolution: {integrity: sha512-Wil92b7cGk712lRHDqS4T90IczF6RkcvCwAD0A2OPg+adKmOe+nOiT/N2hvpQIWS3zfjmtL4CPaH5sIW1Hkm/A==}
+    dependencies:
+      lib0: 0.2.42
+    dev: false
+
   /yallist/4.0.0:
     resolution: {integrity: sha512-3wdGidZyq5PB084XLES5TpOSRA3wjXAlIWMhum2kRcv/41Sn2emQ0dycQW4uZXLejwKvg6EsvbdlVL+FYEct7A==}
     dev: true
+
+  /yjs/13.5.12:
+    resolution: {integrity: sha512-/buy1kh8Ls+t733Lgov9hiNxCsjHSCymTuZNahj2hsPNoGbvnSdDmCz9Z4F19Yr1eUAAXQLJF3q7fiBcvPC6Qg==}
+    requiresBuild: true
+    dependencies:
+      lib0: 0.2.42
+    dev: false

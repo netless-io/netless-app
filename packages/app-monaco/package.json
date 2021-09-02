@@ -1,0 +1,36 @@
+{
+  "name": "@netless/app-docs-viewer",
+  "version": "0.1.17",
+  "description": "Netless App Docs Viewer",
+  "repository": "netless-io/netless-app",
+  "license": "MIT",
+  "author": "CRIMX <straybugs@gmail.com> (https://github.com/crimx/)",
+  "sideEffects": [
+    "*.css"
+  ],
+  "main": "./dist/main.cjs.js",
+  "module": "./dist/main.es.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "src",
+    "dist"
+  ],
+  "scripts": {
+    "types": "cross-env NODE_ENV=production tsc --declaration --emitDeclarationOnly --outDir dist",
+    "build": "vite build && npm run types",
+    "build:dev": "vite build --mode development && npm run types",
+    "cleanup": "rimraf ./build"
+  },
+  "dependencies": {
+    "debounce-fn": "^5.0.0",
+    "js-base64": "^3.6.1",
+    "monaco-editor": "^0.27.0",
+    "vanilla-lazyload": "^17.4.0",
+    "y-monaco": "^0.1.2",
+    "y-protocols": "^1.0.5",
+    "yjs": "^13.5.12"
+  },
+  "devDependencies": {
+    "@netless/app-shared": "workspace:^0.1.0"
+  }
+}
