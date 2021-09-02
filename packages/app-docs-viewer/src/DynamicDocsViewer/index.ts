@@ -1,5 +1,12 @@
-import type { ReadonlyTeleBox, View, Displayer, Room } from "@netless/window-manager";
+import type {
+  ReadonlyTeleBox,
+  View,
+  Displayer,
+  Room,
+  AnimationMode,
+} from "@netless/window-manager";
 import { SideEffectManager } from "@netless/app-shared/SideEffectManager";
+import { createDebounce } from "@netless/app-shared/create-debounce";
 import type { DocsViewerPage } from "../DocsViewer";
 import { DocsViewer } from "../DocsViewer";
 import { clamp } from "../utils/helpers";
@@ -42,6 +49,9 @@ export class DynamicDocsViewer {
 
     this.render();
   }
+
+  protected sideEffect = new SideEffectManager();
+  protected debounce = createDebounce(this.sideEffect);
 
   protected readonly: boolean;
   protected pages: DocsViewerPage[];
@@ -187,7 +197,7 @@ export class DynamicDocsViewer {
     return this.$whiteboardView;
   }
 
-  protected scaleDocsToFit = (): void => {
+  protected _scaleDocsToFitImpl = (): void => {
     const page = this.pages[this.getPageIndex()];
     if (page) {
       this.whiteboardView.moveCameraToContain({
@@ -195,8 +205,16 @@ export class DynamicDocsViewer {
         originY: -page.height / 2,
         width: page.width,
         height: page.height,
+        animationMode: "immediately" as AnimationMode,
       });
     }
+  };
+
+  protected _scaleDocsToFitDebounced = this.debounce(this._scaleDocsToFitImpl, { wait: 1000 });
+
+  protected scaleDocsToFit = (): void => {
+    this._scaleDocsToFitImpl();
+    this._scaleDocsToFitDebounced();
   };
 
   protected onNewPageIndex = (index: number): void => {
@@ -206,6 +224,4 @@ export class DynamicDocsViewer {
   protected wrapClassName(className: string): string {
     return "netless-app-docs-viewer-dynamic-" + className;
   }
-
-  protected sideEffect = new SideEffectManager();
 }
