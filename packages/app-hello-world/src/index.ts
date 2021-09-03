@@ -10,6 +10,7 @@ const HelloWorld: NetlessApp<{ text: string }> = {
         overflow: hidden;
         border: 0; resize: none;
         background: #fafbfc;
+        padding: .5em;
       }
    `);
 
@@ -23,7 +24,7 @@ const HelloWorld: NetlessApp<{ text: string }> = {
     };
 
     context.emitter.on("attributesUpdate", attrs => {
-      attrs && (textarea.value = attrs.text);
+      attrs?.text && (textarea.value = attrs.text);
     });
 
     context.emitter.on("destroy", () => {

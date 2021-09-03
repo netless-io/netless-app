@@ -1,10 +1,10 @@
 {
+  "private": true,
   "name": "@netless/app-hello-world",
+  "version": "0.0.0",
   "main": "dist/main.cjs.js",
   "module": "dist/main.es.js",
   "types": "src/index.ts",
-  "version": "0.1.0",
-  "private": true,
   "scripts": {
     "build": "vite build",
     "build:dev": "vite build --mode development"
