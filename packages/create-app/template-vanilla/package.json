@@ -1,0 +1,15 @@
+{
+  "name": "netless-app-starter",
+  "version": "0.0.0",
+  "main": "dist/main.cjs.js",
+  "module": "dist/main.es.js",
+  "unpkg": "dist/main.iife.js",
+  "jsdelivr": "dist/main.iife.js",
+  "scripts": {
+    "build": "vite build"
+  },
+  "devDependencies": {
+    "vite": "*",
+    "@netless/window-manager": "*"
+  }
+}
