@@ -1,10 +1,10 @@
 import type { Text, Doc } from "yjs";
 import type { AppContext } from "@netless/window-manager";
-import type { Event as WhiteEvent } from "white-web-sdk";
+import type { Event as WhiteEvent, RoomState } from "white-web-sdk";
 import type { NetlessAppMonacoAttributes } from "./typings";
 import type { Debounce } from "@netless/app-shared/create-debounce";
 import { applyUpdate, encodeStateAsUpdate } from "yjs";
-import { Awareness } from "y-protocols/awareness";
+import { Awareness, applyAwarenessUpdate, encodeAwarenessUpdate } from "y-protocols/awareness";
 import { SideEffectManager } from "@netless/app-shared/SideEffectManager";
 import { createDebounce } from "@netless/app-shared/create-debounce";
 import { fromUint8Array, toUint8Array } from "js-base64";
@@ -38,8 +38,8 @@ export class NetlessAppAttributesProvider {
     });
 
     this.setupYDoc();
-    this.setupAwareness();
     this.setupYDocPersistence();
+    this.setupAwareness();
   }
 
   public destroy(): void {
@@ -107,23 +107,97 @@ export class NetlessAppAttributesProvider {
     });
   }
 
+  private broadcastAwareness(ids: number[]): void {
+    if (this.context.getIsWritable()) {
+      const room = this.context.getRoom();
+      if (room) {
+        room.dispatchMagixEvent(
+          "AppMonacoAwareness",
+          fromUint8Array(encodeAwarenessUpdate(this.awareness, ids))
+        );
+      }
+    }
+  }
+
   private setupAwareness(): void {
-    // const displayer = this.context.getDisplayer()
+    // const displayer = this.context.getDisplayer();
     // this.awareness.setLocalStateField('user', {
     //   name: displayer.state.roomMembers.find(member=> member.memberId === displayer.observerId)?.payload?.cursorName || '',
     //   color: `rgb(${displayer.memberState(displayer.observerId).strokeColor.join(',')})`
     // })
-    // this.sideEffect.add(() => {
-    //   this.awareness.on('')
-    //   return () => {
-    //     this.awareness.
-    //   }
-    // })
-    // this.context.getRoom()?.dispatchMagixEvent('Nxxxx', {})
+
+    this.sideEffect.add(() => {
+      const handleStateChanged = (modifyState?: Partial<RoomState>): void => {
+        if (modifyState?.roomMembers) {
+          const nextRoomMemberIDs: number[] = [];
+          const roomMemberNewIDs: number[] = [];
+          modifyState.roomMembers.forEach(({ memberId }) => {
+            nextRoomMemberIDs.push(memberId);
+            if (!this.roomMemberIDs.delete(memberId)) {
+              roomMemberNewIDs.push(memberId);
+            }
+          });
+          if (nextRoomMemberIDs.length > 0) {
+            this.roomMemberIDs = new Set(nextRoomMemberIDs);
+          }
+          if (roomMemberNewIDs.length > 0) {
+            this.broadcastAwareness(Array.from(this.awareness.getStates().keys()));
+          }
+        }
+      };
+
+      const displayer = this.context.getDisplayer();
+      displayer.callbacks.on("onRoomStateChanged", handleStateChanged);
+      return () => displayer.callbacks.off("onRoomStateChanged", handleStateChanged);
+    });
+
+    this.broadcastAwareness([this.doc.clientID]);
+
+    this.sideEffect.add(() => {
+      const handleWritableChanged = () => {
+        this.broadcastAwareness([this.doc.clientID]);
+      };
+      this.context.emitter.on("writableChange", handleWritableChanged);
+      return () => this.context.emitter.off("writableChange", handleWritableChanged);
+    });
+
+    this.sideEffect.add(() => {
+      const displayer = this.context.getDisplayer();
+      const handleUpdate = (event: WhiteEvent) => {
+        if (!this.isDocDestroyed && event.authorId !== displayer.observerId) {
+          applyAwarenessUpdate(this.awareness, toUint8Array(event.payload), this);
+        }
+      };
+      displayer.addMagixEventListener("AppMonacoAwareness", handleUpdate);
+      return () => displayer.removeMagixEventListener("AppMonacoAwareness", handleUpdate);
+    });
+
+    this.sideEffect.add(() => {
+      const handleUpdate = (
+        {
+          added,
+          updated,
+          removed,
+        }: {
+          added: number[];
+          updated: number[];
+          removed: number[];
+        },
+        origin: NetlessAppAttributesProvider
+      ): void => {
+        if (origin !== this) {
+          this.broadcastAwareness([...added, ...updated, ...removed]);
+        }
+      };
+      this.awareness.on("update", handleUpdate);
+      return () => this.awareness.off("update", handleUpdate);
+    });
   }
 
   private sideEffect: SideEffectManager;
   private debounce: Debounce;
-  private attrs?: NetlessAppMonacoAttributes;
+
   private isDocDestroyed = false;
+  private attrs?: NetlessAppMonacoAttributes;
+  private roomMemberIDs: Set<number> = new Set();
 }
