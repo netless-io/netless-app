@@ -14,10 +14,19 @@ const NetlessAppMonaco: NetlessApp<NetlessAppMonacoAttributes> = {
   setup(context) {
     const box = context.getBox();
 
+    let attrs = context.getAttributes();
+    if (!attrs) {
+      context.setAttributes({});
+      attrs = context.getAttributes();
+    }
+    if (!attrs) {
+      throw new Error("[NetlessAppMonaco] No attributes");
+    }
+
     box.mountStyles(styles);
 
     const yDoc = new Doc();
-    const provider = new NetlessAppAttributesProvider(context, yDoc);
+    const provider = new NetlessAppAttributesProvider(context, attrs, yDoc);
 
     const editor = monacoEditor.create(box.$content as HTMLElement, {
       value: "",

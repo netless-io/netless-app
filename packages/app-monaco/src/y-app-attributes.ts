@@ -14,7 +14,11 @@ export class NetlessAppAttributesProvider {
 
   public yText: Text;
 
-  public constructor(public context: AppContext<NetlessAppMonacoAttributes>, public doc: Doc) {
+  public constructor(
+    public context: AppContext<NetlessAppMonacoAttributes>,
+    public attrs: NetlessAppMonacoAttributes,
+    public doc: Doc
+  ) {
     this.awareness = new Awareness(this.doc);
 
     this.sideEffect = new SideEffectManager();
@@ -23,18 +27,17 @@ export class NetlessAppAttributesProvider {
 
     this.yText = this.doc.getText("monaco");
 
-    this.attrs = context.getAttributes();
+    this.textAttr = attrs.text;
 
-    if (this.attrs?.text) {
-      applyUpdate(this.doc, toUint8Array(this.attrs.text));
+    if (this.textAttr) {
+      applyUpdate(this.doc, toUint8Array(this.textAttr), this);
     }
 
     this.sideEffect.add(() => {
-      const updateAttrs = (attrs?: NetlessAppMonacoAttributes): void => {
-        this.attrs = attrs;
-      };
-      context.emitter.on("attributesUpdate", updateAttrs);
-      return () => context.emitter.off("attributesUpdate", updateAttrs);
+      const dispose = context.mobxUtils.autorun(() => {
+        this.textAttr = attrs.text;
+      });
+      return dispose;
     });
 
     this.setupYDoc();
@@ -76,12 +79,8 @@ export class NetlessAppAttributesProvider {
     const setAttrs = this.debounce(
       (): void => {
         const text = fromUint8Array(encodeStateAsUpdate(this.doc));
-        if (text !== this.attrs?.text) {
-          if (!this.attrs) {
-            this.context.setAttributes({ text });
-          } else {
-            this.context.updateAttributes(["text"], text);
-          }
+        if (text !== this.textAttr) {
+          this.context.updateAttributes(["text"], text);
         }
       },
       { wait: 1000 }
@@ -97,8 +96,8 @@ export class NetlessAppAttributesProvider {
 
     this.sideEffect.add(() => {
       const onDocUpdated = (_update: Uint8Array, origin: NetlessAppAttributesProvider): void => {
-        // Only the one who updates the docs writes to the shared App Attributes
-        if (!this.isDocDestroyed && origin === this) {
+        // Only the one who updates the yDoc (origin is yMonaco) writes to the shared App Attributes
+        if (!this.isDocDestroyed && origin !== this) {
           setAttrs();
         }
       };
@@ -198,6 +197,6 @@ export class NetlessAppAttributesProvider {
   private debounce: Debounce;
 
   private isDocDestroyed = false;
-  private attrs?: NetlessAppMonacoAttributes;
+  private textAttr?: string;
   private roomMemberIDs: Set<number> = new Set();
 }
