@@ -35,7 +35,7 @@ export function createViteConfig({
       build: {
         lib: {
           entry,
-          formats: ["es", "cjs"],
+          formats: ["es", "cjs", "iife"],
           fileName: "main",
           name: name || "Netless" + varName,
         },
