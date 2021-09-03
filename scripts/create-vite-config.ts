@@ -43,6 +43,7 @@ export function createViteConfig({
         outDir: "dist",
         rollupOptions: {
           external: ["@netless/window-manager"],
+          output: { manualChunks: undefined },
         },
         minify: isProd,
       },

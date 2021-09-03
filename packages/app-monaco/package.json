@@ -1,7 +1,7 @@
 {
-  "name": "@netless/app-docs-viewer",
+  "name": "@netless/app-monaco",
   "version": "0.1.17",
-  "description": "Netless App Docs Viewer",
+  "description": "Netless App Code Editor",
   "repository": "netless-io/netless-app",
   "license": "MIT",
   "author": "CRIMX <straybugs@gmail.com> (https://github.com/crimx/)",
