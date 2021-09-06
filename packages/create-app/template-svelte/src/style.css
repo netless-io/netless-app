@@ -1,11 +1,10 @@
 [data-kind="todo-app"] {
+  box-sizing: border-box;
   width: 100%;
   height: 100%;
   overflow: hidden;
-  display: flex;
-  flex-flow: column nowrap;
-}
-[data-kind="todo-app"] input {
-  display: block;
-  width: 100%;
+  display: grid;
+  grid-template-rows: auto 1fr;
+  gap: .5em;
+  padding: .5em;
 }

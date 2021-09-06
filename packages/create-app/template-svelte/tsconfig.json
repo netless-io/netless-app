@@ -1,8 +1,8 @@
 {
-  "include": ["src"],
+  "include": ["src", "*.ts"],
   "compilerOptions": {
     "target": "ESNext",
-    "module": "ESnext",
+    "module": "ESNext",
     "lib": ["ESNext", "DOM"],
     "types": ["vite/client", "svelte"],
     "moduleResolution": "Node",

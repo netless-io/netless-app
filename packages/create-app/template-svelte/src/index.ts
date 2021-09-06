@@ -38,7 +38,7 @@ const TodoApp: NetlessApp<Attributes> = {
 
     context.emitter.on("attributesUpdate", attrs => {
       if (attrs?.list) {
-        list = attrs.list;
+        list = [...attrs.list];
         app.$set({ list });
       }
     });
