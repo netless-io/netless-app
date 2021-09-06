@@ -4,14 +4,14 @@ importers:
 
   .:
     specifiers:
-      '@netless/window-manager': ^0.1.55-canary.3
-      '@sveltejs/vite-plugin-svelte': ^1.0.0-next.21
+      '@netless/window-manager': ^0.1.55
+      '@sveltejs/vite-plugin-svelte': ^1.0.0-next.22
       '@tsconfig/svelte': ^2.0.1
       '@types/node': ^16.7.10
       '@typescript-eslint/eslint-plugin': ^4.30.0
       '@typescript-eslint/parser': ^4.30.0
       cross-env: ^7.0.3
-      esbuild: ^0.12.24
+      esbuild: ^0.12.25
       eslint: ^7.32.0
       eslint-config-prettier: ^8.3.0
       eslint-plugin-svelte3: ^3.2.0
@@ -22,16 +22,16 @@ importers:
       svelte: ^3.42.4
       typescript: ^4.4.2
       vite: ^2.5.3
-      white-web-sdk: ^2.13.19
+      white-web-sdk: ^2.13.20
     devDependencies:
-      '@netless/window-manager': 0.1.55-canary.3_white-web-sdk@2.13.19
-      '@sveltejs/vite-plugin-svelte': 1.0.0-next.21_svelte@3.42.4+vite@2.5.3
+      '@netless/window-manager': 0.1.55_white-web-sdk@2.13.20
+      '@sveltejs/vite-plugin-svelte': 1.0.0-next.22_svelte@3.42.4+vite@2.5.3
       '@tsconfig/svelte': 2.0.1
       '@types/node': 16.7.10
       '@typescript-eslint/eslint-plugin': 4.30.0_8a8a2d3eaa9257455a03c16dce5f55b3
       '@typescript-eslint/parser': 4.30.0_eslint@7.32.0+typescript@4.4.2
       cross-env: 7.0.3
-      esbuild: 0.12.24
+      esbuild: 0.12.25
       eslint: 7.32.0
       eslint-config-prettier: 8.3.0_eslint@7.32.0
       eslint-plugin-svelte3: 3.2.0_eslint@7.32.0+svelte@3.42.4
@@ -42,7 +42,7 @@ importers:
       svelte: 3.42.4
       typescript: 4.4.2
       vite: 2.5.3
-      white-web-sdk: 2.13.19
+      white-web-sdk: 2.13.20
 
   packages/app-docs-viewer:
     specifiers:
@@ -130,8 +130,8 @@ packages:
       js-tokens: 4.0.0
     dev: true
 
-  /@babel/runtime/7.15.3:
-    resolution: {integrity: sha512-OvwMLqNXkCXSz1kSm58sEsNuhqOx/fKpnUnKnFB5v8uDda5bLNEHNgKPvhDN6IU0LDcnHQ90LlJ0Q6jnyBSIBA==}
+  /@babel/runtime/7.15.4:
+    resolution: {integrity: sha512-99catp6bHCaxr4sJ/DbTGgHS4+Rs2RVd2g7iOap6SLGPDknRK9ztKNsE/Fg6QhSeh1FGE5f6gHGQmvvn3I3xhw==}
     engines: {node: '>=6.9.0'}
     dependencies:
       regenerator-runtime: 0.13.9
@@ -173,8 +173,8 @@ packages:
     resolution: {integrity: sha512-zMM9Ds+SawiUkakS7y94Ymqx+S0ORzpG3frZirN3l+UlXUmSUR7hF4wxCVqW+ei94JzV5kt0uXBcoOEAuiydrw==}
     dev: true
 
-  /@netless/app-docs-viewer/0.1.18:
-    resolution: {integrity: sha512-rFLAMQSDRLWdsmGFMl75F4h5D1/U2N1TwKiODUZ8BDlrDlugqRGa8McX0bY0/toP1GTBAZ6oDGSDn8TirkxFpA==}
+  /@netless/app-docs-viewer/0.1.19:
+    resolution: {integrity: sha512-ZV/5q1ADMwuFW0vO/SDP81j6DR+Rbp1bLfA4cWTqqf2qrlkLLt4H5qI3WpB8qGrdWYrk4XKYqvhuRWiiZEs4mA==}
     dependencies:
       debounce-fn: 5.0.0
       vanilla-lazyload: 17.4.0
@@ -195,20 +195,20 @@ packages:
       stylefire: 7.0.3
     dev: true
 
-  /@netless/window-manager/0.1.55-canary.3_white-web-sdk@2.13.19:
-    resolution: {integrity: sha512-20Bf8yUnooKa76sYqryubU8PpPry4PFlln88SRm5sOlxaTDHFmdSCImDkc9YtIYCwyvPYmlX0M5XCB3bSvAe1w==}
+  /@netless/window-manager/0.1.55_white-web-sdk@2.13.20:
+    resolution: {integrity: sha512-zanEmfdLCMAC44263fiqZHcQDfSLgbVijxO3YMgzCjxKC4cJEwvb4Udgf+TdsOjsuRjBRLOgscpjwamETuevMQ==}
     peerDependencies:
       white-web-sdk: ^2.13.16
     dependencies:
       '@juggle/resize-observer': 3.3.1
-      '@netless/app-docs-viewer': 0.1.18
+      '@netless/app-docs-viewer': 0.1.19
       '@netless/app-media-player': 0.1.0-beta.5
       '@netless/telebox-insider': 0.1.17
       emittery: 0.9.2
       lodash-es: 4.17.21
       nanoid: 3.1.25
       video.js: 7.14.3
-      white-web-sdk: 2.13.19
+      white-web-sdk: 2.13.20
     dev: true
 
   /@netless/xml-js/1.6.15:
@@ -302,8 +302,8 @@ packages:
       picomatch: 2.3.0
     dev: true
 
-  /@sveltejs/vite-plugin-svelte/1.0.0-next.21_svelte@3.42.4+vite@2.5.3:
-    resolution: {integrity: sha512-JjPnoQoI1+VXHjguE1bWyFYdZvPN6VTZ5RsFRpju45zICas1N5jAuOqKTbhQ1G+eEMCbhhB6zjZgQQRtaXPhNQ==}
+  /@sveltejs/vite-plugin-svelte/1.0.0-next.22_svelte@3.42.4+vite@2.5.3:
+    resolution: {integrity: sha512-B1O/GMIxpE4iJ3/FBUJ3oYGKHhJ99G9uFARsb8kVeReLDPhtZGXTM+7brLDefJuedbKkRkGEEkbGOVuEuEBo3g==}
     engines: {node: ^12.20 || ^14.13.1 || >= 16}
     peerDependencies:
       diff-match-patch: ^1.0.5
@@ -339,10 +339,6 @@ packages:
 
   /@types/node/16.7.10:
     resolution: {integrity: sha512-S63Dlv4zIPb8x6MMTgDq5WWRJQe56iBEY0O3SOFA9JrRienkOVDXSXBjjJw6HTNQYSE2JI6GMCR6LVbIMHJVvA==}
-    dev: true
-
-  /@types/node/16.7.2:
-    resolution: {integrity: sha512-TbG4TOx9hng8FKxaVrCisdaxKxqEwJ3zwHoCWXZ0Jw6mnvTInpaB99/2Cy4+XxpXtjNv9/TgfGSvZFyfV/t8Fw==}
     dev: true
 
   /@typescript-eslint/eslint-plugin/4.30.0_8a8a2d3eaa9257455a03c16dce5f55b3:
@@ -454,7 +450,7 @@ packages:
     resolution: {integrity: sha512-2ZsxJn4/nZZ6k6jIhic2l9ynGmKwprtuI5b3+M6JgqOSLvQQ/ah+heVs/0g2Ze7qJxodqR+aSY948JwJIz1gCw==}
     engines: {node: '>=8', npm: '>=5'}
     dependencies:
-      '@babel/runtime': 7.15.3
+      '@babel/runtime': 7.15.4
       '@videojs/vhs-utils': 3.0.3
       aes-decrypter: 3.1.2
       global: 4.4.0
@@ -468,7 +464,7 @@ packages:
     resolution: {integrity: sha512-bU7daxDHhzcTDbmty1cXjzsTYvx2cBGbA8hG5H2Gvpuk4sdfuvkZtMCwtCqL59p6dsleMPspyaNS+7tWXx2Y0A==}
     engines: {node: '>=8', npm: '>=5'}
     dependencies:
-      '@babel/runtime': 7.15.3
+      '@babel/runtime': 7.15.4
       global: 4.4.0
       url-toolkit: 2.2.3
     dev: true
@@ -476,7 +472,7 @@ packages:
   /@videojs/xhr/2.5.1:
     resolution: {integrity: sha512-wV9nGESHseSK+S9ePEru2+OJZ1jq/ZbbzniGQ4weAmTIepuBMSYPx5zrxxQA0E786T5ykpO8ts+LayV+3/oI2w==}
     dependencies:
-      '@babel/runtime': 7.15.3
+      '@babel/runtime': 7.15.4
       global: 4.4.0
       is-function: 1.0.2
     dev: true
@@ -498,7 +494,7 @@ packages:
   /aes-decrypter/3.1.2:
     resolution: {integrity: sha512-42nRwfQuPRj9R1zqZBdoxnaAmnIFyDi0MNyTVhjdFOd8fifXKKRfwIHIZ6AMn1or4x5WONzjwRTbTWcsIQ0O4A==}
     dependencies:
-      '@babel/runtime': 7.15.3
+      '@babel/runtime': 7.15.4
       '@videojs/vhs-utils': 3.0.3
       global: 4.4.0
       pkcs7: 1.0.4
@@ -692,8 +688,8 @@ packages:
     requiresBuild: true
     dev: true
 
-  /core-js/3.16.3:
-    resolution: {integrity: sha512-lM3GftxzHNtPNUJg0v4pC2RC6puwMd6VZA7vXUczi+SKmCWSf4JwO89VJGMqbzmB7jlK7B5hr3S64PqwFL49cA==}
+  /core-js/3.17.2:
+    resolution: {integrity: sha512-XkbXqhcXeMHPRk2ItS+zQYliAMilea2euoMsnpRRdDad6b2VY6CQQcwz1K8AnWesfw4p165RzY0bTnr3UrbYiA==}
     requiresBuild: true
     dev: true
 
@@ -745,8 +741,8 @@ packages:
     engines: {node: '>=0.10'}
     dev: true
 
-  /deep-is/0.1.3:
-    resolution: {integrity: sha1-s2nW+128E+7PUk+RsHD+7cNXzzQ=}
+  /deep-is/0.1.4:
+    resolution: {integrity: sha512-oIPzksmTg4/MriiaYGO+okXDT7ztn/w3Eptv/+gSIdMdKsJo0u4CfYNFJPy+4SKMuCqGw2wxnA+URMg3t8a/bQ==}
     dev: true
 
   /detect-hover/1.0.3:
@@ -808,8 +804,8 @@ packages:
       ansi-colors: 4.1.1
     dev: true
 
-  /esbuild/0.12.24:
-    resolution: {integrity: sha512-C0ibY+HsXzYB6L/pLWEiWjMpghKsIc58Q5yumARwBQsHl9DXPakW+5NI/Y9w4YXiz0PEP6XTGTT/OV4Nnsmb4A==}
+  /esbuild/0.12.25:
+    resolution: {integrity: sha512-woie0PosbRSoN8gQytrdCzUbS2ByKgO8nD1xCZkEup3D9q92miCze4PqEI9TZDYAuwn6CruEnQpJxgTRWdooAg==}
     hasBin: true
     requiresBuild: true
     dev: true
@@ -1333,7 +1329,7 @@ packages:
   /m3u8-parser/4.7.0:
     resolution: {integrity: sha512-48l/OwRyjBm+QhNNigEEcRcgbRvnUjL7rxs597HmW9QSNbyNvt+RcZ9T/d9vxi9A9z7EZrB1POtZYhdRlwYQkQ==}
     dependencies:
-      '@babel/runtime': 7.15.3
+      '@babel/runtime': 7.15.4
       '@videojs/vhs-utils': 3.0.3
       global: 4.4.0
     dev: true
@@ -1392,8 +1388,8 @@ packages:
     resolution: {integrity: sha512-FM9nNUYrRBAELZQT3xeZQ7fmMOBg6nWNmJKTcgsJeaLstP/UODVpGsr5OhXhhXg6f+qtJ8uiZ+PUxkDWcgIXLw==}
     dev: false
 
-  /mobx-react-lite/3.2.0_0729acb4a737c8184c6fffb74f5b1c86:
-    resolution: {integrity: sha512-q5+UHIqYCOpBoFm/PElDuOhbcatvTllgRp3M1s+Hp5j0Z6XNgDbgqxawJ0ZAUEyKM8X1zs70PCuhAIzX1f4Q/g==}
+  /mobx-react-lite/3.2.1_893ed1b834c2abca974b42d8bab564d5:
+    resolution: {integrity: sha512-hwURgfmP2apX3HQrB55V9DN47kuN3C6KlQvI5UIfJRibXma72C/JudcNt2r9dWjAdFMrcZoz1ivvtXMCkJ2aQA==}
     peerDependencies:
       mobx: ^6.1.0
       react: ^16.8.0 || ^17
@@ -1405,12 +1401,12 @@ packages:
       react-native:
         optional: true
     dependencies:
-      mobx: 6.3.2
+      mobx: 6.3.3
       react: 16.14.0
       react-dom: 16.14.0_react@16.14.0
     dev: true
 
-  /mobx-react/7.2.0_0729acb4a737c8184c6fffb74f5b1c86:
+  /mobx-react/7.2.0_893ed1b834c2abca974b42d8bab564d5:
     resolution: {integrity: sha512-KHUjZ3HBmZlNnPd1M82jcdVsQRDlfym38zJhZEs33VxyVQTvL77hODCArq6+C1P1k/6erEeo2R7rpE7ZeOL7dg==}
     peerDependencies:
       mobx: ^6.1.0
@@ -1423,14 +1419,14 @@ packages:
       react-native:
         optional: true
     dependencies:
-      mobx: 6.3.2
-      mobx-react-lite: 3.2.0_0729acb4a737c8184c6fffb74f5b1c86
+      mobx: 6.3.3
+      mobx-react-lite: 3.2.1_893ed1b834c2abca974b42d8bab564d5
       react: 16.14.0
       react-dom: 16.14.0_react@16.14.0
     dev: true
 
-  /mobx/6.3.2:
-    resolution: {integrity: sha512-xGPM9dIE1qkK9Nrhevp0gzpsmELKU4MFUJRORW/jqxVFIHHWIoQrjDjL8vkwoJYY3C2CeVJqgvl38hgKTalTWg==}
+  /mobx/6.3.3:
+    resolution: {integrity: sha512-JoNU50rO6d1wHwKPJqKq4rmUMbYnI9CsJmBo+Cu4exBYenFvIN77LWrZENpzW6reZPADtXMmB1DicbDSfy8Clw==}
     dev: true
 
   /monaco-editor/0.27.0:
@@ -1441,7 +1437,7 @@ packages:
     resolution: {integrity: sha512-oKS5G0jCcHHJ3sHYlcLeM9Xcbuixl08eAx7QW0Th7ChlZiI0YvLtGaHE/L0aKUBJFNvtkeksIr8XgJgSBBsS4g==}
     hasBin: true
     dependencies:
-      '@babel/runtime': 7.15.3
+      '@babel/runtime': 7.15.4
       '@videojs/vhs-utils': 3.0.3
       global: 4.4.0
       xmldom: 0.5.0
@@ -1456,7 +1452,7 @@ packages:
     engines: {node: '>=8', npm: '>=5'}
     hasBin: true
     dependencies:
-      '@babel/runtime': 7.15.3
+      '@babel/runtime': 7.15.4
     dev: true
 
   /nanoid/3.1.25:
@@ -1489,7 +1485,7 @@ packages:
     resolution: {integrity: sha512-74RlY5FCnhq4jRxVUPKDaRwrVNXMqsGsiW6AJw4XK8hmtm10wC0ypZBLw5IIp85NZMr91+qd1RvvENwg7jjRFw==}
     engines: {node: '>= 0.8.0'}
     dependencies:
-      deep-is: 0.1.3
+      deep-is: 0.1.4
       fast-levenshtein: 2.0.6
       levn: 0.4.1
       prelude-ls: 1.2.1
@@ -1532,7 +1528,7 @@ packages:
     resolution: {integrity: sha512-afRERtHn54AlwaF2/+LFszyAANTCggGilmcmILUzEjvs3XgFZT+xE6+QWQcAGmu4xajy+Xtj7acLOPdx5/eXWQ==}
     hasBin: true
     dependencies:
-      '@babel/runtime': 7.15.3
+      '@babel/runtime': 7.15.4
     dev: true
 
   /plyr/3.6.8:
@@ -1622,7 +1618,7 @@ packages:
       '@protobufjs/pool': 1.1.0
       '@protobufjs/utf8': 1.1.0
       '@types/long': 4.0.1
-      '@types/node': 16.7.2
+      '@types/node': 16.7.10
       long: 4.0.0
     dev: true
 
@@ -2014,7 +2010,7 @@ packages:
   /video.js/7.14.3:
     resolution: {integrity: sha512-6avCdSIfn5ss5NOgoQfY/xEfPNcz9DXSw+ZN80NwPguCdRd4VL4y40b/d7osYJwyCdF+YkvhqAW7dw4s0vBigg==}
     dependencies:
-      '@babel/runtime': 7.15.3
+      '@babel/runtime': 7.15.4
       '@videojs/http-streaming': 2.9.2
       '@videojs/vhs-utils': 3.0.3
       '@videojs/xhr': 2.5.1
@@ -2044,7 +2040,7 @@ packages:
     engines: {node: '>=12.2.0'}
     hasBin: true
     dependencies:
-      esbuild: 0.12.24
+      esbuild: 0.12.25
       postcss: 8.3.6
       resolve: 1.20.0
       rollup: 2.56.3
@@ -2060,20 +2056,20 @@ packages:
       isexe: 2.0.0
     dev: true
 
-  /white-web-sdk/2.13.19:
-    resolution: {integrity: sha512-hIV59tvIPUOeGVlqDIp7bb7HilPYJfvMH6Op3Od6yauOR3ss18E1ftaDN+qPn3Ys7A+FkvP1BwKNkYezHiQ5mw==}
+  /white-web-sdk/2.13.20:
+    resolution: {integrity: sha512-zpN66Jtvc/mY1pFcJDMBRsqH3BU5hFxNn/g0+xyPlN5OBIaIDMxzg2rPPcIbjNp/aZ0Zc1+XTk1iU8O3mlQGmg==}
     dependencies:
       '@netless/canvas-polyfill': 0.0.4
       '@netless/xml-js': 1.6.15
       atob: 2.1.2
       bezier-js: 2.6.1
       color: 3.2.1
-      core-js: 3.16.3
+      core-js: 3.17.2
       detect-it: 3.0.7
       eventemitter3: 4.0.7
       mathjs: 6.6.5
-      mobx: 6.3.2
-      mobx-react: 7.2.0_0729acb4a737c8184c6fffb74f5b1c86
+      mobx: 6.3.3
+      mobx-react: 7.2.0_893ed1b834c2abca974b42d8bab564d5
       protobufjs: 6.11.2
       query-string: 5.1.1
       react: 16.14.0

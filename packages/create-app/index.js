@@ -15,6 +15,10 @@ const TEMPLATES = [
     name: "vanilla",
     color: yellow,
   },
+  {
+    name: "svelte",
+    color: lightRed,
+  },
 ];
 
 const TEMPLATE_NAMES = TEMPLATES.map(t => t.name);
@@ -27,7 +31,7 @@ async function init() {
   let targetDir = argv._[0];
   let template = argv.template || argv.t;
 
-  const defaultProjectName = !targetDir ? "vite-project" : targetDir;
+  const defaultProjectName = !targetDir ? "netless-app-project" : targetDir;
 
   let result = {};
 
@@ -146,11 +150,11 @@ async function init() {
   switch (pkgManager) {
     case "yarn":
       console.log("  yarn");
-      console.log("  yarn dev");
+      console.log("  yarn build");
       break;
     default:
       console.log(`  ${pkgManager} install`);
-      console.log(`  ${pkgManager} run dev`);
+      console.log(`  ${pkgManager} run build`);
       break;
   }
   console.log();

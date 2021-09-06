@@ -1,4 +1,5 @@
 import type { NetlessApp } from "@netless/window-manager";
+import styles from "./style.css?inline";
 
 export interface Attributes {
   list: string[];
@@ -62,15 +63,7 @@ const TodoApp: NetlessApp<Attributes> = {
     content.append(ul);
 
     const box = context.getBox();
-    box.mountStyles(`
-      [data-kind="todo-app"] {
-        width: 100%; height: 100%; overflow: hidden;
-        display: flex; flex-flow: column nowrap;
-      }
-      [data-kind="todo-app"] input {
-        display: block; width: 100%;
-      }
-    `);
+    box.mountStyles(styles);
     box.mountContent(content);
   },
 };

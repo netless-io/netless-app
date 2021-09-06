@@ -10,7 +10,10 @@
   },
   "devDependencies": {
     "@netless/window-manager": "^0.1.55",
+    "@sveltejs/vite-plugin-svelte": "^1.0.0-next.22",
     "@types/node": "^16.7.10",
+    "resolve": "^1.20.0",
+    "svelte": "^3.42.4",
     "vite": "^2.5.3"
   }
 }
