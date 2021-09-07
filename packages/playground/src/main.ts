@@ -20,6 +20,35 @@ const $tools = $("#tools") as HTMLDivElement;
 const $whiteboard = $("#whiteboard") as HTMLDivElement;
 const $actions = $("#actions") as HTMLDivElement;
 const store = sessionStorage;
+const persistStore = localStorage;
+
+interface RoomItem {
+  uuid: string;
+  roomToken: string;
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const post = (path: string, body: any) =>
+  fetch(`https://api.netless.link/v5/${path}`, {
+    method: "POST",
+    headers: {
+      token: env.VITE_TOKEN,
+      region: "cn-hz",
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(body),
+  }).then(r => r.json());
+
+async function createRoom() {
+  const { uuid } = await post("rooms", { name: "test1", limit: 0 });
+  log(`uuid = %O`, uuid);
+  const roomToken = await post(`tokens/rooms/${uuid}`, { lifespan: 0, role: "admin" });
+  log(`roomToken = %O`, roomToken);
+  const rooms = JSON.parse(persistStore.getItem("rooms") || "[]") as RoomItem[];
+  rooms.unshift({ uuid, roomToken });
+  persistStore.setItem("rooms", JSON.stringify(rooms));
+  window.open(location.href, "_blank");
+}
 
 const sdk = new WhiteWebSdk({
   appIdentifier: env.VITE_APPID,
@@ -85,6 +114,17 @@ function setupTools() {
   };
 
   createEmergencyBtn();
+
+  const createNewPageBtn = () => {
+    const btn = document.createElement("button");
+    btn.classList.add("new-page-btn");
+    btn.textContent = "NEW ROOM";
+    btn.title = "create new room and window.open, save as localStorage/rooms";
+    btn.addEventListener("click", createRoom);
+    $tools.append(btn);
+  };
+
+  createNewPageBtn();
 }
 
 async function setupApps() {
@@ -130,16 +170,28 @@ async function setupApps() {
   document.title += " - loaded.";
 }
 
-// prettier-ignore
-sdk.joinRoom({
-  roomToken: env.VITE_ROOM_TOKEN,
-  uuid: env.VITE_ROOM_UUID,
-  invisiblePlugins: [WindowManager],
-  useMultiViews: true,
-  disableNewPencil: false,
-  floatBar: true,
-}).then(room => {
-  window.room = room;
-  window.manager = room.getInvisiblePlugin(WindowManager.kind) as WindowManager;
-  return setupTools(), setupApps();
-});
+const rooms = JSON.parse(persistStore.getItem("rooms") || "[]") as RoomItem[];
+
+let item = rooms[0];
+if (!item && env.VITE_ROOM_TOKEN && env.VITE_ROOM_UUID) {
+  item = { uuid: env.VITE_ROOM_UUID, roomToken: env.VITE_ROOM_TOKEN };
+}
+if (!item) {
+  document.title += ` - creating new room...`;
+  createRoom().then(() => location.reload());
+}
+
+if (item) {
+  // prettier-ignore
+  sdk.joinRoom({
+    ...item,
+    invisiblePlugins: [WindowManager],
+    useMultiViews: true,
+    disableNewPencil: false,
+    floatBar: true,
+  }).then(room => {
+    window.room = room;
+    window.manager = room.getInvisiblePlugin(WindowManager.kind) as WindowManager;
+    return setupTools(), setupApps();
+  });
+}

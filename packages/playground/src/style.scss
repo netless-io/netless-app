@@ -50,6 +50,12 @@
   }
 }
 
+.new-page-btn {
+  @extend .reset-btn;
+  margin-left: 0;
+  background-color: #0074d9;
+}
+
 .netless-window-manager-sizer::before,
 .netless-window-manager-sizer::after {
   background: #f4f4f4;
