@@ -1,0 +1,32 @@
+.netless-app-browser {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-flow: column nowrap;
+}
+.netless-app-browser-omnibox {
+  padding: 2px 4px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.netless-app-browser-status {
+  width: 5em;
+  font-size: x-small;
+  text-align: center;
+  &.loading {
+    color: grey;
+  }
+  &.ready {
+    color: green;
+  }
+}
+.netless-app-browser-url {
+  flex-grow: 1;
+}
+.netless-app-browser-go {
+  padding: 1px 12px;
+}
+.netless-app-browser-content {
+  flex-grow: 1;
+}
