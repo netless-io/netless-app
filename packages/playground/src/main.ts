@@ -3,6 +3,9 @@ import { WhiteWebSdk, ApplianceNames } from "white-web-sdk";
 
 import "@netless/window-manager/dist/style.css";
 import { WindowManager } from "@netless/window-manager";
+
+import faker from "faker";
+
 import type { PlaygroundConfig, PlaygroundConfigs } from "../typings";
 
 declare global {
@@ -189,6 +192,9 @@ if (item) {
     useMultiViews: true,
     disableNewPencil: false,
     floatBar: true,
+    userPayload: {
+      cursorName: faker.name.firstName()
+    }
   }).then(room => {
     window.room = room;
     window.manager = room.getInvisiblePlugin(WindowManager.kind) as WindowManager;

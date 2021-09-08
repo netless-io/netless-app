@@ -4,5 +4,9 @@
   "private": true,
   "scripts": {
     "dev": "vite --open --host"
+  },
+  "devDependencies": {
+    "@types/faker": "^5.5.8",
+    "faker": "^5.5.3"
   }
 }

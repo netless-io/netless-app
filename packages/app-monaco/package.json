@@ -24,13 +24,15 @@
   "dependencies": {
     "debounce-fn": "^5.0.0",
     "js-base64": "^3.6.1",
+    "lib0": "^0.2.42",
     "monaco-editor": "^0.27.0",
-    "vanilla-lazyload": "^17.4.0",
-    "y-monaco": "^0.1.2",
+    "randomcolor": "^0.6.2",
     "y-protocols": "^1.0.5",
     "yjs": "^13.5.12"
   },
   "devDependencies": {
-    "@netless/app-shared": "workspace:^0.1.0"
+    "@netless/app-shared": "workspace:^0.1.0",
+    "@types/lodash.isequal": "^4.5.5",
+    "@types/randomcolor": "^0.5.6"
   }
 }

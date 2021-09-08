@@ -32,5 +32,5 @@
   "[typescriptreact]": {
     "editor.defaultFormatter": "esbenp.prettier-vscode"
   },
-  "cSpell.words": ["Magix"]
+  "cSpell.words": ["autorun", "isequal", "Magix", "Mutex", "randomcolor", "Tele"]
 }

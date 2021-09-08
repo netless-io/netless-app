@@ -6,20 +6,55 @@
   background-color: rgb(250, 129, 0, 0.5);
 }
 
-.yRemoteSelectionHead {
-  position: absolute;
-  border-left: orange solid 2px;
-  border-top: orange solid 2px;
-  border-bottom: orange solid 2px;
-  height: 100%;
-  box-sizing: border-box;
+.netless-app-monaco-cursor {
+  --content: "";
+  --bg-color: orange;
+  --text-color: #fff;
+  --label: block;
+  margin-left: -1px;
+  border-left: 2px solid var(--bg-color);
+  transition: top 0.2s, left 0.2s;
+  user-select: none;
 }
 
-.yRemoteSelectionHead::after {
+.netless-app-monaco-cursor::before {
+  display: var(--label);
+  content: var(--content);
   position: absolute;
-  content: " ";
-  border: 3px solid orange;
-  border-radius: 4px;
+  z-index: 1;
+  top: -18px;
   left: -4px;
-  top: -5px;
+  font-size: 12px;
+  line-height: 20px;
+  height: 20px;
+  padding: 0 5px;
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  word-break: keep-all;
+  white-space: nowrap;
+  background: var(--bg-color);
+  border-radius: 4px;
+  color: var(--text-color);
+}
+
+.netless-app-monaco-cursor-first-line::before {
+  top: 16px;
+  left: -2px;
+}
+
+.netless-app-monaco-cursor-right::before {
+  left: unset;
+  right: 2px;
+}
+
+.netless-app-monaco-cursor::after {
+  content: " ";
+  position: absolute;
+  left: -4px;
+  top: -4px;
+  width: 6px;
+  height: 6px;
+  border-radius: 4px;
+  background: var(--bg-color);
 }

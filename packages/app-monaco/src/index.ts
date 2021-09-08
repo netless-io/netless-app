@@ -2,10 +2,10 @@ import styles from "./style.scss?inline";
 
 import type { NetlessApp } from "@netless/window-manager";
 import { Doc } from "yjs";
-import { MonacoBinding } from "y-monaco";
 import { editor as monacoEditor } from "monaco-editor";
 import type { NetlessAppMonacoAttributes } from "./typings";
 import { NetlessAppAttributesProvider } from "./y-app-attributes";
+import { YMonaco } from "./y-monaco";
 
 export type { NetlessAppMonacoAttributes } from "./typings";
 
@@ -16,11 +16,17 @@ const NetlessAppMonaco: NetlessApp<NetlessAppMonacoAttributes> = {
 
     let attrs = context.getAttributes();
     if (!attrs) {
-      context.setAttributes({});
+      context.setAttributes({ cursors: {}, selections: {} });
       attrs = context.getAttributes();
     }
     if (!attrs) {
       throw new Error("[NetlessAppMonaco] No attributes");
+    }
+    if (!attrs.cursors) {
+      context.updateAttributes(["cursors"], {});
+    }
+    if (!attrs.selections) {
+      context.updateAttributes(["selections"], {});
     }
 
     box.mountStyles(styles);
@@ -33,12 +39,12 @@ const NetlessAppMonaco: NetlessApp<NetlessAppMonacoAttributes> = {
       automaticLayout: true,
     });
 
-    const monacoBinding = new MonacoBinding(
-      provider.yText,
-      editor.getModel(),
-      new Set([editor]),
-      provider.awareness
-    );
+    if (import.meta.env.DEV) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (window as any).monacoEditor = editor;
+    }
+
+    const monacoBinding = new YMonaco(context, attrs, box, editor, provider.doc, provider.yText);
 
     context.emitter.on("destroy", () => {
       provider.destroy();

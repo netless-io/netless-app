@@ -33,12 +33,11 @@ export class NetlessAppAttributesProvider {
       applyUpdate(this.doc, toUint8Array(this.textAttr), this);
     }
 
-    this.sideEffect.add(() => {
-      const dispose = context.mobxUtils.autorun(() => {
+    this.sideEffect.add(() =>
+      context.mobxUtils.autorun(() => {
         this.textAttr = attrs.text;
-      });
-      return dispose;
-    });
+      })
+    );
 
     this.setupYDoc();
     this.setupYDocPersistence();
@@ -80,6 +79,7 @@ export class NetlessAppAttributesProvider {
       (): void => {
         const text = fromUint8Array(encodeStateAsUpdate(this.doc));
         if (text !== this.textAttr) {
+          // @TODO handle large text
           this.context.updateAttributes(["text"], text);
         }
       },
