@@ -125,7 +125,7 @@ export class CursorDecoration {
           this.cursorStyleRule.style.setProperty("display", "block");
           this.cursorVisible = true;
         }
-        this.hideCursorTimeout = setTimeout(() => this.setCursorVisible(false), 5000);
+        this.hideCursorTimeout = setTimeout(() => this.setCursorVisible(false), 8000);
       }
     } else {
       if (this.cursorStyleRule && this.cursorVisible) {
