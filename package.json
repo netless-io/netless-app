@@ -2,7 +2,7 @@
   "name": "netless-app-monorepo",
   "private": true,
   "devDependencies": {
-    "@netless/window-manager": "^0.1.63-canary.1",
+    "@netless/window-manager": "^0.1.63-canary.2",
     "@sveltejs/vite-plugin-svelte": "^1.0.0-next.22",
     "@tsconfig/svelte": "^2.0.1",
     "@types/node": "^16.7.10",

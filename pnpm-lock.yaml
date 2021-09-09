@@ -4,7 +4,7 @@ importers:
 
   .:
     specifiers:
-      '@netless/window-manager': ^0.1.63-canary.1
+      '@netless/window-manager': ^0.1.63-canary.2
       '@sveltejs/vite-plugin-svelte': ^1.0.0-next.22
       '@tsconfig/svelte': ^2.0.1
       '@types/node': ^16.7.10
@@ -24,7 +24,7 @@ importers:
       vite: ^2.5.3
       white-web-sdk: ^2.13.20
     devDependencies:
-      '@netless/window-manager': 0.1.63-canary.1_white-web-sdk@2.13.20
+      '@netless/window-manager': 0.1.63-canary.2_white-web-sdk@2.13.20
       '@sveltejs/vite-plugin-svelte': 1.0.0-next.22_svelte@3.42.4+vite@2.5.3
       '@tsconfig/svelte': 2.0.1
       '@types/node': 16.7.10
@@ -99,6 +99,9 @@ importers:
       debounce-fn: ^5.0.0
     dependencies:
       debounce-fn: 5.0.0
+
+  packages/app-vote:
+    specifiers: {}
 
   packages/create-app:
     specifiers:
@@ -205,8 +208,8 @@ packages:
       stylefire: 7.0.3
     dev: true
 
-  /@netless/window-manager/0.1.63-canary.1_white-web-sdk@2.13.20:
-    resolution: {integrity: sha512-LsDDwR5ajnzaSmlfxQTNJBVfuZ/S+mZZaS6vpIYR8nApLxpIyfV2W6siw9Z6vQwwkOyPvQJqtFkL/WynXlKSOQ==}
+  /@netless/window-manager/0.1.63-canary.2_white-web-sdk@2.13.20:
+    resolution: {integrity: sha512-cvjaBJk1X9UoasiPfsa5RXV/O/dhQXdOfKBpT7dGDUFvsE6AsjGD35X/+sU7oyJIVMnTOFWHPBPLjfjaflOU1g==}
     peerDependencies:
       white-web-sdk: ^2.13.16
     dependencies:

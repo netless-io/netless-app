@@ -6,8 +6,7 @@ const options: PlaygroundConfigs<NetlessAppMonacoAttributes> = [
   {
     app: NetlessAppMonaco,
     options: {
-      scenePath: `/${NetlessAppMonaco.kind}/1`,
-      title: "VSCode",
+      title: "Monaco",
     },
   },
 ];

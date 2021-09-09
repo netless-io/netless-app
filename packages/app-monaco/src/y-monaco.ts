@@ -24,6 +24,7 @@ export class YMonaco {
   ) {
     const monacoModel = monacoEditor.getModel();
     this.authorId = String(this.context.getDisplayer().observerId);
+    this.MagixMonacoDocChannel = this.context.appId + "AppMonacoDoc";
 
     if (!monacoModel) {
       throw new Error("[NetlessAppMonaco] No Monaco Model");
@@ -108,16 +109,6 @@ export class YMonaco {
   }
 
   private setupDocUpdate(): void {
-    //   this.sideEffect.add(() => {
-    //     const displayer = this.context.getDisplayer();
-    //     const handleUpdate = (event: WhiteEvent) => {
-    //       if (event.authorId !== displayer.observerId) {
-    //         this.decorations.get(String(event.authorId))?.rerender();
-    //       }
-    //     };
-    //     displayer.addMagixEventListener("AppMonacoDoc", handleUpdate);
-    //     return () => displayer.removeMagixEventListener("AppMonacoDoc", handleUpdate);
-    //   });
     const displayer = this.context.getDisplayer();
 
     this.sideEffect.add(() => {
@@ -131,8 +122,8 @@ export class YMonaco {
           }
         }
       };
-      displayer.addMagixEventListener("AppMonacoDoc", handleUpdate);
-      return () => displayer.removeMagixEventListener("AppMonacoDoc", handleUpdate);
+      displayer.addMagixEventListener(this.MagixMonacoDocChannel, handleUpdate);
+      return () => displayer.removeMagixEventListener(this.MagixMonacoDocChannel, handleUpdate);
     });
 
     this.sideEffect.add(() => {
@@ -141,7 +132,7 @@ export class YMonaco {
           const room = this.context.getRoom();
           if (room) {
             this.authorId = String(displayer.observerId);
-            room.dispatchMagixEvent("AppMonacoDoc", fromUint8Array(update));
+            room.dispatchMagixEvent(this.MagixMonacoDocChannel, fromUint8Array(update));
           }
         }
       };
@@ -281,4 +272,6 @@ export class YMonaco {
   private mux = createMutex();
 
   private deltaDecorations: string[] = [];
+
+  private readonly MagixMonacoDocChannel: string;
 }
