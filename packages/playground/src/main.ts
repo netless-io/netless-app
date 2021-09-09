@@ -50,7 +50,6 @@ async function createRoom() {
   const rooms = JSON.parse(persistStore.getItem("rooms") || "[]") as RoomItem[];
   rooms.unshift({ uuid, roomToken });
   persistStore.setItem("rooms", JSON.stringify(rooms));
-  window.open(location.href, "_blank");
 }
 
 const sdk = new WhiteWebSdk({
@@ -98,7 +97,7 @@ function setupTools() {
     btn.classList.add("reset-btn");
     btn.textContent = "RESET";
     btn.title = "remove all apps, reset camera";
-    btn.addEventListener("click", async () => {
+    btn.addEventListener("click", async e => {
       // close all apps
       await Promise.all(Object.keys(manager.apps || {}).map(appId => manager.closeApp(appId)));
       // clear attributes
@@ -112,6 +111,9 @@ function setupTools() {
       });
       // reset camera
       manager.mainView.moveCamera({ centerX: 0, centerY: 0, scale: 1 });
+      if (e.metaKey || e.ctrlKey || e.shiftKey) {
+        location.reload();
+      }
     });
     $tools.append(btn);
   };
@@ -123,7 +125,10 @@ function setupTools() {
     btn.classList.add("new-page-btn");
     btn.textContent = "NEW ROOM";
     btn.title = "create new room and window.open, save as localStorage/rooms";
-    btn.addEventListener("click", createRoom);
+    btn.addEventListener("click", async () => {
+      await createRoom();
+      window.open(location.origin + location.pathname, "_blank");
+    });
     $tools.append(btn);
   };
 
@@ -145,10 +150,6 @@ async function setupApps() {
     $actions.append(caption);
   };
 
-  room.setScenePath("/init");
-  WindowManager.mount({ room, container: $whiteboard, chessboard: false });
-  window.manager = room.getInvisiblePlugin(WindowManager.kind) as WindowManager;
-
   const configs = import.meta.glob("../../*/playground.ts");
   const apps = (await Promise.all(Object.values(configs).map(p => p()))) as {
     default: PlaygroundConfig | PlaygroundConfigs;
@@ -165,19 +166,26 @@ async function setupApps() {
     for (const { app, ...restOptions } of a) {
       WindowManager.register({ kind: app.kind, src: app });
       createBtn(restOptions.options?.title || `${app.kind} ${i++}`, app.kind, () =>
-        manager.addApp({ kind: app.kind, ...restOptions })
+        window.manager.addApp({ kind: app.kind, ...restOptions })
       );
     }
   }
 
+  room.setScenePath("/init");
+  WindowManager.mount({ room, container: $whiteboard, chessboard: false });
+  window.manager = room.getInvisiblePlugin(WindowManager.kind) as WindowManager;
   manager.switchMainViewToWriter();
 
   document.title += " - loaded.";
 }
 
+const query = new URLSearchParams(location.search);
 const rooms = JSON.parse(persistStore.getItem("rooms") || "[]") as RoomItem[];
 
 let item = rooms[0];
+if (query.has("uuid") && query.has("roomToken")) {
+  item = { uuid: query.get("uuid") as string, roomToken: query.get("roomToken") as string };
+}
 if (!item && env.VITE_ROOM_TOKEN && env.VITE_ROOM_UUID) {
   item = { uuid: env.VITE_ROOM_UUID, roomToken: env.VITE_ROOM_TOKEN };
 }
@@ -187,6 +195,10 @@ if (!item) {
 }
 
 if (item) {
+  console.log(item);
+  query.set("uuid", item.uuid);
+  query.set("roomToken", item.roomToken);
+  history.replaceState(item, "", location.origin + location.pathname + "?" + query.toString());
   // prettier-ignore
   sdk.joinRoom({
     ...item,
