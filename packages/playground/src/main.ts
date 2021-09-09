@@ -145,6 +145,10 @@ async function setupApps() {
     $actions.append(caption);
   };
 
+  room.setScenePath("/init");
+  WindowManager.mount({ room, container: $whiteboard, chessboard: false });
+  window.manager = room.getInvisiblePlugin(WindowManager.kind) as WindowManager;
+
   const configs = import.meta.glob("../../*/playground.ts");
   const apps = (await Promise.all(Object.values(configs).map(p => p()))) as {
     default: PlaygroundConfig | PlaygroundConfigs;
@@ -166,8 +170,6 @@ async function setupApps() {
     }
   }
 
-  room.setScenePath("/init");
-  WindowManager.mount({ room, container: $whiteboard, chessboard: false });
   manager.switchMainViewToWriter();
 
   document.title += " - loaded.";
@@ -197,7 +199,6 @@ if (item) {
     }
   }).then(room => {
     window.room = room;
-    window.manager = room.getInvisiblePlugin(WindowManager.kind) as WindowManager;
     return setupTools(), setupApps();
   });
 }
