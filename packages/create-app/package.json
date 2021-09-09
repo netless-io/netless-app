@@ -15,6 +15,6 @@
     "prompts": "^2.4.1"
   },
   "scripts": {
-    "prepublish": "rimraf template-\\*/node_modules && rimraf template-\\*/.env.local"
+    "prepublishOnly": "rimraf template-\\*/node_modules template-\\*/.env.local"
   }
 }
