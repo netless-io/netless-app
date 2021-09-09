@@ -1,0 +1,76 @@
+.netless-app-vote {
+  width: 100%;
+  height: 100%;
+  background-color: #fff;
+  display: flex;
+  flex-flow: column nowrap;
+  [contenteditable="true"] {
+    border-bottom: 1px dashed #ccc;
+  }
+  button {
+    height: 25px;
+    gap: 4px;
+    background-color: transparent;
+    border: 2px solid transparent;
+    border-radius: 4px;
+    &:hover {
+      border-color: #ccc;
+    }
+    &:active {
+      background-color: #ccc;
+    }
+    img {
+      width: 16px;
+      height: 16px;
+    }
+  }
+}
+.netless-app-vote-controls {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+}
+.netless-app-vote-title {
+  padding: 8px;
+  h2 {
+    margin: 0;
+    padding: 2px 8px;
+    display: inline-block;
+    line-height: 1.1;
+    color: #333;
+    border-bottom: 1px dashed transparent;
+  }
+}
+.netless-app-vote-items {
+  flex-grow: 1;
+  margin: 0;
+  padding: 0 8px 12px;
+  list-style-type: none;
+  overflow-y: auto;
+  li {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    line-height: 1.5;
+    padding-bottom: 4px;
+    button {
+      display: inline-block;
+    }
+  }
+}
+.netless-app-vote-item {
+  display: block;
+  font-size: 16px;
+  line-height: 1.5;
+  font-family: Arial, sans-serif;
+  flex-grow: 1;
+  border: 1px solid #eee;
+  border-radius: 4px;
+  padding: 2px 8px;
+  &[readonly] {
+    border-color: transparent;
+  }
+}
+.netless-app-vote-count {
+  padding-right: 8px;
+}
