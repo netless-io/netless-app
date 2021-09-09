@@ -1,3 +1,11 @@
+body {
+  margin: 0;
+}
+
+* {
+  box-sizing: border-box;
+}
+
 #app {
   box-sizing: border-box;
   height: 100vh;
@@ -16,6 +24,10 @@
   display: flex;
   gap: 0.5em;
   user-select: none;
+  transition: height 0.2s;
+  button.active {
+    color: red;
+  }
 }
 
 #actions {
@@ -27,6 +39,7 @@
   gap: 0.25em;
   padding-right: 1em;
   user-select: none;
+  transition: width 0.2s;
 }
 
 .two-side {
@@ -36,11 +49,11 @@
   overflow: hidden;
 }
 
-.reset-btn {
+.new-page-btn {
   margin-left: auto;
   padding: 0 10px;
   color: white;
-  background-color: #ff4136;
+  background-color: #0074d9;
   border: 0;
   border-radius: 2px;
   transition: filter 0.2s;
@@ -50,10 +63,10 @@
   }
 }
 
-.new-page-btn {
-  @extend .reset-btn;
+.reset-btn {
+  @extend .new-page-btn;
   margin-left: 0;
-  background-color: #0074d9;
+  background-color: #ff4136;
 }
 
 .netless-window-manager-sizer::before,
