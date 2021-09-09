@@ -16,11 +16,14 @@ const NetlessAppMonaco: NetlessApp<NetlessAppMonacoAttributes> = {
 
     let attrs = context.getAttributes();
     if (!attrs) {
-      context.setAttributes({ cursors: {}, selections: {} });
+      context.setAttributes({ text: "", cursors: {}, selections: {} });
       attrs = context.getAttributes();
     }
     if (!attrs) {
       throw new Error("[NetlessAppMonaco] No attributes");
+    }
+    if (attrs.text == null) {
+      context.updateAttributes(["text"], "");
     }
     if (!attrs.cursors) {
       context.updateAttributes(["cursors"], {});
@@ -42,6 +45,8 @@ const NetlessAppMonaco: NetlessApp<NetlessAppMonacoAttributes> = {
     if (import.meta.env.DEV) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (window as any).monacoEditor = editor;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (window as any).monacoContext = context;
     }
 
     const monacoBinding = new YMonaco(context, attrs, box, editor, provider.doc, provider.yText);

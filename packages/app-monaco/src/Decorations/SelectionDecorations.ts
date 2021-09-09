@@ -4,8 +4,9 @@ import type { editor } from "monaco-editor";
 import { Range } from "monaco-editor";
 import type { StyleManager } from "./StyleManager";
 
-export class SelectionDecoration {
-  public rawSelectionStr?: string;
+export class SelectionDecorations {
+  public rawSelectionsStr?: string;
+  public selections?: Array<{ start: unknown; end: unknown }>;
 
   public styleRule: CSSStyleRule | null | undefined;
 
@@ -15,27 +16,40 @@ export class SelectionDecoration {
     public doc: Doc,
     public monacoEditor: editor.IStandaloneCodeEditor,
     public monacoModel: editor.ITextModel,
-    public decorationID: number,
+    public useID: string,
     public selectionColor: string,
     public styleManager: StyleManager
   ) {
-    this.selectionClassName = `netless-app-monaco-selection-${this.decorationID}`;
+    this.selectionClassName = `netless-app-monaco-selection-${this.useID}`;
 
     this.styleRule = this.styleManager.addRule(
       `.${this.selectionClassName} { background: ${selectionColor}; }`
     );
   }
 
-  public setSelection(rawSelectionStr?: string): void {
-    if (rawSelectionStr === this.rawSelectionStr) {
+  public setSelections(rawSelectionsStr?: string): void {
+    if (rawSelectionsStr === this.rawSelectionsStr) {
       return;
     }
+    this.rawSelectionsStr = rawSelectionsStr;
 
-    this.rawSelectionStr = rawSelectionStr;
-
-    if (rawSelectionStr) {
+    this.selections = void 0;
+    if (this.rawSelectionsStr) {
       try {
-        const selection = JSON.parse(rawSelectionStr);
+        const selections = JSON.parse(this.rawSelectionsStr);
+        if (Array.isArray(selections)) {
+          this.selections = selections;
+        }
+      } catch (e) {
+        console.warn(e);
+      }
+    }
+  }
+
+  public renderSelections(): editor.IModelDeltaDecoration[] {
+    const selectionDecorations: editor.IModelDeltaDecoration[] = [];
+    if (this.selections) {
+      this.selections.forEach(selection => {
         if (selection.start && selection.end) {
           const startAbs = createAbsolutePositionFromRelativePosition(
             createRelativePositionFromJSON(selection.start),
@@ -48,41 +62,26 @@ export class SelectionDecoration {
           if (startAbs && endAbs) {
             const posStart = this.monacoModel.getPositionAt(startAbs.index);
             const posEnd = this.monacoModel.getPositionAt(endAbs.index);
-            const selectionDecorations = [
-              {
-                range: new Range(
-                  posStart.lineNumber,
-                  posStart.column,
-                  posEnd.lineNumber,
-                  posEnd.column
-                ),
-                options: {
-                  zIndex: -1,
-                  className: `netless-app-monaco-selection ${this.selectionClassName}`,
-                },
+            selectionDecorations.push({
+              range: new Range(
+                posStart.lineNumber,
+                posStart.column,
+                posEnd.lineNumber,
+                posEnd.column
+              ),
+              options: {
+                zIndex: -1,
+                className: `netless-app-monaco-selection ${this.selectionClassName}`,
               },
-            ];
-            this.selectionDecorations = this.monacoEditor.deltaDecorations(
-              this.selectionDecorations,
-              selectionDecorations
-            );
-            return;
+            });
           }
         }
-      } catch (e) {
-        console.warn(e);
-      }
+      });
     }
-
-    this.clearSelections();
-  }
-
-  public clearSelections(): void {
-    this.selectionDecorations = this.monacoEditor.deltaDecorations(this.selectionDecorations, []);
+    return selectionDecorations;
   }
 
   public destroy(): void {
-    this.clearSelections();
     if (this.styleRule) {
       this.styleManager.deleteRule(this.styleRule);
     }

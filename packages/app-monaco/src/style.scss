@@ -2,15 +2,16 @@
   overflow: hidden;
 }
 
-.yRemoteSelection {
-  background-color: rgb(250, 129, 0, 0.5);
+.netless-app-monaco-selection {
+  background: rgb(250, 129, 0, 0.5);
 }
 
 .netless-app-monaco-cursor {
-  --content: "";
+  --content: "Guest";
   --bg-color: orange;
   --text-color: #fff;
-  --label: block;
+  --label: none;
+  display: none;
   margin-left: -1px;
   border-left: 2px solid var(--bg-color);
   transition: top 0.2s, left 0.2s;

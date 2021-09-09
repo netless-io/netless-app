@@ -1,18 +1,18 @@
 import type { Text, Doc, YTextEvent } from "yjs";
-import { createRelativePositionFromTypeIndex } from "yjs";
+import { createRelativePositionFromTypeIndex, applyUpdate } from "yjs";
 import { Selection } from "monaco-editor";
 import type { editor } from "monaco-editor";
 import { createMutex } from "lib0/mutex.js";
+import { fromUint8Array, toUint8Array } from "js-base64";
 import type { AppContext, ReadonlyTeleBox } from "@netless/window-manager";
-import type { DisplayerState } from "white-web-sdk";
+import type { DisplayerState, Event as WhiteEvent } from "white-web-sdk";
 import { SideEffectManager } from "../../app-shared/dist/SideEffectManager";
 import type { NetlessAppMonacoAttributes } from "./typings";
 import { Decoration } from "./Decorations";
 
 export class YMonaco {
-  public _decorations: string[] = [];
-
   public monacoModel: editor.ITextModel;
+  public authorId: string;
 
   public constructor(
     public context: AppContext<NetlessAppMonacoAttributes>,
@@ -23,6 +23,7 @@ export class YMonaco {
     public yText: Text
   ) {
     const monacoModel = monacoEditor.getModel();
+    this.authorId = String(this.context.getDisplayer().observerId);
 
     if (!monacoModel) {
       throw new Error("[NetlessAppMonaco] No Monaco Model");
@@ -38,14 +39,17 @@ export class YMonaco {
     this.broadcastSelections();
 
     this.setupAttrsUpdate();
-
+    this.setupDocUpdate();
     this.setupYText();
-
     this.setupMembers();
   }
 
   public destroy(): void {
     this.sideEffect.flush();
+    this.decorations.forEach(decoration => decoration.destroy());
+    this.decorations.clear();
+    this.context.updateAttributes(["cursors", this.observerId], undefined);
+    this.context.updateAttributes(["selections", this.observerId], undefined);
   }
 
   private setupYText(): void {
@@ -59,7 +63,9 @@ export class YMonaco {
             } else if (op.insert != null) {
               const pos = this.monacoModel.getPositionAt(index);
               const range = new Selection(pos.lineNumber, pos.column, pos.lineNumber, pos.column);
-              this.monacoModel.applyEdits([{ range, text: String(op.insert) }]);
+              this.monacoModel.applyEdits([
+                { range, text: String(op.insert), forceMoveMarkers: true },
+              ]);
               index += op.insert.length;
             } else if (op.delete != null) {
               const pos = this.monacoModel.getPositionAt(index);
@@ -101,15 +107,65 @@ export class YMonaco {
     });
   }
 
+  private setupDocUpdate(): void {
+    //   this.sideEffect.add(() => {
+    //     const displayer = this.context.getDisplayer();
+    //     const handleUpdate = (event: WhiteEvent) => {
+    //       if (event.authorId !== displayer.observerId) {
+    //         this.decorations.get(String(event.authorId))?.rerender();
+    //       }
+    //     };
+    //     displayer.addMagixEventListener("AppMonacoDoc", handleUpdate);
+    //     return () => displayer.removeMagixEventListener("AppMonacoDoc", handleUpdate);
+    //   });
+    const displayer = this.context.getDisplayer();
+
+    this.sideEffect.add(() => {
+      const handleUpdate = (event: WhiteEvent) => {
+        this.authorId = String(event.authorId);
+        if (event.authorId !== displayer.observerId) {
+          try {
+            applyUpdate(this.doc, toUint8Array(event.payload), "_remote_edit_");
+          } catch (e) {
+            console.warn(e);
+          }
+        }
+      };
+      displayer.addMagixEventListener("AppMonacoDoc", handleUpdate);
+      return () => displayer.removeMagixEventListener("AppMonacoDoc", handleUpdate);
+    });
+
+    this.sideEffect.add(() => {
+      const handleUpdate = (update: Uint8Array, origin: unknown) => {
+        if (origin !== "_remote_edit_" && this.context.getIsWritable()) {
+          const room = this.context.getRoom();
+          if (room) {
+            this.authorId = String(displayer.observerId);
+            room.dispatchMagixEvent("AppMonacoDoc", fromUint8Array(update));
+          }
+        }
+      };
+      this.doc.on("update", handleUpdate);
+      return () => this.doc.off("update", handleUpdate);
+    });
+  }
+
   private broadcastCursors(): void {
     this.sideEffect.add(() => {
       const disposable = this.monacoEditor.onDidChangeCursorPosition(event => {
-        this.curCursors = [event.position, ...event.secondaryPositions].map(position =>
-          JSON.stringify(
-            createRelativePositionFromTypeIndex(this.yText, this.monacoModel.getOffsetAt(position))
-          )
-        );
-        this.context.updateAttributes(["cursors", this.observerId], this.curCursors);
+        try {
+          const rawCursorStrList = [event.position, ...event.secondaryPositions].map(position =>
+            JSON.stringify(
+              createRelativePositionFromTypeIndex(
+                this.yText,
+                this.monacoModel.getOffsetAt(position)
+              )
+            )
+          );
+          this.context.updateAttributes(["cursors", this.observerId], rawCursorStrList);
+        } catch (e) {
+          console.warn(e);
+        }
       });
       return () => disposable.dispose();
     });
@@ -120,19 +176,25 @@ export class YMonaco {
       const disposable = this.monacoEditor.onDidChangeCursorSelection(() => {
         const selections = this.monacoEditor.getSelections();
         if (selections) {
-          this.curSelections = selections.map(selection =>
-            JSON.stringify({
-              start: createRelativePositionFromTypeIndex(
-                this.yText,
-                this.monacoModel.getOffsetAt(selection.getStartPosition())
-              ),
-              end: createRelativePositionFromTypeIndex(
-                this.yText,
-                this.monacoModel.getOffsetAt(selection.getEndPosition())
-              ),
-            })
-          );
-          this.context.updateAttributes(["selections", this.observerId], this.curSelections);
+          try {
+            const rawSelectionsStr = JSON.stringify(
+              selections
+                .filter(selection => !Selection.isEmpty(selection))
+                .map(selection => ({
+                  start: createRelativePositionFromTypeIndex(
+                    this.yText,
+                    this.monacoModel.getOffsetAt(selection.getStartPosition())
+                  ),
+                  end: createRelativePositionFromTypeIndex(
+                    this.yText,
+                    this.monacoModel.getOffsetAt(selection.getEndPosition())
+                  ),
+                }))
+            );
+            this.context.updateAttributes(["selections", this.observerId], rawSelectionsStr);
+          } catch (e) {
+            console.warn(e);
+          }
         }
       });
       return () => disposable.dispose();
@@ -145,24 +207,20 @@ export class YMonaco {
         this.context.getDisplayer().state.roomMembers.forEach(member => {
           const id = String(member.memberId);
           if (id !== this.observerId) {
-            const decoration = this.decorations.get(id);
+            let decoration = this.decorations.get(id);
             if (!decoration) {
-              this.decorations.set(
+              decoration = new Decoration(
+                this.doc,
+                this.monacoEditor,
+                this.monacoModel,
                 id,
-                new Decoration(
-                  this.doc,
-                  this.monacoEditor,
-                  this.monacoModel,
-                  id,
-                  member.payload?.cursorName || id,
-                  this.attrs.cursors?.[id],
-                  this.attrs.selections?.[id]
-                )
+                member.payload?.cursorName || id
               );
-            } else {
-              decoration.setCursor(this.attrs.cursors?.[id]);
-              decoration.setSelection(this.attrs.selections?.[id]);
+              this.decorations.set(id, decoration);
             }
+            decoration.setCursor(this.attrs.cursors?.[id]);
+            decoration.setSelection(this.attrs.selections?.[id]);
+            this.renderDecorations();
           }
         });
       };
@@ -182,6 +240,20 @@ export class YMonaco {
               this.decorations.delete(memberId);
             }
           });
+          if (this.attrs.cursors) {
+            Object.keys(this.attrs.cursors).forEach(memberId => {
+              if (!members.has(memberId)) {
+                this.context.updateAttributes(["cursors", memberId], undefined);
+              }
+            });
+          }
+          if (this.attrs.selections) {
+            Object.keys(this.attrs.selections).forEach(memberId => {
+              if (!members.has(memberId)) {
+                this.context.updateAttributes(["selections", memberId], undefined);
+              }
+            });
+          }
         }
       };
       this.context.emitter.on("roomStateChange", handleStateChanged);
@@ -189,15 +261,24 @@ export class YMonaco {
     });
   }
 
+  private renderDecorations(): void {
+    const deltaDecorations: editor.IModelDeltaDecoration[] = [];
+    this.decorations.forEach(decoration => {
+      deltaDecorations.push(...decoration.rerender(this.authorId));
+    });
+    this.deltaDecorations = this.monacoModel.deltaDecorations(
+      this.deltaDecorations,
+      deltaDecorations
+    );
+  }
+
   private sideEffect: SideEffectManager;
 
   private observerId: string;
 
-  private curCursors: string[] = [];
-
-  private curSelections: string[] = [];
-
   private decorations = new Map<string, Decoration>();
 
   private mux = createMutex();
+
+  private deltaDecorations: string[] = [];
 }
