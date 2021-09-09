@@ -1,6 +1,5 @@
 import type { Text, Doc } from "yjs";
 import type { AppContext } from "@netless/window-manager";
-import type { Event as WhiteEvent } from "white-web-sdk";
 import type { NetlessAppMonacoAttributes } from "./typings";
 import type { Debounce } from "@netless/app-shared/create-debounce";
 import { applyUpdate, encodeStateAsUpdate } from "yjs";
@@ -8,7 +7,7 @@ import { SideEffectManager } from "@netless/app-shared/SideEffectManager";
 import { createDebounce } from "@netless/app-shared/create-debounce";
 import { fromUint8Array, toUint8Array } from "js-base64";
 
-export class NetlessAppAttributesProvider {
+export class NetlessAppMonacoPersistence {
   public yText: Text;
 
   public constructor(
@@ -62,9 +61,9 @@ export class NetlessAppAttributesProvider {
     });
 
     this.sideEffect.add(() => {
-      const onDocUpdated = (_update: Uint8Array, origin: NetlessAppAttributesProvider): void => {
+      const onDocUpdated = (_update: Uint8Array, origin: string): void => {
         // Only the one who updates the yDoc (origin is yMonaco) writes to the shared App Attributes
-        if (!this.isDocDestroyed && origin !== this) {
+        if (!this.isDocDestroyed && origin !== "_remote_edit_") {
           setAttrs();
         }
       };

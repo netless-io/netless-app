@@ -4,7 +4,7 @@ import type { NetlessApp } from "@netless/window-manager";
 import { Doc } from "yjs";
 import { editor as monacoEditor } from "monaco-editor";
 import type { NetlessAppMonacoAttributes } from "./typings";
-import { NetlessAppAttributesProvider } from "./y-app-attributes";
+import { NetlessAppMonacoPersistence } from "./monaco-persistence";
 import { YMonaco } from "./y-monaco";
 
 export type { NetlessAppMonacoAttributes } from "./typings";
@@ -35,7 +35,7 @@ const NetlessAppMonaco: NetlessApp<NetlessAppMonacoAttributes> = {
     box.mountStyles(styles);
 
     const yDoc = new Doc();
-    const provider = new NetlessAppAttributesProvider(context, attrs, yDoc);
+    const provider = new NetlessAppMonacoPersistence(context, attrs, yDoc);
 
     const editor = monacoEditor.create(box.$content as HTMLElement, {
       value: "",
