@@ -5,6 +5,7 @@
   import { init, joinRoom, prepare, tools, reset } from "./room";
   import type { AppGroup } from "./apps";
   import { registerApps } from "./apps";
+  import { copyToClipboard } from "./clipboard";
 </script>
 
 <script lang="ts">
@@ -81,7 +82,7 @@
       query.set("roomToken", roomToken);
       const url = share(query);
       let fail = false;
-      await navigator.clipboard.writeText(url).catch(() => {
+      await copyToClipboard(url).catch(() => {
         fail = true;
       });
       prompt(`${fail ? "Failed to copy" : "Copied"} share url`, url);
