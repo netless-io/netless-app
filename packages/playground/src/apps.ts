@@ -18,11 +18,19 @@ export async function registerApps(): Promise<AppGroup[]> {
   const apps: AppGroup[] = [];
   for (let { default: a } of appConfigs) {
     if (!Array.isArray(a)) a = [a];
-    debug("[register]", a[0].app.kind);
-    const item: AppGroup = { kind: a[0].app.kind, configs: [] };
-    for (const { app, ...rest } of a) {
-      WindowManager.register({ kind: app.kind, src: app });
-      item.configs.push({ kind: app.kind, ...rest });
+    debug("[register]", a[0].kind);
+    const item: AppGroup = { kind: a[0].kind, configs: [] };
+    for (const { kind, src, ...rest } of a) {
+      const wrapped = async () => {
+        if (typeof src === "function") {
+          const mod = await src();
+          return "default" in mod ? mod.default : mod;
+        } else {
+          return src;
+        }
+      };
+      WindowManager.register({ kind, src: wrapped });
+      item.configs.push({ kind, ...rest });
     }
     apps.push(item);
   }

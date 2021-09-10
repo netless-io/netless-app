@@ -6,11 +6,12 @@ import { editor as monacoEditor } from "monaco-editor";
 import type { NetlessAppMonacoAttributes } from "./typings";
 import { NetlessAppMonacoPersistence } from "./monaco-persistence";
 import { YMonaco } from "./y-monaco";
+import { kind } from "./constants";
 
 export type { NetlessAppMonacoAttributes } from "./typings";
 
 const NetlessAppMonaco: NetlessApp<NetlessAppMonacoAttributes> = {
-  kind: "Monaco",
+  kind,
   setup(context) {
     const box = context.getBox();
 

@@ -5,6 +5,7 @@ import type { View, Size } from "white-web-sdk";
 import { StaticDocsViewer } from "./StaticDocsViewer";
 import type { DocsViewerPage } from "./DocsViewer";
 import { DynamicDocsViewer } from "./DynamicDocsViewer";
+import { kind } from "./constants";
 
 export type { DocsViewerPage } from "./DocsViewer";
 
@@ -18,7 +19,7 @@ export interface NetlessAppDynamicDocsViewerAttributes {}
 const NetlessAppDocsViewer: NetlessApp<
   NetlessAppStaticDocsViewerAttributes | NetlessAppDynamicDocsViewerAttributes
 > = {
-  kind: "DocsViewer",
+  kind,
   setup(context) {
     const box = context.getBox();
 

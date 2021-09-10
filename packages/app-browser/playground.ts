@@ -1,9 +1,9 @@
 import type { PlaygroundConfig } from "../playground/typings";
 import type { Attributes } from "./src";
-import Browser from "./src";
 
 const options: PlaygroundConfig<Attributes> = {
-  app: Browser,
+  kind: "Browser",
+  src: () => import("./src"),
   options: {
     title: "Browser",
   },

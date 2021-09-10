@@ -3,15 +3,16 @@ import type {
   NetlessAppStaticDocsViewerAttributes,
   NetlessAppDynamicDocsViewerAttributes,
 } from "./src";
-import DocsViewer from "./src";
+import { kind } from "./src/constants";
 
 const options: PlaygroundConfigs<
   NetlessAppStaticDocsViewerAttributes | NetlessAppDynamicDocsViewerAttributes
 > = [
   {
-    app: DocsViewer,
+    kind,
+    src: () => import("./src"),
     options: {
-      scenePath: `/${DocsViewer.kind}/1`,
+      scenePath: `/${kind}/1`,
       title: "Static PDF",
       scenes: [
         {
@@ -34,9 +35,10 @@ const options: PlaygroundConfigs<
     },
   },
   {
-    app: DocsViewer,
+    kind,
+    src: () => import("./src"),
     options: {
-      scenePath: `/${DocsViewer.kind}/2`,
+      scenePath: `/${kind}/2`,
       title: "Dynamic PPT",
       scenes: [
         {
@@ -343,9 +345,10 @@ const options: PlaygroundConfigs<
     },
   },
   {
-    app: DocsViewer,
+    kind,
+    src: () => import("./src"),
     options: {
-      scenePath: `/${DocsViewer.kind}/7`,
+      scenePath: `/${kind}/7`,
       title: "Click PPT",
       scenes: [
         {

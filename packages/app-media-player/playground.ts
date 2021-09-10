@@ -1,11 +1,11 @@
 /* eslint-disable max-len */
 import type { PlaygroundConfigs } from "../playground/typings";
 import type { Attributes } from "./src";
-import MediaPlayer from "./src";
 
 const options: PlaygroundConfigs<Attributes> = [
   {
-    app: MediaPlayer,
+    kind: "MediaPlayer",
+    src: () => import("./src"),
     options: {
       title: "MP4",
     },
@@ -15,7 +15,8 @@ const options: PlaygroundConfigs<Attributes> = [
     },
   },
   {
-    app: MediaPlayer,
+    kind: "MediaPlayer",
+    src: () => import("./src"),
     options: {
       title: "MP3",
     },
@@ -25,7 +26,8 @@ const options: PlaygroundConfigs<Attributes> = [
     },
   },
   {
-    app: MediaPlayer,
+    kind: "MediaPlayer",
+    src: () => import("./src"),
     options: {
       title: "M3U8",
     },
