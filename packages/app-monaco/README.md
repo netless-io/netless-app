@@ -1,6 +1,6 @@
-## @netless/app-docs-viewer
+## @netless/app-monaco
 
-Netless App for collaborative editing, powered with [Yjs](https://github.com/yjs/yjs) (a CRDT implementation) and [Monaco editor](https://github.com/microsoft/monaco-editor) (the editor that power VS Code).
+Netless App for collaborative editing, powered with [Yjs](https://github.com/yjs/yjs) (a CRDT implementation) and [Monaco editor](https://github.com/microsoft/monaco-editor) (the editor that powers VS Code).
 
 ### Usage
 
