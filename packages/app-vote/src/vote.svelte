@@ -8,7 +8,7 @@
   import { createEventDispatcher } from "svelte";
   const dispatch = createEventDispatcher();
 
-  export let writable: boolean = false;
+  export let writable = false;
 
   let phase: "edit" | "vote" = "vote";
   export let title = "";

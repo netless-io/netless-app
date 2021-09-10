@@ -7,6 +7,7 @@
     "source.fixAll": true,
     "source.addMissingImports": true
   },
+  "eslint.validate": ["javascript", "javascriptreact", "html", "vue", "svelte"],
   "typescript.tsdk": "node_modules/typescript/lib",
   "[html]": {
     "editor.defaultFormatter": "esbenp.prettier-vscode"
