@@ -24,7 +24,9 @@ export async function prepare(): Promise<RoomInfo | undefined> {
 
   if (!uuid || !roomToken) {
     const rooms = JSON.parse(persistStore.getItem("rooms") || "[]");
-    ({ uuid, roomToken } = rooms[0]);
+    if (rooms[0]) {
+      ({ uuid, roomToken } = rooms[0]);
+    }
   }
 
   if (!uuid || !roomToken) {
