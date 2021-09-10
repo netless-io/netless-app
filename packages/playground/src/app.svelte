@@ -1,7 +1,7 @@
 <script context="module" lang="ts">
   import type { Room, RoomState, ApplianceNames } from "white-web-sdk";
 
-  import { createRoom, share } from "./common";
+  import { createRoom, share, store } from "./common";
   import { init, joinRoom, prepare, tools, reset } from "./room";
   import type { AppGroup } from "./apps";
   import { registerApps } from "./apps";
@@ -43,6 +43,7 @@
     if (target?.dataset?.tool) {
       const nextTool = target.dataset.tool as ApplianceNames;
       room.setMemberState({ currentApplianceName: nextTool });
+      store.setItem("currentApplianceName", nextTool);
     }
   }
 

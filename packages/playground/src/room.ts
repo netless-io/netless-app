@@ -5,7 +5,7 @@ import type { Room } from "white-web-sdk";
 import { ApplianceNames, WhiteWebSdk } from "white-web-sdk";
 
 import type { RoomInfo } from "./common";
-import { clearQueryString, createRoom, env, persistStore } from "./common";
+import { store, clearQueryString, createRoom, env, persistStore } from "./common";
 
 export const sdk = new WhiteWebSdk({
   appIdentifier: env.VITE_APPID,
@@ -56,6 +56,8 @@ export async function joinRoom(info: RoomInfo): Promise<Room> {
     },
   });
   window.room = room;
+  const tool = store.getItem("currentApplianceName") as ApplianceNames;
+  if (tool) room.setMemberState({ currentApplianceName: tool });
   clearQueryString();
   return room;
 }
