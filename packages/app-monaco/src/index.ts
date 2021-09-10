@@ -38,9 +38,12 @@ const NetlessAppMonaco: NetlessApp<NetlessAppMonacoAttributes> = {
     const yDoc = new Doc();
     const provider = new NetlessAppMonacoPersistence(context, attrs, yDoc);
 
+    const readonly = !context.getIsWritable();
+
     const editor = monacoEditor.create(box.$content as HTMLElement, {
       value: "",
       automaticLayout: true,
+      readOnly: readonly,
     });
 
     if (import.meta.env.DEV) {
@@ -50,12 +53,32 @@ const NetlessAppMonaco: NetlessApp<NetlessAppMonacoAttributes> = {
       (window as any).monacoContext = context;
     }
 
-    const monacoBinding = new YMonaco(context, attrs, box, editor, provider.doc, provider.yText);
+    const monacoBinding = new YMonaco(
+      context,
+      attrs,
+      box,
+      editor,
+      provider.doc,
+      provider.yText,
+      readonly
+    );
+
+    updateReadonly(readonly);
+
+    context.emitter.on("writableChange", isWritable => {
+      updateReadonly(!isWritable);
+    });
 
     context.emitter.on("destroy", () => {
       provider.destroy();
       monacoBinding.destroy();
     });
+
+    function updateReadonly(readonly: boolean): void {
+      box.$content?.classList.toggle("netless-app-monaco-cursor-readonly", readonly);
+      editor.updateOptions({ readOnly: readonly });
+      monacoBinding.setReadonly(readonly);
+    }
   },
 };
 

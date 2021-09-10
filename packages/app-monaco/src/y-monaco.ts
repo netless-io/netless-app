@@ -1,7 +1,7 @@
 import type { Text, Doc, YTextEvent } from "yjs";
 import { createRelativePositionFromTypeIndex, applyUpdate } from "yjs";
 import { Selection } from "monaco-editor";
-import type { editor } from "monaco-editor";
+import type { editor, Position } from "monaco-editor";
 import { createMutex } from "lib0/mutex.js";
 import { fromUint8Array, toUint8Array } from "js-base64";
 import type { AppContext, ReadonlyTeleBox } from "@netless/window-manager";
@@ -20,7 +20,8 @@ export class YMonaco {
     public box: ReadonlyTeleBox,
     public monacoEditor: editor.IStandaloneCodeEditor,
     public doc: Doc,
-    public yText: Text
+    public yText: Text,
+    public readonly: boolean
   ) {
     const monacoModel = monacoEditor.getModel();
     this.authorId = String(this.context.getDisplayer().observerId);
@@ -36,8 +37,7 @@ export class YMonaco {
 
     this.observerId = String(context.getDisplayer().observerId);
 
-    this.broadcastCursors();
-    this.broadcastSelections();
+    this.setupDecorations();
 
     this.setupAttrsUpdate();
     this.setupDocUpdate();
@@ -45,12 +45,26 @@ export class YMonaco {
     this.setupMembers();
   }
 
+  public setReadonly(readonly: boolean): void {
+    if (readonly !== this.readonly) {
+      this.readonly = readonly;
+      if (!readonly) {
+        this.broadcastCursors();
+        this.broadcastSelections();
+      }
+    }
+  }
+
+  public clearDecorationAttrs(): void {
+    this.context.updateAttributes(["cursors", this.observerId], undefined);
+    this.context.updateAttributes(["selections", this.observerId], undefined);
+  }
+
   public destroy(): void {
     this.sideEffect.flush();
     this.decorations.forEach(decoration => decoration.destroy());
     this.decorations.clear();
-    this.context.updateAttributes(["cursors", this.observerId], undefined);
-    this.context.updateAttributes(["selections", this.observerId], undefined);
+    this.clearDecorationAttrs();
   }
 
   private setupYText(): void {
@@ -141,55 +155,63 @@ export class YMonaco {
     });
   }
 
-  private broadcastCursors(): void {
+  private setupDecorations(): void {
     this.sideEffect.add(() => {
       const disposable = this.monacoEditor.onDidChangeCursorPosition(event => {
-        try {
-          const rawCursorStrList = [event.position, ...event.secondaryPositions].map(position =>
-            JSON.stringify(
-              createRelativePositionFromTypeIndex(
-                this.yText,
-                this.monacoModel.getOffsetAt(position)
-              )
-            )
-          );
-          this.context.updateAttributes(["cursors", this.observerId], rawCursorStrList);
-        } catch (e) {
-          console.warn(e);
+        this.cursorPositions = [event.position, ...event.secondaryPositions];
+        if (!this.readonly) {
+          this.broadcastCursors();
+        }
+      });
+      return () => disposable.dispose();
+    });
+
+    this.sideEffect.add(() => {
+      const disposable = this.monacoEditor.onDidChangeCursorSelection(() => {
+        if (!this.readonly) {
+          this.broadcastSelections();
         }
       });
       return () => disposable.dispose();
     });
   }
 
+  private broadcastCursors(): void {
+    try {
+      const rawCursorStrList = this.cursorPositions.map(position =>
+        JSON.stringify(
+          createRelativePositionFromTypeIndex(this.yText, this.monacoModel.getOffsetAt(position))
+        )
+      );
+      this.context.updateAttributes(["cursors", this.observerId], rawCursorStrList);
+    } catch (e) {
+      console.warn(e);
+    }
+  }
+
   private broadcastSelections(): void {
-    this.sideEffect.add(() => {
-      const disposable = this.monacoEditor.onDidChangeCursorSelection(() => {
-        const selections = this.monacoEditor.getSelections();
-        if (selections) {
-          try {
-            const rawSelectionsStr = JSON.stringify(
-              selections
-                .filter(selection => !Selection.isEmpty(selection))
-                .map(selection => ({
-                  start: createRelativePositionFromTypeIndex(
-                    this.yText,
-                    this.monacoModel.getOffsetAt(selection.getStartPosition())
-                  ),
-                  end: createRelativePositionFromTypeIndex(
-                    this.yText,
-                    this.monacoModel.getOffsetAt(selection.getEndPosition())
-                  ),
-                }))
-            );
-            this.context.updateAttributes(["selections", this.observerId], rawSelectionsStr);
-          } catch (e) {
-            console.warn(e);
-          }
-        }
-      });
-      return () => disposable.dispose();
-    });
+    const selections = this.monacoEditor.getSelections();
+    if (selections) {
+      try {
+        const rawSelectionsStr = JSON.stringify(
+          selections
+            .filter(selection => !Selection.isEmpty(selection))
+            .map(selection => ({
+              start: createRelativePositionFromTypeIndex(
+                this.yText,
+                this.monacoModel.getOffsetAt(selection.getStartPosition())
+              ),
+              end: createRelativePositionFromTypeIndex(
+                this.yText,
+                this.monacoModel.getOffsetAt(selection.getEndPosition())
+              ),
+            }))
+        );
+        this.context.updateAttributes(["selections", this.observerId], rawSelectionsStr);
+      } catch (e) {
+        console.warn(e);
+      }
+    }
   }
 
   private setupAttrsUpdate(): void {
@@ -274,4 +296,6 @@ export class YMonaco {
   private deltaDecorations: string[] = [];
 
   private readonly MagixMonacoDocChannel: string;
+
+  private cursorPositions: Position[] = [];
 }

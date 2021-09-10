@@ -2,6 +2,12 @@
   overflow: hidden;
 }
 
+.netless-app-monaco-cursor-readonly {
+  .cursors-layer > .cursor {
+    display: none !important;
+  }
+}
+
 .netless-app-monaco-selection {
   background: rgb(250, 129, 0, 0.5);
 }
