@@ -11,6 +11,7 @@
   --bg-color: orange;
   --text-color: #fff;
   --label: none;
+  --dot: block;
   display: none;
   margin-left: -1px;
   border-left: 2px solid var(--bg-color);
@@ -50,6 +51,7 @@
 }
 
 .netless-app-monaco-cursor::after {
+  display: var(--dot);
   content: " ";
   position: absolute;
   left: -4px;

@@ -94,21 +94,18 @@ export class CursorDecoration {
   public setLabelVisible(visible: boolean): void {
     window.clearTimeout(this.hideLabelTimeout);
     if (visible) {
-      if (!this.labelStyleRule) {
-        this.labelStyleRule = this.styleManager.addRule(
-          `.${this.cursorClassName} { --content: "${this.userName}"; --bg-color: ${this.cursorColor}; }`
-        );
-      }
-      if (this.labelStyleRule) {
+      if (this.styleRule) {
         if (!this.labelVisible) {
-          this.labelStyleRule.style.setProperty("--label", "block");
+          this.styleRule.style.setProperty("--label", "block");
+          this.styleRule.style.setProperty("--dot", "none");
           this.labelVisible = true;
         }
         this.hideLabelTimeout = setTimeout(() => this.setLabelVisible(false), 3000);
       }
     } else {
-      if (this.labelStyleRule && this.labelVisible) {
-        this.labelStyleRule.style.setProperty("--label", "none");
+      if (this.styleRule && this.labelVisible) {
+        this.styleRule.style.setProperty("--label", "none");
+        this.styleRule.style.setProperty("--dot", "block");
         this.labelVisible = false;
       }
     }
@@ -117,19 +114,16 @@ export class CursorDecoration {
   public setCursorVisible(visible: boolean): void {
     window.clearTimeout(this.hideCursorTimeout);
     if (visible) {
-      if (!this.cursorStyleRule) {
-        this.cursorStyleRule = this.styleManager.addRule(`.${this.cursorClassName} {}`);
-      }
-      if (this.cursorStyleRule) {
+      if (this.styleRule) {
         if (!this.cursorVisible) {
-          this.cursorStyleRule.style.setProperty("display", "block");
+          this.styleRule.style.setProperty("display", "block");
           this.cursorVisible = true;
         }
         this.hideCursorTimeout = setTimeout(() => this.setCursorVisible(false), 8000);
       }
     } else {
-      if (this.cursorStyleRule && this.cursorVisible) {
-        this.cursorStyleRule.style.setProperty("display", "none");
+      if (this.styleRule && this.cursorVisible) {
+        this.styleRule.style.setProperty("display", "none");
         this.cursorVisible = false;
       }
     }
@@ -142,21 +136,26 @@ export class CursorDecoration {
 
   public destroy(): void {
     this.clearCursor();
-    if (this.labelStyleRule) {
-      this.styleManager.deleteRule(this.labelStyleRule);
+    if (this._styleRuleMemo) {
+      this.styleManager.deleteRule(this._styleRuleMemo);
     }
-    if (this.cursorStyleRule) {
-      this.styleManager.deleteRule(this.cursorStyleRule);
+  }
+
+  private _styleRuleMemo: CSSStyleRule | null | undefined;
+  private get styleRule(): CSSStyleRule | null | undefined {
+    if (!this._styleRuleMemo) {
+      this._styleRuleMemo = this.styleManager.addRule(
+        `.${this.cursorClassName} { --content: "${this.userName}"; --bg-color: ${this.cursorColor}; }`
+      );
     }
+    return this._styleRuleMemo;
   }
 
   public labelVisible = false;
   private hideLabelTimeout = NaN;
-  private labelStyleRule: CSSStyleRule | null | undefined;
 
   private cursorVisible = false;
   private hideCursorTimeout = NaN;
-  private cursorStyleRule: CSSStyleRule | null | undefined;
 
   private lastLineNumber = -1;
   private lastColumn = -1;
