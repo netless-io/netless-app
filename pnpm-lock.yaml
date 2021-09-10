@@ -82,17 +82,16 @@ importers:
       monaco-editor: ^0.27.0
       randomcolor: ^0.6.2
       yjs: ^13.5.12
-    dependencies:
+    devDependencies:
+      '@netless/app-shared': link:../app-shared
+      '@types/lodash.isequal': 4.5.5
+      '@types/randomcolor': 0.5.6
       debounce-fn: 5.0.0
       js-base64: 3.6.1
       lib0: 0.2.42
       monaco-editor: 0.27.0
       randomcolor: 0.6.2
       yjs: 13.5.12
-    devDependencies:
-      '@netless/app-shared': link:../app-shared
-      '@types/lodash.isequal': 4.5.5
-      '@types/randomcolor': 0.5.6
 
   packages/app-shared:
     specifiers:
@@ -1267,7 +1266,7 @@ packages:
 
   /isomorphic.js/0.2.4:
     resolution: {integrity: sha512-Y4NjZceAwaPXctwsHgNsmfuPxR8lJ3f8X7QTAkhltrX4oGIv+eTlgHLXn4tWysC9zGTi929gapnPp+8F8cg7nA==}
-    dev: false
+    dev: true
 
   /javascript-natural-sort/0.7.1:
     resolution: {integrity: sha1-+eIwPUUH9tdDVac2ZNFED7Wg71k=}
@@ -1275,7 +1274,7 @@ packages:
 
   /js-base64/3.6.1:
     resolution: {integrity: sha512-Frdq2+tRRGLQUIQOgsIGSCd1VePCS2fsddTG5dTCqR0JHgltXWfsxnY0gIXPoMeRmdom6Oyq+UMOFg5suduOjQ==}
-    dev: false
+    dev: true
 
   /js-tokens/4.0.0:
     resolution: {integrity: sha512-RdJUflcE3cUzKiMqQgsCu06FPu9UdIJO0beYbPhHN4k6apgJtifcoCtT9bcxOpYBtpD2kCM6Sbzg4CausW/PKQ==}
@@ -1332,7 +1331,7 @@ packages:
     engines: {node: '>=12'}
     dependencies:
       isomorphic.js: 0.2.4
-    dev: false
+    dev: true
 
   /loadjs/4.2.0:
     resolution: {integrity: sha512-AgQGZisAlTPbTEzrHPb6q+NYBMD+DP9uvGSIjSUM5uG+0jG15cb8axWpxuOIqrmQjn6scaaH8JwloiP27b2KXA==}
@@ -1477,7 +1476,7 @@ packages:
 
   /monaco-editor/0.27.0:
     resolution: {integrity: sha512-UhwP78Wb8w0ZSYoKXQNTV/0CHObp6NS3nCt51QfKE6sKyBo5PBsvuDOHoI2ooBakc6uIwByRLHVeT7+yXQe2fQ==}
-    dev: false
+    dev: true
 
   /mpd-parser/0.17.0:
     resolution: {integrity: sha512-oKS5G0jCcHHJ3sHYlcLeM9Xcbuixl08eAx7QW0Th7ChlZiI0YvLtGaHE/L0aKUBJFNvtkeksIr8XgJgSBBsS4g==}
@@ -1700,7 +1699,7 @@ packages:
 
   /randomcolor/0.6.2:
     resolution: {integrity: sha512-Mn6TbyYpFgwFuQ8KJKqf3bqqY9O1y37/0jgSK/61PUxV4QfIMv0+K2ioq8DfOjkBslcjwSzRfIDEXfzA9aCx7A==}
-    dev: false
+    dev: true
 
   /rangetouch/2.0.1:
     resolution: {integrity: sha512-sln+pNSc8NGaHoLzwNBssFSf/rSYkqeBXzX1AtJlkJiUaVSJSbRAWJk+4omsXkN+EJalzkZhWQ3th1m0FpR5xA==}
@@ -2169,4 +2168,4 @@ packages:
     requiresBuild: true
     dependencies:
       lib0: 0.2.42
-    dev: false
+    dev: true

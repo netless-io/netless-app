@@ -1,6 +1,6 @@
 {
   "name": "@netless/app-monaco",
-  "version": "0.1.17",
+  "version": "0.1.0",
   "description": "Netless App Code Editor",
   "repository": "netless-io/netless-app",
   "license": "MIT",
@@ -21,15 +21,13 @@
     "build:dev": "vite build --mode development && npm run types",
     "cleanup": "rimraf ./build"
   },
-  "dependencies": {
+  "devDependencies": {
     "debounce-fn": "^5.0.0",
     "js-base64": "^3.6.1",
     "lib0": "^0.2.42",
     "monaco-editor": "^0.27.0",
     "randomcolor": "^0.6.2",
-    "yjs": "^13.5.12"
-  },
-  "devDependencies": {
+    "yjs": "^13.5.12",
     "@netless/app-shared": "workspace:^0.1.0",
     "@types/lodash.isequal": "^4.5.5",
     "@types/randomcolor": "^0.5.6"
