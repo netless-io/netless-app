@@ -26,6 +26,6 @@
     "vanilla-lazyload": "^17.4.0"
   },
   "devDependencies": {
-    "@netless/app-shared": "workspace:^0.1.0"
+    "@netless/app-shared": "workspace:*"
   }
 }

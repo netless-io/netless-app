@@ -28,7 +28,7 @@
     "monaco-editor": "^0.27.0",
     "randomcolor": "^0.6.2",
     "yjs": "^13.5.12",
-    "@netless/app-shared": "workspace:^0.1.0",
+    "@netless/app-shared": "workspace:*",
     "@types/lodash.isequal": "^4.5.5",
     "@types/randomcolor": "^0.5.6"
   }

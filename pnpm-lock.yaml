@@ -49,7 +49,7 @@ importers:
 
   packages/app-docs-viewer:
     specifiers:
-      '@netless/app-shared': workspace:^0.1.0
+      '@netless/app-shared': workspace:*
       debounce-fn: ^5.0.0
       vanilla-lazyload: ^17.4.0
     dependencies:
@@ -73,7 +73,7 @@ importers:
 
   packages/app-monaco:
     specifiers:
-      '@netless/app-shared': workspace:^0.1.0
+      '@netless/app-shared': workspace:*
       '@types/lodash.isequal': ^4.5.5
       '@types/randomcolor': ^0.5.6
       debounce-fn: ^5.0.0

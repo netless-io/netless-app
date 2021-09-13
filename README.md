@@ -8,7 +8,7 @@ Setup:
 gh repo clone netless-io/netless-app
 cd netless-app
 pnpm i
-pnpm build
+pnpm build --filter \*app-shared
 pnpm dev
 ```
 
