@@ -33,8 +33,6 @@ const NetlessAppDocsViewer: NetlessApp<
       throw new Error("[Docs Viewer]: no whiteboard view.");
     }
 
-    whiteboardView.disableCameraTransform = true;
-
     const pages = scenes
       .map(({ ppt }): DocsViewerPage | null =>
         ppt
@@ -124,6 +122,8 @@ function setupDynamicDocsViewer(
   box: ReadonlyTeleBox,
   pages: DocsViewerPage[]
 ): void {
+  whiteboardView.disableCameraTransform = true;
+
   const displayer = context.getDisplayer();
 
   const docsViewer = new DynamicDocsViewer({

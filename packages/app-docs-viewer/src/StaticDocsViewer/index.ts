@@ -1,5 +1,5 @@
 import type { AnimationMode, ReadonlyTeleBox } from "@netless/window-manager";
-import type { View, Size } from "white-web-sdk";
+import type { View, Size, Camera } from "white-web-sdk";
 import LazyLoad from "vanilla-lazyload";
 import type { DebouncedFunction, Options } from "debounce-fn";
 import debounceFn from "debounce-fn";
@@ -207,28 +207,22 @@ export class StaticDocsViewer {
         ev => {
           preventEvent(ev);
           if (!this.readonly) {
-            const scrollTop = clamp(this.pageScrollTop + ev.deltaY, 0, this.pagesSize.height);
-            this.pageScrollTo(scrollTop);
-            if (this.onUserScroll) {
-              this.onUserScroll(scrollTop);
-            }
+            this.pageScrollTo(this.pageScrollTop + ev.deltaY);
+            this.updateUserScroll();
           }
         },
         { passive: false, capture: true }
       );
       this.sideEffect.addEventListener(
         this.$whiteboardView,
-        "touchstart",
+        "touchmove",
         ev => {
-          if (ev.touches.length > 1) {
-            preventEvent(ev);
-            if (this.readonly) {
-              return;
-            }
-            this.handleSwipeScroll(ev);
+          if (this.readonly || ev.touches.length <= 1) {
+            return;
           }
+          this.updateUserScroll();
         },
-        { passive: false, capture: true }
+        { passive: true, capture: true }
       );
     }
     return this.$whiteboardView;
@@ -297,14 +291,20 @@ export class StaticDocsViewer {
 
   /** Scroll base on DOM rect */
   protected elScrollTo(elScrollTop: number): void {
-    this.$pages.scrollTo({
-      top: elScrollTop,
-    });
+    this.pageScrollTo(this.scrollTopElToPage(elScrollTop));
   }
 
   /** Scroll base on docs size */
   protected pageScrollTo(pageScrollTop: number): void {
-    this.elScrollTo(this.scrollTopPageToEl(pageScrollTop));
+    const halfWbHeight = this.scrollTopElToPage(this.whiteboardView.size.height / 2);
+    this.whiteboardView.moveCamera({
+      centerY: clamp(
+        pageScrollTop + halfWbHeight,
+        halfWbHeight,
+        this.pagesSize.height - halfWbHeight
+      ),
+      animationMode: "immediately" as AnimationMode,
+    });
   }
 
   protected scrollToPage(index: number): void {
@@ -316,9 +316,7 @@ export class StaticDocsViewer {
       if ($page) {
         const elOffsetTop = $page.offsetTop + 5;
         this.elScrollTo(elOffsetTop);
-        if (this.onUserScroll) {
-          this.onUserScroll(this.scrollTopElToPage(elOffsetTop));
-        }
+        this.updateUserScroll();
       }
     }
   }
@@ -345,26 +343,27 @@ export class StaticDocsViewer {
       "debounce-updatePageIndex"
     );
 
-    this.sideEffect.addEventListener(this.$pages, "scroll", () => {
-      const elScrollTop = this.$pages.scrollTop;
-      const pageScrollTop = this.scrollTopElToPage(elScrollTop);
-      this.pageScrollTop = pageScrollTop;
+    this.sideEffect.add(() => {
+      const handleCameraUpdate = (camera: Camera) => {
+        const { width: wbWidth, height: wbHeight } = this.whiteboardView.size;
+        const { width: pageWidth, height: pageHeight } = this.pagesSize;
+        const elScrollHeight = (wbWidth / pageWidth) * pageHeight;
 
-      const { width: wbWidth, height: wbHeight } = this.whiteboardView.size;
-      const { width: pageWidth, height: pageHeight } = this.pagesSize;
-      const elScrollHeight = (wbWidth / pageWidth) * pageHeight;
+        const elScrollTop = this.scrollTopPageToEl(camera.centerY) - wbHeight / 2;
+        const pageScrollTop = this.scrollTopElToPage(elScrollTop);
+        this.pageScrollTop = pageScrollTop;
 
-      this.whiteboardView.moveCamera({
-        centerY: this.scrollTopElToPage(elScrollTop + wbHeight / 2),
-        animationMode: "immediately" as AnimationMode,
-      });
+        this.$pages.scrollTo({ top: elScrollTop });
 
-      this.setScrollbarHeight((wbHeight / elScrollHeight) * wbHeight);
-      this.$scrollbar.style.transform = `translateY(${
-        (elScrollTop / (elScrollHeight - wbHeight)) * (wbHeight - this.scrollbarHeight)
-      }px)`;
+        this.setScrollbarHeight((wbHeight / elScrollHeight) * wbHeight);
+        this.$scrollbar.style.transform = `translateY(${
+          (elScrollTop / (elScrollHeight - wbHeight)) * (wbHeight - this.scrollbarHeight)
+        }px)`;
 
-      updatePageIndex();
+        updatePageIndex();
+      };
+      this.whiteboardView.callbacks.on("onCameraUpdated", handleCameraUpdate);
+      return () => this.whiteboardView.callbacks.off("onCameraUpdated", handleCameraUpdate);
     });
   }
 
@@ -382,6 +381,15 @@ export class StaticDocsViewer {
             height: height * ratio,
             animationMode: "immediately" as AnimationMode,
           });
+          this.whiteboardView.setCameraBound({
+            damping: 1,
+            maxContentMode: () => width / pageWidth,
+            minContentMode: () => width / pageWidth,
+            centerX: this.pagesSize.width / 2,
+            centerY: this.pagesSize.height / 2,
+            width: this.pagesSize.width,
+            height: this.pagesSize.height,
+          });
           this.elScrollTo(elScrollTop);
         }
       };
@@ -390,6 +398,14 @@ export class StaticDocsViewer {
         this.whiteboardView.callbacks.off("onSizeUpdated", handleSizeUpdate);
       };
     }, "whiteboard-size-update");
+  }
+
+  protected updateUserScroll(): void {
+    window.requestAnimationFrame(() => {
+      if (this.onUserScroll) {
+        this.onUserScroll(this.pageScrollTop);
+      }
+    });
   }
 
   protected debounce<ArgumentsType extends unknown[], ReturnType>(
@@ -424,28 +440,5 @@ export class StaticDocsViewer {
       this.scrollbarHeight = elScrollbarHeight;
       this.$scrollbar.style.height = `${elScrollbarHeight}px`;
     }
-  }
-
-  protected handleSwipeScroll(ev: TouchEvent): void {
-    const startTop = this.scrollTopPageToEl(this.pageScrollTop);
-    const elScrollHeight =
-      (this.whiteboardView.size.width / this.pagesSize.width) * this.pagesSize.height;
-    let { clientY: startY } = ev.touches[0];
-
-    const tracking = (ev: TouchEvent): void => {
-      const { clientY } = ev.touches[0];
-      this.elScrollTo(clamp(startTop + (startY - clientY), 0, elScrollHeight));
-    };
-
-    const trackEnd = (ev: TouchEvent): void => {
-      ({ clientY: startY } = ev.touches[0]);
-      window.removeEventListener("touchmove", tracking, true);
-      window.removeEventListener("touchend", trackEnd, true);
-      window.removeEventListener("touchcancel", trackEnd, true);
-    };
-
-    window.addEventListener("touchmove", tracking, true);
-    window.addEventListener("touchend", trackEnd, true);
-    window.addEventListener("touchcancel", trackEnd, true);
   }
 }
