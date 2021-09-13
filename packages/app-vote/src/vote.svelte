@@ -9,11 +9,11 @@
   const dispatch = createEventDispatcher();
 
   export let writable = false;
-
-  let phase: "edit" | "vote" = "vote";
   export let title = "";
   export let items: string[] = ["lorem", "ipsum", "dolo", "sit", "amet"];
   export let votes: number[] = [0, 0, 0, 0, 0];
+
+  let phase: "edit" | "vote" = "vote";
 
   $: editing = phase === "edit";
 
