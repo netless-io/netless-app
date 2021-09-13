@@ -1,5 +1,5 @@
 import { svelte } from "@sveltejs/vite-plugin-svelte";
-import type { LibraryFormats, UserConfig } from "vite";
+import type { UserConfig } from "vite";
 import { defineConfig } from "vite";
 import path from "path";
 
@@ -11,7 +11,7 @@ export function createViteConfig({
   name?: string;
 } = {}): UserConfig {
   return defineConfig(({ mode }) => {
-    const isProd = mode === "production" || mode === "iife";
+    const isProd = mode === "production";
     const pkgName = (entry.match(/packages[/\\]([^/\\]+)/) || ["", ""])[1];
 
     if (!pkgName) {
@@ -23,7 +23,7 @@ export function createViteConfig({
       .map((e: string) => e[0].toUpperCase() + e.slice(1))
       .join("");
 
-    const config = {
+    return {
       plugins: [
         svelte({
           emitCss: false,
@@ -35,7 +35,7 @@ export function createViteConfig({
       build: {
         lib: {
           entry,
-          formats: ["es", "cjs"] as LibraryFormats[],
+          formats: ["es", "cjs", "iife"],
           fileName: "main",
           name: name || "Netless" + varName,
         },
@@ -43,17 +43,10 @@ export function createViteConfig({
         outDir: "dist",
         rollupOptions: {
           external: ["@netless/window-manager"],
-          output: { manualChunks: undefined, inlineDynamicImports: false },
+          output: { manualChunks: undefined, inlineDynamicImports: true },
         },
         minify: isProd,
       },
     };
-
-    if (mode === "iife") {
-      config.build.lib.formats = ["iife"];
-      config.build.rollupOptions.output.inlineDynamicImports = true;
-    }
-
-    return config;
   }) as UserConfig;
 }

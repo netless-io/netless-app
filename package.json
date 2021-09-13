@@ -26,7 +26,7 @@
     "prettier": "prettier --write .",
     "lint": "eslint --ext .ts,.tsx,.svelte . && prettier --check .",
     "preinstall": "npx only-allow pnpm",
-    "build": "pnpm build -r --filter ./packages && pnpm build -r --filter ./packages --filter !./packages/app-shared -- -m iife",
+    "build": "pnpm build -r --filter ./packages",
     "build:dev": "pnpm build:dev -r --filter ./packages",
     "dev": "pnpm dev --filter playground"
   }
