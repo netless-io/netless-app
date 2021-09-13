@@ -33,7 +33,13 @@ const Vote: NetlessApp<Attributes> = {
 
     box.mountStyles(styles);
 
-    const app = new App({
+    interface Props {
+      title?: string;
+      items?: string[];
+      votes?: number[];
+      writable: boolean;
+    }
+    const app = new App<Props, { update: CustomEvent<Detail> }>({
       target: box.$content as HTMLDivElement,
       props: { writable: context.getIsWritable() },
     });

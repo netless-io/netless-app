@@ -1,5 +1,3 @@
-<svelte:options immutable />
-
 <script lang="ts">
   import Plyr from "plyr";
   import { createEventDispatcher, onDestroy, onMount } from "svelte";

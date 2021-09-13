@@ -82,7 +82,7 @@ const MediaPlayer: NetlessApp<Attributes> = {
 
     const app = new Player({
       target: box.$content,
-      props: initialProps,
+      props: initialProps as Omit<Attributes, "hostTime">,
     });
 
     let saved = { ...initialAttributes };
