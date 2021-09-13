@@ -3,13 +3,13 @@
   "private": true,
   "devDependencies": {
     "@netless/window-manager": "^0.1.63-canary.4",
-    "@sveltejs/vite-plugin-svelte": "^1.0.0-next.22",
+    "@sveltejs/vite-plugin-svelte": "^1.0.0-next.23",
     "@tsconfig/svelte": "^2.0.1",
     "@types/node": "^16.9.1",
     "@typescript-eslint/eslint-plugin": "^4.31.0",
     "@typescript-eslint/parser": "^4.31.0",
     "cross-env": "^7.0.3",
-    "esbuild": "^0.12.26",
+    "esbuild": "^0.12.27",
     "eslint": "^7.32.0",
     "eslint-config-prettier": "^8.3.0",
     "eslint-plugin-svelte3": "^3.2.1",
@@ -17,8 +17,8 @@
     "prettier-plugin-svelte": "^2.4.0",
     "rimraf": "^3.0.2",
     "sass": "^1.39.2",
-    "svelte": "^3.42.4",
-    "typescript": "^4.4.2",
+    "svelte": "^3.42.5",
+    "typescript": "^4.4.3",
     "vite": "^2.5.6",
     "white-web-sdk": "^2.13.20"
   },
@@ -26,8 +26,8 @@
     "prettier": "prettier --write .",
     "lint": "eslint --ext .ts,.tsx,.svelte . && prettier --check .",
     "preinstall": "npx only-allow pnpm",
-    "build": "pnpm build -r --filter ./packages",
-    "build:dev": "pnpm build:dev -r --filter ./packages",
+    "build-all": "pnpm build -r --filter ./packages",
+    "build-all:dev": "pnpm build:dev -r --filter ./packages",
     "dev": "pnpm dev --filter playground"
   }
 }
