@@ -23,6 +23,11 @@ export async function prepare(): Promise<RoomInfo | undefined> {
     roomToken = query.get("roomToken") as string;
   }
 
+  if ((!uuid || !roomToken) && env.VITE_ROOM_UUID && env.VITE_ROOM_TOKEN) {
+    uuid = env.VITE_ROOM_UUID;
+    roomToken = env.VITE_ROOM_TOKEN;
+  }
+
   if (!uuid || !roomToken) {
     const rooms = JSON.parse(persistStore.getItem("rooms") || "[]");
     if (rooms[0]) {
@@ -30,7 +35,7 @@ export async function prepare(): Promise<RoomInfo | undefined> {
     }
   }
 
-  if (!uuid || !roomToken) {
+  if ((!uuid || !roomToken) && env.VITE_TOKEN) {
     const shouldCreateRoom = window.confirm(
       "Not found uuid/roomToken both in query and localStorage, create a new one?"
     );
