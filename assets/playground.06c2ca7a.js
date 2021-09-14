@@ -1,0 +1,1 @@
+import{_ as o}from"./index.6a094237.js";import"./vendor.9fbfd044.js";const r={kind:"Browser",src:()=>o((()=>import("./index.8664958a.js")),["assets/index.8664958a.js","assets/vendor.9fbfd044.js"]),options:{title:"Browser"}};export{r as default};
