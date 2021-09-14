@@ -42,5 +42,10 @@ export function share(query: URLSearchParams | string | RoomInfo): string {
 }
 
 export function clearQueryString(): void {
-  history.replaceState({}, "", location.origin + location.pathname);
+  replaceURL(location.origin + location.pathname);
+}
+
+export function replaceURL(url: string): void {
+  url ||= location.origin + location.pathname;
+  history.replaceState({ url }, "", url);
 }

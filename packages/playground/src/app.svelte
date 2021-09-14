@@ -1,21 +1,25 @@
 <script context="module" lang="ts">
   import type { Room, RoomState, ApplianceNames } from "white-web-sdk";
 
-  import { createRoom, share, store } from "./common";
+  import { createRoom, replaceURL, share, store } from "./common";
   import { init, joinRoom, prepare, tools, reset } from "./room";
   import type { AppGroup } from "./apps";
   import { registerApps } from "./apps";
   import { copyToClipboard } from "./clipboard";
+
+  let copyTimer = 0;
 </script>
 
 <script lang="ts">
   import { onMount } from "svelte";
+  import { fade, fly } from "svelte/transition";
 
   let phase: "prepare" | "404" | "register-apps" | "join-room" | "main" = "prepare";
   let apps: AppGroup[];
   let room: Room;
   let tool: ApplianceNames;
   let shareMode: "share" | "new-room" = "share";
+  let copyTip = "";
 
   onMount(async () => {
     const roomInfo = await prepare();
@@ -74,18 +78,20 @@
     }
   }
 
-  async function shareOrCreateRoom() {
+  async function shareOrCreateRoom(e: MouseEvent) {
     if (shareMode === "share") {
       const { uuid, roomToken } = room;
       const query = new URLSearchParams();
       query.set("uuid", uuid);
       query.set("roomToken", roomToken);
       const url = share(query);
-      let fail = false;
-      await copyToClipboard(url).catch(() => {
-        fail = true;
-      });
-      prompt(`${fail ? "Failed to copy" : "Copied"} share url`, url);
+      replaceURL(e.ctrlKey || e.metaKey ? "" : url);
+      try {
+        await copyToClipboard(url);
+        showTip("Copied share url.");
+      } catch {
+        showTip("Failed to write clipboard.");
+      }
     }
     if (shareMode === "new-room") {
       const roomInfo = await createRoom();
@@ -93,6 +99,15 @@
       window.open(url, "_blank");
       shareMode = "share";
     }
+  }
+
+  function showTip(str: string) {
+    copyTip = str;
+    clearTimeout(copyTimer);
+    copyTimer = window.setTimeout(() => {
+      copyTimer = 0;
+      copyTip = "";
+    }, 3000);
   }
 </script>
 
@@ -114,6 +129,7 @@
     <button
       class="new-page-btn"
       title="copy share url to clipboard
+press ctrl/meta to clear address bar
 press shift to create new room"
       on:click={shareOrCreateRoom}
     >
@@ -146,3 +162,29 @@ press shift to clear screen"
     <div id="whiteboard" use:init />
   </div>
 {/if}
+
+{#if copyTip}
+  <div class="tip" class:error={copyTip.includes("Failed")} in:fly={{ x: 200 }} out:fade>
+    {copyTip}
+  </div>
+{/if}
+
+<style>
+  .tip {
+    position: fixed;
+    bottom: 1em;
+    right: 1em;
+    color: #fff;
+    background-color: #0074d9;
+    padding: 1em;
+    border-radius: 4px;
+    box-shadow: 0 4px 5px 0 rgba(0, 0, 0, 0.14), 0 1px 10px 0 rgba(0, 0, 0, 0.12),
+      0 2px 4px -1px rgba(0, 0, 0, 0.2);
+    z-index: 9999;
+    font-family: Arial, sans-serif;
+    font-size: small;
+  }
+  .tip.error {
+    background-color: #ff4136;
+  }
+</style>
