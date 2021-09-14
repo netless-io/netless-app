@@ -3,7 +3,7 @@ import type { View, Size, Camera } from "white-web-sdk";
 import LazyLoad from "vanilla-lazyload";
 import type { DebouncedFunction, Options } from "debounce-fn";
 import debounceFn from "debounce-fn";
-import { SideEffectManager } from "@netless/app-shared/SideEffectManager";
+import { SideEffectManager } from "side-effect-manager";
 import type { DocsViewerPage } from "../DocsViewer";
 import { DocsViewer } from "../DocsViewer";
 import { clamp, flattenEvent, preventEvent } from "../utils/helpers";
@@ -112,7 +112,7 @@ export class StaticDocsViewer {
   }
 
   public destroy(): void {
-    this.sideEffect.flush();
+    this.sideEffect.flushAll();
     this.onUserScroll = void 0;
     this.unmount();
     this.viewer.destroy();
@@ -414,7 +414,7 @@ export class StaticDocsViewer {
     disposerID?: string
   ): DebouncedFunction<ArgumentsType, ReturnType | undefined> {
     const dFn = debounceFn(fn, options);
-    this.sideEffect.addDisposer(() => dFn.cancel(), disposerID);
+    this.sideEffect.add(() => () => dFn.cancel(), disposerID);
     return dFn;
   }
 

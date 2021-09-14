@@ -1,10 +1,8 @@
 import type { Text, Doc } from "yjs";
 import type { AppContext } from "@netless/window-manager";
 import type { NetlessAppMonacoAttributes } from "./typings";
-import type { Debounce } from "@netless/app-shared/create-debounce";
 import { applyUpdate, encodeStateAsUpdate } from "yjs";
-import { SideEffectManager } from "@netless/app-shared/SideEffectManager";
-import { createDebounce } from "@netless/app-shared/create-debounce";
+import { SideEffectManager } from "side-effect-manager";
 import { fromUint8Array, toUint8Array } from "js-base64";
 
 export class NetlessAppMonacoPersistence {
@@ -16,8 +14,6 @@ export class NetlessAppMonacoPersistence {
     public doc: Doc
   ) {
     this.sideEffect = new SideEffectManager();
-
-    this.debounce = createDebounce(this.sideEffect);
 
     this.yText = this.doc.getText("monaco");
 
@@ -37,20 +33,23 @@ export class NetlessAppMonacoPersistence {
   }
 
   public destroy(): void {
-    this.sideEffect.flush();
+    this.sideEffect.flushAll();
   }
 
   private setupYDocPersistence(): void {
-    const setAttrs = this.debounce(
-      (): void => {
-        const text = fromUint8Array(encodeStateAsUpdate(this.doc));
-        if (text !== this.textAttr) {
-          // @TODO handle large text
-          this.context.updateAttributes(["text"], text);
-        }
-      },
-      { wait: 1000 }
-    );
+    const setAttrs = (): void => {
+      this.sideEffect.setTimeout(
+        () => {
+          const text = fromUint8Array(encodeStateAsUpdate(this.doc));
+          if (text !== this.textAttr) {
+            // @TODO handle large text
+            this.context.updateAttributes(["text"], text);
+          }
+        },
+        1000,
+        "setAttrs"
+      );
+    };
 
     this.sideEffect.add(() => {
       const onDocDestroyed = (): void => {
@@ -73,7 +72,6 @@ export class NetlessAppMonacoPersistence {
   }
 
   private sideEffect: SideEffectManager;
-  private debounce: Debounce;
 
   private isDocDestroyed = false;
   private textAttr?: string;

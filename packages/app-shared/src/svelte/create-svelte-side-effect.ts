@@ -1,10 +1,10 @@
 import { onDestroy } from "svelte";
-import { SideEffectManager } from "../SideEffectManager";
+import { SideEffectManager } from "side-effect-manager";
 
 export function createSvelteSideEffect(): SideEffectManager {
   const sideEffect = new SideEffectManager();
 
-  onDestroy(() => sideEffect.flush());
+  onDestroy(() => sideEffect.flushAll());
 
   return sideEffect;
 }

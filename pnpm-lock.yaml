@@ -51,12 +51,14 @@ importers:
     specifiers:
       '@netless/app-shared': workspace:*
       debounce-fn: ^5.0.0
+      side-effect-manager: ^0.1.2
       vanilla-lazyload: ^17.4.0
     dependencies:
       debounce-fn: 5.0.0
       vanilla-lazyload: 17.4.0
     devDependencies:
       '@netless/app-shared': link:../app-shared
+      side-effect-manager: 0.1.2
 
   packages/app-hello-world:
     specifiers: {}
@@ -81,6 +83,7 @@ importers:
       lib0: ^0.2.42
       monaco-editor: ^0.27.0
       randomcolor: ^0.6.2
+      side-effect-manager: ^0.1.2
       yjs: ^13.5.12
     devDependencies:
       '@netless/app-shared': link:../app-shared
@@ -91,13 +94,14 @@ importers:
       lib0: 0.2.42
       monaco-editor: 0.27.0
       randomcolor: 0.6.2
+      side-effect-manager: 0.1.2
       yjs: 13.5.12
 
   packages/app-shared:
     specifiers:
-      debounce-fn: ^5.0.0
-    dependencies:
-      debounce-fn: 5.0.0
+      side-effect-manager: ^0.1.2
+    devDependencies:
+      side-effect-manager: 0.1.2
 
   packages/app-vote:
     specifiers: {}
@@ -2086,6 +2090,10 @@ packages:
   /shebang-regex/3.0.0:
     resolution: {integrity: sha512-7++dFhtcx3353uBaq8DDR4NuxBetBzC7ZQOhmTQInHEd6bSrXdiEyzCvG07Z44UYdLShWUyXt5M/yhz8ekcb1A==}
     engines: {node: '>=8'}
+    dev: true
+
+  /side-effect-manager/0.1.2:
+    resolution: {integrity: sha512-zf2mxpvhVGXBvrBiGusZh+5WC4RMqMM0qcoF/mJFGsX+5GCt2m549S2rFaKluj1Q+l5ZKABj18Z4un70+GVqLw==}
     dev: true
 
   /simple-swizzle/0.2.2:

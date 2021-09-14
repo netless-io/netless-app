@@ -5,8 +5,7 @@ import type {
   Room,
   AnimationMode,
 } from "@netless/window-manager";
-import { SideEffectManager } from "@netless/app-shared/SideEffectManager";
-import { createDebounce } from "@netless/app-shared/create-debounce";
+import { SideEffectManager } from "side-effect-manager";
 import type { DocsViewerPage } from "../DocsViewer";
 import { DocsViewer } from "../DocsViewer";
 import { clamp } from "../utils/helpers";
@@ -51,7 +50,6 @@ export class DynamicDocsViewer {
   }
 
   protected sideEffect = new SideEffectManager();
-  protected debounce = createDebounce(this.sideEffect);
 
   protected readonly: boolean;
   protected pages: DocsViewerPage[];
@@ -99,7 +97,7 @@ export class DynamicDocsViewer {
   }
 
   public destroy(): void {
-    this.sideEffect.flush();
+    this.sideEffect.flushAll();
     this.unmount();
     this.viewer.destroy();
   }
@@ -210,7 +208,9 @@ export class DynamicDocsViewer {
     }
   };
 
-  protected _scaleDocsToFitDebounced = this.debounce(this._scaleDocsToFitImpl, { wait: 1000 });
+  protected _scaleDocsToFitDebounced = (): void => {
+    this.sideEffect.setTimeout(this._scaleDocsToFitImpl, 1000, "_scaleDocsToFitDebounced");
+  };
 
   protected scaleDocsToFit = (): void => {
     this._scaleDocsToFitImpl();

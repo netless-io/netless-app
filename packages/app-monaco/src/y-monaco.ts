@@ -6,7 +6,7 @@ import { createMutex } from "lib0/mutex.js";
 import { fromUint8Array, toUint8Array } from "js-base64";
 import type { AppContext, ReadonlyTeleBox } from "@netless/window-manager";
 import type { DisplayerState, Event as WhiteEvent } from "white-web-sdk";
-import { SideEffectManager } from "../../app-shared/dist/SideEffectManager";
+import { SideEffectManager } from "side-effect-manager";
 import type { NetlessAppMonacoAttributes } from "./typings";
 import { Decoration } from "./Decorations";
 
@@ -61,7 +61,7 @@ export class YMonaco {
   }
 
   public destroy(): void {
-    this.sideEffect.flush();
+    this.sideEffect.flushAll();
     this.decorations.forEach(decoration => decoration.destroy());
     this.decorations.clear();
     this.clearDecorationAttrs();

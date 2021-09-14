@@ -32,7 +32,10 @@
   "scripts": {
     "build": "rimraf ./dist && tsc --declaration --outDir dist"
   },
-  "dependencies": {
-    "debounce-fn": "^5.0.0"
+  "peerDependencies": {
+    "side-effect-manager": ">=0"
+  },
+  "devDependencies": {
+    "side-effect-manager": "^0.1.2"
   }
 }

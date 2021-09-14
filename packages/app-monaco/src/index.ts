@@ -72,6 +72,7 @@ const NetlessAppMonaco: NetlessApp<NetlessAppMonacoAttributes> = {
     context.emitter.on("destroy", () => {
       provider.destroy();
       monacoBinding.destroy();
+      editor.dispose();
     });
 
     function updateReadonly(readonly: boolean): void {

@@ -6,8 +6,7 @@ import { pauseSVG } from "./icons/pause";
 
 import type { ReadonlyTeleBox } from "@netless/window-manager";
 import LazyLoad from "vanilla-lazyload";
-import debounceFn from "debounce-fn";
-import { SideEffectManager } from "@netless/app-shared/SideEffectManager";
+import { SideEffectManager } from "side-effect-manager";
 
 export interface DocsViewerPage {
   src: string;
@@ -84,7 +83,7 @@ export class DocsViewer {
   }
 
   public destroy(): void {
-    this.sideEffect.flush();
+    this.sideEffect.flushAll();
     this.unmount();
   }
 
@@ -238,9 +237,15 @@ export class DocsViewer {
           playSVG(this.namespace),
           pauseSVG(this.namespace)
         );
-        const returnPlay = this.debounce(() => {
-          $btnPlay.classList.toggle(this.wrapClassName("footer-btn-playing"), false);
-        }, 500);
+        const returnPlay = (): void => {
+          this.sideEffect.setTimeout(
+            () => {
+              $btnPlay.classList.toggle(this.wrapClassName("footer-btn-playing"), false);
+            },
+            500,
+            "returnPlay"
+          );
+        };
         this.sideEffect.addEventListener($btnPlay, "click", () => {
           if (this.readonly) {
             return;
@@ -325,12 +330,6 @@ export class DocsViewer {
         });
       }
     }
-  }
-
-  protected debounce(fn: () => void, wait: number): () => void {
-    const dFn = debounceFn(fn, { wait });
-    this.sideEffect.addDisposer(() => dFn.cancel());
-    return dFn;
   }
 
   protected wrapClassName(className: string): string {
