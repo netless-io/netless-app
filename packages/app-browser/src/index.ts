@@ -15,7 +15,7 @@ const Browser: NetlessApp<Attributes> = {
 
     let url = context.getAttributes()?.url || "about:blank";
 
-    const app = new App<Attributes, { update: CustomEvent<string> }>({
+    const app = new App({
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       target: box.$content!,
       props: { url },
