@@ -6,6 +6,7 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    environment: github-pages
     env:
       VITE_APPID: ${{ secrets.VITE_APPID }}
       VITE_ROOM_UUID: ${{ secrets.VITE_ROOM_UUID }}
