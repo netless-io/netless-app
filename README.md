@@ -4,15 +4,21 @@
 
 Setup:
 
+> If you don't have pnpm installed:
+> 
+> ```bash
+> npm i -g pnpm
+> ```
+
+Clone or fork this project, at project root run:
+
 ```bash
-gh repo clone netless-io/netless-app
-cd netless-app
 pnpm i
 pnpm build --filter \*app-shared
 pnpm dev
 ```
 
-Common:
+Useful commands:
 
 ```bash
 # install dev dependencies in top-level package.json
