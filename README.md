@@ -11,7 +11,7 @@ Add `packages/playground/.env`. See `packages/playground/.env.example` for refer
 ### Setup:
 
 > If you don't have pnpm installed:
-> 
+>
 > ```bash
 > npm i -g pnpm
 > ```
