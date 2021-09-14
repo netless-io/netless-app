@@ -2,7 +2,7 @@ import faker from "faker";
 
 import { WindowManager } from "@netless/window-manager";
 import type { Room } from "white-web-sdk";
-import { ApplianceNames, WhiteWebSdk } from "white-web-sdk";
+import { ApplianceNames, DeviceType, WhiteWebSdk } from "white-web-sdk";
 
 import type { RoomInfo } from "./common";
 import { store, clearQueryString, createRoom, env, persistStore } from "./common";
@@ -10,6 +10,7 @@ import { store, clearQueryString, createRoom, env, persistStore } from "./common
 export const sdk = new WhiteWebSdk({
   appIdentifier: env.VITE_APPID,
   useMobXState: true,
+  deviceType: DeviceType.Surface,
 });
 
 export async function prepare(): Promise<RoomInfo | undefined> {

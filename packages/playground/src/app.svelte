@@ -1,7 +1,7 @@
 <script context="module" lang="ts">
   import type { Room, RoomState, ApplianceNames } from "white-web-sdk";
 
-  import { createRoom, replaceURL, share, store } from "./common";
+  import { createRoom, env, replaceURL, share, store } from "./common";
   import { init, joinRoom, prepare, tools, reset } from "./room";
   import type { AppGroup } from "./apps";
   import { registerApps } from "./apps";
@@ -126,18 +126,20 @@
     {#each tools as name}
       <button data-tool={name} class:active={name === tool}>{name}</button>
     {/each}
-    <button
-      class="new-page-btn"
-      title="copy share url to clipboard
+    {#if env.VITE_TOKEN}
+      <button
+        class="new-page-btn"
+        title="copy share url to clipboard
 press ctrl/meta to clear address bar
 press shift to create new room"
-      on:click={shareOrCreateRoom}
-    >
-      {shareMode
-        .split("-")
-        .map(e => e.toUpperCase())
-        .join(" ")}
-    </button>
+        on:click={shareOrCreateRoom}
+      >
+        {shareMode
+          .split("-")
+          .map(e => e.toUpperCase())
+          .join(" ")}
+      </button>
+    {/if}
     <button
       class="reset-btn"
       title="remove all apps, reset camera

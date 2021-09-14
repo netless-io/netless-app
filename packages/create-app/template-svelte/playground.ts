@@ -1,5 +1,4 @@
-import type { Room } from "white-web-sdk";
-import { WhiteWebSdk } from "white-web-sdk";
+import { DeviceType, Room, WhiteWebSdk } from "white-web-sdk";
 
 import "@netless/window-manager/dist/style.css";
 import { WindowManager } from "@netless/window-manager";
@@ -45,6 +44,7 @@ async function joinRoom() {
   const sdk = new WhiteWebSdk({
     appIdentifier: env.VITE_APPID,
     useMobXState: true,
+    deviceType: DeviceType.Surface,
   });
 
   if (!(env.VITE_ROOM_UUID && env.VITE_ROOM_TOKEN)) {
