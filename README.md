@@ -1,8 +1,14 @@
 # Netless App
 
+Official Apps for the Agora Interactive Whiteboard.
+
 ## Develop
 
-Setup:
+### Env:
+
+Add `packages/playground/.env`. See `packages/playground/.env.example` for reference.
+
+### Setup:
 
 > If you don't have pnpm installed:
 > 
@@ -18,7 +24,7 @@ pnpm build --filter \*app-shared
 pnpm dev
 ```
 
-Useful commands:
+### Useful commands:
 
 ```bash
 # install dev dependencies in top-level package.json
