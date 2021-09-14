@@ -20,4 +20,5 @@ jobs:
           version: latest
           run_install: true
       - run: pnpm lint
+      - run: pnpm build --filter @netless/app-shared
       - run: pnpm build-all:dev

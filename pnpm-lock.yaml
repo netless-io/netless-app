@@ -114,9 +114,11 @@ importers:
 
   packages/playground:
     specifiers:
+      '@netless/app-shared': workspace:*
       '@types/faker': ^5.5.8
       faker: ^5.5.3
     devDependencies:
+      '@netless/app-shared': link:../app-shared
       '@types/faker': 5.5.8
       faker: 5.5.3
 
