@@ -23,16 +23,16 @@ export async function prepare(): Promise<RoomInfo | undefined> {
     roomToken = query.get("roomToken") as string;
   }
 
-  if ((!uuid || !roomToken) && env.VITE_ROOM_UUID && env.VITE_ROOM_TOKEN) {
-    uuid = env.VITE_ROOM_UUID;
-    roomToken = env.VITE_ROOM_TOKEN;
-  }
-
   if (!uuid || !roomToken) {
     const rooms = JSON.parse(persistStore.getItem("rooms") || "[]");
     if (rooms[0]) {
       ({ uuid, roomToken } = rooms[0]);
     }
+  }
+
+  if (!uuid || !roomToken) {
+    uuid = env.VITE_ROOM_UUID;
+    roomToken = env.VITE_ROOM_TOKEN;
   }
 
   if ((!uuid || !roomToken) && env.VITE_TOKEN) {
@@ -101,7 +101,7 @@ export async function reset({
 
 export function init(container: HTMLElement): void {
   room.setScenePath("/init");
-  WindowManager.mount({ room, container, chessboard: false });
+  WindowManager.mount({ room, container, chessboard: false, cursor: true, debug: true });
   window.manager = room.getInvisiblePlugin(WindowManager.kind) as WindowManager;
   manager.switchMainViewToWriter();
 }
