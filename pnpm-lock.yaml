@@ -4,48 +4,54 @@ importers:
 
   .:
     specifiers:
-      '@netless/window-manager': ^0.1.63-canary.4
-      '@sveltejs/vite-plugin-svelte': ^1.0.0-next.23
+      '@netless/window-manager': ^0.1.64-canary.1
+      '@sveltejs/vite-plugin-svelte': ^1.0.0-next.24
       '@tsconfig/svelte': ^2.0.1
       '@types/node': ^16.9.1
       '@typescript-eslint/eslint-plugin': ^4.31.1
       '@typescript-eslint/parser': ^4.31.1
       cross-env: ^7.0.3
-      esbuild: ^0.12.27
+      esbuild: ^0.12.28
       eslint: ^7.32.0
       eslint-config-prettier: ^8.3.0
       eslint-plugin-svelte3: ^3.2.1
       prettier: ^2.4.0
       prettier-plugin-svelte: ^2.4.0
       rimraf: ^3.0.2
-      sass: ^1.40.0
-      svelte: ^3.42.5
+      sass: ^1.41.0
+      svelte: ^3.42.6
       typescript: ^4.4.3
       vite: ^2.5.7
-      white-web-sdk: ^2.13.20
+      white-web-sdk: ^2.14.1
     devDependencies:
-      '@netless/window-manager': 0.1.63-canary.4_white-web-sdk@2.13.20
-      '@sveltejs/vite-plugin-svelte': 1.0.0-next.23_svelte@3.42.5+vite@2.5.7
+      '@netless/window-manager': 0.1.64-canary.1_white-web-sdk@2.14.1
+      '@sveltejs/vite-plugin-svelte': 1.0.0-next.24_svelte@3.42.6+vite@2.5.7
       '@tsconfig/svelte': 2.0.1
       '@types/node': 16.9.1
       '@typescript-eslint/eslint-plugin': 4.31.1_e2d3c88d378335c4183365c112128ce9
       '@typescript-eslint/parser': 4.31.1_eslint@7.32.0+typescript@4.4.3
       cross-env: 7.0.3
-      esbuild: 0.12.27
+      esbuild: 0.12.28
       eslint: 7.32.0
       eslint-config-prettier: 8.3.0_eslint@7.32.0
-      eslint-plugin-svelte3: 3.2.1_eslint@7.32.0+svelte@3.42.5
+      eslint-plugin-svelte3: 3.2.1_eslint@7.32.0+svelte@3.42.6
       prettier: 2.4.0
-      prettier-plugin-svelte: 2.4.0_prettier@2.4.0+svelte@3.42.5
+      prettier-plugin-svelte: 2.4.0_prettier@2.4.0+svelte@3.42.6
       rimraf: 3.0.2
-      sass: 1.40.0
-      svelte: 3.42.5
+      sass: 1.41.0
+      svelte: 3.42.6
       typescript: 4.4.3
       vite: 2.5.7
-      white-web-sdk: 2.13.20
+      white-web-sdk: 2.14.1
 
   packages/app-browser:
     specifiers: {}
+
+  packages/app-countdown:
+    specifiers:
+      preact: ^10.5.14
+    devDependencies:
+      preact: 10.5.14
 
   packages/app-docs-viewer:
     specifiers:
@@ -191,8 +197,8 @@ packages:
     resolution: {integrity: sha512-zMM9Ds+SawiUkakS7y94Ymqx+S0ORzpG3frZirN3l+UlXUmSUR7hF4wxCVqW+ei94JzV5kt0uXBcoOEAuiydrw==}
     dev: true
 
-  /@netless/app-docs-viewer/0.1.19:
-    resolution: {integrity: sha512-ZV/5q1ADMwuFW0vO/SDP81j6DR+Rbp1bLfA4cWTqqf2qrlkLLt4H5qI3WpB8qGrdWYrk4XKYqvhuRWiiZEs4mA==}
+  /@netless/app-docs-viewer/0.1.20:
+    resolution: {integrity: sha512-nLlvdNagPDndujAYRokCj8BAN3VhZwsX4/0Hri8d+kRniqR8nethEZGmq5ItI1Y0HU1IDE9K4JYz8A8Mc9vgnA==}
     dependencies:
       debounce-fn: 5.0.0
       vanilla-lazyload: 17.4.0
@@ -213,13 +219,13 @@ packages:
       stylefire: 7.0.3
     dev: true
 
-  /@netless/window-manager/0.1.63-canary.4_white-web-sdk@2.13.20:
-    resolution: {integrity: sha512-z4jHwWYmV8ZmXcaymbi9n+4Ox8xoChVyymj//alWdxQptrr+vwanO/BZebkKCYZQ9icWf0ONmy1B6A7jEwwd8g==}
+  /@netless/window-manager/0.1.64-canary.1_white-web-sdk@2.14.1:
+    resolution: {integrity: sha512-WQ4v6wq/6FsQXXvJhv0iniq1KExN3WtV8gQG72X5czxbFP77d1U7+/d2wi9d//IQvmjmGk6UhfggTHMX6q4fcQ==}
     peerDependencies:
       white-web-sdk: ^2.13.16
     dependencies:
       '@juggle/resize-observer': 3.3.1
-      '@netless/app-docs-viewer': 0.1.19
+      '@netless/app-docs-viewer': 0.1.20
       '@netless/app-media-player': 0.1.0-beta.5
       '@netless/telebox-insider': 0.1.17
       dexie: 3.0.3
@@ -228,7 +234,7 @@ packages:
       nanoid: 3.1.25
       p-retry: 4.6.1
       video.js: 7.14.3
-      white-web-sdk: 2.13.20
+      white-web-sdk: 2.14.1
     dev: true
 
   /@netless/xml-js/1.6.15:
@@ -322,8 +328,8 @@ packages:
       picomatch: 2.3.0
     dev: true
 
-  /@sveltejs/vite-plugin-svelte/1.0.0-next.23_svelte@3.42.5+vite@2.5.7:
-    resolution: {integrity: sha512-zmguJ9OYYsvZUhzPA3ZeYana2qx/ORadI0LVjzDIuXEXcR7AKj9qJgGCWe5Wi2Z/xg9PsKMHTTCHgiiplphIYg==}
+  /@sveltejs/vite-plugin-svelte/1.0.0-next.24_svelte@3.42.6+vite@2.5.7:
+    resolution: {integrity: sha512-b+n3jcLpk2j/25APQbk5ejCyd0faYTB2bOxR3gY0LX3MFGgdiL8zdf3/aawcPSxLdbL73YVlxNBIATGuvq03uQ==}
     engines: {node: ^12.20 || ^14.13.1 || >= 16}
     peerDependencies:
       diff-match-patch: ^1.0.5
@@ -338,8 +344,8 @@ packages:
       kleur: 4.1.4
       magic-string: 0.25.7
       require-relative: 0.8.7
-      svelte: 3.42.5
-      svelte-hmr: 0.14.7_svelte@3.42.5
+      svelte: 3.42.6
+      svelte-hmr: 0.14.7_svelte@3.42.6
       vite: 2.5.7
     transitivePeerDependencies:
       - supports-color
@@ -920,6 +926,12 @@ packages:
     requiresBuild: true
     dev: true
 
+  /esbuild/0.12.28:
+    resolution: {integrity: sha512-pZ0FrWZXlvQOATlp14lRSk1N9GkeJ3vLIwOcUoo3ICQn9WNR4rWoNi81pbn6sC1iYUy7QPqNzI3+AEzokwyVcA==}
+    hasBin: true
+    requiresBuild: true
+    dev: true
+
   /escalade/3.1.1:
     resolution: {integrity: sha512-k0er2gUkLf8O0zKJiAhmkTnJlTvINGv7ygDNPbeIsX/TJjGJZHuh9B2UxbsaEkmlEo9MfhrSzmhIlhRlI2GXnw==}
     engines: {node: '>=6'}
@@ -948,7 +960,7 @@ packages:
       eslint: 7.32.0
     dev: true
 
-  /eslint-plugin-svelte3/3.2.1_eslint@7.32.0+svelte@3.42.5:
+  /eslint-plugin-svelte3/3.2.1_eslint@7.32.0+svelte@3.42.6:
     resolution: {integrity: sha512-YoBR9mLoKCjGghJ/gvpnFZKaMEu/VRcuxpSRS8KuozuEo7CdBH7bmBHa6FmMm0i4kJnOyx+PVsaptz96K6H/4Q==}
     engines: {node: '>=10'}
     peerDependencies:
@@ -956,7 +968,7 @@ packages:
       svelte: ^3.2.0
     dependencies:
       eslint: 7.32.0
-      svelte: 3.42.5
+      svelte: 3.42.6
     dev: true
 
   /eslint-scope/5.1.1:
@@ -1810,6 +1822,10 @@ packages:
       source-map-js: 0.6.2
     dev: true
 
+  /preact/10.5.14:
+    resolution: {integrity: sha512-KojoltCrshZ099ksUZ2OQKfbH66uquFoxHSbnwKbTJHeQNvx42EmC7wQVWNuDt6vC5s3nudRHFtKbpY4ijKlaQ==}
+    dev: true
+
   /prelude-ls/1.2.1:
     resolution: {integrity: sha512-vkcDPrRZo1QZLbn5RLGPpg/WmIQ65qoWWhcGKf/b5eplkkarX0m9z8ppCat4mlOqUsWpyNuYgO3VRyrYHSzX5g==}
     engines: {node: '>= 0.8.0'}
@@ -1820,14 +1836,14 @@ packages:
     engines: {node: ^12.20.0 || ^14.13.1 || >=16.0.0}
     dev: true
 
-  /prettier-plugin-svelte/2.4.0_prettier@2.4.0+svelte@3.42.5:
+  /prettier-plugin-svelte/2.4.0_prettier@2.4.0+svelte@3.42.6:
     resolution: {integrity: sha512-JwJ9bOz4XHLQtiLnX4mTSSDUdhu12WH8sTwy/XTDCSyPlah6IcV7NWeYBZscPEcceu2YnW8Y9sJCP40Z2UH9GA==}
     peerDependencies:
       prettier: ^1.16.4 || ^2.0.0
       svelte: ^3.2.0
     dependencies:
       prettier: 2.4.0
-      svelte: 3.42.5
+      svelte: 3.42.6
     dev: true
 
   /prettier/2.4.0:
@@ -1984,10 +2000,6 @@ packages:
     resolution: {integrity: sha1-kl0mAdOaxIXgkc8NpcbmlNw9yv8=}
     dev: true
 
-  /resize-observer-polyfill/1.5.1:
-    resolution: {integrity: sha512-LwZrotdHOo12nQuZlHEmtuXdqGoOD0OhaxopaNFxWzInpEgaLWoVuAMbTzixuosCx2nEG58ngzW3vxdWoxIgdg==}
-    dev: true
-
   /resolve-from/4.0.0:
     resolution: {integrity: sha512-pb/MYmXstAkysRFx8piNI1tGFNQIFA3vkE3Gq4EuA1dF6gHp/+vgZqsCGJapvy8N3Q+4o7FwvquPJcnZ7RYy4g==}
     engines: {node: '>=4'}
@@ -2047,8 +2059,8 @@ packages:
       rust-result: 1.0.0
     dev: true
 
-  /sass/1.40.0:
-    resolution: {integrity: sha512-2nLdBmvcxhsYlH6VDsHMhEoc9iYvH7uIkgGJXXNPfTqwKpvXsZyYPMwNLntqoY4zxDKU8wSSqA7XLKHy1o8nVA==}
+  /sass/1.41.0:
+    resolution: {integrity: sha512-wb8nT60cjo9ZZMcHzG7TzdbFtCAmHEKWrH+zAdScPb4ZxL64WQBnGdbp5nwlenW5wJPcHva1JWmVa0h6iqA5eg==}
     engines: {node: '>=8.9.0'}
     hasBin: true
     dependencies:
@@ -2216,16 +2228,16 @@ packages:
       has-flag: 4.0.0
     dev: true
 
-  /svelte-hmr/0.14.7_svelte@3.42.5:
+  /svelte-hmr/0.14.7_svelte@3.42.6:
     resolution: {integrity: sha512-pDrzgcWSoMaK6AJkBWkmgIsecW0GChxYZSZieIYfCP0v2oPyx2CYU/zm7TBIcjLVUPP714WxmViE9Thht4etog==}
     peerDependencies:
       svelte: '>=3.19.0'
     dependencies:
-      svelte: 3.42.5
+      svelte: 3.42.6
     dev: true
 
-  /svelte/3.42.5:
-    resolution: {integrity: sha512-+y9ivcwMojAb0e87W7vR/UP7go44zc/3gtEciIMb8CUoIkUx6UJmPloBvVuO9MDXoGkUZM5SHr5PbLze9fJQVw==}
+  /svelte/3.42.6:
+    resolution: {integrity: sha512-lAcryr9Do2PeGtbodspX5I4kWj4yWYAa2WGpDCwzNkP3y8WZTxigMd4/TMO1rBZEOkMYGn4ZXrbAlSEGhK6q3w==}
     engines: {node: '>= 8'}
     dev: true
 
@@ -2379,9 +2391,10 @@ packages:
       isexe: 2.0.0
     dev: true
 
-  /white-web-sdk/2.13.20:
-    resolution: {integrity: sha512-zpN66Jtvc/mY1pFcJDMBRsqH3BU5hFxNn/g0+xyPlN5OBIaIDMxzg2rPPcIbjNp/aZ0Zc1+XTk1iU8O3mlQGmg==}
+  /white-web-sdk/2.14.1:
+    resolution: {integrity: sha512-LvoVM1gbMtk8qyAc/Xsv8J+Gpc7tYhAqaSaF5J+2qY/+GYHPIUHzUUXug8oHMC8jjCV0MKHbwzMyTlTy6uBeog==}
     dependencies:
+      '@juggle/resize-observer': 3.3.1
       '@netless/canvas-polyfill': 0.0.4
       '@netless/xml-js': 1.6.15
       atob: 2.1.2
@@ -2397,7 +2410,6 @@ packages:
       query-string: 5.1.1
       react: 16.14.0
       react-dom: 16.14.0_react@16.14.0
-      resize-observer-polyfill: 1.5.1
       spark-md5: 3.0.2
       textarea-caret-ts: 4.1.1
       url-parse: 1.5.3

@@ -1,0 +1,17 @@
+{
+  "private": true,
+  "name": "@netless/app-countdown",
+  "version": "0.0.0",
+  "main": "dist/main.cjs.js",
+  "module": "dist/main.es.js",
+  "types": "src/index.ts",
+  "scripts": {
+    "types": "cross-env NODE_ENV=production tsc --declaration --emitDeclarationOnly --outDir dist",
+    "build": "vite build && npm run types",
+    "build:dev": "vite build --mode development && npm run types",
+    "cleanup": "rimraf ./build"
+  },
+  "devDependencies": {
+    "preact": "^10.5.14"
+  }
+}

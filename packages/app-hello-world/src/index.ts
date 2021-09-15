@@ -28,6 +28,7 @@ const HelloWorld: NetlessApp<{ text: string }> = {
     });
 
     context.emitter.on("destroy", () => {
+      console.log("[HelloWorld]: destroy");
       textarea.remove();
     });
   },

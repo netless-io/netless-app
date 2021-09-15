@@ -1,5 +1,5 @@
 import { svelte } from "@sveltejs/vite-plugin-svelte";
-import type { UserConfigExport } from "vite";
+import type { UserConfigFn } from "vite";
 import { defineConfig } from "vite";
 import path from "path";
 
@@ -9,7 +9,7 @@ export function createViteConfig({
 }: {
   entry?: string;
   name?: string;
-} = {}): UserConfigExport {
+} = {}): UserConfigFn {
   return defineConfig(({ mode }) => {
     const isProd = mode === "production";
     const pkgName = (entry.match(/packages[/\\]([^/\\]+)/) || ["", ""])[1];
@@ -48,5 +48,5 @@ export function createViteConfig({
         minify: isProd,
       },
     };
-  }) as UserConfigExport;
+  }) as UserConfigFn;
 }
