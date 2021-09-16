@@ -1,4 +1,5 @@
 import styles from "./style.scss?inline";
+import editorStyles from "monaco-editor/min/vs/editor/editor.main.css?inline";
 
 import type { NetlessApp } from "@netless/window-manager";
 import { Doc } from "yjs";
@@ -7,6 +8,47 @@ import type { NetlessAppMonacoAttributes } from "./typings";
 import { NetlessAppMonacoPersistence } from "./monaco-persistence";
 import { YMonaco } from "./y-monaco";
 import { kind } from "./constants";
+
+import editorWorker from "monaco-editor/esm/vs/editor/editor.worker?worker&inline";
+import jsonWorker from "monaco-editor/esm/vs/language/json/json.worker?worker&inline";
+import cssWorker from "monaco-editor/esm/vs/language/css/css.worker?worker&inline";
+import htmlWorker from "monaco-editor/esm/vs/language/html/html.worker?worker&inline";
+import tsWorker from "monaco-editor/esm/vs/language/typescript/ts.worker?worker&inline";
+
+declare global {
+  interface Window {
+    MonacoEnvironment: {
+      getWorker: (_: string, label: string) => Worker;
+    };
+  }
+}
+
+self.MonacoEnvironment = {
+  getWorker(_: unknown, label: string): Worker {
+    switch (label) {
+      case "javascript":
+      case "typescript": {
+        return new tsWorker();
+      }
+      case "json": {
+        return new jsonWorker();
+      }
+      case "css":
+      case "scss":
+      case "less": {
+        return new cssWorker();
+      }
+      case "html":
+      case "handlebars":
+      case "razor": {
+        return new htmlWorker();
+      }
+      default: {
+        return new editorWorker();
+      }
+    }
+  },
+};
 
 export type { NetlessAppMonacoAttributes } from "./typings";
 
@@ -33,7 +75,7 @@ const NetlessAppMonaco: NetlessApp<NetlessAppMonacoAttributes> = {
       context.updateAttributes(["selections"], {});
     }
 
-    box.mountStyles(styles);
+    box.mountStyles(styles + editorStyles);
 
     const yDoc = new Doc();
     const provider = new NetlessAppMonacoPersistence(context, attrs, yDoc);
@@ -44,6 +86,8 @@ const NetlessAppMonaco: NetlessApp<NetlessAppMonacoAttributes> = {
       value: "",
       automaticLayout: true,
       readOnly: readonly,
+      language: "javascript",
+      fixedOverflowWidgets: false,
     });
 
     if (import.meta.env.DEV) {
@@ -80,6 +124,8 @@ const NetlessAppMonaco: NetlessApp<NetlessAppMonacoAttributes> = {
       editor.updateOptions({ readOnly: readonly });
       monacoBinding.setReadonly(readonly);
     }
+
+    return editor;
   },
 };
 
