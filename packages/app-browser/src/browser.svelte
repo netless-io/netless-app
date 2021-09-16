@@ -3,7 +3,7 @@
   const dispatch = createEventDispatcher();
 
   export let url = "about:blank";
-  let dummyURL = url;
+  export let dummyURL = url;
   let status: "Ready" | "Loading" = "Ready";
 
   function onload() {

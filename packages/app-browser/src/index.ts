@@ -4,35 +4,40 @@ import styles from "./style.scss?inline";
 
 export interface Attributes {
   url: string;
+  dummyURL?: string;
 }
 
 const Browser: NetlessApp<Attributes> = {
   kind: "Browser",
   setup(context) {
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    const box = context.getBox()!;
+    let attrs = context.getAttributes() as Attributes;
+    if (!attrs?.url) {
+      context.setAttributes({ url: "about:blank" });
+      attrs = context.getAttributes() as Attributes;
+    }
+    if (!attrs) {
+      throw new Error("[Browser]: Missing attributes");
+    }
+
+    const box = context.getBox();
     box.mountStyles(styles);
 
-    let url = context.getAttributes()?.url || "about:blank";
-
     const app = new App({
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      target: box.$content!,
-      props: { url },
+      target: box.$content as HTMLElement,
+      props: { url: attrs.url },
     });
 
     app.$on("update", ({ detail: url }) => {
       context.updateAttributes(["url"], url);
     });
 
-    context.emitter.on("attributesUpdate", attrs => {
-      if (!context.getIsWritable()) {
-        return app.$set({ url });
-      }
-      if (attrs?.url != null) {
-        url = attrs.url;
-        app.$set({ url });
-      }
+    context.mobxUtils.autorun(() => {
+      app.$set({ url: attrs.url, dummyURL: attrs.url });
+    });
+
+    context.emitter.on("destroy", () => {
+      console.log("[Browser]: destroy");
+      app.$destroy();
     });
   },
 };

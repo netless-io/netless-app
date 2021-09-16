@@ -23,21 +23,15 @@ interface FlipDownProps {
 }
 
 export default class Controller extends Component<ControllerProps, FlipDownState & FlipDownProps> {
+  private attributes: Attributes;
+
   // hold the requestAnimationFrame handler
   private raf = 0;
-
-  get attributes(): Attributes {
-    const attrs = this.props.context.getAttributes() || ({} as Attributes);
-    return {
-      start: attrs.start || 0,
-      pause: attrs.pause || 0,
-      total: attrs.total || 0,
-    };
-  }
 
   constructor(props: ControllerProps) {
     super(props);
     this.raf = requestAnimationFrame(this.update);
+    this.attributes = props.context.getAttributes() as Attributes;
     this.state = {
       isInit: true,
       seconds: 0,
@@ -51,31 +45,33 @@ export default class Controller extends Component<ControllerProps, FlipDownState
   // 继续 / 暂停
   start = (): void => {
     const { context, room } = this.props;
-    const { start, pause, total } = this.attributes;
+    const { start, pause, total } = this.attributes.state;
     const now = room.calibrationTimestamp;
     if (pause) {
-      context.setAttributes({ start: now - (pause - start), pause: 0, total });
+      context.updateAttributes(["state"], { start: now - (pause - start), pause: 0, total });
     } else {
-      context.updateAttributes(["pause"] as [keyof Attributes], now);
+      context.updateAttributes(["state", "pause"], now);
     }
   };
 
   // 重置
   reset = (): void => {
     const { context } = this.props;
-    context.setAttributes({ start: 0, pause: 0, total: 0 });
+    context.updateAttributes(["state"], { start: 0, pause: 0, total: 0 });
   };
 
   // 开始
   init = (): void => {
     const { context, room } = this.props;
-    context.setAttributes({ start: room.calibrationTimestamp, pause: 0, total: 0 });
+    context.updateAttributes(["state"], { start: room.calibrationTimestamp, pause: 0, total: 0 });
   };
 
   update = (): void => {
     this.raf = requestAnimationFrame(this.update);
-    const { room } = this.props;
-    const { start, pause, total } = this.attributes;
+    const { context, room } = this.props;
+    this.attributes = context.getAttributes() as Attributes;
+    const { start, pause, total } = this.attributes.state;
+
     const isInit = start === 0;
     const stopped = isInit || pause !== 0;
     let seconds = 0;
@@ -89,6 +85,7 @@ export default class Controller extends Component<ControllerProps, FlipDownState
     if (total) {
       seconds = Math.max(total - seconds, 0);
     }
+
     this.setState({ isInit, stopped, seconds });
   };
 
