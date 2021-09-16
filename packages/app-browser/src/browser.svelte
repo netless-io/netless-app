@@ -32,6 +32,7 @@
       autocomplete="off"
       spellcheck="false"
       bind:value={dummyURL}
+      on:keypress={ev => ev.key === "Enter" && go()}
     />
     <button class="netless-app-browser-go" on:click={go}>GO</button>
   </div>
