@@ -142,7 +142,7 @@ function setupDynamicDocsViewer(
     whiteboardView.callbacks.once(
       "onSizeUpdated",
       ({ width: contentWidth, height: contentHeight }: Size) => {
-        if (pages.length > 0) {
+        if (pages.length > 0 && box.state !== "maximized") {
           const { width: pageWidth, height: pageHeight } = pages[0];
           const preferHeight = (pageHeight / pageWidth) * contentWidth;
           const diff = preferHeight - contentHeight;
