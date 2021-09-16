@@ -7,6 +7,9 @@ const options: PlaygroundConfig<Attributes> = {
   options: {
     title: "Browser",
   },
+  attributes: {
+    url: "https://flat.whiteboard.agora.io/",
+  },
 };
 
 export default options;
