@@ -10,9 +10,6 @@ import { YMonaco } from "./y-monaco";
 import { kind } from "./constants";
 
 import editorWorker from "monaco-editor/esm/vs/editor/editor.worker?worker&inline";
-import jsonWorker from "monaco-editor/esm/vs/language/json/json.worker?worker&inline";
-import cssWorker from "monaco-editor/esm/vs/language/css/css.worker?worker&inline";
-import htmlWorker from "monaco-editor/esm/vs/language/html/html.worker?worker&inline";
 import tsWorker from "monaco-editor/esm/vs/language/typescript/ts.worker?worker&inline";
 
 declare global {
@@ -29,19 +26,6 @@ self.MonacoEnvironment = {
       case "javascript":
       case "typescript": {
         return new tsWorker();
-      }
-      case "json": {
-        return new jsonWorker();
-      }
-      case "css":
-      case "scss":
-      case "less": {
-        return new cssWorker();
-      }
-      case "html":
-      case "handlebars":
-      case "razor": {
-        return new htmlWorker();
       }
       default: {
         return new editorWorker();
