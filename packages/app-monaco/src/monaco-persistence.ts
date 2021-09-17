@@ -6,16 +6,13 @@ import { SideEffectManager } from "side-effect-manager";
 import { fromUint8Array, toUint8Array } from "js-base64";
 
 export class NetlessAppMonacoPersistence {
-  public yText: Text;
-
   public constructor(
     public context: AppContext<NetlessAppMonacoAttributes>,
     public attrs: NetlessAppMonacoAttributes,
-    public doc: Doc
+    public doc: Doc,
+    public yText: Text
   ) {
     this.sideEffect = new SideEffectManager();
-
-    this.yText = this.doc.getText("monaco");
 
     this.textAttr = attrs.text;
 
