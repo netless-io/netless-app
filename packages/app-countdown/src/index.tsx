@@ -15,12 +15,14 @@ export interface Attributes {
 }
 
 const Noop = () => null;
+const MIN_WIDTH = 208;
+const MIN_HEIGHT = 216;
 
 const Countdown: NetlessApp<Attributes> = {
   kind: "Countdown",
   config: {
-    minwidth: 208,
-    minheight: 180,
+    minwidth: MIN_WIDTH,
+    minheight: MIN_HEIGHT,
   },
   setup(context) {
     let attrs = context.getAttributes();

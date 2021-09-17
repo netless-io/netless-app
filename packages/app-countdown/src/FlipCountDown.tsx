@@ -14,12 +14,13 @@ interface FlipDownState {
   seconds: number;
   stopped: boolean;
   isInit: boolean;
+  isDone: boolean;
 }
 
 interface FlipDownProps {
   start(): void;
   reset(): void;
-  init(): void;
+  init(total?: number): void;
 }
 
 export default class Controller extends Component<ControllerProps, FlipDownState & FlipDownProps> {
@@ -34,6 +35,7 @@ export default class Controller extends Component<ControllerProps, FlipDownState
     this.attributes = props.context.getAttributes() as Attributes;
     this.state = {
       isInit: true,
+      isDone: false,
       seconds: 0,
       stopped: true,
       start: this.start,
@@ -58,12 +60,17 @@ export default class Controller extends Component<ControllerProps, FlipDownState
   reset = (): void => {
     const { context } = this.props;
     context.updateAttributes(["state"], { start: 0, pause: 0, total: 0 });
+    this.setState({ isDone: false });
   };
 
   // 开始
-  init = (): void => {
+  init = (total?: number): void => {
     const { context, room } = this.props;
-    context.updateAttributes(["state"], { start: room.calibrationTimestamp, pause: 0, total: 0 });
+    context.updateAttributes(["state"], {
+      start: room.calibrationTimestamp,
+      pause: 0,
+      total: total || 0,
+    });
   };
 
   update = (): void => {
@@ -83,6 +90,11 @@ export default class Controller extends Component<ControllerProps, FlipDownState
       }
     }
     if (total) {
+      if (seconds > total) {
+        // 倒计时结束
+        !pause && this.start();
+        this.setState({ isDone: true });
+      }
       seconds = Math.max(total - seconds, 0);
     }
 
@@ -90,7 +102,7 @@ export default class Controller extends Component<ControllerProps, FlipDownState
   };
 
   override componentWillUnmount(): void {
-    console.log("componentWillUnmount");
+    console.log("[Countdown]: unmount");
     cancelAnimationFrame(this.raf);
   }
 
@@ -99,17 +111,34 @@ export default class Controller extends Component<ControllerProps, FlipDownState
   }
 }
 
-export class FlipCountDown extends PureComponent<FlipDownState & FlipDownProps> {
+type FlipCountDownProps = FlipDownState & FlipDownProps;
+
+interface FlipCountDownState {
+  total: [number, number, number, number];
+}
+
+export class FlipCountDown extends PureComponent<FlipCountDownProps, FlipCountDownState> {
+  constructor(props: FlipCountDownProps) {
+    super(props);
+    this.state = {
+      total: [0, 0, 0, 0],
+    };
+  }
+
   private correctValueFormat = (value: number): { left: number; right: number } => {
     return { left: Math.floor(value / 10), right: value % 10 };
   };
 
-  private transformTime = (): {
-    minutes_left: number;
-    minutes_right: number;
-    seconds_left: number;
-    seconds_right: number;
-  } => {
+  private transformTime = () => {
+    if (this.props.isInit) {
+      const { total } = this.state;
+      return {
+        minutes_left: total[0],
+        minutes_right: total[1],
+        seconds_left: total[2],
+        seconds_right: total[3],
+      };
+    }
     const current = this.props.seconds;
     const minutes = Math.floor((current % (60 * 60)) / 60);
     const seconds = Math.floor(current % 60);
@@ -123,51 +152,112 @@ export class FlipCountDown extends PureComponent<FlipDownState & FlipDownProps> 
     };
   };
 
+  private handleInit = () => {
+    const [a, b, c, d] = this.state.total;
+    this.props.init((a * 10 + b) * 60 + (c * 10 + d));
+  };
+
+  private handleReset = () => {
+    this.props.reset();
+    this.setState({ total: [0, 0, 0, 0] });
+  };
+
+  private handleInc = (index: number) => () => {
+    const nextTotal = this.state.total.map((e, i) => (i === index ? (e + 1) % 10 : e));
+    if (index === 2 && nextTotal[index] > 5) {
+      nextTotal[index] = 0;
+    }
+    this.setState({ total: nextTotal as FlipCountDownState["total"] });
+  };
+  private incMinutesLeft = this.handleInc(0);
+  private incMinutesRight = this.handleInc(1);
+  private incSecondsLeft = this.handleInc(2);
+  private incSecondsRight = this.handleInc(3);
+
+  private handleDec = (index: number) => () => {
+    const nextTotal = this.state.total.map((e, i) => (i === index ? (e + 9) % 10 : e));
+    if (index === 2 && nextTotal[index] > 5) {
+      nextTotal[index] = 5;
+    }
+    this.setState({ total: nextTotal as FlipCountDownState["total"] });
+  };
+  private decMinutesLeft = this.handleDec(0);
+  private decMinutesRight = this.handleDec(1);
+  private decSecondsLeft = this.handleDec(2);
+  private decSecondsRight = this.handleDec(3);
+
   // eslint-disable-next-line
   public render() {
+    const { isInit, isDone, stopped, start } = this.props;
     const { seconds_left, seconds_right, minutes_right, minutes_left } = this.transformTime();
+
+    const className = isDone ? "flipdown flipdown__theme-light" : "flipdown flipdown__theme-dark";
+
     return (
       <div class="flipdown-box">
-        {!this.props.isInit && (
+        {!isInit && (
           <div class="flipdown-mask">
-            {this.props.stopped ? (
+            {stopped ? (
               <div class="flipdown-mask-mid">
-                <button onClick={this.props.reset} class="flipdown-mask-btn">
+                <button onClick={this.handleReset} class="flipdown-mask-btn">
                   重置
                 </button>
-                <button onClick={this.props.start} class="flipdown-mask-btn">
-                  继续
-                </button>
+                {!isDone && (
+                  <button onClick={start} class="flipdown-mask-btn">
+                    继续
+                  </button>
+                )}
               </div>
             ) : (
               <div class="flipdown-mask-mid">
-                <button onClick={this.props.start} class="flipdown-mask-btn">
+                <button onClick={start} class="flipdown-mask-btn">
                   暂停
                 </button>
               </div>
             )}
           </div>
         )}
-        <div class="flipdown flipdown__theme-dark">
+        <div class={className}>
           <div class="flipdown-mid-box">
-            <TimeCell style={{ marginRight: 8 }} time={minutes_left} />
-            <TimeCell time={minutes_right} />
+            <TimeCell
+              style={{ marginRight: 8 }}
+              disabled={!isInit}
+              time={minutes_left}
+              onUp={this.incMinutesLeft}
+              onDown={this.decMinutesLeft}
+            />
+            <TimeCell
+              time={minutes_right}
+              disabled={!isInit}
+              onUp={this.incMinutesRight}
+              onDown={this.decMinutesRight}
+            />
           </div>
           <div class="flipdown-point-box">
             <div style="margin-bottom: 12px" />
             <div />
           </div>
           <div class="flipdown-mid-box">
-            <TimeCell style={{ marginRight: 8 }} time={seconds_left} />
-            <TimeCell time={seconds_right} />
+            <TimeCell
+              style={{ marginRight: 8 }}
+              disabled={!isInit}
+              time={seconds_left}
+              onUp={this.incSecondsLeft}
+              onDown={this.decSecondsLeft}
+            />
+            <TimeCell
+              time={seconds_right}
+              disabled={!isInit}
+              onUp={this.incSecondsRight}
+              onDown={this.decSecondsRight}
+            />
           </div>
         </div>
-        {this.props.isInit && (
-          <div>
-            <button onClick={this.props.init} class="flipdown-button">
+        {isInit && (
+          <div class="flipdown-buttons">
+            <button onClick={this.handleInit} class="flipdown-button">
               开始
             </button>
-            <div style={{ height: 20 }} />
           </div>
         )}
       </div>
@@ -175,31 +265,47 @@ export class FlipCountDown extends PureComponent<FlipDownState & FlipDownProps> 
   }
 }
 
-type TimeCellProps = {
+interface TimeCellProps {
   time: number;
   style?: JSX.HTMLAttributes["style"];
-};
+  disabled?: boolean;
+  onUp?: () => void;
+  onDown?: () => void;
+}
 
-const TimeCell = ({ time, style }: TimeCellProps) => {
+const TimeCell = ({ time, style, disabled, onUp, onDown }: TimeCellProps) => {
   const [flipdown, setFlipDown] = useState("rotor-leaf");
   const [oldTime, setOldTime] = useState(0);
+  const [shift, setShift] = useState(0);
 
   useEffect(() => {
-    setFlipDown("rotor-leaf flipped");
-    setTimeout(() => {
-      setFlipDown("rotor-leaf");
+    if (disabled || shift) {
+      setShift(1);
+      setFlipDown("rotor-leaf flipped");
+      setTimeout(() => {
+        setFlipDown("rotor-leaf");
+        setOldTime(time);
+      }, 500);
+      !disabled && setShift(0);
+    } else {
       setOldTime(time);
-    }, 500);
-  }, [time]);
+    }
+  }, [time, disabled]);
+
+  const className = disabled ? "flipdown-digit disabled" : "flipdown-digit";
 
   return (
-    <div style={style} class="rotor">
-      <div class={flipdown}>
-        <figure class="rotor-leaf-rear">{time}</figure>
-        <figure class="rotor-leaf-front">{oldTime}</figure>
+    <div class={className} style={style}>
+      <div class="flipdown-up" onClick={disabled ? void 0 : onUp} />
+      <div class="rotor">
+        <div class={flipdown}>
+          <figure class="rotor-leaf-rear">{time}</figure>
+          <figure class="rotor-leaf-front">{oldTime}</figure>
+        </div>
+        <div class="rotor-top">{time}</div>
+        <div class="rotor-bottom">{oldTime}</div>
       </div>
-      <div class="rotor-top">{time}</div>
-      <div class="rotor-bottom">{oldTime}</div>
+      <div class="flipdown-down" onClick={disabled ? void 0 : onDown} />
     </div>
   );
 };

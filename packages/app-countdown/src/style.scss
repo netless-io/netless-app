@@ -50,6 +50,13 @@
   justify-content: center;
 }
 
+.flipdown-buttons {
+  display: flex;
+  flex-flow: column nowrap;
+  gap: 4px;
+  padding-bottom: 20px;
+}
+
 .flipdown-button {
   width: 180px;
   height: 36px;
@@ -68,23 +75,55 @@
 .flipdown {
   display: flex;
   flex-direction: row;
+  align-items: center;
   justify-content: center;
   transform-origin: center;
+}
+
+.flipdown-digit {
+  display: flex;
+  flex-flow: column nowrap;
+  align-items: center;
+  &.disabled {
+    .flipdown-up::before,
+    .flipdown-down::after {
+      border-top-color: rgba(0, 0, 0, 0.05);
+      border-bottom-color: rgba(0, 0, 0, 0.05);
+    }
+  }
+}
+
+$arrow-unit: 12px;
+.flipdown-up::before,
+.flipdown-down::after {
+  content: "";
+  display: inline-block;
+  width: 0;
+  height: 0;
+  border-top: 0;
+  border-left: $arrow-unit solid transparent;
+  border-right: $arrow-unit solid transparent;
+  border-bottom: $arrow-unit solid #151515;
+  cursor: pointer;
+}
+
+.flipdown-down::after {
+  border-top: $arrow-unit solid #151515;
+  border-bottom: 0;
 }
 
 .flipdown-mid-box {
   display: flex;
   flex-direction: row;
-  margin-top: 20px;
-  margin-bottom: 20px;
+  padding-top: 20px;
+  padding-bottom: 8px;
 }
 
 .flipdown-point-box {
-  height: 64px;
   display: flex;
   flex-direction: column;
   justify-content: center;
-  margin: 20px 6px;
+  padding: 20px 6px 8px;
 
   div {
     width: 8px;
