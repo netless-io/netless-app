@@ -15,11 +15,17 @@ const NetlessAppMonaco: NetlessApp<NetlessAppMonacoAttributes> = {
   setup(context) {
     const box = context.getBox();
 
-    const attrs = ensureAttributes(context, { text: "", cursors: {}, selections: {} });
+    const attrs = ensureAttributes(context, {
+      text: "",
+      cursors: {},
+      selections: {},
+      lang: "javascript",
+    });
 
     box.mountStyles(styles + editorStyles);
 
     const monacoEditor = new MonacoEditor(context, attrs, box, !context.getIsWritable());
+
     const persistence = new NetlessAppMonacoPersistence(
       context,
       attrs,

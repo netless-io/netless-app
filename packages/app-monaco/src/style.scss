@@ -1,20 +1,22 @@
-.netless-app-monaco-editor-container {
+$namespace: "netless-app-monaco";
+
+.#{$namespace}-editor-container {
   width: 100%;
   height: 100%;
   overflow: hidden;
 }
 
-.netless-app-monaco-cursor-readonly {
+.#{$namespace}-cursor-readonly {
   .cursors-layer > .cursor {
     display: none !important;
   }
 }
 
-.netless-app-monaco-selection {
+.#{$namespace}-selection {
   background: rgb(250, 129, 0, 0.5);
 }
 
-.netless-app-monaco-cursor {
+.#{$namespace}-cursor {
   --content: "Guest";
   --bg-color: orange;
   --text-color: #fff;
@@ -27,7 +29,7 @@
   user-select: none;
 }
 
-.netless-app-monaco-cursor::before {
+.#{$namespace}-cursor::before {
   display: var(--label);
   content: var(--content);
   position: absolute;
@@ -48,17 +50,17 @@
   color: var(--text-color);
 }
 
-.netless-app-monaco-cursor-first-line::before {
+.#{$namespace}-cursor-first-line::before {
   top: 16px;
   left: -2px;
 }
 
-.netless-app-monaco-cursor-right::before {
+.#{$namespace}-cursor-right::before {
   left: unset;
   right: 2px;
 }
 
-.netless-app-monaco-cursor::after {
+.#{$namespace}-cursor::after {
   display: var(--dot);
   content: " ";
   position: absolute;
@@ -68,4 +70,23 @@
   height: 6px;
   border-radius: 4px;
   background: var(--bg-color);
+}
+
+.#{$namespace}-footer {
+  box-sizing: border-box;
+  height: 26px;
+  display: flex;
+  align-items: center;
+  padding: 0 16px;
+  border-top: 1px solid #eeeef7;
+  color: #191919;
+  font-size: 12px;
+}
+
+.#{$namespace}-readonly {
+  pointer-events: none;
+
+  .#{$namespace}-lang-select {
+    pointer-events: none;
+  }
 }
