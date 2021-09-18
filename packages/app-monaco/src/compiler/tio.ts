@@ -2,7 +2,7 @@ import { deflateRaw } from "pako";
 import type { Compiler } from "./typings";
 
 export class Tio implements Compiler {
-  public hasLanguage(lang: string): boolean {
+  public hasLanguage(lang: string): lang is keyof typeof Tio.lanMap {
     return Object.prototype.hasOwnProperty.call(Tio.lanMap, lang);
   }
 
@@ -16,7 +16,7 @@ export class Tio implements Compiler {
     }
 
     try {
-      const l = unescape(encodeURIComponent(lang));
+      const l = unescape(encodeURIComponent(Tio.lanMap[lang]));
       const c = unescape(encodeURIComponent(source));
       const plain = `Vlang\0${1}\0${l}\0VTIO_OPTIONS\0${0}\0F.code.tio\0${
         c.length
