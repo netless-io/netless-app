@@ -1,7 +1,6 @@
 import type { AppContext, ReadonlyTeleBox } from "@netless/window-manager";
 import type { Text } from "yjs";
 import { Doc } from "yjs";
-import monacoLoader from "@monaco-editor/loader";
 import { SideEffectManager } from "side-effect-manager";
 import type * as Monaco from "monaco-editor";
 import type { NetlessAppMonacoAttributes } from "./typings";
@@ -29,17 +28,6 @@ export class MonacoEditor {
 
   public readonly compiler = new Judge0(import.meta.env.VITE_JUDGE0_KEY);
   public readonly terminal = new Terminal(this.compiler);
-
-  public static async loadEditor(
-    context: AppContext<NetlessAppMonacoAttributes>,
-    attrs: NetlessAppMonacoAttributes,
-    box: ReadonlyTeleBox,
-    readonly: boolean
-  ): Promise<MonacoEditor> {
-    return monacoLoader
-      .init()
-      .then(monaco => new MonacoEditor(context, attrs, box, monaco, readonly));
-  }
 
   public constructor(
     public readonly context: AppContext<NetlessAppMonacoAttributes>,

@@ -1,6 +1,7 @@
 import styles from "./style.scss?inline";
 import editorStyles from "monaco-editor/min/vs/editor/editor.main.css?inline";
 
+import monacoLoader from "@monaco-editor/loader";
 import type { NetlessApp } from "@netless/window-manager";
 import { ensureAttributes } from "@netless/app-shared";
 import type { NetlessAppMonacoAttributes } from "./typings";
@@ -24,12 +25,9 @@ const NetlessAppMonaco: NetlessApp<NetlessAppMonacoAttributes> = {
 
     box.mountStyles(styles + editorStyles);
 
-    const monacoEditor = await MonacoEditor.loadEditor(
-      context,
-      attrs,
-      box,
-      !context.getIsWritable()
-    );
+    const monaco = await monacoLoader.init();
+
+    const monacoEditor = new MonacoEditor(context, attrs, box, monaco, !context.getIsWritable());
 
     const persistence = new NetlessAppMonacoPersistence(
       context,
