@@ -11,6 +11,7 @@ jobs:
       VITE_APPID: ${{ secrets.VITE_APPID }}
       VITE_ROOM_UUID: ${{ secrets.VITE_ROOM_UUID }}
       VITE_ROOM_TOKEN: ${{ secrets.VITE_ROOM_TOKEN }}
+      VITE_JUDGE0_KEY: ${{ secrets.VITE_JUDGE0_KEY }}
     steps:
       - uses: actions/checkout@v2
       - uses: actions/cache@v2
