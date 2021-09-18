@@ -31,35 +31,11 @@ export class Tio implements Compiler {
         return `${response.status} ${response.statusText}`;
       }
 
-      const result = await response.text();
+      const lines = (await response.text()).split("\n");
+      const result = lines.slice(0, lines.length - 5).join("\n");
       const splitter = result.slice(0, 16);
 
-      let i = 16;
-      let out = "";
-      let err = "";
-
-      for (; i < result.length; i++) {
-        if (result[i] === "\n") {
-          i += 1;
-          break;
-        } else if (result.slice(i).startsWith(splitter)) {
-          i += 16;
-          break;
-        }
-        out += result[i];
-      }
-
-      // err may at the same line as out
-      if (result.slice(i).startsWith(splitter)) {
-        i += 16;
-      }
-
-      for (; i < result.length; i++) {
-        if (result[i] === "\n" || result.slice(i).startsWith(splitter)) {
-          break;
-        }
-        err += result[i];
-      }
+      const [out, err] = result.slice(16).split(splitter);
 
       return err || out;
     } catch (err) {
