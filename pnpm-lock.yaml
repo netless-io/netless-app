@@ -255,6 +255,9 @@ importers:
       '@netless/y':
         specifier: ^0.2.0-canary.0
         version: 0.2.0-canary.0(@netless/window-manager@1.0.0-canary.69)(yjs@13.5.13)
+      '@types/pako':
+        specifier: ^1.0.2
+        version: 1.0.7
       '@types/randomcolor':
         specifier: ^0.5.6
         version: 0.5.6
@@ -270,6 +273,9 @@ importers:
       monaco-editor:
         specifier: ^0.29.1
         version: 0.29.1
+      pako:
+        specifier: ^2.0.4
+        version: 2.1.0
       randomcolor:
         specifier: ^0.6.2
         version: 0.6.2
@@ -1891,6 +1897,10 @@ packages:
 
   /@types/normalize-package-data@2.4.1:
     resolution: {integrity: sha512-Gj7cI7z+98M282Tqmp2K5EIsoouUEzbBJhQQzDE3jSIRk6r9gsz0oUokqIUR4u1R3dMHo0pDHM7sNOHyhulypw==}
+    dev: true
+
+  /@types/pako@1.0.7:
+    resolution: {integrity: sha512-YBtzT2ztNF6R/9+UXj2wTGFnC9NklAnASt3sC0h2m1bbH7G6FyBIkt4AN8ThZpNfxUo1b2iMVO0UawiJymEt8A==}
     dev: true
 
   /@types/parse-json@4.0.0:
@@ -4210,6 +4220,10 @@ packages:
   /p-try@2.2.0:
     resolution: {integrity: sha512-R4nPAVTAU0B9D35/Gk3uJf/7XYbQcyohSKdvAxIRSNghFl4e71hVoGnBNQz9cWaXxO2I10KTC+3jMdvvoKw6dQ==}
     engines: {node: '>=6'}
+    dev: true
+
+  /pako@2.1.0:
+    resolution: {integrity: sha512-w+eufiZ1WuJYgPXbV/PO3NCMEc3xqylkKHzp8bxp1uW4qaSNQUkwmLLEc3kKsfz8lpV1F8Ht3U1Cm+9Srog2ug==}
     dev: true
 
   /parchment@1.1.4:

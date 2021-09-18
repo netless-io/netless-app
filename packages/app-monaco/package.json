@@ -25,11 +25,13 @@
     "@monaco-editor/loader": "^1.2.0",
     "@netless/app-shared": "workspace:*",
     "@netless/y": "^0.2.0-canary.0",
+    "@types/pako": "^1.0.2",
     "@types/randomcolor": "^0.5.6",
     "debounce-fn": "^5.1.0",
     "js-base64": "^3.7.2",
     "lib0": "^0.2.42",
     "monaco-editor": "^0.29.1",
+    "pako": "^2.0.4",
     "randomcolor": "^0.6.2",
     "side-effect-manager": "^1.1.1",
     "yjs": "13.5.13"

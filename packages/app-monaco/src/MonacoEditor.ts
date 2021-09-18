@@ -5,7 +5,7 @@ import type { NetlessAppMonacoAttributes } from "./typings";
 
 import { SideEffectManager } from "side-effect-manager";
 import { Doc } from "yjs";
-import { Judge0 } from "./compiler/judge0";
+import { Tio } from "./compiler/tio";
 import { Terminal } from "./Terminal";
 import { YMonaco } from "./y-monaco";
 
@@ -27,7 +27,7 @@ export class MonacoEditor {
   public readonly $container: HTMLDivElement;
   public readonly $footer: HTMLDivElement | undefined;
 
-  public readonly compiler = new Judge0(import.meta.env.VITE_JUDGE0_KEY);
+  public readonly compiler = new Tio();
   public readonly terminal: Terminal;
 
   public constructor(
