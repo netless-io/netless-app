@@ -4,7 +4,7 @@ import type { Compiler } from "./typings";
 export class Judge0 implements Compiler {
   public constructor(public apiKey: string) {}
 
-  public hasLanguage(lang: string): boolean {
+  public hasLanguage(lang: string): lang is keyof typeof Judge0.lanMap {
     return Object.prototype.hasOwnProperty.call(Judge0.lanMap, lang);
   }
 
@@ -28,7 +28,7 @@ export class Judge0 implements Compiler {
             "x-rapidapi-key": this.apiKey,
           },
           body: JSON.stringify({
-            language_id: Judge0.lanMap[lang as keyof typeof Judge0.lanMap],
+            language_id: Judge0.lanMap[lang],
             source_code: encode(source),
           }),
         }
