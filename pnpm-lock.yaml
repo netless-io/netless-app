@@ -163,22 +163,26 @@ importers:
     specifiers:
       '@monaco-editor/loader': ^1.2.0
       '@netless/app-shared': workspace:*
+      '@types/pako': ^1.0.2
       '@types/randomcolor': ^0.5.6
       debounce-fn: ^5.1.0
       js-base64: ^3.7.2
       lib0: ^0.2.42
       monaco-editor: ^0.29.1
+      pako: ^2.0.4
       randomcolor: ^0.6.2
       side-effect-manager: ^1.1.1
       yjs: 13.5.13
     devDependencies:
       '@monaco-editor/loader': 1.2.0_monaco-editor@0.29.1
       '@netless/app-shared': link:../app-shared
+      '@types/pako': 1.0.2
       '@types/randomcolor': 0.5.6
       debounce-fn: 5.1.0
       js-base64: 3.7.2
       lib0: 0.2.42
       monaco-editor: 0.29.1
+      pako: 2.0.4
       randomcolor: 0.6.2
       side-effect-manager: 1.1.1
       yjs: 13.5.13
@@ -1352,16 +1356,16 @@ packages:
     resolution: {integrity: sha512-cHlGmko4gWLVI27cGJntjs/Sj8th9aYwplmZFwmmgYQQvL5NUsgVJG7OddLvNfLqYS31KFN0s3qlaD9qCaxACA==}
     dev: true
 
-  /@types/node/18.0.4:
-    resolution: {integrity: sha512-M0+G6V0Y4YV8cqzHssZpaNCqvYwlCiulmm0PwpNLF55r/+cT8Ol42CHRU1SEaYFH2rTwiiE1aYg/2g2rrtGdPA==}
-    dev: true
-
   /@types/normalize-package-data/2.4.1:
     resolution: {integrity: sha512-Gj7cI7z+98M282Tqmp2K5EIsoouUEzbBJhQQzDE3jSIRk6r9gsz0oUokqIUR4u1R3dMHo0pDHM7sNOHyhulypw==}
     dev: true
 
   /@types/parse-json/4.0.0:
     resolution: {integrity: sha512-//oorEZjL6sbPcKUaCdIGlIUeH26mgzimjBB77G6XRgnDl/L5wOnpyBGRe/Mmf5CVW3PwEBE1NjiMZ/ssFh4wA==}
+    dev: true
+
+  /@types/pako/1.0.2:
+    resolution: {integrity: sha512-8UJl2MjkqqS6ncpLZqRZ5LmGiFBkbYxocD4e4jmBqGvfRG1RS23gKsBQbdtV9O9GvRyjFTiRHRByjSlKCLlmZw==}
     dev: true
 
   /@types/quill/2.0.9:
@@ -3621,9 +3625,8 @@ packages:
       retry: 0.13.1
     dev: true
 
-  /p-try/2.2.0:
-    resolution: {integrity: sha512-R4nPAVTAU0B9D35/Gk3uJf/7XYbQcyohSKdvAxIRSNghFl4e71hVoGnBNQz9cWaXxO2I10KTC+3jMdvvoKw6dQ==}
-    engines: {node: '>=6'}
+  /pako/2.0.4:
+    resolution: {integrity: sha512-v8tweI900AUkZN6heMU/4Uy4cXRc2AYNRggVmTR+dEncawDJgCdLMximOVA2p4qO57WMynangsfGRb5WD6L1Bg==}
     dev: true
 
   /parchment/1.1.4:

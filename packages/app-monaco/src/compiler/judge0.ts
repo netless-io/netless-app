@@ -34,6 +34,10 @@ export class Judge0 implements Compiler {
         }
       );
 
+      if (!response.ok) {
+        return `${response.status} ${response.statusText}`;
+      }
+
       const data = await response.json();
 
       if (data.stderr) {
