@@ -6,6 +6,8 @@ import { SideEffectManager } from "side-effect-manager";
 import type * as Monaco from "monaco-editor";
 import type { NetlessAppMonacoAttributes } from "./typings";
 import { YMonaco } from "./y-monaco";
+import { Terminal } from "./Terminal";
+import { Judge0 } from "./compiler/judge0";
 
 declare global {
   interface Window {
@@ -24,6 +26,9 @@ export class MonacoEditor {
 
   public readonly $container: HTMLDivElement;
   public readonly $footer: HTMLDivElement;
+
+  public readonly compiler = new Judge0(import.meta.env.VITE_JUDGE0_KEY);
+  public readonly terminal = new Terminal(this.compiler);
 
   public static async loadEditor(
     context: AppContext<NetlessAppMonacoAttributes>,
@@ -102,6 +107,10 @@ export class MonacoEditor {
       $footer.classList.add(this.wrapClassName("readonly"));
     }
 
+    const $ctrl = document.createElement("div");
+    $ctrl.className = this.wrapClassName("footer-ctrl");
+    $footer.appendChild($ctrl);
+
     const $langSelect = document.createElement("select");
     $langSelect.className = this.wrapClassName("lang-select");
 
@@ -113,7 +122,13 @@ export class MonacoEditor {
     });
 
     $langSelect.value = this.attrs.lang;
-    $footer.appendChild($langSelect);
+    $ctrl.appendChild($langSelect);
+
+    const $runCode = document.createElement("button");
+    $runCode.className = this.wrapClassName("run-code");
+    $runCode.textContent = "Run";
+    $runCode.disabled = !this.compiler.hasLanguage(this.attrs.lang);
+    $ctrl.appendChild($runCode);
 
     this.sideEffect.addEventListener($langSelect, "change", () => {
       const lang = $langSelect.value;
@@ -129,10 +144,23 @@ export class MonacoEditor {
           if (lang) {
             this.monaco.editor.setModelLanguage(this.yBinding.monacoModel, lang);
             $langSelect.value = lang;
+            $runCode.disabled = !this.compiler.hasLanguage(lang);
           }
         }
       )
     );
+
+    this.sideEffect.addEventListener($runCode, "click", async () => {
+      const text = this.editor.getValue();
+      if (this.readonly || !text.trim()) {
+        return;
+      }
+      $runCode.disabled = true;
+      await this.terminal.runCode(text, this.attrs.lang);
+      $runCode.disabled = false;
+    });
+
+    $footer.appendChild(this.terminal.$content);
 
     return $footer;
   }

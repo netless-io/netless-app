@@ -74,9 +74,9 @@ $namespace: "netless-app-monaco";
 
 .#{$namespace}-footer {
   box-sizing: border-box;
-  height: 26px;
+  height: 100px;
   display: flex;
-  align-items: center;
+  flex-direction: column;
   padding: 0 16px;
   border-top: 1px solid #eeeef7;
   color: #191919;
@@ -89,4 +89,14 @@ $namespace: "netless-app-monaco";
   .#{$namespace}-lang-select {
     pointer-events: none;
   }
+}
+
+.#{$namespace}-footer-ctrl {
+  width: 100%;
+  height: 26px;
+}
+
+.#{$namespace}-terminal {
+  flex: 1;
+  width: 100%;
 }
