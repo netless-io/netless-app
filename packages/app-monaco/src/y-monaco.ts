@@ -1,7 +1,6 @@
 import type { Text, Doc, YTextEvent } from "yjs";
 import { createRelativePositionFromTypeIndex, applyUpdate } from "yjs";
-import { Selection } from "monaco-editor";
-import type { editor, Position } from "monaco-editor";
+import type * as Monaco from "monaco-editor";
 import { createMutex } from "lib0/mutex.js";
 import { fromUint8Array, toUint8Array } from "js-base64";
 import type { AppContext, ReadonlyTeleBox } from "@netless/window-manager";
@@ -11,14 +10,15 @@ import type { NetlessAppMonacoAttributes } from "./typings";
 import { Decoration } from "./Decorations";
 
 export class YMonaco {
-  public monacoModel: editor.ITextModel;
+  public monacoModel: Monaco.editor.ITextModel;
   public authorId: string;
 
   public constructor(
     public context: AppContext<NetlessAppMonacoAttributes>,
     public attrs: NetlessAppMonacoAttributes,
     public box: ReadonlyTeleBox,
-    public monacoEditor: editor.IStandaloneCodeEditor,
+    public monaco: typeof Monaco,
+    public monacoEditor: Monaco.editor.IStandaloneCodeEditor,
     public doc: Doc,
     public yText: Text,
     public readonly: boolean
@@ -77,7 +77,12 @@ export class YMonaco {
               index += op.retain;
             } else if (op.insert != null) {
               const pos = this.monacoModel.getPositionAt(index);
-              const range = new Selection(pos.lineNumber, pos.column, pos.lineNumber, pos.column);
+              const range = new this.monaco.Selection(
+                pos.lineNumber,
+                pos.column,
+                pos.lineNumber,
+                pos.column
+              );
               this.monacoModel.applyEdits([
                 { range, text: String(op.insert), forceMoveMarkers: true },
               ]);
@@ -85,7 +90,7 @@ export class YMonaco {
             } else if (op.delete != null) {
               const pos = this.monacoModel.getPositionAt(index);
               const endPos = this.monacoModel.getPositionAt(index + op.delete);
-              const range = new Selection(
+              const range = new this.monaco.Selection(
                 pos.lineNumber,
                 pos.column,
                 endPos.lineNumber,
@@ -195,7 +200,7 @@ export class YMonaco {
       try {
         const rawSelectionsStr = JSON.stringify(
           selections
-            .filter(selection => !Selection.isEmpty(selection))
+            .filter(selection => !this.monaco.Selection.isEmpty(selection))
             .map(selection => ({
               start: createRelativePositionFromTypeIndex(
                 this.yText,
@@ -224,6 +229,7 @@ export class YMonaco {
             if (!decoration) {
               decoration = new Decoration(
                 this.doc,
+                this.monaco,
                 this.monacoEditor,
                 this.monacoModel,
                 id,
@@ -275,7 +281,7 @@ export class YMonaco {
   }
 
   private renderDecorations(): void {
-    const deltaDecorations: editor.IModelDeltaDecoration[] = [];
+    const deltaDecorations: Monaco.editor.IModelDeltaDecoration[] = [];
     this.decorations.forEach(decoration => {
       deltaDecorations.push(...decoration.rerender(this.authorId));
     });
@@ -297,5 +303,5 @@ export class YMonaco {
 
   private readonly MagixMonacoDocChannel: string;
 
-  private cursorPositions: Position[] = [];
+  private cursorPositions: Monaco.Position[] = [];
 }

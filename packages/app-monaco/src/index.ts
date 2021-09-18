@@ -12,7 +12,7 @@ export type { NetlessAppMonacoAttributes } from "./typings";
 
 const NetlessAppMonaco: NetlessApp<NetlessAppMonacoAttributes> = {
   kind,
-  setup(context) {
+  async setup(context) {
     const box = context.getBox();
 
     const attrs = ensureAttributes(context, {
@@ -24,7 +24,12 @@ const NetlessAppMonaco: NetlessApp<NetlessAppMonacoAttributes> = {
 
     box.mountStyles(styles + editorStyles);
 
-    const monacoEditor = new MonacoEditor(context, attrs, box, !context.getIsWritable());
+    const monacoEditor = await MonacoEditor.loadEditor(
+      context,
+      attrs,
+      box,
+      !context.getIsWritable()
+    );
 
     const persistence = new NetlessAppMonacoPersistence(
       context,

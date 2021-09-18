@@ -1,13 +1,11 @@
 import type { AppContext, ReadonlyTeleBox } from "@netless/window-manager";
 import type { Text } from "yjs";
 import { Doc } from "yjs";
-import type { NetlessAppMonacoAttributes } from "./typings";
-import { editor as monacoEditor, languages } from "monaco-editor";
-import { YMonaco } from "./y-monaco";
-
-import editorWorker from "monaco-editor/esm/vs/editor/editor.worker?worker&inline";
-import tsWorker from "monaco-editor/esm/vs/language/typescript/ts.worker?worker&inline";
+import monacoLoader from "@monaco-editor/loader";
 import { SideEffectManager } from "side-effect-manager";
+import type * as Monaco from "monaco-editor";
+import type { NetlessAppMonacoAttributes } from "./typings";
+import { YMonaco } from "./y-monaco";
 
 declare global {
   interface Window {
@@ -18,7 +16,8 @@ declare global {
 }
 
 export class MonacoEditor {
-  public readonly editor: monacoEditor.IStandaloneCodeEditor;
+  public readonly editor: Monaco.editor.IStandaloneCodeEditor;
+
   public readonly yBinding: YMonaco;
   public readonly yDoc: Doc;
   public readonly yText: Text;
@@ -26,21 +25,31 @@ export class MonacoEditor {
   public readonly $container: HTMLDivElement;
   public readonly $footer: HTMLDivElement;
 
+  public static async loadEditor(
+    context: AppContext<NetlessAppMonacoAttributes>,
+    attrs: NetlessAppMonacoAttributes,
+    box: ReadonlyTeleBox,
+    readonly: boolean
+  ): Promise<MonacoEditor> {
+    return monacoLoader
+      .init()
+      .then(monaco => new MonacoEditor(context, attrs, box, monaco, readonly));
+  }
+
   public constructor(
-    public context: AppContext<NetlessAppMonacoAttributes>,
-    public attrs: NetlessAppMonacoAttributes,
-    public box: ReadonlyTeleBox,
+    public readonly context: AppContext<NetlessAppMonacoAttributes>,
+    public readonly attrs: NetlessAppMonacoAttributes,
+    public readonly box: ReadonlyTeleBox,
+    public readonly monaco: typeof Monaco,
     public readonly: boolean
   ) {
-    this.setupMonacoEnv();
-
     this.yDoc = new Doc();
     this.yText = this.yDoc.getText("monaco");
 
     this.$container = this.renderContainer();
     this.box.mountContent(this.$container);
 
-    this.editor = monacoEditor.create(this.$container, {
+    this.editor = this.monaco.editor.create(this.$container, {
       value: "",
       automaticLayout: true,
       readOnly: readonly,
@@ -52,7 +61,16 @@ export class MonacoEditor {
     this.$footer = this.renderFooter();
     this.box.mountFooter(this.$footer);
 
-    this.yBinding = new YMonaco(context, attrs, box, this.editor, this.yDoc, this.yText, readonly);
+    this.yBinding = new YMonaco(
+      context,
+      attrs,
+      box,
+      this.monaco,
+      this.editor,
+      this.yDoc,
+      this.yText,
+      readonly
+    );
   }
 
   public setReadonly(readonly: boolean): void {
@@ -87,7 +105,7 @@ export class MonacoEditor {
     const $langSelect = document.createElement("select");
     $langSelect.className = this.wrapClassName("lang-select");
 
-    languages.getLanguages().forEach(lang => {
+    this.monaco.languages.getLanguages().forEach(lang => {
       const opt = document.createElement("option");
       opt.value = lang.id;
       opt.textContent = lang.id;
@@ -109,7 +127,7 @@ export class MonacoEditor {
         () => this.attrs.lang,
         lang => {
           if (lang) {
-            monacoEditor.setModelLanguage(this.yBinding.monacoModel, lang);
+            this.monaco.editor.setModelLanguage(this.yBinding.monacoModel, lang);
             $langSelect.value = lang;
           }
         }
@@ -117,24 +135,6 @@ export class MonacoEditor {
     );
 
     return $footer;
-  }
-
-  private setupMonacoEnv(): void {
-    if (!self.MonacoEnvironment) {
-      self.MonacoEnvironment = {
-        getWorker(_: unknown, label: string): Worker {
-          switch (label) {
-            case "javascript":
-            case "typescript": {
-              return new tsWorker();
-            }
-            default: {
-              return new editorWorker();
-            }
-          }
-        },
-      };
-    }
   }
 
   public wrapClassName(className: string): string {

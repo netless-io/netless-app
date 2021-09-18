@@ -1,6 +1,5 @@
 import type { Doc } from "yjs";
-import type { editor } from "monaco-editor";
-import { Range } from "monaco-editor";
+import type * as Monaco from "monaco-editor";
 import { createAbsolutePositionFromRelativePosition, createRelativePositionFromJSON } from "yjs";
 import type { StyleManager } from "./StyleManager";
 
@@ -12,8 +11,9 @@ export class CursorDecoration {
 
   public constructor(
     public doc: Doc,
-    public monacoEditor: editor.IStandaloneCodeEditor,
-    public monacoModel: editor.ITextModel,
+    public monaco: typeof Monaco,
+    public monacoEditor: Monaco.editor.IStandaloneCodeEditor,
+    public monacoModel: Monaco.editor.ITextModel,
     public userID: string,
     public userName: string,
     /** ID for a cursor */
@@ -27,7 +27,7 @@ export class CursorDecoration {
   public renderCursor(
     rawCursorSrc: string,
     authorId: string
-  ): editor.IModelDeltaDecoration | undefined {
+  ): Monaco.editor.IModelDeltaDecoration | undefined {
     const cursorChanged = rawCursorSrc !== this.rawCursorSrc;
 
     if (cursorChanged) {
@@ -76,7 +76,12 @@ export class CursorDecoration {
           }
 
           return {
-            range: new Range(pos.lineNumber, pos.column, pos.lineNumber, pos.column + 1),
+            range: new this.monaco.Range(
+              pos.lineNumber,
+              pos.column,
+              pos.lineNumber,
+              pos.column + 1
+            ),
             options: {
               className,
               hoverMessage: { value: this.userName },

@@ -1,5 +1,5 @@
 import type { Doc } from "yjs";
-import type { editor } from "monaco-editor";
+import type * as Monaco from "monaco-editor";
 import randomColor from "randomcolor";
 import { StyleManager } from "./StyleManager";
 import { CursorDecorations } from "./CursorDecorations";
@@ -16,8 +16,9 @@ export class Decoration {
 
   public constructor(
     public doc: Doc,
-    public monacoEditor: editor.IStandaloneCodeEditor,
-    public monacoModel: editor.ITextModel,
+    public monaco: typeof Monaco,
+    public monacoEditor: Monaco.editor.IStandaloneCodeEditor,
+    public monacoModel: Monaco.editor.ITextModel,
     public userID: string,
     public userName: string
   ) {
@@ -26,6 +27,7 @@ export class Decoration {
 
     this.selectionDecorations = new SelectionDecorations(
       this.doc,
+      this.monaco,
       this.monacoEditor,
       this.monacoModel,
       this.userID,
@@ -35,6 +37,7 @@ export class Decoration {
 
     this.cursorDecorations = new CursorDecorations(
       this.doc,
+      this.monaco,
       this.monacoEditor,
       this.monacoModel,
       this.userID,
@@ -52,7 +55,7 @@ export class Decoration {
     this.selectionDecorations.setSelections(rawSelectionsStr);
   }
 
-  public rerender(authorId: string = this.userID): editor.IModelDeltaDecoration[] {
+  public rerender(authorId: string = this.userID): Monaco.editor.IModelDeltaDecoration[] {
     return [
       ...this.cursorDecorations.renderCursors(authorId),
       ...this.selectionDecorations.renderSelections(),

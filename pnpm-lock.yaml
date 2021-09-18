@@ -81,8 +81,8 @@ importers:
 
   packages/app-monaco:
     specifiers:
+      '@monaco-editor/loader': ^1.1.1
       '@netless/app-shared': workspace:*
-      '@types/lodash.isequal': ^4.5.5
       '@types/randomcolor': ^0.5.6
       debounce-fn: ^5.0.0
       js-base64: ^3.7.0
@@ -92,8 +92,8 @@ importers:
       side-effect-manager: ^0.1.2
       yjs: ^13.5.12
     devDependencies:
+      '@monaco-editor/loader': 1.1.1_monaco-editor@0.27.0
       '@netless/app-shared': link:../app-shared
-      '@types/lodash.isequal': 4.5.5
       '@types/randomcolor': 0.5.6
       debounce-fn: 5.0.0
       js-base64: 3.7.0
@@ -195,6 +195,15 @@ packages:
 
   /@juggle/resize-observer/3.3.1:
     resolution: {integrity: sha512-zMM9Ds+SawiUkakS7y94Ymqx+S0ORzpG3frZirN3l+UlXUmSUR7hF4wxCVqW+ei94JzV5kt0uXBcoOEAuiydrw==}
+    dev: true
+
+  /@monaco-editor/loader/1.1.1_monaco-editor@0.27.0:
+    resolution: {integrity: sha512-mkT4r4xDjIyOG9o9M6rJDSzEIeonwF80sYErxEvAAL4LncFVdcbNli8Qv6NDqF6nyv6sunuKkDzo4iFjxPL+uQ==}
+    peerDependencies:
+      monaco-editor: '>= 0.21.0 < 1'
+    dependencies:
+      monaco-editor: 0.27.0
+      state-local: 1.0.7
     dev: true
 
   /@netless/app-docs-viewer/0.1.20:
@@ -361,16 +370,6 @@ packages:
 
   /@types/json-schema/7.0.9:
     resolution: {integrity: sha512-qcUXuemtEu+E5wZSJHNxUXeCZhAfXKQ41D+duX+VYPde7xyEVZci+/oXKJL13tnRs9lR2pr4fod59GT6/X1/yQ==}
-    dev: true
-
-  /@types/lodash.isequal/4.5.5:
-    resolution: {integrity: sha512-4IKbinG7MGP131wRfceK6W4E/Qt3qssEFLF30LnJbjYiSfHGGRU/Io8YxXrZX109ir+iDETC8hw8QsDijukUVg==}
-    dependencies:
-      '@types/lodash': 4.14.172
-    dev: true
-
-  /@types/lodash/4.14.172:
-    resolution: {integrity: sha512-/BHF5HAx3em7/KkzVKm3LrsD6HZAXuXO1AJZQ3cRRBZj4oHZDviWPYu0aEplAqDFNHZPW6d3G7KN+ONcCCC7pw==}
     dev: true
 
   /@types/long/4.0.1:
@@ -2147,6 +2146,10 @@ packages:
 
   /sprintf-js/1.0.3:
     resolution: {integrity: sha1-BOaSb2YolTVPPdAVIDYzuFcpfiw=}
+    dev: true
+
+  /state-local/1.0.7:
+    resolution: {integrity: sha512-HTEHMNieakEnoe33shBYcZ7NX83ACUjCu8c40iOGEZsngj9zRnkqS9j1pqQPXwobB0ZcVTk27REb7COQ0UR59w==}
     dev: true
 
   /strict-uri-encode/1.1.0:

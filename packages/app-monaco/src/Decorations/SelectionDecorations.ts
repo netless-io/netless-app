@@ -1,7 +1,6 @@
 import type { Doc } from "yjs";
 import { createAbsolutePositionFromRelativePosition, createRelativePositionFromJSON } from "yjs";
-import type { editor } from "monaco-editor";
-import { Range } from "monaco-editor";
+import type * as Monaco from "monaco-editor";
 import type { StyleManager } from "./StyleManager";
 
 export class SelectionDecorations {
@@ -14,8 +13,9 @@ export class SelectionDecorations {
 
   public constructor(
     public doc: Doc,
-    public monacoEditor: editor.IStandaloneCodeEditor,
-    public monacoModel: editor.ITextModel,
+    public monaco: typeof Monaco,
+    public monacoEditor: Monaco.editor.IStandaloneCodeEditor,
+    public monacoModel: Monaco.editor.ITextModel,
     public useID: string,
     public selectionColor: string,
     public styleManager: StyleManager
@@ -46,8 +46,8 @@ export class SelectionDecorations {
     }
   }
 
-  public renderSelections(): editor.IModelDeltaDecoration[] {
-    const selectionDecorations: editor.IModelDeltaDecoration[] = [];
+  public renderSelections(): Monaco.editor.IModelDeltaDecoration[] {
+    const selectionDecorations: Monaco.editor.IModelDeltaDecoration[] = [];
     if (this.selections) {
       this.selections.forEach(selection => {
         if (selection.start && selection.end) {
@@ -63,7 +63,7 @@ export class SelectionDecorations {
             const posStart = this.monacoModel.getPositionAt(startAbs.index);
             const posEnd = this.monacoModel.getPositionAt(endAbs.index);
             selectionDecorations.push({
-              range: new Range(
+              range: new this.monaco.Range(
                 posStart.lineNumber,
                 posStart.column,
                 posEnd.lineNumber,

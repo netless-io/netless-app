@@ -1,5 +1,5 @@
 import type { Doc } from "yjs";
-import type { editor } from "monaco-editor";
+import type * as Monaco from "monaco-editor";
 import type { StyleManager } from "./StyleManager";
 import { CursorDecoration } from "./CursorDecoration";
 
@@ -9,8 +9,9 @@ export class CursorDecorations {
 
   public constructor(
     public doc: Doc,
-    public monacoEditor: editor.IStandaloneCodeEditor,
-    public monacoModel: editor.ITextModel,
+    public monaco: typeof Monaco,
+    public monacoEditor: Monaco.editor.IStandaloneCodeEditor,
+    public monacoModel: Monaco.editor.ITextModel,
     public userID: string,
     public userName: string,
     public cursorColor: string,
@@ -21,15 +22,16 @@ export class CursorDecorations {
     this.rawCursorStrList = rawCursorStrList;
   }
 
-  public renderCursors(authorId: string): editor.IModelDeltaDecoration[] {
+  public renderCursors(authorId: string): Monaco.editor.IModelDeltaDecoration[] {
     const cursors = this.rawCursorStrList || [];
-    const cursorDeltaDecorations: editor.IModelDeltaDecoration[] = [];
+    const cursorDeltaDecorations: Monaco.editor.IModelDeltaDecoration[] = [];
 
     let i = 0;
     for (; i < cursors.length; i++) {
       if (!this.cursorDecorations[i]) {
         this.cursorDecorations[i] = new CursorDecoration(
           this.doc,
+          this.monaco,
           this.monacoEditor,
           this.monacoModel,
           this.userID,
