@@ -4,4 +4,6 @@ export interface NetlessAppMonacoAttributes {
   cursors: Record<string, string[]>;
   selections: Record<string, string>;
   lang: string;
+  terminal: string;
+  codeRunning: boolean;
 }

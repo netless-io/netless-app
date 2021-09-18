@@ -27,7 +27,7 @@ export class MonacoEditor {
   public readonly $footer: HTMLDivElement;
 
   public readonly compiler = new Judge0(import.meta.env.VITE_JUDGE0_KEY);
-  public readonly terminal = new Terminal(this.compiler);
+  public readonly terminal: Terminal;
 
   public constructor(
     public readonly context: AppContext<NetlessAppMonacoAttributes>,
@@ -36,6 +36,8 @@ export class MonacoEditor {
     public readonly monaco: typeof Monaco,
     public readonly: boolean
   ) {
+    this.terminal = new Terminal(context, attrs, this.compiler);
+
     this.yDoc = new Doc();
     this.yText = this.yDoc.getText("monaco");
 
@@ -138,14 +140,23 @@ export class MonacoEditor {
       )
     );
 
+    this.sideEffect.add(() =>
+      this.context.mobxUtils.reaction(
+        () => this.attrs.codeRunning,
+        codeRunning => {
+          $runCode.disabled = codeRunning;
+        }
+      )
+    );
+
     this.sideEffect.addEventListener($runCode, "click", async () => {
       const text = this.editor.getValue();
       if (this.readonly || !text.trim()) {
         return;
       }
-      $runCode.disabled = true;
+      this.context.updateAttributes(["codeRunning"], true);
       await this.terminal.runCode(text, this.attrs.lang);
-      $runCode.disabled = false;
+      this.context.updateAttributes(["codeRunning"], false);
     });
 
     $footer.appendChild(this.terminal.$content);

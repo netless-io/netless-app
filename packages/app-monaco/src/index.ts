@@ -21,6 +21,8 @@ const NetlessAppMonaco: NetlessApp<NetlessAppMonacoAttributes> = {
       cursors: {},
       selections: {},
       lang: "javascript",
+      terminal: "",
+      codeRunning: false,
     });
 
     box.mountStyles(styles + editorStyles);
