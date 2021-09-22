@@ -24,7 +24,6 @@ export class MonacoEditor {
   public readonly yText: Text;
 
   public readonly $container: HTMLDivElement;
-  public readonly $footer: HTMLDivElement;
 
   public readonly compiler = new Judge0(import.meta.env.VITE_JUDGE0_KEY);
   public readonly terminal: Terminal;
@@ -44,7 +43,11 @@ export class MonacoEditor {
     this.$container = this.renderContainer();
     this.box.mountContent(this.$container);
 
-    this.editor = this.monaco.editor.create(this.$container, {
+    const $editor = document.createElement("div");
+    $editor.className = this.wrapClassName("editor");
+    this.$container.appendChild($editor);
+
+    this.editor = this.monaco.editor.create($editor, {
       value: "",
       automaticLayout: true,
       readOnly: readonly,
@@ -53,8 +56,8 @@ export class MonacoEditor {
     });
 
     // set footer after editor creation
-    this.$footer = this.renderFooter();
-    this.box.mountFooter(this.$footer);
+    const $footer = this.renderFooter();
+    this.$container.appendChild($footer);
 
     this.yBinding = new YMonaco(
       context,
@@ -71,8 +74,7 @@ export class MonacoEditor {
   public setReadonly(readonly: boolean): void {
     if (readonly !== this.readonly) {
       this.readonly = readonly;
-      this.$container.classList.toggle(this.wrapClassName("cursor-readonly"), readonly);
-      this.$footer.classList.toggle(this.wrapClassName("readonly"), readonly);
+      this.$container.classList.toggle(this.wrapClassName("readonly"), readonly);
       this.editor.updateOptions({ readOnly: readonly });
       this.yBinding.setReadonly(readonly);
     }

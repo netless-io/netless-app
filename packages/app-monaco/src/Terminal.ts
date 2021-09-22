@@ -13,7 +13,7 @@ export class Terminal {
     public readonly compiler: Compiler
   ) {
     this.$content = document.createElement("pre");
-    this.$content.className = this.namespace;
+    this.$content.className = `${this.namespace} tele-fancy-scrollbar`;
 
     this.content = this.attrs.terminal;
     this.render();
@@ -55,6 +55,9 @@ export class Terminal {
   private updateCodeRunning(codeRunning: boolean): void {
     if (codeRunning !== this.attrs.codeRunning) {
       this.context.updateAttributes(["codeRunning"], codeRunning);
+      if (codeRunning) {
+        this.context.updateAttributes(["terminal"], "");
+      }
     }
   }
 
