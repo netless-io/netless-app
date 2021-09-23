@@ -16,7 +16,7 @@ export enum IframeEvents {
   RemoveAllMagixEvent = "RemoveAllMagixEvent",
   RoomStateChanged = "RoomStateChanged",
   DispatchMagixEvent = "DispatchMagixEvent",
-  ReceiveMagixEvent = "ReceiveMagixEvent",
+  ReceiveMagixEvent = "ReciveMagixEvent",
   NextPage = "NextPage",
   PrevPage = "PrevPage",
   SDKCreate = "SDKCreate",
@@ -24,7 +24,7 @@ export enum IframeEvents {
   SetPage = "SetPage",
   GetAttributes = "GetAttributes",
   Ready = "Ready",
-  Destroy = "Destroy",
+  Destroy = "Destory",
   StartCreate = "StartCreate",
   WrapperDidUpdate = "WrapperDidUpdate",
   DisplayIframe = "DisplayIframe",
@@ -89,7 +89,7 @@ const IframeBridge: NetlessApp<Attributes> = {
       width: iframe.scrollWidth,
       height: iframe.scrollHeight,
       useClicker: true,
-      useSelector: true,
+      lastEvent: attrs.lastEvent,
     });
 
     const sideEffect = new SideEffectManager();
@@ -97,7 +97,7 @@ const IframeBridge: NetlessApp<Attributes> = {
     const emitter = new Emittery<Record<IframeEvents | DomEvents, any>>();
     const magixEventMap = new Map<string, (event: Event) => void>();
 
-    const removeAllMagicEvent = () => {
+    const removeAllMagixEvent = () => {
       magixEventMap.forEach((listener, event) => {
         displayer.removeMagixEventListener(event, listener);
       });
@@ -179,7 +179,7 @@ const IframeBridge: NetlessApp<Attributes> = {
     emitter.emit(IframeEvents.OnCreate, bridge);
 
     const onStateChange = (state: Partial<RoomState>) => {
-      log("[IframeBridge] onStateChange", JSON.parse(JSON.stringify(state?.sceneState)));
+      log("[IframeBridge] onStateChange", JSON.parse(JSON.stringify(state?.sceneState) || "{}"));
       if (state?.sceneState?.scenePath.startsWith(attrs.displaySceneDir)) {
         wrapper.classList.remove("readonly");
         log("[IframeBridge] onStateChange sent");
@@ -235,7 +235,7 @@ const IframeBridge: NetlessApp<Attributes> = {
           break;
         }
         case IframeEvents.RemoveAllMagixEvent: {
-          removeAllMagicEvent();
+          removeAllMagixEvent();
           break;
         }
         case IframeEvents.NextPage: {
@@ -290,9 +290,9 @@ const IframeBridge: NetlessApp<Attributes> = {
         }
         case IframeEvents.PageTo: {
           if (context.getIsWritable() && room) {
-            const page = data.payload;
+            const page = data.payload as number;
             if (!Number.isSafeInteger(page) || page <= 0) {
-              return;
+              break;
             }
             room.setSceneIndex(page - 1);
             dispatchMagixEvent(IframeEvents.PageTo, page - 1);
@@ -309,7 +309,7 @@ const IframeBridge: NetlessApp<Attributes> = {
       console.log("[IframeBridge]: destroy");
       emitter.emit(IframeEvents.Destroy);
       sideEffect.flushAll();
-      removeAllMagicEvent();
+      removeAllMagixEvent();
       iframe.remove();
     });
 
