@@ -143,7 +143,16 @@ const IframeBridge: NetlessApp<Attributes> = {
       iframe.removeEventListener("load", onLoad);
     };
     sideEffect.addEventListener(iframe, "load", onLoad);
-    iframe.addEventListener("load", onLoad);
+
+    let retryCount = 0;
+    const onError = (): void => {
+      // try again
+      if (retryCount++ < 3) {
+        iframe.src = attrs.src;
+      }
+    };
+    sideEffect.addEventListener(iframe, "error", onError);
+
     iframe.src = attrs.src;
 
     sideEffect.add(() =>
