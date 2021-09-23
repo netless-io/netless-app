@@ -45,5 +45,14 @@
     "editor.formatOnSave": true,
     "editor.defaultFormatter": "esbenp.prettier-vscode"
   },
-  "cSpell.words": ["autorun", "isequal", "Magix", "Mutex", "pnpm", "randomcolor", "Tele"]
+  "cSpell.words": [
+    "autorun",
+    "Emittery",
+    "isequal",
+    "Magix",
+    "Mutex",
+    "pnpm",
+    "randomcolor",
+    "Tele"
+  ]
 }
