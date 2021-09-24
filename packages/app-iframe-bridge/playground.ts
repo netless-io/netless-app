@@ -7,10 +7,11 @@ const demo: { title: string; src: string }[] = [
     title: "cocos",
     src: "https://demo-edu.cocos.com/agora-demo/index.html",
   },
-  {
-    title: "qukoucai",
-    src: "https://demo-h5.netless.group/docs/",
-  },
+  // target origin is not '*', so it won't work
+  // {
+  //   title: "qukoucai",
+  //   src: "https://demo-h5.netless.group/docs/",
+  // },
   {
     title: "chick",
     src: "https://demo-h5.netless.group/dist2020/",
@@ -26,7 +27,7 @@ const options: PlaygroundConfigs<Attributes> = [
     kind: IframeBridge.kind,
     src: () => import("./src"),
     options: {
-      title: "Simple",
+      title: "demo",
     },
     attributes: {
       src: "/h5.html",
