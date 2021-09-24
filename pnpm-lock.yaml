@@ -66,6 +66,14 @@ importers:
       '@netless/app-shared': link:../app-shared
       side-effect-manager: 0.1.2
 
+  packages/app-geogebra:
+    specifiers:
+      '@netless/app-shared': workspace:*
+      side-effect-manager: ^0.1.2
+    devDependencies:
+      '@netless/app-shared': link:../app-shared
+      side-effect-manager: 0.1.2
+
   packages/app-hello-world:
     specifiers: {}
 
