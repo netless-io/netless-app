@@ -5,7 +5,31 @@ import Emittery from "emittery";
 import { SideEffectManager } from "side-effect-manager";
 import type { Event, RoomState } from "white-web-sdk";
 import styles from "./style.scss?inline";
-import { createIframe, createMask, times } from "./utils";
+
+function times(page: number): { name: string }[] {
+  return Array(page)
+    .fill(0)
+    .map((_, i) => ({ name: String(i + 1) }));
+}
+
+function createIframe(): HTMLIFrameElement {
+  return document.createElement("iframe");
+}
+
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+function createView(): HTMLDivElement {
+  const div = document.createElement("div");
+  div.classList.add("netless-app-iframe-bridge-view");
+  return div;
+}
+
+function createMask(...el: HTMLElement[]): HTMLDivElement {
+  const div = document.createElement("div");
+  div.title = "Netless App Iframe Bridge";
+  div.classList.add("netless-app-iframe-bridge");
+  div.append(...el);
+  return div;
+}
 
 export enum IframeEvents {
   Init = "Init",
