@@ -67,7 +67,7 @@
   }
 
   function keydown(e: KeyboardEvent) {
-    if (e.key === "Shift" && e.shiftKey) {
+    if (e.key === "Shift" && e.shiftKey && env.VITE_TOKEN) {
       shareMode = "new-room";
     }
   }
@@ -126,20 +126,18 @@
     {#each tools as name}
       <button data-tool={name} class:active={name === tool}>{name}</button>
     {/each}
-    {#if env.VITE_TOKEN}
-      <button
-        class="new-page-btn"
-        title="copy share url to clipboard
+    <button
+      class="new-page-btn"
+      title="copy share url to clipboard
 press ctrl/meta to clear address bar
-press shift to create new room"
-        on:click={shareOrCreateRoom}
-      >
-        {shareMode
-          .split("-")
-          .map(e => e.toUpperCase())
-          .join(" ")}
-      </button>
-    {/if}
+press shift to create new room (only available with sdk token)"
+      on:click={shareOrCreateRoom}
+    >
+      {shareMode
+        .split("-")
+        .map(e => e.toUpperCase())
+        .join(" ")}
+    </button>
     <button
       class="reset-btn"
       title="remove all apps, reset camera
