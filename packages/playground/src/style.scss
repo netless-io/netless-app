@@ -69,6 +69,15 @@ body {
   background-color: #ff4136;
 }
 
+.github-btn {
+  @extend .reset-btn;
+  background-color: #000;
+  font-size: calc(5em / 6);
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+}
+
 .netless-window-manager-sizer::before,
 .netless-window-manager-sizer::after {
   background: #f4f4f4;

@@ -147,6 +147,9 @@ press shift to clear screen"
     >
       RESET
     </button>
+    <a class="github-btn" href="https://github.com/netless-io/netless-app" title="View my source">
+      GITHUB
+    </a>
   </div>
   <div class="two-side">
     <div id="actions" on:click={openApp}>
