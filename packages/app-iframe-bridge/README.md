@@ -6,6 +6,8 @@
 
 See [playground](https://github.com/netless-io/netless-app/tree/master/packages/playground).
 
+Also refer to [netless-io/netless-iframe-sdk](https://github.com/netless-io/netless-iframe-sdk) for example codes.
+
 ### Known Issue
 
 - Not support whiteboard (draw on iframe) now.
