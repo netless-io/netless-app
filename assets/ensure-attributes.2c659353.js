@@ -1,0 +1,1 @@
+function t(t,e){let r=t.getAttributes();if(r||(t.setAttributes(e),r=t.getAttributes()),!r)throw new Error("[NetlessAppMonaco] No attributes");var o;return null==(o=e)||"object"!=typeof o||Array.isArray(o)||Object.keys(e).forEach((o=>{Object.prototype.hasOwnProperty.call(r,o)||t.updateAttributes([o],e[o])})),r}export{t as e};

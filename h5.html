@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+  </head>
+  <body>
+    <div>
+      <div class="state">
+        <strong>Attributes:</strong>
+        <button id="count">0</button>
+      </div>
+      <div class="magic">
+        <strong>Magix:</strong>
+        <input id="magix-payload" />
+        <button id="magix-send">SEND</button>
+        <div>
+          <output id="magix-recv"></output>
+        </div>
+      </div>
+    </div>
+    <script>
+      (() => {
+        "use strict";
+
+        const $ = sel => document.querySelector(sel);
+
+        const postMessage = payload => {
+          parent.postMessage(payload, "*");
+        };
+
+        let count = 0;
+        const refreshCount = () => {
+          $("#count").textContent = count + "";
+        };
+
+        window.addEventListener("message", e => {
+          const data = e.data;
+          const { kind, payload } = data;
+          if (kind === "Init") {
+            count = payload.attributes.count || 0;
+            refreshCount();
+          }
+          if (kind === "AttributesUpdate") {
+            count = payload.count || 0;
+            refreshCount();
+          }
+          if (kind === "ReceiveMagixEvent") {
+            if (payload.event === "custom event type") {
+              $("#magix-recv").innerText += "< " + payload.payload + "\n";
+            }
+          }
+        });
+
+        $("#count").addEventListener("click", e => {
+          const nextCount = e.shiftKey ? count - 1 : count + 1;
+          postMessage({
+            kind: "SetAttributes",
+            payload: { count: nextCount },
+          });
+        });
+
+        $("#magix-send").addEventListener("click", e => {
+          $("#magix-recv").innerText += "> " + $("#magix-payload").value + "\n";
+          postMessage({
+            kind: "DispatchMagixEvent",
+            payload: {
+              event: "custom event type",
+              payload: $("#magix-payload").value,
+            },
+          });
+        });
+
+        postMessage({
+          kind: "RegisterMagixEvent",
+          payload: "custom event type",
+        });
+      })();
+    </script>
+  </body>
+</html>
