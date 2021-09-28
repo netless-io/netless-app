@@ -70,6 +70,8 @@ export interface Attributes {
   lastEvent: { name: string; payload: any } | null;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   state: any;
+  page: number;
+  pages: number;
   debug: boolean;
 }
 
@@ -85,6 +87,8 @@ const IframeBridge: NetlessApp<Attributes> = {
       displaySceneDir: "/h5",
       lastEvent: null,
       state: {},
+      page: 0,
+      pages: 0,
       debug: import.meta.env.DEV,
     });
 
@@ -93,8 +97,12 @@ const IframeBridge: NetlessApp<Attributes> = {
     const iframe = createIframe();
     // const viewEl = createView();
     const wrapper = createMask(iframe);
-    // hack on pointer events only if we have scenes
-    if (context.getInitScenePath()) {
+    if (
+      // hack on pointer events only if we have scenes
+      context.getInitScenePath() &&
+      // and current focused view is not me
+      displayer.state.sceneState.contextPath !== attrs.displaySceneDir
+    ) {
       wrapper.classList.add("readonly");
     }
     box.mountContent(wrapper);
@@ -158,12 +166,20 @@ const IframeBridge: NetlessApp<Attributes> = {
       });
     };
 
+    let hackCocos = true;
+
     const onLoad = (ev: globalThis.Event): void => {
       sendInitMessage();
       emitter.emit(DomEvents.IframeLoad, ev);
       emitter.on(IframeEvents.Ready, () => {
         postMessage(attrs.lastEvent?.payload);
       });
+      if (hackCocos) {
+        setTimeout(() => {
+          postMessage({ kind: IframeEvents.RoomStateChanged, payload: fakeRoomState(0) });
+        }, 500);
+        hackCocos = false;
+      }
       iframe.removeEventListener("load", onLoad);
     };
     sideEffect.addEventListener(iframe, "load", onLoad);
@@ -193,6 +209,22 @@ const IframeBridge: NetlessApp<Attributes> = {
       })
     );
 
+    const fakeRoomState = (page = attrs.page): Partial<RoomState> => ({
+      sceneState: {
+        sceneName: String(page),
+        scenePath: `${attrs.displaySceneDir}/${page}`,
+        contextPath: attrs.displaySceneDir,
+        scenes: times(attrs.pages),
+        index: page,
+      },
+    });
+
+    sideEffect.add(() =>
+      context.mobxUtils.autorun(() => {
+        postMessage({ kind: IframeEvents.RoomStateChanged, payload: fakeRoomState() });
+      })
+    );
+
     const bridge = {
       emitter,
       postMessage,
@@ -203,14 +235,10 @@ const IframeBridge: NetlessApp<Attributes> = {
     emitter.emit(IframeEvents.OnCreate, bridge);
 
     const onStateChange = (state: Partial<RoomState>) => {
-      log("[IframeBridge] onStateChange", JSON.parse(JSON.stringify(state?.sceneState) || "{}"));
       if (state?.sceneState?.scenePath.startsWith(attrs.displaySceneDir)) {
         wrapper.classList.remove("readonly");
-        log("[IframeBridge] onStateChange sent");
-        postMessage({ kind: IframeEvents.RoomStateChanged, payload: state });
       } else {
         wrapper.classList.add("readonly");
-        log("[IframeBridge] onStateChange dropped");
       }
     };
     sideEffect.add(() => {
@@ -229,6 +257,7 @@ const IframeBridge: NetlessApp<Attributes> = {
       }
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const data: { kind: IframeEvents; payload: any } = ev.data;
+      log("[IframeBridge] received", data.kind, data.payload);
       switch (data.kind) {
         case IframeEvents.SetAttributes: {
           context.updateAttributes(["state"], { ...attrs.state, ...data.payload });
@@ -270,6 +299,7 @@ const IframeBridge: NetlessApp<Attributes> = {
             }
             log("[IframeBridge] setSceneIndex", nextPage - 1);
             room.setSceneIndex(nextPage - 1);
+            context.updateAttributes(["page"], nextPage - 1);
             dispatchMagixEvent(IframeEvents.NextPage, {});
           }
           break;
@@ -282,6 +312,7 @@ const IframeBridge: NetlessApp<Attributes> = {
             }
             log("[IframeBridge] setSceneIndex", prevPage - 1);
             room.setSceneIndex(prevPage - 1);
+            context.updateAttributes(["page"], prevPage - 1);
             dispatchMagixEvent(IframeEvents.PrevPage, {});
           }
           break;
@@ -298,14 +329,16 @@ const IframeBridge: NetlessApp<Attributes> = {
           break;
         }
         case IframeEvents.SetPage: {
-          const page = data.payload;
-          const nextScenes = times(page);
+          const pages = data.payload;
+          const nextScenes = times(pages);
           if (context.getIsWritable() && room) {
             const scenes = room.entireScenes()[attrs.displaySceneDir];
-            if (!scenes || scenes.length !== page) {
+            if (!scenes || scenes.length !== pages) {
               room.putScenes(attrs.displaySceneDir, nextScenes);
             }
             room.setScenePath(attrs.displaySceneDir);
+            log("[IframeBridge] SetPage", pages);
+            context.updateAttributes(["pages"], pages);
           }
           if (appProxy.scenes?.length !== nextScenes.length) {
             appProxy.scenes = nextScenes;
@@ -319,6 +352,7 @@ const IframeBridge: NetlessApp<Attributes> = {
               break;
             }
             room.setSceneIndex(page - 1);
+            context.updateAttributes(["page"], page - 1);
             dispatchMagixEvent(IframeEvents.PageTo, page - 1);
           }
           break;
