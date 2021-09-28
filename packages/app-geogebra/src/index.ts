@@ -1,143 +1,108 @@
 import { ensureAttributes } from "@netless/app-shared";
 import type { NetlessApp } from "@netless/window-manager";
-import type { GGBAppletObject, GGBFileJSON } from "./loader";
-import { ensureGeoGebraAPI } from "./loader";
-import styles from "./style.scss?inline";
 import { SideEffectManager } from "side-effect-manager";
+import getGGBApplet, { defaultParameters } from "./ggb";
+import LiveApp from "./ggb/live";
+import styles from "./style.scss?inline";
+import type { AppletObject, GGBAppletParameters } from "./types";
+import { createSyncService, onResize } from "./utils";
 
-function scan(str: string, start: string, end: string, pos?: number): [i: number, j: number] {
-  const i = str.indexOf(start, pos);
-  const j = str.indexOf(end, i);
-  return [i, j];
-}
-
-function replaceByScan(str: string, replace: string, start: string, end: string, pos?: number) {
-  const [i, j] = scan(str, start, end, pos);
-  const [k, l] = scan(replace, start, end, pos);
-  return [str.slice(0, i) + replace.slice(k, l) + str.slice(j), j] as const;
-}
-
-function hackGeoGebraXML(me: string, incoming: string, pos = 0) {
-  [me, pos] = replaceByScan(me, incoming, "<window", "/>", pos);
-  [me, pos] = replaceByScan(me, incoming, `<pane location="" divider=`, "/>", pos);
-  [me, pos] = replaceByScan(me, incoming, `visible="true"`, "/>", pos);
-  [me, pos] = replaceByScan(me, incoming, `<size `, "/>", pos);
-  [me, pos] = replaceByScan(me, incoming, `<coordSystem `, "/>", pos);
-  return me;
-}
+export type {
+  AppletObject,
+  AppletParameters,
+  AppletType,
+  ClientEvent,
+  GGBApplet,
+  GGBAppletParameters,
+  Views,
+} from "./types";
 
 export interface Attributes {
-  [fileName: string]: string; // fileContent
+  ggbBase64: string;
 }
 
+/**
+ * NOTE: GeoGebra is licensed under GPLv3 and is free only in non-commercial use.
+ * If you want to use it, please refer to their licence first:
+ * https://www.geogebra.org/license
+ */
 const GeoGebra: NetlessApp<Attributes> = {
   kind: "GeoGebra",
   async setup(context) {
+    const attrs = ensureAttributes(context, { ggbBase64: "" });
+
     const box = context.getBox();
-
-    const attrs = ensureAttributes(context, {
-      "geogebra_defaults2d.xml": "",
-      "geogebra_defaults3d.xml": "",
-      "geogebra_javascript.js": "",
-      "geogebra.xml": "",
-    });
-
     box.mountStyles(styles);
+
     const content = document.createElement("div");
-    content.classList.add("netless-app-geogebra");
+    content.classList.add("netless-app-geogebra", "loading");
     box.mountContent(content);
 
-    const sideEffect = new SideEffectManager();
+    const sideEffectManager = new SideEffectManager();
 
-    const GGBApplet = await ensureGeoGebraAPI();
-    const api = await new Promise<GGBAppletObject>(resolve => {
-      const applet = new GGBApplet({
-        appName: "graphing",
-        showToolBar: true,
-        showAlgebraInput: true,
-        showMenuBar: true,
-        borderColor: null,
-        useBrowserForJS: true,
-        appletOnLoad: resolve,
-      });
-      applet.inject(content);
-    });
-
-    const resizeObserver = new ResizeObserver(() => {
-      const { width, height } = content.getBoundingClientRect();
-      api.setWidth(width);
-      api.setHeight(height);
-    });
-
-    resizeObserver.observe(content);
-
-    const send = () => {
-      const { archive } = api.getFileJSON();
-      for (const { fileName, fileContent } of archive) {
-        if (attrs[fileName] !== fileContent) {
-          context.updateAttributes([fileName], fileContent);
-        }
-      }
-    };
-
-    let debounceSendTimer = 0;
-    const debouncedSend = async () => {
-      clearTimeout(debounceSendTimer);
-      debounceSendTimer = setTimeout(send, 500);
-    };
-
-    const receive = () => {
-      const archive: GGBFileJSON["archive"] = [];
-      const old = Object.fromEntries(
-        api.getFileJSON().archive.map(e => [e.fileName, e.fileContent])
-      );
-      const changed = new Map();
-      for (const [key, value] of Object.entries(attrs)) {
-        if (key in old) {
-          if (key === "geogebra.xml") {
-            old[key] = hackGeoGebraXML(old[key], value);
-          }
-          if (old[key] !== value) changed.set(key, [old[key], value]);
-          archive.push({ fileName: key, fileContent: value });
-        }
-      }
-      if (changed.size > 0) {
-        // TODO: wtf
-        console.log(changed);
-        api.setFileJSON({ archive });
-      }
-    };
-
-    let debounceReceiveTimer = 0;
-    const debouncedReceive = () => {
-      clearTimeout(debounceReceiveTimer);
-      debounceReceiveTimer = setTimeout(receive, 500);
-    };
-
-    const watchedKeys = Object.keys(attrs);
-    sideEffect.add(() =>
-      context.mobxUtils.autorun(() => {
-        watchedKeys.forEach(key => attrs[key]);
-        debouncedReceive();
-      })
-    );
-
-    api.registerAddListener(debouncedSend);
-    api.registerClearListener(debouncedSend);
-    api.registerRemoveListener(debouncedSend);
-    api.registerRenameListener(debouncedSend);
-    api.registerStoreUndoListener(debouncedSend);
-    api.registerUpdateListener(debouncedSend);
-
-    if (import.meta.env.DEV) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (window as any).geo = api;
+    const params: GGBAppletParameters = { ...defaultParameters };
+    if (attrs.ggbBase64) {
+      params.ggbBase64 = attrs.ggbBase64;
     }
+
+    params.id = "ggb_" + context.appId;
+
+    let app: AppletObject | undefined;
+    const sync = createSyncService(context, attrs, "ggbBase64");
+
+    function resize() {
+      const { width, height } = content.getBoundingClientRect();
+      app?.setWidth(width);
+      app?.setHeight(height);
+    }
+
+    params.appletOnLoad = api => {
+      console.log(`[GeoGebra]: loaded ${JSON.stringify(params.id)}`);
+
+      app = api;
+      resize();
+      content.classList.remove("loading");
+
+      const displayer = context.getDisplayer();
+      const liveApp = new LiveApp({
+        clientId: displayer.observerId,
+        api,
+        isDecider: clientId => {
+          const users = displayer.state.roomMembers.map(member => member.memberId);
+          return users.every(id => clientId <= id);
+        },
+        getColor: clientId => {
+          const color = displayer.memberState(clientId).strokeColor;
+          return "#" + color.map(x => x.toString(16).padStart(2, "0")).join("") + "80";
+        },
+        ...sync.service,
+      });
+
+      liveApp.registerListeners();
+      sync.service.addListener(e => {
+        liveApp.dispatch(e);
+        app?.setUndoPoint();
+      });
+
+      if (import.meta.env.DEV) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (window as any)["ggb_live_" + context.appId] = liveApp;
+        console.log(`[GeoGebra]: init live app of ${JSON.stringify(params.id)}`);
+      }
+    };
+
+    sideEffectManager.add(() => onResize(content, resize));
 
     context.emitter.on("destroy", () => {
       console.log("[GeoGebra]: destroy");
-      sideEffect.flushAll();
+      sideEffectManager.flushAll();
+      sync.disposer();
+      app?.remove();
     });
+
+    const GGBApplet = await getGGBApplet();
+    const applet = new GGBApplet(params);
+    applet.inject(content);
   },
 };
 
