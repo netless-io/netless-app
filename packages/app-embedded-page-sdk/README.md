@@ -40,10 +40,10 @@ app.destroy(); // remove all event listeners
 
 ### Details
 
-1. `app.setState()` changes `app.state` immediately, while `onStateChanged`
-   will wait until the data is sent to the whiteboard server.
+1. `app.setState()` changes `app.state` immediately, while `onStateChanged` will wait until the data is sent to the whiteboard server.
 2. `app.onMessage` won't receive messages sent by itself via `app.sendMessage()`.
-3.
+3. Syncing time varies around 0.1s - 10s, don't expect it to be very fast.
+4. Storing state needs bandwidth and time, don't store objects too big.
 
 ### Licence
 
