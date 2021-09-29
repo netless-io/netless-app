@@ -1,5 +1,7 @@
 ## @netless/app-iframe-bridge
 
+**It is recommended to use [Embedded Page](https://github.com/netless-io/netless-app/tree/master/packages/app-embedded-page).**
+
 [netless-io/netless-iframe-bridge](https://github.com/netless-io/netless-iframe-bridge), in netless app.
 
 ### Usage
@@ -10,8 +12,8 @@ Also refer to [netless-io/netless-iframe-sdk](https://github.com/netless-io/netl
 
 ### Known Issue
 
-- Not support whiteboard (draw on iframe) now.
-- Refresh page will set page to 1.
+- Not support whiteboard (draw on iframe).
+- Refresh page will set page to 1 (mainly because of cocos).
 
 ### Licence
 

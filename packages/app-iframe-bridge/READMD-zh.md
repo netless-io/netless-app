@@ -1,3 +1,9 @@
+## @netless/app-iframe-bridge
+
+**推荐先使用 [Embedded Page](https://github.com/netless-io/netless-app/tree/master/packages/app-embedded-page)**
+
+[接入指南](#接入指南) [进阶](#进阶) [限制](#限制)
+
 ### 接入指南
 
 Iframe Bridge 为任意静态网页提供了同步的能力，其核心是两个功能：
@@ -80,7 +86,46 @@ manager.addApp({
   kind: "IframeBridge",
   attributes: {
     src: "https://example.org",
-    state: {}, // 其他初始值
+    state: { page: 1 }, // 其他初始值
   },
 });
 ```
+
+### 进阶
+
+存在一些 "同步" 接口，意思是一旦发送消息就可以立刻收到数据，可以预期在一个较短的时间内得到回复：
+
+```ts
+let resolveGetAttributes: (data: any) => void | undefined;
+
+addEventListener("message", e => {
+  const { kind, payload } = e.data;
+  if (kind === "GetAttributes") {
+    if (resolveGetAttributes) {
+      resolveGetAttributes(payload);
+      resolveGetAttributes = void 0;
+    }
+  }
+});
+
+/**
+ * 获取当前状态，如果获取失败会返回 undefined
+ */
+async function GetAttributes() {
+  postMessage({ kind: "GetAttributes" });
+  return Promise.race([
+    new Promise(resolve => {
+      resolveGetAttributes = resolve;
+    }),
+    new Promise(resolve => setTimeout(resolve, 100)),
+  ]);
+}
+```
+
+### 限制
+
+Attributes 和 Magix 都需要通过网络发送和接收，因此他们不宜过大。\
+目前虽然接口上 SetAttributes 可以差量更新，但是同步时还是发送的全量状态。
+
+网络时延在 0.1s - 10s 左右，因此不宜基于此组件制作对同步要求高的应用。\
+后续会给出一个同步时间戳接口，可以基于他制作计时器、播放器等对具体时间发生的事件有要求的应用。

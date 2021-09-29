@@ -38,6 +38,9 @@ const options: PlaygroundConfigs<Attributes> = [
     src: () => import("./src"),
     options: {
       title,
+      // add `scenePath` will make it use _Pages_ feature
+      // make sure to call `SetPage` first
+      // otherwise you may not be able to click on it
       scenePath: `/h5/${title}`,
       scenes: [],
     },
