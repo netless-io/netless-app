@@ -1,6 +1,5 @@
 import type { PlaygroundConfigs } from "../playground/typings";
 import type { Attributes } from "./src";
-import IframeBridge from "./src";
 
 const demo: { title: string; src: string }[] = [
   {
@@ -24,7 +23,7 @@ const demo: { title: string; src: string }[] = [
 
 const options: PlaygroundConfigs<Attributes> = [
   {
-    kind: IframeBridge.kind,
+    kind: "IframeBridge",
     src: () => import("./src"),
     options: {
       title: "demo",
@@ -34,7 +33,7 @@ const options: PlaygroundConfigs<Attributes> = [
     },
   },
   ...demo.map(({ title, src }) => ({
-    kind: IframeBridge.kind,
+    kind: "IframeBridge",
     src: () => import("./src"),
     options: {
       title,
