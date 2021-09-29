@@ -2,7 +2,7 @@
   "name": "netless-app-monorepo",
   "private": true,
   "devDependencies": {
-    "@netless/window-manager": "^0.1.66-canary.2",
+    "@netless/window-manager": "^0.1.66-canary.3",
     "@sveltejs/vite-plugin-svelte": "^1.0.0-next.24",
     "@tsconfig/svelte": "^2.0.1",
     "@types/node": "^16.10.1",
@@ -20,7 +20,7 @@
     "svelte": "^3.43.0",
     "typescript": "^4.4.3",
     "vite": "^2.5.10",
-    "white-web-sdk": "^2.14.2"
+    "white-web-sdk": "^2.14.3"
   },
   "scripts": {
     "prettier": "prettier --write .",

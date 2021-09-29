@@ -4,7 +4,7 @@ importers:
 
   .:
     specifiers:
-      '@netless/window-manager': ^0.1.66-canary.2
+      '@netless/window-manager': ^0.1.66-canary.3
       '@sveltejs/vite-plugin-svelte': ^1.0.0-next.24
       '@tsconfig/svelte': ^2.0.1
       '@types/node': ^16.10.1
@@ -22,9 +22,9 @@ importers:
       svelte: ^3.43.0
       typescript: ^4.4.3
       vite: ^2.5.10
-      white-web-sdk: ^2.14.2
+      white-web-sdk: ^2.14.3
     devDependencies:
-      '@netless/window-manager': 0.1.66-canary.2_white-web-sdk@2.14.2
+      '@netless/window-manager': 0.1.66-canary.3_white-web-sdk@2.14.3
       '@sveltejs/vite-plugin-svelte': 1.0.0-next.24_svelte@3.43.0+vite@2.5.10
       '@tsconfig/svelte': 2.0.1
       '@types/node': 16.10.1
@@ -42,7 +42,7 @@ importers:
       svelte: 3.43.0
       typescript: 4.4.3
       vite: 2.5.10
-      white-web-sdk: 2.14.2
+      white-web-sdk: 2.14.3
 
   packages/app-browser:
     specifiers: {}
@@ -69,11 +69,17 @@ importers:
   packages/app-embedded-page:
     specifiers:
       '@netless/app-shared': workspace:*
-      emittery: ^0.10.0
       side-effect-manager: ^0.1.2
     devDependencies:
       '@netless/app-shared': link:../app-shared
-      emittery: 0.10.0
+      side-effect-manager: 0.1.2
+
+  packages/app-embedded-page-sdk:
+    specifiers:
+      '@netless/app-shared': workspace:*
+      side-effect-manager: ^0.1.2
+    devDependencies:
+      '@netless/app-shared': link:../app-shared
       side-effect-manager: 0.1.2
 
   packages/app-geogebra:
@@ -256,8 +262,8 @@ packages:
       stylefire: 7.0.3
     dev: true
 
-  /@netless/window-manager/0.1.66-canary.2_white-web-sdk@2.14.2:
-    resolution: {integrity: sha512-pBbG3SnNWPFeajo7xd/rZrD7fifvRcXoItRzs5R7fj0sTKJh7BXOMY9/lw5ye5eS9Ah0h5KizwjVpzFBRkk6Eg==}
+  /@netless/window-manager/0.1.66-canary.3_white-web-sdk@2.14.3:
+    resolution: {integrity: sha512-AIkHwnKCYSw3kyLGWSJlasl2NVfk0uIyu4kTxNtSY1CPzbZ/OiGlxnIGmGvVwgIcwiK4I3sFWaxusvdhS6epNA==}
     peerDependencies:
       white-web-sdk: ^2.13.16
     dependencies:
@@ -271,7 +277,7 @@ packages:
       nanoid: 3.1.28
       p-retry: 4.6.1
       video.js: 7.15.4
-      white-web-sdk: 2.14.2
+      white-web-sdk: 2.14.3
     dev: true
 
   /@netless/xml-js/1.6.15:
@@ -406,10 +412,6 @@ packages:
 
   /@types/node/16.10.1:
     resolution: {integrity: sha512-4/Z9DMPKFexZj/Gn3LylFgamNKHm4K3QDi0gz9B26Uk0c8izYf97B5fxfpspMNkWlFupblKM/nV8+NA9Ffvr+w==}
-    dev: true
-
-  /@types/node/16.9.6:
-    resolution: {integrity: sha512-YHUZhBOMTM3mjFkXVcK+WwAcYmyhe1wL4lfqNtzI0b3qAy7yuSetnM7QJazgE5PFmgVTNGiLOgRFfJMqW7XpSQ==}
     dev: true
 
   /@types/randomcolor/0.5.6:
@@ -823,8 +825,8 @@ packages:
     requiresBuild: true
     dev: true
 
-  /core-js/3.18.0:
-    resolution: {integrity: sha512-WJeQqq6jOYgVgg4NrXKL0KLQhi0CT4ZOCvFL+3CQ5o7I6J8HkT5wd53EadMfqTDp1so/MT1J+w2ujhWcCJtN7w==}
+  /core-js/3.18.1:
+    resolution: {integrity: sha512-vJlUi/7YdlCZeL6fXvWNaLUPh/id12WXj3MbkMw5uOyF0PfWPBNOCNbs53YqgrvtujLNlt9JQpruyIKkUZ+PKA==}
     requiresBuild: true
     dev: true
 
@@ -2109,7 +2111,7 @@ packages:
       '@protobufjs/pool': 1.1.0
       '@protobufjs/utf8': 1.1.0
       '@types/long': 4.0.1
-      '@types/node': 16.9.6
+      '@types/node': 16.10.1
       long: 4.0.0
     dev: true
 
@@ -2615,8 +2617,8 @@ packages:
       isexe: 2.0.0
     dev: true
 
-  /white-web-sdk/2.14.2:
-    resolution: {integrity: sha512-j4atMyNW2evhRKLWhkfytvvk54pcGy1W4FEBVOtxRr4crW92iqracRufG2jXOBh2NzJqSwXvOLezYkDXbvbO8g==}
+  /white-web-sdk/2.14.3:
+    resolution: {integrity: sha512-+7sk7Tc4aGY9OFhAW+TJZpZHb6xehDutAJ1UETEgoHWebIFKGwiVXqS+Zni87XcTYM4i2wZKgfcsAm+HvUdThw==}
     dependencies:
       '@juggle/resize-observer': 3.3.1
       '@netless/canvas-polyfill': 0.0.4
@@ -2624,7 +2626,7 @@ packages:
       atob: 2.1.2
       bezier-js: 2.6.1
       color: 3.2.1
-      core-js: 3.18.0
+      core-js: 3.18.1
       detect-it: 3.0.7
       eventemitter3: 4.0.7
       mathjs: 6.6.5

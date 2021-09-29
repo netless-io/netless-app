@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+  </head>
+  <body>
+    <div>
+      <h2>embed.html</h2>
+      <div class="state">
+        <strong>State:</strong>
+        <button id="count">0</button>
+      </div>
+      <div class="message">
+        <strong>Message:</strong>
+        <input id="message-payload" />
+        <button id="message-send">SEND</button>
+        <div>
+          <output id="message-recv"></output>
+        </div>
+      </div>
+    </div>
+    <script src="./embedded-page-sdk.js"></script>
+    <script>
+      (() => {
+        "use strict";
+
+        const $ = sel => document.querySelector(sel);
+
+        const app = X.createEmbeddedApp({ count: 0 });
+        window.app = app;
+
+        const refreshCount = state => {
+          $("#count").textContent = app.state.count + "";
+        };
+
+        app.onInit.addListener(refreshCount);
+        app.onStateChanged.addListener(refreshCount);
+        app.onMessage.addListener(payload => {
+          $("#message-recv").innerText += "< " + payload + "\n";
+        });
+
+        $("#count").addEventListener("click", e => {
+          const nextCount = e.shiftKey ? app.state.count - 1 : app.state.count + 1;
+          app.setState({ count: nextCount });
+        });
+
+        $("#message-send").addEventListener("click", e => {
+          $("#message-recv").innerText += "> " + $("#message-payload").value + "\n";
+          app.sendMessage($("#message-payload").value);
+        });
+      })();
+    </script>
+  </body>
+</html>
