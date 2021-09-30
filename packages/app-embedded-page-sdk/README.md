@@ -46,7 +46,7 @@ app.destroy(); // remove all event listeners
 
 ### Details
 
-1. Do not relay on the order of state changes:
+1. Do not rely on the order of state changes:
    - `app.setState()` alters `app.state` synchronously but `onStateChanged` will wait until the data is successfully synced.
    - State syncing time span varies due to network status and data size. It is recommended to store only necessary data in the store.
 2. `app.onMessage` won't receive `app.sendMessage()` messages sent by itself.
