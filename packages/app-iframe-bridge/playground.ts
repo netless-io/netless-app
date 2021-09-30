@@ -19,6 +19,10 @@ const demo: { title: string; src: string }[] = [
   //   title: "wzomo",
   //   src: "https://static.pre.wzomo.com/web/netless/index.html#/lesson1/page7?debug=1&role=teacher&origin=dev",
   // },
+  {
+    title: "testtt",
+    src: "https://vf-cdn.yunkc.cn/platform/netless/v1/index.html?total=25&debug=true&url=https://vf-cdn.yunkc.cn/platform/netless/v1/demo/demo.json",
+  },
 ];
 
 const options: PlaygroundConfigs<Attributes> = [
