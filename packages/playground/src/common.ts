@@ -23,7 +23,7 @@ export const post = <T>(path: string, body: unknown): Promise<T> =>
   }).then(r => r.json());
 
 export async function createRoom(): Promise<RoomInfo> {
-  const { uuid } = await post<{ uuid: string }>("rooms", { name: "test1", limit: 0 });
+  const { uuid } = await post<{ uuid: string }>("rooms", { limit: 0, isRecord: false });
   log(`uuid = %O`, uuid);
   const roomToken = await post<string>(`tokens/rooms/${uuid}`, { lifespan: 0, role: "admin" });
   log(`roomToken = %O`, roomToken);
