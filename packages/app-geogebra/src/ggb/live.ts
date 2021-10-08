@@ -31,7 +31,13 @@ export type LiveAppEventType =
   | "showPointsTV"
   | "lockTextElement"
   | "unlockTextElement"
-  | "conflictResolution";
+  | "conflictResolution"
+  | "viewChanged2D";
+
+export type ViewProperties = Record<
+  `inv${"X" | "Y"}scale` | `${"x" | "y"}Min` | "width" | "height",
+  number
+>;
 
 export interface LiveAppEvent {
   readonly type: LiveAppEventType;
@@ -70,6 +76,12 @@ export type LiveAppOptions = ISyncService & {
   readonly embedLabel?: string;
 };
 
+interface ViewState {
+  scale: number;
+  x: number;
+  y: number;
+}
+
 export default class LiveApp {
   readonly clientId: number;
   readonly api: AppletObject;
@@ -89,6 +101,9 @@ export default class LiveApp {
     this.clientId = options.clientId;
     this.delay = options.delay ?? 200;
     this.context = options;
+    setTimeout(() => {
+      this.api.evalCommand("Pan(0,0)"); // trigger viewChanged2D
+    }, this.delay);
   }
 
   createEvent(type: LiveAppEventType, content?: string, label?: string): LiveAppEvent {
@@ -242,11 +257,33 @@ export default class LiveApp {
   };
 
   private lastEditingLabel: string | undefined;
+  private isSyncingViewState = 0;
+
+  startSyncViewState() {
+    clearTimeout(this.isSyncingViewState);
+    this.isSyncingViewState = setTimeout(this.stopSyncViewState, 1000);
+  }
+
+  stopSyncViewState = () => {
+    this.isSyncingViewState = 0;
+  };
+
+  _flushViewState = () => {
+    const { invXscale, invYscale, xMin, yMin } = JSON.parse(
+      this.api.getViewProperties(0)
+    ) as ViewProperties;
+    const scale = 1 / invXscale;
+    const x = -xMin / invXscale;
+    const y = -yMin / invYscale;
+    this.viewState = { scale, x, y };
+    this.viewSyncCallback = 0;
+    return this.viewState;
+  };
 
   clientListener = (event: ClientEvent): void => {
     let label: string, content: string;
-
-    switch (event.type) {
+    const type = event.type;
+    switch (type) {
       case "updateStyle":
         label = event.target;
         content = this.api.getXML(label);
@@ -288,43 +325,43 @@ export default class LiveApp {
         this.sendEvent("setXML", content);
         break;
 
-      case "addSlide" as unknown:
-        this.sendEvent("addSlide");
+      case "addSlide" as LiveAppEventType:
+        this.sendEvent(type);
         break;
 
-      case "removeSlide" as unknown:
-      case "moveSlide" as unknown:
-      case "selectSlide" as unknown:
-      case "clearSlide" as unknown:
-      case "orderingChange" as unknown:
+      case "removeSlide" as LiveAppEventType:
+      case "moveSlide" as LiveAppEventType:
+      case "selectSlide" as LiveAppEventType:
+      case "clearSlide" as LiveAppEventType:
+      case "orderingChange" as LiveAppEventType:
         content = (event as unknown as string[])[2];
-        this.sendEvent(event.type as LiveAppEventType, content);
+        this.sendEvent(type, content);
         break;
 
-      case "pasteSlide" as unknown:
+      case "pasteSlide" as LiveAppEventType:
         ({ cardIdx: content, ggbFile: label } = event as unknown as {
           cardIdx: string;
           ggbFile: string;
         });
-        this.sendEvent(event.type as LiveAppEventType, content, label);
+        this.sendEvent(type, content, label);
         break;
 
-      case "startAnimation" as unknown:
+      case "startAnimation" as LiveAppEventType:
         label = (event as unknown as string[])[1];
         this.currentAnimations.push(label);
-        this.sendEvent(event.type as LiveAppEventType, label, label);
+        this.sendEvent(type, label, label);
         break;
 
-      case "stopAnimation" as unknown:
+      case "stopAnimation" as LiveAppEventType:
         label = (event as unknown as string[])[1];
         this.currentAnimations.splice(this.currentAnimations.indexOf(label), 1);
-        this.sendEvent(event.type as LiveAppEventType, label, label);
+        this.sendEvent(type, label, label);
         break;
 
-      case "groupObjects" as unknown:
-      case "ungroupObjects" as unknown:
+      case "groupObjects" as LiveAppEventType:
+      case "ungroupObjects" as LiveAppEventType:
         content = (event as unknown as { targets: string }).targets;
-        this.sendEvent(event.type as LiveAppEventType, content);
+        this.sendEvent(type, content);
         break;
 
       case "pasteElmsComplete":
@@ -334,31 +371,40 @@ export default class LiveApp {
         this.sendEvent("evalXML", content);
         break;
 
-      case "addGeoToTV" as unknown:
-      case "removeGeoFromTV" as unknown:
+      case "addGeoToTV" as LiveAppEventType:
+      case "removeGeoFromTV" as LiveAppEventType:
         content = (event as unknown as string[])[1];
-        this.sendEvent(event.type as LiveAppEventType, content);
+        this.sendEvent(type, content);
         break;
 
-      case "setValuesOfTV" as unknown:
+      case "setValuesOfTV" as LiveAppEventType:
         content = (event as unknown as string[])[2];
-        this.sendEvent(event.type as LiveAppEventType, content);
+        this.sendEvent(type, content);
         break;
 
-      case "showPointsTV" as unknown:
+      case "showPointsTV" as LiveAppEventType:
         ({ column: content, show: label } = event as unknown as { column: string; show: string });
-        this.sendEvent(event.type as LiveAppEventType, content, label);
+        this.sendEvent(type, content, label);
         break;
 
-      case "lockTextElement" as unknown:
-      case "unlockTextElement" as unknown:
+      case "lockTextElement" as LiveAppEventType:
+      case "unlockTextElement" as LiveAppEventType:
         content = (event as unknown as string[])[1];
-        this.sendEvent(event.type as LiveAppEventType, content);
+        this.sendEvent(type, content);
+        break;
+
+      case "viewChanged2D":
+        if (!this.viewSyncCallback) {
+          if (this.isSyncingViewState || this.viewState.scale === 0) {
+            this.viewSyncCallback = setTimeout(this._flushViewState, this.delay);
+          } else {
+            this.viewSyncCallback = setTimeout(this._sendViewSyncEvent, this.delay);
+          }
+        }
         break;
 
       case "mouseDown":
       case "deleteGeos":
-      case "viewChanged2D":
       case "dragEnd":
         // ignore
         break;
@@ -367,6 +413,29 @@ export default class LiveApp {
         console.debug("[GeoGebra] unhandled event ", event.type, event);
     }
   };
+
+  private viewSyncCallback = 0;
+  private viewState: ViewState = { scale: 0, x: 0, y: 0 };
+  private static readonly Threshold = 20;
+
+  _sendViewSyncEvent = () => {
+    this._flushViewState();
+    this.sendEvent("viewChanged2D", JSON.stringify(this.viewState));
+    this.viewSyncCallback = 0;
+  };
+
+  _delayedRegisterListeners = () => {
+    this.registerListeners();
+    this.viewSyncCallback = 0;
+  };
+
+  shouldSyncView(oldView: ViewState, scale: number, x: number, y: number) {
+    return (
+      Math.abs(scale - oldView.scale) > LiveApp.Threshold / 10 ||
+      Math.abs(x - oldView.x) > LiveApp.Threshold ||
+      Math.abs(y - oldView.y) > LiveApp.Threshold
+    );
+  }
 
   registerListeners(): void {
     this.api.registerUpdateListener(this.updateListener);
@@ -499,6 +568,17 @@ export default class LiveApp {
       target.api.lockTextElement(content);
     } else if (type === "unlockTextElement") {
       target.api.unlockTextElement(content);
+    } else if (type === "viewChanged2D") {
+      if (target.viewState.scale === 0) {
+        target.api.evalCommand("Pan(0,0)");
+        target.startSyncViewState();
+      } else {
+        const { scale, x, y } = JSON.parse(content) as ViewState;
+        const v = target._flushViewState();
+        target.startSyncViewState();
+        target.api.evalCommand(`Pan(${x - v.x},${y - v.y})`);
+        target.api.evalCommand(`ZoomIn(${scale / v.scale})`);
+      }
     } else {
       console.debug("[GeoGebra] unknown event", type, content, label);
     }

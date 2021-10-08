@@ -317,7 +317,7 @@ export type ClientEvent =
       type: "viewChanged2D";
       xZero: number;
       yZero: number;
-      xscale: number;
+      scale: number;
       yscale: number;
       viewNo: 1 | 2;
     }
@@ -327,7 +327,7 @@ export type ClientEvent =
       xZero: number;
       yZero: number;
       zZero: number;
-      xscale: number;
+      scale: number;
       yscale: number;
       zscale: number;
       xAngle: number;
