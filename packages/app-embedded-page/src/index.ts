@@ -10,6 +10,7 @@ export type { ReceiveMessages, SendMessages, State } from "./types";
 export interface Attributes {
   src: string;
   state: State;
+  page: string;
 }
 
 const EmbeddedPage: NetlessApp<Attributes> = {
@@ -22,29 +23,43 @@ const EmbeddedPage: NetlessApp<Attributes> = {
     const attrs = ensureAttributes<Attributes>(context, {
       src: "https://example.org",
       state: {},
+      page: "",
     });
 
     const sideEffectManager = new SideEffectManager();
 
-    const content = document.createElement("iframe");
-    Object.assign(content.style, { width: "100%", height: "100%", border: "none" });
+    const container = document.createElement("div");
+    Object.assign(container.style, { width: "100%", height: "100%", position: "relative" });
 
-    box.mountContent(content);
+    const iframe = document.createElement("iframe");
+    Object.assign(iframe.style, { width: "100%", height: "100%", border: "none" });
+    container.appendChild(iframe);
 
-    type MessageToSend<T extends keyof SendMessages> = {
+    const viewBox = document.createElement("div");
+    Object.assign(viewBox.style, {
+      width: "100%",
+      height: "100%",
+      position: "absolute",
+      top: 0,
+      left: 0,
+    });
+    container.appendChild(viewBox);
+
+    box.mountContent(container);
+    context.mountView(viewBox);
+
+    const postMessage = <T extends keyof SendMessages>(payload: {
       type: T;
       payload: SendMessages[T];
-    };
-
-    const sendMessage = <T extends keyof SendMessages>(payload: MessageToSend<T>) => {
-      content.contentWindow?.postMessage(payload, "*");
+    }) => {
+      iframe.contentWindow?.postMessage(payload, "*");
     };
 
     const event = `channel-${context.appId}`;
 
     const magixListener = (e: Event) => {
       if (e.event === event && e.authorId !== displayer.observerId) {
-        sendMessage({ type: "ReceiveMessage", payload: e.payload });
+        postMessage({ type: "ReceiveMessage", payload: e.payload });
       }
     };
 
@@ -53,12 +68,12 @@ const EmbeddedPage: NetlessApp<Attributes> = {
       return () => displayer.removeMagixEventListener(event);
     });
 
-    sideEffectManager.addEventListener(content, "load", () => {
-      sendMessage({ type: "Init", payload: attrs.state });
+    sideEffectManager.addEventListener(iframe, "load", () => {
+      postMessage({ type: "Init", payload: attrs.state });
     });
 
     sideEffectManager.addEventListener(window, "message", e => {
-      if (e.source !== content.contentWindow) return;
+      if (e.source !== iframe.contentWindow) return;
       if (!isObj(e.data)) return;
 
       const { data } = e;
@@ -67,13 +82,21 @@ const EmbeddedPage: NetlessApp<Attributes> = {
       console.log("[EmbeddedPage] receive", data);
 
       if (type === "GetState") {
-        sendMessage({ type: "GetState", payload: attrs.state });
+        postMessage({ type: "GetState", payload: attrs.state });
       } else if (type === "SetState") {
         if (isObj(data.payload) && context.getIsWritable()) {
           for (const [key, value] of Object.entries(data.payload)) {
             context.updateAttributes(["state", key], value);
           }
         }
+      } else if (type === "GetPage") {
+        postMessage({ type: "GetPage", payload: attrs.page });
+      } else if (type === "SetPage") {
+        const value = data.payload as ReceiveMessages["SetPage"];
+        if (typeof value === "string" && context.getIsWritable()) {
+          context.updateAttributes(["page"], value);
+        }
+        // TODO: if not exist page, putScenes()
       } else if (type === "SendMessage") {
         if (context.getIsWritable()) {
           room?.dispatchMagixEvent(event, data.payload);
@@ -90,7 +113,7 @@ const EmbeddedPage: NetlessApp<Attributes> = {
           payload[key] = { oldValue: oldState[key], newValue: value };
         }
         oldState = { ...attrs.state };
-        sendMessage({ type: "StateChanged", payload });
+        postMessage({ type: "StateChanged", payload });
       };
 
       const listen = () => context.objectUtils.listenUpdated(attrs.state, updateListener);
@@ -98,7 +121,14 @@ const EmbeddedPage: NetlessApp<Attributes> = {
       return context.mobxUtils.reaction(() => attrs.state, listen, { fireImmediately: true });
     });
 
-    content.src = attrs.src;
+    sideEffectManager.add(() => {
+      const updateListener = (newValue: string, oldValue: string) => {
+        postMessage({ type: "PageChanged", payload: { oldValue, newValue } });
+      };
+      return context.mobxUtils.reaction(() => attrs.page, updateListener);
+    });
+
+    iframe.src = attrs.src;
 
     context.emitter.on("destroy", () => {
       console.log("[EmbeddedPage]: destroy");

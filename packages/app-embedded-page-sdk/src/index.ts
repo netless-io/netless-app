@@ -1,21 +1,34 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import type { ReceiveMessages, SendMessages } from "@netless/app-embedded-page";
 import { SideEffectManager } from "side-effect-manager";
 import { isObj } from "./utils";
 
-export type SendMessage<State = any, Message = any> =
+type CheckSendMessageType<T extends { type: keyof ReceiveMessages }> = T;
+
+export type SendMessage<State = any, Message = any> = CheckSendMessageType<
   | { type: "GetState" }
   | { type: "SetState"; payload: Partial<State> }
-  | { type: "SendMessage"; payload: Message };
+  | { type: "SendMessage"; payload: Message }
+  | { type: "GetPage" }
+  | { type: "SetPage"; payload: string }
+>;
+
+export type DiffOne<T> = { oldValue?: T; newValue?: T };
 
 export type Diff<State> = State extends Record<infer K, unknown>
-  ? Record<K, { oldValue?: State[K]; newValue?: State[K] }>
+  ? Record<K, DiffOne<State[K]>>
   : never;
 
-export type IncomingMessage<State = any, Message = any> =
+type CheckIncomingMessageType<T extends { type: keyof SendMessages }> = T;
+
+export type IncomingMessage<State = any, Message = any> = CheckIncomingMessageType<
   | { type: "Init"; payload: State }
   | { type: "GetState"; payload: State }
   | { type: "StateChanged"; payload: Diff<State> }
-  | { type: "ReceiveMessage"; payload: Message };
+  | { type: "ReceiveMessage"; payload: Message }
+  | { type: "GetPage"; payload: string | undefined }
+  | { type: "PageChanged"; payload: DiffOne<string> }
+>;
 
 export type Listener<T> = (event: T) => void;
 
@@ -37,25 +50,41 @@ function createEmitter<T>(): Emitter<T> {
 
 export interface EmbeddedApp<State = any, Message = any> {
   readonly state: Readonly<State>;
+  readonly page: string | undefined;
   setState(partialState: Partial<State>): void;
+  setPage(page: string): void;
   sendMessage(message: Message): void;
   destroy(): void;
   onInit: Emitter<State>;
   onStateChanged: Emitter<Diff<State>>;
+  onPageChanged: Emitter<DiffOne<string>>;
   onMessage: Emitter<Message>;
 }
 
+/**
+ * @example
+ * interface State { count: number }
+ * type Message = { type: "click"; payload: { id: string } };
+ * const app = createEmbeddedApp<State, Message>({ count: 0 });
+ */
 export function createEmbeddedApp<State = any, Message = any>(
   state: State
 ): EmbeddedApp<State, Message> {
   state = { ...state };
+  let page: string | undefined;
 
   const onInit = createEmitter<State>();
   const onStateChanged = createEmitter<Diff<State>>();
+  const onPageChanged = createEmitter<DiffOne<string>>();
   const onMessage = createEmitter<Message>();
 
   const sideEffectManager = new SideEffectManager();
   let onStateChangedPayload: Diff<State> | undefined;
+  let onPageChangedPayload: DiffOne<string> | undefined;
+
+  function postMessage(message: SendMessage) {
+    parent.postMessage(message, "*");
+  }
 
   sideEffectManager.addEventListener(window, "message", e => {
     if (!isObj(e.data)) {
@@ -68,6 +97,7 @@ export function createEmbeddedApp<State = any, Message = any>(
     if (event.type === "Init") {
       state = { ...state, ...event.payload };
       onInit.dispatch(state);
+      postMessage({ type: "GetPage" });
     } else if (event.type === "GetState") {
       state = event.payload;
       if (onStateChangedPayload) {
@@ -76,7 +106,16 @@ export function createEmbeddedApp<State = any, Message = any>(
       }
     } else if (event.type === "StateChanged") {
       onStateChangedPayload = event.payload;
-      parent.postMessage(<SendMessage>{ type: "GetState" }, "*");
+      postMessage({ type: "GetState" });
+    } else if (event.type === "GetPage") {
+      page = event.payload;
+      if (onPageChangedPayload) {
+        onPageChanged.dispatch(onPageChangedPayload);
+        onPageChangedPayload = void 0;
+      }
+    } else if (event.type === "PageChanged") {
+      onPageChangedPayload = event.payload;
+      postMessage({ type: "GetPage" });
     } else if (event.type === "ReceiveMessage") {
       onMessage.dispatch(event.payload);
     }
@@ -90,11 +129,15 @@ export function createEmbeddedApp<State = any, Message = any>(
         state[key as keyof State] = value as State[keyof State];
       }
     }
-    parent.postMessage(<SendMessage>{ type: "SetState", payload: newState }, "*");
+    postMessage({ type: "SetState", payload: newState });
+  };
+
+  const setPage = (page: string) => {
+    postMessage({ type: "SetPage", payload: page });
   };
 
   const sendMessage = (payload: Message) => {
-    parent.postMessage(<SendMessage>{ type: "SendMessage", payload }, "*");
+    postMessage({ type: "SendMessage", payload });
   };
 
   const destroy = () => sideEffectManager.flushAll();
@@ -103,11 +146,16 @@ export function createEmbeddedApp<State = any, Message = any>(
     get state() {
       return state;
     },
-    onInit,
+    get page() {
+      return page;
+    },
     setState,
-    onStateChanged,
+    setPage,
     sendMessage,
-    onMessage,
     destroy,
+    onInit,
+    onStateChanged,
+    onPageChanged,
+    onMessage,
   };
 }

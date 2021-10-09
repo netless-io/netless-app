@@ -76,9 +76,11 @@ importers:
 
   packages/app-embedded-page-sdk:
     specifiers:
+      '@netless/app-embedded-page': workspace:*
       '@netless/app-shared': workspace:*
       side-effect-manager: ^0.1.2
     devDependencies:
+      '@netless/app-embedded-page': link:../app-embedded-page
       '@netless/app-shared': link:../app-shared
       side-effect-manager: 0.1.2
 
