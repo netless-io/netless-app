@@ -1,6 +1,5 @@
 import { ensureAttributes } from "@netless/app-shared";
 import type { NetlessApp } from "@netless/window-manager";
-import type { AppProxy } from "@netless/window-manager/dist/AppProxy";
 import Emittery from "emittery";
 import { SideEffectManager } from "side-effect-manager";
 import type { Event, RoomState } from "white-web-sdk";
@@ -247,10 +246,6 @@ const IframeBridge: NetlessApp<Attributes> = {
       return () => displayer.callbacks.off(callbackName, onStateChange);
     });
 
-    // TODO: replace this with setScenes()
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const appProxy = (context as any).manager.appProxies.get(context.appId) as AppProxy;
-
     sideEffect.addEventListener(window, "message", (ev: MessageEvent) => {
       if (ev.source !== iframe.contentWindow) {
         return;
@@ -340,9 +335,7 @@ const IframeBridge: NetlessApp<Attributes> = {
             log("[IframeBridge] SetPage", pages);
             context.updateAttributes(["pages"], pages);
           }
-          if (appProxy.scenes?.length !== nextScenes.length) {
-            appProxy.scenes = nextScenes;
-          }
+          context.setScenes(nextScenes);
           break;
         }
         case IframeEvents.PageTo: {

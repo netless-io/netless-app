@@ -1,8 +1,15 @@
 ## @netless/app-iframe-bridge
 
-**It is recommended to use [Embedded Page](https://github.com/netless-io/netless-app/tree/master/packages/app-embedded-page).**
+# [DEPRECATED](https://github.com/netless-io/netless-app/tree/master/packages/app-embedded-page)
 
-[netless-io/netless-iframe-bridge](https://github.com/netless-io/netless-iframe-bridge), in netless app.
+**Please use [Embedded Page](https://github.com/netless-io/netless-app/tree/master/packages/app-embedded-page) instead.**
+
+- - -
+- - -
+- - -
+- - -
+- - -
+- - -
 
 ### Usage
 

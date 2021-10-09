@@ -1,6 +1,15 @@
 ## @netless/app-iframe-bridge
 
-**推荐先使用 [Embedded Page](https://github.com/netless-io/netless-app/tree/master/packages/app-embedded-page)**
+# 已废弃
+
+**请使用 [Embedded Page](https://github.com/netless-io/netless-app/tree/master/packages/app-embedded-page)**
+
+- - -
+- - -
+- - -
+- - -
+- - -
+- - -
 
 [接入指南](#接入指南) [进阶](#进阶) [限制](#限制)
 
