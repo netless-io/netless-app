@@ -2,6 +2,8 @@
 
 SDK for storing shared replayable states and sending/receiving replayable events inside [@netless/app-embedded-page](https://github.com/netless-io/netless-app/tree/master/packages/app-embedded-page).
 
+[中文](./README-zh.md)
+
 ### Install
 
 ```bash

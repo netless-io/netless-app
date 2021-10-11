@@ -2,6 +2,8 @@
 
 Netless App for embedding web apps, providing the ability to sync state and event messaging.
 
+[中文](./README-zh.md)
+
 ### Usage
 
 #### ✏️ Basic Usage
@@ -40,7 +42,7 @@ If you need whiteboard on top of your page, pass a `scenePath` option:
 manager.addApp({
   kind: "EmbeddedPage",
   options: {
-    scenePath: "/demo",
+    scenePath: "/demo", // `scenePath` should be globally unique (across apps).
   },
   attributes: {
     src: "<your-url>",

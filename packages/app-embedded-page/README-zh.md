@@ -40,7 +40,7 @@ manager.addApp({
 manager.addApp({
   kind: "EmbeddedPage",
   options: {
-    scenePath: "/demo",
+    scenePath: "/demo", // `scenePath` 应该全局唯一（即便是不同 apps）。
   },
   attributes: {
     src: "<your-url>",
