@@ -259,16 +259,16 @@ export default class LiveApp {
   private lastEditingLabel: string | undefined;
   private isSyncingViewState = 0;
 
-  startSyncViewState() {
+  startSyncViewState(): void {
     clearTimeout(this.isSyncingViewState);
     this.isSyncingViewState = setTimeout(this.stopSyncViewState, 1000);
   }
 
-  stopSyncViewState = () => {
+  stopSyncViewState = (): void => {
     this.isSyncingViewState = 0;
   };
 
-  _flushViewState = () => {
+  _flushViewState = (): ViewState => {
     const { invXscale, invYscale, xMin, yMin } = JSON.parse(
       this.api.getViewProperties(0)
     ) as ViewProperties;
@@ -418,18 +418,18 @@ export default class LiveApp {
   private viewState: ViewState = { scale: 0, x: 0, y: 0 };
   private static readonly Threshold = 20;
 
-  _sendViewSyncEvent = () => {
+  _sendViewSyncEvent = (): void => {
     this._flushViewState();
     this.sendEvent("viewChanged2D", JSON.stringify(this.viewState));
     this.viewSyncCallback = 0;
   };
 
-  _delayedRegisterListeners = () => {
+  _delayedRegisterListeners = (): void => {
     this.registerListeners();
     this.viewSyncCallback = 0;
   };
 
-  shouldSyncView(oldView: ViewState, scale: number, x: number, y: number) {
+  shouldSyncView(oldView: ViewState, scale: number, x: number, y: number): boolean {
     return (
       Math.abs(scale - oldView.scale) > LiveApp.Threshold / 10 ||
       Math.abs(x - oldView.x) > LiveApp.Threshold ||
