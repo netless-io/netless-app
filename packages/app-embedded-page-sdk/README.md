@@ -196,8 +196,6 @@ app.onMessage.addListener(({ type, payload }) => {
     click(payload.id);
   }
 });
-
-app.destroy(); // remove all event listeners
 ```
 
 ### Licence
