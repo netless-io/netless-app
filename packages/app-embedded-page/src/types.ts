@@ -7,14 +7,31 @@ export interface ReceiveMessages {
   SendMessage: unknown;
   GetPage: void;
   SetPage: string;
+  GetWritable: void;
+}
+
+export type DiffOne<T> = { oldValue?: T; newValue?: T };
+
+export interface MetaData {
+  roomUUID?: string;
+  userPayload?: unknown;
+}
+
+export interface InitData {
+  state: State;
+  page?: string;
+  writable: boolean;
+  meta: MetaData;
 }
 
 // me --> iframe
 export interface SendMessages {
-  Init: State;
+  Init: InitData;
   GetState: State;
-  StateChanged: Record<string, { oldValue: unknown; newValue: unknown }>;
+  StateChanged: Record<string, DiffOne<unknown>>;
   ReceiveMessage: unknown;
   GetPage: string | undefined;
-  PageChanged: { oldValue?: string; newValue?: string };
+  PageChanged: DiffOne<string>;
+  GetWritable: boolean;
+  WritableChanged: DiffOne<boolean>;
 }

@@ -8,6 +8,7 @@
     "build:dev": "vite build --mode development"
   },
   "devDependencies": {
+    "@netless/app-embedded-page-sdk": "workspace:*",
     "@netless/app-shared": "workspace:*",
     "@types/faker": "^5.5.8",
     "faker": "^5.5.3"

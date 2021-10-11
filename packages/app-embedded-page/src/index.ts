@@ -1,11 +1,17 @@
 import { ensureAttributes } from "@netless/app-shared";
 import type { NetlessApp } from "@netless/window-manager";
 import { SideEffectManager } from "side-effect-manager";
-import type { AkkoObjectUpdatedListener, Event } from "white-web-sdk";
+import type {
+  AkkoObjectUpdatedListener,
+  ApplianceNames,
+  Event,
+  RoomState,
+  ScenePathType,
+} from "white-web-sdk";
 import type { ReceiveMessages, SendMessages, State } from "./types";
 import { isObj } from "./utils";
 
-export type { ReceiveMessages, SendMessages, State } from "./types";
+export type { DiffOne, InitData, MetaData, ReceiveMessages, SendMessages, State } from "./types";
 
 export interface Attributes {
   src: string;
@@ -13,12 +19,15 @@ export interface Attributes {
   page: string;
 }
 
+const ClickThroughAppliances = new Set(["clicker", "selector"]);
+
 const EmbeddedPage: NetlessApp<Attributes> = {
   kind: "EmbeddedPage",
   setup(context) {
     const displayer = context.getDisplayer();
     const room = context.getRoom();
     const box = context.getBox();
+    const view = context.getView();
 
     const attrs = ensureAttributes<Attributes>(context, {
       src: "https://example.org",
@@ -35,18 +44,32 @@ const EmbeddedPage: NetlessApp<Attributes> = {
     Object.assign(iframe.style, { width: "100%", height: "100%", border: "none" });
     container.appendChild(iframe);
 
-    const viewBox = document.createElement("div");
-    Object.assign(viewBox.style, {
-      width: "100%",
-      height: "100%",
-      position: "absolute",
-      top: 0,
-      left: 0,
-    });
-    container.appendChild(viewBox);
-
     box.mountContent(container);
-    context.mountView(viewBox);
+
+    // eslint-disable-next-line @typescript-eslint/no-empty-function
+    let toggleClickThrough: (enable?: boolean) => void = () => {};
+    const shouldClickThrough = (tool?: ApplianceNames) => {
+      return ClickThroughAppliances.has(tool as ApplianceNames);
+    };
+
+    if (view) {
+      const viewBox = document.createElement("div");
+      Object.assign(viewBox.style, {
+        width: "100%",
+        height: "100%",
+        position: "absolute",
+        top: 0,
+        left: 0,
+      });
+      container.appendChild(viewBox);
+      context.mountView(viewBox);
+
+      toggleClickThrough = (enable?: boolean) => {
+        viewBox.style.pointerEvents = enable ? "none" : "auto";
+      };
+
+      toggleClickThrough(shouldClickThrough(room?.state.memberState.currentApplianceName));
+    }
 
     const postMessage = <T extends keyof SendMessages>(payload: {
       type: T;
@@ -68,8 +91,36 @@ const EmbeddedPage: NetlessApp<Attributes> = {
       return () => displayer.removeMagixEventListener(event);
     });
 
+    if (room) {
+      sideEffectManager.add(() => {
+        const onRoomStateChanged = (e: Partial<RoomState>) => {
+          if (e.memberState) {
+            toggleClickThrough(shouldClickThrough(e.memberState.currentApplianceName));
+          }
+        };
+        room.callbacks.on("onRoomStateChanged", onRoomStateChanged);
+        return () => room.callbacks.off("onRoomStateChanged", onRoomStateChanged);
+      });
+    }
+
     sideEffectManager.addEventListener(iframe, "load", () => {
-      postMessage({ type: "Init", payload: attrs.state });
+      const memberId = displayer.observerId;
+      const userPayload = displayer.state.roomMembers.find(
+        member => member.memberId === memberId
+      )?.payload;
+
+      postMessage({
+        type: "Init",
+        payload: {
+          state: attrs.state,
+          page: attrs.page,
+          writable: context.getIsWritable(),
+          meta: {
+            roomUUID: room?.uuid,
+            userPayload: userPayload && JSON.parse(JSON.stringify(userPayload)),
+          },
+        },
+      });
     });
 
     sideEffectManager.addEventListener(window, "message", e => {
@@ -92,11 +143,22 @@ const EmbeddedPage: NetlessApp<Attributes> = {
       } else if (type === "GetPage") {
         postMessage({ type: "GetPage", payload: attrs.page });
       } else if (type === "SetPage") {
-        const value = data.payload as ReceiveMessages["SetPage"];
-        if (typeof value === "string" && context.getIsWritable()) {
-          context.updateAttributes(["page"], value);
+        if (!view) {
+          console.warn("[EmbeddedPage] SetPage: page api is only available with 'scenePath'");
+        } else {
+          const value = data.payload as ReceiveMessages["SetPage"];
+          const scenePath = context.getInitScenePath();
+          if (typeof value === "string" && context.getIsWritable() && scenePath && room) {
+            const fullScenePath = [scenePath, value].join("/");
+            if (room.scenePathType(fullScenePath) === ("none" as ScenePathType)) {
+              room.putScenes(scenePath, [{ name: value }]);
+            }
+            context.setScenePath(fullScenePath);
+            context.updateAttributes(["page"], value);
+          }
         }
-        // TODO: if not exist page, putScenes()
+      } else if (type === "GetWritable") {
+        postMessage({ type: "GetWritable", payload: context.getIsWritable() });
       } else if (type === "SendMessage") {
         if (context.getIsWritable()) {
           room?.dispatchMagixEvent(event, data.payload);
@@ -126,6 +188,18 @@ const EmbeddedPage: NetlessApp<Attributes> = {
         postMessage({ type: "PageChanged", payload: { oldValue, newValue } });
       };
       return context.mobxUtils.reaction(() => attrs.page, updateListener);
+    });
+
+    sideEffectManager.add(() => {
+      const updateListener = () => {
+        const writable = context.getIsWritable();
+        postMessage({
+          type: "WritableChanged",
+          payload: { oldValue: !writable, newValue: writable },
+        });
+      };
+      context.emitter.on("writableChange", updateListener);
+      return () => context.emitter.off("writableChange", updateListener);
     });
 
     iframe.src = attrs.src;

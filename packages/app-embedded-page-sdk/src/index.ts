@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import type { ReceiveMessages, SendMessages } from "@netless/app-embedded-page";
+import type { ReceiveMessages, SendMessages, DiffOne, InitData } from "@netless/app-embedded-page";
 import { SideEffectManager } from "side-effect-manager";
 import { isObj } from "./utils";
 
@@ -11,9 +11,8 @@ export type SendMessage<State = any, Message = any> = CheckSendMessageType<
   | { type: "SendMessage"; payload: Message }
   | { type: "GetPage" }
   | { type: "SetPage"; payload: string }
+  | { type: "GetWritable" }
 >;
-
-export type DiffOne<T> = { oldValue?: T; newValue?: T };
 
 export type Diff<State> = State extends Record<infer K, unknown>
   ? Record<K, DiffOne<State[K]>>
@@ -22,12 +21,14 @@ export type Diff<State> = State extends Record<infer K, unknown>
 type CheckIncomingMessageType<T extends { type: keyof SendMessages }> = T;
 
 export type IncomingMessage<State = any, Message = any> = CheckIncomingMessageType<
-  | { type: "Init"; payload: State }
+  | { type: "Init"; payload: InitData }
   | { type: "GetState"; payload: State }
   | { type: "StateChanged"; payload: Diff<State> }
   | { type: "ReceiveMessage"; payload: Message }
   | { type: "GetPage"; payload: string | undefined }
   | { type: "PageChanged"; payload: DiffOne<string> }
+  | { type: "GetWritable"; payload: boolean }
+  | { type: "WritableChanged"; payload: DiffOne<boolean> }
 >;
 
 export type Listener<T> = (event: T) => void;
@@ -50,14 +51,17 @@ function createEmitter<T>(): Emitter<T> {
 
 export interface EmbeddedApp<State = any, Message = any> {
   readonly state: Readonly<State>;
-  readonly page: string | undefined;
+  readonly page?: string;
+  readonly isWritable: boolean;
+  readonly meta: Readonly<InitData["meta"]>;
   setState(partialState: Partial<State>): void;
   setPage(page: string): void;
   sendMessage(message: Message): void;
   destroy(): void;
-  onInit: Emitter<State>;
+  onInit: Emitter<InitData>;
   onStateChanged: Emitter<Diff<State>>;
   onPageChanged: Emitter<DiffOne<string>>;
+  onWritableChanged: Emitter<DiffOne<boolean>>;
   onMessage: Emitter<Message>;
 }
 
@@ -72,15 +76,20 @@ export function createEmbeddedApp<State = any, Message = any>(
 ): EmbeddedApp<State, Message> {
   state = { ...state };
   let page: string | undefined;
+  let writable = false;
+  let meta: Readonly<InitData["meta"]>;
 
-  const onInit = createEmitter<State>();
+  const onInit = createEmitter<InitData>();
+  const onMessage = createEmitter<Message>();
+
   const onStateChanged = createEmitter<Diff<State>>();
   const onPageChanged = createEmitter<DiffOne<string>>();
-  const onMessage = createEmitter<Message>();
+  const onWritableChanged = createEmitter<DiffOne<boolean>>();
 
   const sideEffectManager = new SideEffectManager();
   let onStateChangedPayload: Diff<State> | undefined;
   let onPageChangedPayload: DiffOne<string> | undefined;
+  let onWritableChangedPayload: DiffOne<boolean> | undefined;
 
   function postMessage(message: SendMessage) {
     parent.postMessage(message, "*");
@@ -95,29 +104,47 @@ export function createEmbeddedApp<State = any, Message = any>(
     const event = e.data as IncomingMessage<State, Message>;
 
     if (event.type === "Init") {
-      state = { ...state, ...event.payload };
-      onInit.dispatch(state);
-      postMessage({ type: "GetPage" });
-    } else if (event.type === "GetState") {
-      state = event.payload;
-      if (onStateChangedPayload) {
-        onStateChanged.dispatch(onStateChangedPayload);
-        onStateChangedPayload = void 0;
-      }
-    } else if (event.type === "StateChanged") {
-      onStateChangedPayload = event.payload;
-      postMessage({ type: "GetState" });
-    } else if (event.type === "GetPage") {
-      page = event.payload;
-      if (onPageChangedPayload) {
-        onPageChanged.dispatch(onPageChangedPayload);
-        onPageChangedPayload = void 0;
-      }
-    } else if (event.type === "PageChanged") {
-      onPageChangedPayload = event.payload;
-      postMessage({ type: "GetPage" });
+      const { payload } = event;
+      payload.state = state = { ...state, ...payload.state };
+      page = payload.page;
+      writable = payload.writable;
+      meta = payload.meta;
+      onInit.dispatch(payload);
     } else if (event.type === "ReceiveMessage") {
       onMessage.dispatch(event.payload);
+    } else {
+      if (event.type === "StateChanged") {
+        onStateChangedPayload = event.payload;
+        postMessage({ type: "GetState" });
+      } else if (event.type === "GetState") {
+        state = event.payload;
+        if (onStateChangedPayload) {
+          onStateChanged.dispatch(onStateChangedPayload);
+          onStateChangedPayload = void 0;
+        }
+      }
+
+      if (event.type === "PageChanged") {
+        onPageChangedPayload = event.payload;
+        postMessage({ type: "GetPage" });
+      } else if (event.type === "GetPage") {
+        page = event.payload;
+        if (onPageChangedPayload) {
+          onPageChanged.dispatch(onPageChangedPayload);
+          onPageChangedPayload = void 0;
+        }
+      }
+
+      if (event.type === "WritableChanged") {
+        onWritableChangedPayload = event.payload;
+        postMessage({ type: "GetWritable" });
+      } else if (event.type === "GetWritable") {
+        writable = event.payload;
+        if (onWritableChangedPayload) {
+          onWritableChanged.dispatch(onWritableChangedPayload);
+          onWritableChangedPayload = void 0;
+        }
+      }
     }
   });
 
@@ -149,6 +176,12 @@ export function createEmbeddedApp<State = any, Message = any>(
     get page() {
       return page;
     },
+    get isWritable() {
+      return writable;
+    },
+    get meta() {
+      return meta;
+    },
     setState,
     setPage,
     sendMessage,
@@ -156,6 +189,7 @@ export function createEmbeddedApp<State = any, Message = any>(
     onInit,
     onStateChanged,
     onPageChanged,
+    onWritableChanged,
     onMessage,
   };
 }
