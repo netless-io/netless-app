@@ -1,7 +1,6 @@
 {
-  "private": true,
   "name": "@netless/app-embedded-page-sdk",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "main": "dist/main.cjs.js",
   "module": "dist/main.es.js",
   "types": "src/index.ts",
