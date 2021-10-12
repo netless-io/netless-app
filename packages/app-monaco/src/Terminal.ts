@@ -62,10 +62,15 @@ export class Terminal {
   }
 
   private render(): void {
-    if (this.attrs.codeRunning) {
-      this.$content.textContent = "Code Running...\n";
+    if (!this.content) {
+      this.$content.style.display = "none";
     } else {
-      this.$content.textContent = this.content;
+      this.$content.style.display = "block";
+      if (this.attrs.codeRunning) {
+        this.$content.textContent = "Code Running...\n";
+      } else {
+        this.$content.textContent = this.content;
+      }
     }
   }
 
