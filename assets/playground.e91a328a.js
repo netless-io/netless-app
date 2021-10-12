@@ -1,1 +1,21 @@
-var e=Object.defineProperty,t=Object.getOwnPropertySymbols,n=Object.prototype.hasOwnProperty,o=Object.prototype.propertyIsEnumerable,r=(t,n,o)=>n in t?e(t,n,{enumerable:!0,configurable:!0,writable:!0,value:o}):t[n]=o;const l={kind:"HelloWorld",setup(e){var t,n;e.getBox().mountStyles("\n      .netless-app-hello-world {\n        display: block;\n        width: 100%; height: 100%;\n        overflow: hidden;\n        border: 0; resize: none;\n        background: #fafbfc;\n        padding: .5em;\n      }\n   ");const o=document.createElement("textarea");o.classList.add("netless-app-hello-world"),o.value=null!=(n=null==(t=e.getAttributes())?void 0:t.text)?n:"Hello world!",e.getBox().mountContent(o),o.oninput=()=>{e.updateAttributes(["text"],o.value)},e.emitter.on("attributesUpdate",(e=>{(null==e?void 0:e.text)&&(o.value=e.text)})),e.emitter.on("destroy",(()=>{console.log("[HelloWorld]: destroy"),o.remove()}))}},a={kind:"TwoRange",config:{minwidth:200,minheight:100},setup(e){e.getBox().mountStyles("\n      .netless-app-two-range {\n        padding: 8px;\n        display: flex;\n        flex-flow: column nowrap;\n        justify-content: center;\n        gap: 8px;\n        width: 100%; height: 100%;\n        overflow: hidden;\n        background: #fafbfc;\n      }\n   ");const l=((e,l)=>{for(var a in l||(l={}))n.call(l,a)&&r(e,a,l[a]);if(t)for(var a of t(l))o.call(l,a)&&r(e,a,l[a]);return e})({a:50,b:50},e.getAttributes()),a=document.createElement("div");a.classList.add("netless-app-two-range");const i={},s=t=>{const n=document.createElement("input");n.type="range",n.valueAsNumber=l[t],n.oninput=()=>{const o=n.valueAsNumber;e.updateAttributes([t],l[t]=o)},i[t]=n,a.append(n)};s("a"),s("b"),e.getBox().mountContent(a),e.emitter.on("attributesUpdate",(e=>{if(e)for(const t in e)i[t].valueAsNumber=e[t]})),e.emitter.on("destroy",(()=>{a.remove()}))}},i=[{kind:l.kind,src:l,options:{title:"Hello, world!"}},{kind:a.kind,src:a,options:{title:"2 range"}}];export{i as default};
+var c=Object.defineProperty;var s=Object.getOwnPropertySymbols;var m=Object.prototype.hasOwnProperty,b=Object.prototype.propertyIsEnumerable;var d=(e,t,o)=>t in e?c(e,t,{enumerable:!0,configurable:!0,writable:!0,value:o}):e[t]=o,r=(e,t)=>{for(var o in t||(t={}))m.call(t,o)&&d(e,o,t[o]);if(s)for(var o of s(t))b.call(t,o)&&d(e,o,t[o]);return e};const u={kind:"HelloWorld",setup(e){var o,a;e.getBox().mountStyles(`
+      .netless-app-hello-world {
+        display: block;
+        width: 100%; height: 100%;
+        overflow: hidden;
+        border: 0; resize: none;
+        background: #fafbfc;
+        padding: .5em;
+      }
+   `);const t=document.createElement("textarea");t.classList.add("netless-app-hello-world"),t.value=(a=(o=e.getAttributes())==null?void 0:o.text)!=null?a:"Hello world!",e.getBox().mountContent(t),t.oninput=()=>{e.updateAttributes(["text"],t.value)},e.emitter.on("attributesUpdate",i=>{(i==null?void 0:i.text)&&(t.value=i.text)}),e.emitter.on("destroy",()=>{console.log("[HelloWorld]: destroy"),t.remove()})}},p={kind:"TwoRange",config:{minwidth:200,minheight:100},setup(e){e.getBox().mountStyles(`
+      .netless-app-two-range {
+        padding: 8px;
+        display: flex;
+        flex-flow: column nowrap;
+        justify-content: center;
+        gap: 8px;
+        width: 100%; height: 100%;
+        overflow: hidden;
+        background: #fafbfc;
+      }
+   `);const t=r({a:50,b:50},e.getAttributes()),o=document.createElement("div");o.classList.add("netless-app-two-range");const a={},i=l=>{const n=document.createElement("input");n.type="range",n.valueAsNumber=t[l],n.oninput=()=>{const g=n.valueAsNumber;e.updateAttributes([l],t[l]=g)},a[l]=n,o.append(n)};i("a"),i("b"),e.getBox().mountContent(o),e.emitter.on("attributesUpdate",l=>{if(!!l)for(const n in l)a[n].valueAsNumber=l[n]}),e.emitter.on("destroy",()=>{o.remove()})}},w=[{kind:u.kind,src:u,options:{title:"Hello, world!"}},{kind:p.kind,src:p,options:{title:"2 range"}}];export{w as default};
