@@ -74,16 +74,16 @@ const renderPage = pageNum => {
 const app = createEmbeddedApp();
 app.onInit.addListener(() => {
   renderPage(app.page || pages[0].pageNum);
-});
 
-// Switch to another page
-$("#btn-to-page-2").onclick = () => {
-  app.setPage("2");
-};
+  // Switch to another page
+  $("#btn-to-page-2").onclick = () => {
+    app.setPage("2");
+  };
 
-// Listen page changed
-app.onPageChanged.addListener(() => {
-  renderPage(app.page || pages[0].pageNum);
+  // Listen page changed
+  app.onPageChanged.addListener(() => {
+    renderPage(app.page || pages[0].pageNum);
+  });
 });
 ```
 

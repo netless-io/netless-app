@@ -72,16 +72,16 @@ const renderPage = pageNum => {
 const app = createEmbeddedApp();
 app.onInit.addListener(() => {
   renderPage(app.page || pages[0].pageNum);
-});
 
-// 切换到另一块白板页
-$("#btn-to-page-2").onclick = () => {
-  app.setPage("2");
-};
+  // 切换到另一块白板页
+  $("#btn-to-page-2").onclick = () => {
+    app.setPage("2");
+  };
 
-// 监听页变化
-app.onPageChanged.addListener(() => {
-  renderPage(app.page || pages[0].pageNum);
+  // 监听页变化
+  app.onPageChanged.addListener(() => {
+    renderPage(app.page || pages[0].pageNum);
+  });
 });
 ```
 

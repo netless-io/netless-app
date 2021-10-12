@@ -8,7 +8,6 @@ const options: PlaygroundConfigs<Attributes> = [
     options: {
       title: "demo",
       scenePath: "/demo",
-      scenes: [{ name: "1" }],
     },
     attributes: {
       src: "/embed.html",
