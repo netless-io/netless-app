@@ -100,7 +100,6 @@ export async function reset({
 }
 
 export function init(container: HTMLElement): void {
-  room.setScenePath("/init");
   WindowManager.mount({ room, container, chessboard: false, cursor: true, debug: true });
   window.manager = room.getInvisiblePlugin(WindowManager.kind) as WindowManager;
   manager.switchMainViewToWriter();

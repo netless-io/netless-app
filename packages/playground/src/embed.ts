@@ -33,6 +33,7 @@ $("#message-send").addEventListener("click", () => {
 
 // ------ Listen Message ------
 const receiveMessage = (payload: string) => {
+  console.log("receiveMessage");
   ($("#message-recv") as HTMLTextAreaElement).value += "< " + payload + "\n";
 };
 app.onMessage.addListener(receiveMessage);
@@ -44,6 +45,7 @@ $("#page-set").addEventListener("click", () => {
 
 // ------ Listen Page Change ------
 const refreshPage = () => {
+  console.log("refreshPage");
   ($("#page") as HTMLInputElement).value = String(app.page);
 };
 app.onPageChanged.addListener(refreshPage);
@@ -56,7 +58,7 @@ app.onWritableChanged.addListener(refreshWritable);
 
 // ------ after init, get app.state and app.page ------
 app.onInit.addListener(initData => {
-  console.log(initData);
+  console.log("init", initData);
   refreshCount();
   refreshPage();
   refreshWritable();
