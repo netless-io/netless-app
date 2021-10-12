@@ -60,7 +60,7 @@ export async function joinRoom(info: RoomInfo): Promise<Room> {
     disableNewPencil: false,
     floatBar: true,
     userPayload: {
-      cursorName: faker.name.firstName(),
+      nickName: faker.name.firstName(),
     },
   });
   window.room = room;

@@ -233,7 +233,7 @@ export class YMonaco {
                 this.monacoEditor,
                 this.monacoModel,
                 id,
-                member.payload?.cursorName || id
+                member.payload?.nickName || id
               );
               this.decorations.set(id, decoration);
             }
