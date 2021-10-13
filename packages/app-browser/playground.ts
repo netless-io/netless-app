@@ -8,7 +8,7 @@ const options: PlaygroundConfig<Attributes> = {
     title: "Browser",
   },
   attributes: {
-    url: "https://flat.whiteboard.agora.io/",
+    url: "https://example.org/",
   },
 };
 
