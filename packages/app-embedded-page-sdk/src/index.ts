@@ -201,9 +201,11 @@ export function createEmbeddedApp<State = Record<string, any>, Message = any>(
   };
 
   return new Promise(resolve => {
-    onInit.addListener(() => {
+    const handler = () => {
+      onInit.removeListener(handler);
       callback?.(app);
       resolve(app);
-    });
+    };
+    onInit.addListener(handler);
   });
 }
