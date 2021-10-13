@@ -331,11 +331,10 @@ const IframeBridge: NetlessApp<Attributes> = {
             if (!scenes || scenes.length !== pages) {
               room.putScenes(attrs.displaySceneDir, nextScenes);
             }
-            room.setScenePath(attrs.displaySceneDir);
+            context.setScenePath(attrs.displaySceneDir);
             log("[IframeBridge] SetPage", pages);
             context.updateAttributes(["pages"], pages);
           }
-          context.setScenes(nextScenes);
           break;
         }
         case IframeEvents.PageTo: {
