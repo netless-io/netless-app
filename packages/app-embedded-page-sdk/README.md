@@ -183,7 +183,9 @@ type Message = {
   payload: { id: string };
 };
 
-const app = createEmbeddedApp<State, Message>({ count: 0 });
+const app = await createEmbeddedApp<State, Message>();
+
+app.ensureState({ count: 0 });
 
 app.state; // => { count: 0 }
 app.setState({ count: 2 });
