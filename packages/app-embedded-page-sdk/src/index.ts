@@ -49,16 +49,16 @@ function createEmitter<T>(): Emitter<T> {
   return { dispatch, addListener, removeListener };
 }
 
-export interface EmbeddedApp<State = any, Message = any> {
+export interface EmbeddedApp<State = Record<string, any>, Message = any> {
   readonly state: Readonly<State>;
   readonly page?: string;
   readonly isWritable: boolean;
   readonly meta: Readonly<InitData["meta"]>;
+  ensureState(partialState: Partial<State>): void;
   setState(partialState: Partial<State>): void;
   setPage(page: string): void;
   sendMessage(message: Message): void;
   destroy(): void;
-  onInit: Emitter<InitData>;
   onStateChanged: Emitter<Diff<State>>;
   onPageChanged: Emitter<DiffOne<string>>;
   onWritableChanged: Emitter<DiffOne<boolean>>;
@@ -69,12 +69,14 @@ export interface EmbeddedApp<State = any, Message = any> {
  * @example
  * interface State { count: number }
  * type Message = { type: "click"; payload: { id: string } };
- * const app = createEmbeddedApp<State, Message>({ count: 0 });
+ * const app = await createEmbeddedApp<State, Message>((app) => {
+ *   app.ensureState({ count: 0 })
+ * });
  */
-export function createEmbeddedApp<State = any, Message = any>(
-  state: State
-): EmbeddedApp<State, Message> {
-  state = { ...state };
+export function createEmbeddedApp<State = Record<string, any>, Message = any>(
+  callback?: (app: EmbeddedApp<State, Message>) => void
+): Promise<EmbeddedApp<State, Message>> {
+  let state: State;
   let page: string | undefined;
   let writable = false;
   let meta: Readonly<InitData["meta"]>;
@@ -105,7 +107,7 @@ export function createEmbeddedApp<State = any, Message = any>(
 
     if (event.type === "Init") {
       const { payload } = event;
-      payload.state = state = { ...state, ...payload.state };
+      state = payload.state as unknown as State;
       page = payload.page;
       writable = payload.writable;
       meta = payload.meta;
@@ -148,6 +150,10 @@ export function createEmbeddedApp<State = any, Message = any>(
     }
   });
 
+  const ensureState = (initialState: Partial<State>) => {
+    state = { ...initialState, ...state };
+  };
+
   const setState = (newState: Partial<State>) => {
     for (const [key, value] of Object.entries(newState)) {
       if (value === void 0) {
@@ -159,8 +165,9 @@ export function createEmbeddedApp<State = any, Message = any>(
     postMessage({ type: "SetState", payload: newState });
   };
 
-  const setPage = (page: string) => {
-    postMessage({ type: "SetPage", payload: page });
+  const setPage = (newPage: string) => {
+    page = newPage;
+    postMessage({ type: "SetPage", payload: newPage });
   };
 
   const sendMessage = (payload: Message) => {
@@ -169,7 +176,7 @@ export function createEmbeddedApp<State = any, Message = any>(
 
   const destroy = () => sideEffectManager.flushAll();
 
-  return {
+  const app: EmbeddedApp<State, Message> = {
     get state() {
       return state;
     },
@@ -182,14 +189,21 @@ export function createEmbeddedApp<State = any, Message = any>(
     get meta() {
       return meta;
     },
+    ensureState,
     setState,
     setPage,
     sendMessage,
     destroy,
-    onInit,
     onStateChanged,
     onPageChanged,
     onWritableChanged,
     onMessage,
   };
+
+  return new Promise(resolve => {
+    onInit.addListener(() => {
+      callback?.(app);
+      resolve(app);
+    });
+  });
 }

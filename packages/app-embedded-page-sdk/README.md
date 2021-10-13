@@ -12,20 +12,20 @@ npm add @netless/app-embedded-page-sdk
 
 ### API
 
-- **createEmbeddedApp(initialState?)**
+- **createEmbeddedApp(callback?)**
 
   Creates an embedded app instance.
 
-  Returns: `EmbeddedApp<State, Message>`
+  Returns: `Promise<EmbeddedApp<State, Message>>`
 
-  **initialState**
+  **callback**
 
-  Type: `State = Record<string, unknown>`
+  Type: `(app: EmbeddedApp) => void`
 
-  It will be the value of `app.state` if you access it before `onInit` happens.
+  Runs when app is initialized.
 
   ```js
-  const app = createEmbeddedApp({ count: 0 });
+  const app = await createEmbeddedApp();
   ```
 
 - **app.state**
@@ -57,9 +57,32 @@ npm add @netless/app-embedded-page-sdk
   - `roomUUID`: current room's UUID.
   - `userPayload`: the object passed in when calling `joinRoom()`.
 
+- **app.ensureState(partialState)**
+
+  Make sure `app.state` has some initial values, work as if:
+
+  ```js
+  // this code won't work because app.state is readonly
+  app.state = { ...partialState, ...app.state };
+  ```
+
+  This method modifies state locally.
+
+  **partialState**
+
+  Type: `Partial<State>`
+
+  ```js
+  app.state; // { a: 1 }
+  app.ensureState({ a: 0, b: 0 });
+  app.state; // { a: 1, b: 0 }
+  ```
+
 - **app.setState(partialState)**
 
   Works like React's `setState`, it updates `app.state` and synchronize it to other clients.
+
+  When some field's value is `undefined`, it will be removed from `app.state`.
 
   > **Important:** Do not rely on the order of state changes:
   >
@@ -72,8 +95,8 @@ npm add @netless/app-embedded-page-sdk
 
   ```js
   app.state; //=> { count: 0, a: 1 }
-  app.setState({ count: app.state.count + 1, b: 2 });
-  app.state; //=> { count: 1, a: 1, b: 2 }
+  app.setState({ count: app.state.count + 1, a: undefined, b: 2 });
+  app.state; //=> { count: 1, b: 2 }
   ```
 
 - **app.setPage(page)**
@@ -100,20 +123,6 @@ npm add @netless/app-embedded-page-sdk
 
   ```js
   app.sendMessage("hello, world!");
-  ```
-
-- **app.onInit**
-
-  Fires once when the app is initialized.
-
-  Type: `Emitter<{ state, page?, writable, meta: { roomUUID?, userPayload? } }>`
-
-  ```js
-  app.onInit.addListener(data => {
-    console.log("connected", data);
-    // it is safe to access state, page, writable and meta now
-    console.log(app.state, app.page, app.writable, app.meta);
-  });
   ```
 
 - **app.onStateChanged**

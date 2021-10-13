@@ -3,62 +3,61 @@
 
 import { createEmbeddedApp } from "@netless/app-embedded-page-sdk";
 
-const app = createEmbeddedApp({ count: 0 });
-(window as any).app = app;
+const $ = <T = HTMLElement>(sel: string) => document.querySelector(sel) as unknown as T;
 
-const $: <K extends string>(
-  sel: K
-) => K extends keyof HTMLElementTagNameMap ? HTMLElementTagNameMap[K] : HTMLElement = sel =>
-  document.querySelector(sel)!;
+/**
+ * NOTE: Top level `await` works on chrome89+ and firefox89+
+ */
+(window as any).app = await createEmbeddedApp(app => {
+  // make sure app.state.count exists
+  app.ensureState({ count: 0 });
 
-// ------ Listen State Change ------
-const refreshCount = () => {
-  console.log("refreshCount");
-  $("#count").textContent = String(app.state.count);
-};
-app.onStateChanged.addListener(refreshCount);
+  // ------ Listen State Change ------
+  const refreshCount = () => {
+    console.log("refreshCount");
+    $("#count").textContent = String(app.state.count);
+  };
+  app.onStateChanged.addListener(refreshCount);
 
-// ------ Publish State Change, it will trigger onStateChanged on itself ------
-$("#count").addEventListener("click", e => {
-  const nextCount = (e as MouseEvent).shiftKey ? app.state.count - 1 : app.state.count + 1;
-  app.setState({ count: nextCount });
-});
+  // ------ Publish State Change, it will trigger onStateChanged on itself ------
+  $("#count").addEventListener("click", e => {
+    const nextCount = (e as MouseEvent).shiftKey ? app.state.count - 1 : app.state.count + 1;
+    app.setState({ count: nextCount });
+  });
 
-// ------ Broadcast Message, it will NOT trigger onMessage on itself ------
-$("#message-send").addEventListener("click", () => {
-  const { value } = $("#message-payload") as HTMLInputElement;
-  ($("#message-recv") as HTMLTextAreaElement).value += "> " + value + "\n";
-  app.sendMessage(value);
-});
+  // ------ Broadcast Message, it will NOT trigger onMessage on itself ------
+  $("#message-send").addEventListener("click", () => {
+    const { value } = $<HTMLInputElement>("#message-payload");
+    $<HTMLTextAreaElement>("#message-recv").value += "> " + value + "\n";
+    app.sendMessage(value);
+  });
 
-// ------ Listen Message ------
-const receiveMessage = (payload: string) => {
-  console.log("receiveMessage");
-  ($("#message-recv") as HTMLTextAreaElement).value += "< " + payload + "\n";
-};
-app.onMessage.addListener(receiveMessage);
+  // ------ Listen Message ------
+  const receiveMessage = (payload: string) => {
+    console.log("receiveMessage");
+    $<HTMLTextAreaElement>("#message-recv").value += "< " + payload + "\n";
+  };
+  app.onMessage.addListener(receiveMessage);
 
-// ------ Set Page (available when "scenePath" exists) ------
-$("#page-set").addEventListener("click", () => {
-  app.setPage(($("#page") as HTMLInputElement).value);
-});
+  // ------ Set Page (available when "scenePath" exists) ------
+  $("#page-set").addEventListener("click", () => {
+    app.setPage($<HTMLInputElement>("#page").value);
+  });
 
-// ------ Listen Page Change ------
-const refreshPage = () => {
-  console.log("refreshPage");
-  ($("#page") as HTMLInputElement).value = String(app.page);
-};
-app.onPageChanged.addListener(refreshPage);
+  // ------ Listen Page Change ------
+  const refreshPage = () => {
+    console.log("refreshPage");
+    $<HTMLInputElement>("#page").value = String(app.page);
+  };
+  app.onPageChanged.addListener(refreshPage);
 
-// ------ Listen Writable Change ------
-const refreshWritable = () => {
-  $("#writable").textContent = String(app.isWritable);
-};
-app.onWritableChanged.addListener(refreshWritable);
+  // ------ Listen Writable Change ------
+  const refreshWritable = () => {
+    $("#writable").textContent = String(app.isWritable);
+  };
+  app.onWritableChanged.addListener(refreshWritable);
 
-// ------ after init, get app.state and app.page ------
-app.onInit.addListener(initData => {
-  console.log("init", initData);
+  // ------ Refresh App ------
   refreshCount();
   refreshPage();
   refreshWritable();

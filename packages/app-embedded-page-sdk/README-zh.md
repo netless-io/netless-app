@@ -10,20 +10,20 @@ npm add @netless/app-embedded-page-sdk
 
 ### API
 
-- **createEmbeddedApp(initialState?)**
+- **createEmbeddedApp(callback?)**
 
   创建一个 Embedded App 实例。
 
-  返回: `EmbeddedApp<State, Message>`
+  返回: `Promise<EmbeddedApp<State, Message>>`
 
-  **initialState**
+  **callback**
 
-  类型: `State = Record<string, unknown>`
+  类型: `(app: EmbeddedApp) => void`
 
-  在 `onInit` 回调执行之前，访问 `app.state` 会得到这个值。
+  在应用初始化后执行。
 
   ```js
-  const app = createEmbeddedApp({ count: 0 });
+  const app = await createEmbeddedApp();
   ```
 
 - **app.state**
@@ -54,9 +54,32 @@ npm add @netless/app-embedded-page-sdk
   - `roomUUID`: 当前房间的 UUID
   - `userPayload`: `joinRoom()` 时传入的同名对象
 
+- **app.ensureState(partialState)**
+
+  确保 `app.state` 包含某些初始值，类似于执行了：
+
+  ```js
+  // 这段代码不能直接运行，因为 app.state 是只读的
+  app.state = { ...partialState, ...app.state };
+  ```
+
+  和 `app.setState()` 不一样，它不会同步这些初始值给所有客户端。
+
+  **partialState**
+
+  类型: `Partial<State>`
+
+  ```js
+  app.state; // { a: 1 }
+  app.ensureState({ a: 0, b: 0 });
+  app.state; // { a: 1, b: 0 }
+  ```
+
 - **app.setState(partialState)**
 
   和 React 的 `setState` 类似，更新 `app.state` 并同步到所有客户端。
+
+  当设置某个字段为 `undefined` 时，它会被从 `app.state` 里删除。
 
   > **注意:** 不要依赖状态变化的顺序关系
   >
@@ -97,20 +120,6 @@ npm add @netless/app-embedded-page-sdk
 
   ```js
   app.sendMessage("hello, world!");
-  ```
-
-- **app.onInit**
-
-  当应用初始化时发送一次。
-
-  类型: `Emitter<{ state, page?, writable, meta: { roomUUID?, userPayload? } }>`
-
-  ```js
-  app.onInit.addListener(data => {
-    console.log("已初始化", data);
-    // it is safe to access state, page, writable and meta now
-    console.log(app.state, app.page, app.writable, app.meta);
-  });
   ```
 
 - **app.onStateChanged**
