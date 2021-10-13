@@ -9,10 +9,10 @@
     "types": "cross-env NODE_ENV=production tsc --declaration --emitDeclarationOnly --outDir dist",
     "build": "vite build && npm run types",
     "build:dev": "vite build --mode development && npm run types",
-    "cleanup": "rimraf ./build"
+    "cleanup": "rimraf ./dist"
   },
   "devDependencies": {
     "@netless/app-shared": "workspace:*",
-    "side-effect-manager": "^0.1.2"
+    "side-effect-manager": "^0.1.3"
   }
 }

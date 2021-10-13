@@ -19,14 +19,14 @@
     "types": "cross-env NODE_ENV=production tsc --declaration --emitDeclarationOnly --outDir dist",
     "build": "vite build && npm run types",
     "build:dev": "vite build --mode development && npm run types",
-    "cleanup": "rimraf ./build"
+    "cleanup": "rimraf ./dist"
   },
   "dependencies": {
     "debounce-fn": "^5.0.0",
-    "vanilla-lazyload": "^17.4.0"
+    "vanilla-lazyload": "^17.5.0"
   },
   "devDependencies": {
     "@netless/app-shared": "workspace:*",
-    "side-effect-manager": "^0.1.2"
+    "side-effect-manager": "^0.1.3"
   }
 }

@@ -25,6 +25,6 @@
     "side-effect-manager": ">=0"
   },
   "devDependencies": {
-    "side-effect-manager": "^0.1.2"
+    "side-effect-manager": "^0.1.3"
   }
 }
