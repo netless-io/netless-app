@@ -10,17 +10,11 @@ npm add @netless/app-embedded-page-sdk
 
 ### API
 
-- **createEmbeddedApp(callback?)**
+- **createEmbeddedApp()**
 
   创建一个 Embedded App 实例。
 
   返回: `Promise<EmbeddedApp<State, Message>>`
-
-  **callback**
-
-  类型: `(app: EmbeddedApp) => void`
-
-  在应用初始化后执行。
 
   ```js
   const app = await createEmbeddedApp();

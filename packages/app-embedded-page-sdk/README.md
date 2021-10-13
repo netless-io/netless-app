@@ -12,17 +12,11 @@ npm add @netless/app-embedded-page-sdk
 
 ### API
 
-- **createEmbeddedApp(callback?)**
+- **createEmbeddedApp()**
 
   Creates an embedded app instance.
 
   Returns: `Promise<EmbeddedApp<State, Message>>`
-
-  **callback**
-
-  Type: `(app: EmbeddedApp) => void`
-
-  Runs when app is initialized.
 
   ```js
   const app = await createEmbeddedApp();
