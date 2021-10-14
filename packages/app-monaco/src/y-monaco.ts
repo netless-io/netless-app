@@ -71,6 +71,9 @@ export class YMonaco {
     this.sideEffect.add(() => {
       const yTextObserver = (event: YTextEvent) => {
         this.mux(() => {
+          if (this.monacoModel.isDisposed()) {
+            return;
+          }
           let index = 0;
           event.delta.forEach(op => {
             if (op.retain != null) {

@@ -28,6 +28,10 @@ export class CursorDecoration {
     rawCursorSrc: string,
     authorId: string
   ): Monaco.editor.IModelDeltaDecoration | undefined {
+    if (this.monacoModel.isDisposed()) {
+      return;
+    }
+
     const cursorChanged = rawCursorSrc !== this.rawCursorSrc;
 
     if (cursorChanged) {

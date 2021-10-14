@@ -48,7 +48,7 @@ export class SelectionDecorations {
 
   public renderSelections(): Monaco.editor.IModelDeltaDecoration[] {
     const selectionDecorations: Monaco.editor.IModelDeltaDecoration[] = [];
-    if (this.selections) {
+    if (this.selections && !this.monacoModel.isDisposed()) {
       this.selections.forEach(selection => {
         if (selection.start && selection.end) {
           const startAbs = createAbsolutePositionFromRelativePosition(
