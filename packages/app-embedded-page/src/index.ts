@@ -41,7 +41,12 @@ const EmbeddedPage: NetlessApp<Attributes> = {
     Object.assign(container.style, { width: "100%", height: "100%", position: "relative" });
 
     const iframe = document.createElement("iframe");
-    Object.assign(iframe.style, { width: "100%", height: "100%", border: "none" });
+    Object.assign(iframe.style, {
+      width: "100%",
+      height: "100%",
+      border: "none",
+      display: "block",
+    });
     container.appendChild(iframe);
 
     box.mountContent(container);
