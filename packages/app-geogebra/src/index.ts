@@ -53,7 +53,7 @@ const GeoGebra: NetlessApp<Attributes> = {
 
     const content = document.createElement("div");
     content.classList.add("netless-app-geogebra", "loading");
-    if (uid !== attrs.uid && !attrs.uid) {
+    if (uid !== attrs.uid && attrs.uid) {
       content.classList.add("netless-app-geogebra", "readonly");
     }
     box.mountContent(content);
