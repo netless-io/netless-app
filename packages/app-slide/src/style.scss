@@ -1,0 +1,14 @@
+@import "./DocsViewer/style.scss";
+@import "./SlideDocsViewer/style.scss";
+
+.netless-app-slide-slide {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  canvas {
+    transform: scale(var(--netless-app-slide-scale, 1));
+  }
+}
