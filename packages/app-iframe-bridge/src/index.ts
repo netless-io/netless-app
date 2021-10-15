@@ -3,8 +3,9 @@ import { ensureAttributes } from "@netless/app-shared";
 import type { NetlessApp } from "@netless/window-manager";
 import Emittery from "emittery";
 import { SideEffectManager } from "side-effect-manager";
-import type { ApplianceNames, Event, RoomState } from "white-web-sdk";
+import type { AnimationMode, ApplianceNames, Event, RoomState } from "white-web-sdk";
 import { fakeRoomStateChanged, nextPage, pageToScenes, prevPage } from "./page";
+import { height } from "./hardcode";
 import { DomEvents, IframeEvents } from "./typings";
 
 export interface Attributes {
@@ -34,6 +35,8 @@ const IframeBridge: NetlessApp<Attributes> = {
       page: 0,
       maxPage: 0,
     });
+
+    const sideEffectManager = new SideEffectManager();
 
     const container = document.createElement("div");
     Object.assign(container.style, { width: "100%", height: "100%", position: "relative" });
@@ -67,6 +70,18 @@ const IframeBridge: NetlessApp<Attributes> = {
       container.appendChild(viewBox);
       context.mountView(viewBox);
 
+      view.disableCameraTransform = true;
+      sideEffectManager.add(() => {
+        const onResize = () => {
+          const clientRect = container.getBoundingClientRect();
+          const scale = clientRect.height / height;
+          view.moveCamera({ scale, animationMode: "immediately" as AnimationMode });
+        };
+        const observer = new ResizeObserver(onResize);
+        observer.observe(container);
+        return () => observer.disconnect();
+      });
+
       toggleClickThrough = (enable?: boolean) => {
         viewBox.style.pointerEvents = enable ? "none" : "auto";
       };
@@ -85,7 +100,6 @@ const IframeBridge: NetlessApp<Attributes> = {
       lastEvent: attrs.lastEvent,
     });
 
-    const sideEffectManager = new SideEffectManager();
     const emitter = new Emittery<Record<IframeEvents | DomEvents, any>>();
     const magixEventMap = new Map<string, (event: Event) => void>();
 
