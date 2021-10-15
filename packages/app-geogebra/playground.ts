@@ -13,9 +13,6 @@ const options: PlaygroundConfig<Attributes> = {
   options: {
     title: "GeoGebra",
   },
-  attributes: {
-    uid,
-  },
 };
 
 export default options;

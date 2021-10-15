@@ -43,8 +43,6 @@ const GeoGebra: NetlessApp<Attributes> = {
     const uid = userPayload?.uid || "";
     const nickName = userPayload?.nickName || uid;
 
-    console.log({ uid, nickName });
-
     const attrs = ensureAttributes(context, {
       uid: "",
       ggbBase64: "",
@@ -55,7 +53,7 @@ const GeoGebra: NetlessApp<Attributes> = {
 
     const content = document.createElement("div");
     content.classList.add("netless-app-geogebra", "loading");
-    if (uid !== attrs.uid) {
+    if (uid !== attrs.uid && !attrs.uid) {
       content.classList.add("netless-app-geogebra", "readonly");
     }
     box.mountContent(content);
