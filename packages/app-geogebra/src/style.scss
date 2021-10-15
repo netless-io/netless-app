@@ -6,4 +6,9 @@
   &.loading {
     background-color: white;
   }
+
+  &.readonly {
+    user-select: none;
+    pointer-events: none;
+  }
 }

@@ -42,6 +42,7 @@ export type ViewProperties = Record<
 export interface LiveAppEvent {
   readonly type: LiveAppEventType;
   readonly clientId: LiveAppOptions["clientId"];
+  readonly nickName: LiveAppOptions["nickName"];
   // some event's content/label may not be string, just ignore its type
   content?: string;
   label?: string;
@@ -63,6 +64,7 @@ export interface ISyncService {
 
 export type LiveAppOptions = ISyncService & {
   readonly clientId: number;
+  readonly nickName: string;
   /** used for conflict resolution, returns true if the clientId is the one to follow */
   readonly isDecider?: (clientId: number) => boolean;
   /** used for multiuser selections */
@@ -84,6 +86,7 @@ interface ViewState {
 
 export default class LiveApp {
   readonly clientId: number;
+  readonly nickName: string;
   readonly api: AppletObject;
 
   readonly context: Pick<
@@ -99,6 +102,7 @@ export default class LiveApp {
   constructor(options: LiveAppOptions) {
     this.api = options.api;
     this.clientId = options.clientId;
+    this.nickName = options.nickName;
     this.delay = options.delay ?? 200;
     this.context = options;
     setTimeout(() => {
@@ -107,7 +111,7 @@ export default class LiveApp {
   }
 
   createEvent(type: LiveAppEventType, content?: string, label?: string): LiveAppEvent {
-    const event: LiveAppEvent = { type, content, clientId: this.clientId };
+    const event: LiveAppEvent = { type, content, clientId: this.clientId, nickName: this.nickName };
     if (this.context.embedLabel) event.embedLabel = this.context.embedLabel;
     if (label) event.label = label;
     return event;
@@ -159,6 +163,7 @@ export default class LiveApp {
       const child = new LiveApp({
         ...this.context,
         clientId: this.clientId,
+        nickName: this.nickName,
         api: calculator,
         embedLabel: label,
       });
@@ -542,10 +547,10 @@ export default class LiveApp {
     } else if (type === "select") {
       if (content) {
         const color = this.context.getColor?.(last.clientId) || "#80808080";
-        target.api.addMultiuserSelection(String(last.clientId), color, content, !!label);
+        target.api.addMultiuserSelection(String(last.nickName), color, content, !!label);
       }
     } else if (type === "deselect") {
-      target.api.removeMultiuserSelections(String(last.clientId));
+      target.api.removeMultiuserSelections(String(last.nickName));
     } else if (type === "orderingChange") {
       target.api.updateOrdering(content);
     } else if (type === "groupObjects") {

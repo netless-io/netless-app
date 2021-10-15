@@ -18,7 +18,13 @@ export type {
 } from "./types";
 
 export interface Attributes {
+  uid: string;
   ggbBase64: string;
+}
+
+interface UserPayload {
+  uid: string;
+  nickName: string;
 }
 
 /**
@@ -29,13 +35,29 @@ export interface Attributes {
 const GeoGebra: NetlessApp<Attributes> = {
   kind: "GeoGebra",
   async setup(context) {
-    const attrs = ensureAttributes(context, { ggbBase64: "" });
+    const displayer = context.getDisplayer();
+    const memberId = displayer.observerId;
+    const userPayload: UserPayload | undefined = displayer.state.roomMembers.find(
+      member => member.memberId === memberId
+    )?.payload;
+    const uid = userPayload?.uid || "";
+    const nickName = userPayload?.nickName || uid;
+
+    console.log({ uid, nickName });
+
+    const attrs = ensureAttributes(context, {
+      uid: "",
+      ggbBase64: "",
+    });
 
     const box = context.getBox();
     box.mountStyles(styles);
 
     const content = document.createElement("div");
     content.classList.add("netless-app-geogebra", "loading");
+    if (uid !== attrs.uid) {
+      content.classList.add("netless-app-geogebra", "readonly");
+    }
     box.mountContent(content);
 
     const sideEffectManager = new SideEffectManager();
@@ -66,6 +88,7 @@ const GeoGebra: NetlessApp<Attributes> = {
       const displayer = context.getDisplayer();
       const liveApp = new LiveApp({
         clientId: displayer.observerId,
+        nickName,
         api,
         isDecider: clientId => {
           const users = displayer.state.roomMembers.map(member => member.memberId);
