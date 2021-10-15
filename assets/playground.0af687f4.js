@@ -1,1 +1,0 @@
-import{_ as o}from"./index.1850acec.js";import"./vendor.f7331cca.js";const i={kind:"GeoGebra",src:()=>o(()=>import("./index.16438633.js"),["assets/index.16438633.js","assets/side-effect-manager.es.3578cf95.js","assets/ensure-attributes.2c659353.js"]),options:{title:"GeoGebra"}};export{i as default};

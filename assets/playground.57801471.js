@@ -1,1 +1,0 @@
-import{_ as t}from"./index.1850acec.js";import"./vendor.f7331cca.js";const e={kind:"Browser",src:()=>t(()=>import("./index.300f5f47.js"),["assets/index.300f5f47.js","assets/vendor.f7331cca.js"]),options:{title:"Browser"},attributes:{url:"https://flat.whiteboard.agora.io/"}};export{e as default};

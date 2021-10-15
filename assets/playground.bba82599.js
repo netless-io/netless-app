@@ -1,1 +1,0 @@
-import{_ as e}from"./index.1850acec.js";import"./vendor.f7331cca.js";const d=[{kind:"EmbeddedPage",src:()=>e(()=>import("./index.1edf912c.js"),["assets/index.1edf912c.js","assets/side-effect-manager.es.3578cf95.js","assets/ensure-attributes.2c659353.js"]),options:{title:"demo",scenePath:"/demo"},attributes:{src:"/embed.html"}}];export{d as default};
