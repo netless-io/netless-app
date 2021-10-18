@@ -61,6 +61,18 @@ async function main(): Promise<void> {
   refreshPage();
   refreshWritable();
 
+  // ------ Move Camera ------
+  $("#camera-move").addEventListener("click", () => {
+    const x = $<HTMLInputElement>("#camera-x").valueAsNumber;
+    const y = $<HTMLInputElement>("#camera-y").valueAsNumber;
+    const scale = $<HTMLInputElement>("#camera-scale").valueAsNumber;
+    const camera: { x?: number; y?: number; scale?: number } = {};
+    if (x) camera.x = x;
+    if (y) camera.y = y;
+    if (scale) camera.scale = scale;
+    app.moveCamera(camera);
+  });
+
   // for debugging
   (window as any).embeddedApp = app;
 }

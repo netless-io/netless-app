@@ -1,5 +1,11 @@
 export type State = Record<string, unknown>;
 
+export interface CameraState {
+  x: number;
+  y: number;
+  scale: number;
+}
+
 // iframe --> me
 export interface ReceiveMessages {
   GetState: void;
@@ -8,7 +14,19 @@ export interface ReceiveMessages {
   GetPage: void;
   SetPage: string;
   GetWritable: void;
+  MoveCamera: Partial<CameraState>;
 }
+
+type CheckReceiveMessageType<T extends { type: keyof ReceiveMessages }> = T;
+export type ReceiveMessage = CheckReceiveMessageType<
+  | { type: "GetState" }
+  | { type: "SetState"; payload: State }
+  | { type: "SendMessage"; payload: unknown }
+  | { type: "GetPage" }
+  | { type: "SetPage"; payload: string }
+  | { type: "GetWritable" }
+  | { type: "MoveCamera"; payload: Partial<CameraState> }
+>;
 
 export type DiffOne<T> = { oldValue?: T; newValue?: T };
 

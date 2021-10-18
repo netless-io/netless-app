@@ -1,5 +1,12 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import type { ReceiveMessages, SendMessages, DiffOne, InitData } from "@netless/app-embedded-page";
+import type {
+  ReceiveMessages,
+  SendMessages,
+  DiffOne,
+  InitData,
+  CameraState,
+} from "@netless/app-embedded-page";
+
 import { SideEffectManager } from "side-effect-manager";
 import { isObj } from "./utils";
 
@@ -12,6 +19,7 @@ export type SendMessage<State = any, Message = any> = CheckSendMessageType<
   | { type: "GetPage" }
   | { type: "SetPage"; payload: string }
   | { type: "GetWritable" }
+  | { type: "MoveCamera"; payload: Partial<CameraState> }
 >;
 
 export type Diff<State> = State extends Record<infer K, unknown>
@@ -58,6 +66,7 @@ export interface EmbeddedApp<State = Record<string, any>, Message = any> {
   setState(partialState: Partial<State>): void;
   setPage(page: string): void;
   sendMessage(message: Message): void;
+  moveCamera(camera: Partial<CameraState>): void;
   destroy(): void;
   onStateChanged: Emitter<Diff<State>>;
   onPageChanged: Emitter<DiffOne<string>>;
@@ -105,47 +114,58 @@ export function createEmbeddedApp<State = Record<string, any>, Message = any>(
 
     const event = e.data as IncomingMessage<State, Message>;
 
-    if (event.type === "Init") {
-      const { payload } = event;
-      state = payload.state as unknown as State;
-      page = payload.page;
-      writable = payload.writable;
-      meta = payload.meta;
-      onInit.dispatch(payload);
-    } else if (event.type === "ReceiveMessage") {
-      onMessage.dispatch(event.payload);
-    } else {
-      if (event.type === "StateChanged") {
+    switch (event.type) {
+      case "Init": {
+        const { payload } = event;
+        state = payload.state as unknown as State;
+        page = payload.page;
+        writable = payload.writable;
+        meta = payload.meta;
+        onInit.dispatch(payload);
+        break;
+      }
+      case "ReceiveMessage": {
+        onMessage.dispatch(event.payload);
+        break;
+      }
+      case "StateChanged": {
         onStateChangedPayload = event.payload;
         postMessage({ type: "GetState" });
-      } else if (event.type === "GetState") {
+        break;
+      }
+      case "GetState": {
         state = event.payload;
         if (onStateChangedPayload) {
           onStateChanged.dispatch(onStateChangedPayload);
           onStateChangedPayload = void 0;
         }
+        break;
       }
-
-      if (event.type === "PageChanged") {
+      case "PageChanged": {
         onPageChangedPayload = event.payload;
         postMessage({ type: "GetPage" });
-      } else if (event.type === "GetPage") {
+        break;
+      }
+      case "GetPage": {
         page = event.payload;
         if (onPageChangedPayload) {
           onPageChanged.dispatch(onPageChangedPayload);
           onPageChangedPayload = void 0;
         }
+        break;
       }
-
-      if (event.type === "WritableChanged") {
+      case "WritableChanged": {
         onWritableChangedPayload = event.payload;
         postMessage({ type: "GetWritable" });
-      } else if (event.type === "GetWritable") {
+        break;
+      }
+      case "GetWritable": {
         writable = event.payload;
         if (onWritableChangedPayload) {
           onWritableChanged.dispatch(onWritableChangedPayload);
           onWritableChangedPayload = void 0;
         }
+        break;
       }
     }
   });
@@ -174,6 +194,10 @@ export function createEmbeddedApp<State = Record<string, any>, Message = any>(
     postMessage({ type: "SendMessage", payload });
   };
 
+  const moveCamera = (camera: Partial<CameraState>) => {
+    postMessage({ type: "MoveCamera", payload: camera });
+  };
+
   const destroy = () => sideEffectManager.flushAll();
 
   const app: EmbeddedApp<State, Message> = {
@@ -193,6 +217,7 @@ export function createEmbeddedApp<State = Record<string, any>, Message = any>(
     setState,
     setPage,
     sendMessage,
+    moveCamera,
     destroy,
     onStateChanged,
     onPageChanged,

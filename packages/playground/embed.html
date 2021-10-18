@@ -33,6 +33,14 @@
         <strong>Writable:</strong>
         <samp id="writable">true</samp>
       </div>
+      <div class="camera">
+        <strong>MoveCamera:</strong><br />
+        <label for="camera-x">X</label> <input id="camera-x" type="number" /><br />
+        <label for="camera-y">Y</label> <input id="camera-y" type="number" /><br />
+        <label for="camera-scale">SCALE</label>
+        <input id="camera-scale" type="number" min="0.1" max="10" /><br />
+        <button id="camera-move">MOVE CAMERA</button>
+      </div>
     </div>
     <script type="module" src="/src/embed.ts"></script>
   </body>

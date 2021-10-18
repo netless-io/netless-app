@@ -116,6 +116,20 @@ npm add @netless/app-embedded-page-sdk
   app.sendMessage("hello, world!");
   ```
 
+- **app.moveCamera(partialCameraState)**
+
+  移动上层白板的视角。
+
+  **partialCameraState**
+
+  类型: `Partial<{ x: number, y: number, scale: number }>`
+
+  默认的视角状态是 `{ x: 0, y: 0, scale: 1 }`，与页面正中间对齐。
+
+  ```js
+  app.moveCamera({ scale: 0.5 });
+  ```
+
 - **app.onStateChanged**
 
   当某一端调用 `app.setState()` 时执行（包括自己调用）。
@@ -148,7 +162,7 @@ npm add @netless/app-embedded-page-sdk
 
   ```js
   app.onWritableChanged.addListener(diff => {
-    console.log("现在是否可写", app.writable);
+    console.log("现在是否可写", app.isWritable);
   });
   ```
 

@@ -1,6 +1,6 @@
 ## @netless/app-embedded-page-sdk
 
-SDK for storing shared replayable states and sending/receiving replayable events inside [@netless/app-embedded-page](https://github.com/netless-io/netless-app/tree/master/packages/app-embedded-page).
+SDK for storing shared replayable states and sending/receiving replayable events inside [`@netless/app-embedded-page`](https://github.com/netless-io/netless-app/tree/master/packages/app-embedded-page).
 
 [中文](./README-zh.md)
 
@@ -119,6 +119,20 @@ npm add @netless/app-embedded-page-sdk
   app.sendMessage("hello, world!");
   ```
 
+- **app.moveCamera(partialCameraState)**
+
+  Change the whiteboard scene's position on top of your page.
+
+  **partialCameraState**
+
+  Type: `Partial<{ x: number, y: number, scale: number }>`
+
+  The default camera state is `{ x: 0, y: 0, scale: 1 }`, at the center of your page.
+
+  ```js
+  app.moveCamera({ scale: 0.5 });
+  ```
+
 - **app.onStateChanged**
 
   It fires after someone called `app.setState()` (including the app itself).
@@ -151,7 +165,7 @@ npm add @netless/app-embedded-page-sdk
 
   ```js
   app.onWritableChanged.addListener(diff => {
-    console.log("my writable becomes", app.writable);
+    console.log("my writable becomes", app.isWritable);
   });
   ```
 
