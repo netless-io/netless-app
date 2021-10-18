@@ -13,7 +13,7 @@
   },
   "devDependencies": {
     "@netless/app-shared": "workspace:^0.1.1",
-    "@netless/slide": "^0.1.4",
+    "@netless/slide": "^0.1.5",
     "side-effect-manager": "^0.1.3",
     "vanilla-lazyload": "^17.5.0"
   }

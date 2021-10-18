@@ -20,7 +20,7 @@
   },
   "devDependencies": {
     "hls.js": "^1.0.11",
-    "plyr": "^3.6.8",
+    "plyr": "^3.6.9",
     "prepend-http": "^4.0.0"
   }
 }
