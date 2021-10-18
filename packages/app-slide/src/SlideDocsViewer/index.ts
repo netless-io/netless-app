@@ -1,10 +1,10 @@
-import type { Slide } from "@netless/slide";
 import type { ReadonlyTeleBox, View, Displayer, AnimationMode } from "@netless/window-manager";
-import { SideEffectManager } from "side-effect-manager";
 import type { DocsViewerPage } from "../DocsViewer";
+
+import { Slide, SLIDE_EVENTS } from "@netless/slide";
+import { SideEffectManager } from "side-effect-manager";
 import { DocsViewer } from "../DocsViewer";
 import { clamp } from "../utils/helpers";
-import { pages } from "./hardcode";
 
 export interface SlideDocsViewerConfig {
   displayer: Displayer;
@@ -14,6 +14,7 @@ export interface SlideDocsViewerConfig {
   createSlide: (anchor: HTMLDivElement) => Slide;
   setSceneIndex: (index: number) => void;
   mountWhiteboard: (dom: HTMLDivElement) => void;
+  refreshScenes: () => void;
 }
 
 export class SlideDocsViewer {
@@ -25,6 +26,7 @@ export class SlideDocsViewer {
     createSlide,
     setSceneIndex,
     mountWhiteboard,
+    refreshScenes,
   }: SlideDocsViewerConfig) {
     this.whiteboardView = whiteboardView;
     this.readonly = readonly;
@@ -33,6 +35,7 @@ export class SlideDocsViewer {
     this.createSlide = createSlide;
     this.setSceneIndex = setSceneIndex;
     this.mountWhiteboard = mountWhiteboard;
+    this.refreshScenes = refreshScenes;
 
     this.viewer = new DocsViewer({
       readonly,
@@ -54,10 +57,12 @@ export class SlideDocsViewer {
   protected displayer: Displayer;
   protected setSceneIndex: (index: number) => void;
   protected mountWhiteboard: (dom: HTMLDivElement) => void;
+  protected refreshScenes: () => void;
 
   public set pages(value: DocsViewerPage[]) {
     this.viewer.pages = value;
   }
+
   public get pages() {
     return this.viewer.pages;
   }
@@ -71,10 +76,9 @@ export class SlideDocsViewer {
   public mount(): this {
     this.viewer.mount();
     this.slide = this.createSlide(this.$slide);
+    this.slide.renderSlide(this.getPageIndex() + 1);
 
-    this.refreshPages();
-    const pageIndex = this.getPageIndex();
-    this.jumpToPage(pageIndex);
+    this.jumpToPage(this.getPageIndex());
 
     this.scaleDocsToFit();
     this.sideEffect.add(() => {
@@ -84,8 +88,47 @@ export class SlideDocsViewer {
       };
     });
 
+    this.slide.on(SLIDE_EVENTS.slideChange, this.onSlideChange);
+    this.slide.on(SLIDE_EVENTS.mainSeqStepStart, this.setPlaying);
+    this.slide.on(SLIDE_EVENTS.mainSeqStepEnd, this.setPaused);
+    this.slide.on(SLIDE_EVENTS.renderStart, this.setPlaying);
+    this.slide.on(SLIDE_EVENTS.renderEnd, this.setPaused);
+    this.slide.on(SLIDE_EVENTS.renderError, err => {
+      console.log("render Error", err);
+    });
+
     return this;
   }
+
+  public setPlaying = (): void => {
+    this.viewer.setPlaying();
+  };
+
+  public setPaused = (): void => {
+    this.viewer.setPaused();
+  };
+
+  public makePages(): DocsViewerPage[] {
+    const { width, height, slideCount, slideState } = this.slide;
+    const { taskId, url } = slideState;
+    const pages: DocsViewerPage[] = [];
+    for (let i = 1; i <= slideCount; ++i) {
+      pages.push({ width, height, thumbnail: `${url}/${taskId}/preview/${i}.png`, src: "ppt" });
+    }
+    return pages;
+  }
+
+  public onSlideChange = (page: number): void => {
+    if (this.slide.slideCount !== this.pages.length) {
+      this.pages = this.makePages();
+    }
+    this.refreshScenes();
+    this.updateSlideScale();
+    if (this.getPageIndex() !== page - 1) {
+      this.setSceneIndex(page - 1);
+    }
+    this.viewer.setPageIndex(page - 1);
+  };
 
   public unmount(): this {
     this.slide.destroy();
@@ -108,14 +151,17 @@ export class SlideDocsViewer {
   }
 
   public getPageIndex(): number {
-    return Math.max(this.slide.slideState.currentSlideIndex || 1 - 1, 0);
+    return this.displayer.state.sceneState.index;
   }
 
   public jumpToPage(index: number): void {
+    if (this.pages.length <= 0) {
+      return;
+    }
     index = clamp(index, 0, this.pages.length - 1);
-    this.slide.renderSlide(index + 1).then(this.refreshPages);
     if (index !== this.getPageIndex()) {
-      // this.setSceneIndex(index);
+      this.slide.renderSlide(index + 1);
+      this.setSceneIndex(index);
       this.scaleDocsToFit();
     }
     if (index !== this.viewer.pageIndex) {
@@ -141,7 +187,7 @@ export class SlideDocsViewer {
           }
           case "ArrowRight":
           case "ArrowDown": {
-            this.slide.prevStep();
+            this.slide.nextStep();
             break;
           }
           default: {
@@ -164,22 +210,12 @@ export class SlideDocsViewer {
     this.$slide.style.setProperty("--netless-app-slide-scale", String(scale));
   };
 
-  protected refreshPages = () => {
-    // TODO: this.pages = this.slide.totalPages ...
-    this.pages = pages;
-    this.viewer.refreshTotalPage();
-    this.updateSlideScale();
-    this.$slide.style.opacity = "1";
-  };
-
   protected renderSlideContainer(): HTMLDivElement {
     if (!this.$slide) {
       const $slide = document.createElement("div");
       $slide.className = this.wrapClassName("slide");
-      $slide.style.opacity = "0";
       $slide.dataset.appKind = "Slide";
       this.$slide = $slide;
-      console.log($slide);
     }
     return this.$slide;
   }

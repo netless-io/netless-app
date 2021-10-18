@@ -36,11 +36,16 @@ export class DocsViewer {
   protected box: ReadonlyTeleBox;
   protected onNewPageIndex: (index: number) => void;
   protected onPlay?: () => void;
+
   private _pages: DocsViewerPage[] = [];
+
   public set pages(value: DocsViewerPage[]) {
     this._pages = value;
     this.refreshPreview();
+    this.refreshTotalPage();
+    this.refreshBtnSidebar();
   }
+
   public get pages() {
     return this._pages;
   }
@@ -51,6 +56,8 @@ export class DocsViewer {
   public $footer!: HTMLElement;
   public $pageNumberInput!: HTMLInputElement;
   public $totalPage!: HTMLSpanElement;
+  public $btnPlay!: HTMLButtonElement;
+  public $btnSidebar!: HTMLButtonElement;
 
   public pageIndex = 0;
 
@@ -208,6 +215,18 @@ export class DocsViewer {
     return this.$previewMask;
   }
 
+  public setPaused = () => {
+    this.$btnPlay.classList.toggle(this.wrapClassName("footer-btn-playing"), false);
+  };
+
+  public setPlaying = () => {
+    this.$btnPlay.classList.toggle(this.wrapClassName("footer-btn-playing"), true);
+  };
+
+  public refreshBtnSidebar() {
+    this.$btnSidebar.style.display = this.pages.length > 0 ? "inline-block" : "none";
+  }
+
   protected renderFooter(): HTMLElement {
     if (!this.$footer) {
       const $footer = document.createElement("div");
@@ -222,16 +241,16 @@ export class DocsViewer {
         $footer.classList.add(this.wrapClassName("float-footer"));
       }
 
-      if (this.pages.some(page => page.thumbnail || !page.src.startsWith("ppt"))) {
-        const $btnSidebar = this.renderFooterBtn("btn-sidebar", sidebarSVG(this.namespace));
-        this.sideEffect.addEventListener($btnSidebar, "click", () => {
-          if (this.readonly) {
-            return;
-          }
-          this.togglePreview();
-        });
-        this.$footer.appendChild($btnSidebar);
-      }
+      const $btnSidebar = this.renderFooterBtn("btn-sidebar", sidebarSVG(this.namespace));
+      this.sideEffect.addEventListener($btnSidebar, "click", () => {
+        if (this.readonly) {
+          return;
+        }
+        this.togglePreview();
+      });
+      this.$btnSidebar = $btnSidebar;
+      this.$btnSidebar.style.display = "none";
+      this.$footer.appendChild($btnSidebar);
 
       const $pageJumps = document.createElement("div");
       $pageJumps.className = this.wrapClassName("page-jumps");
@@ -251,24 +270,15 @@ export class DocsViewer {
           playSVG(this.namespace),
           pauseSVG(this.namespace)
         );
-        const returnPlay = (): void => {
-          this.sideEffect.setTimeout(
-            () => {
-              $btnPlay.classList.toggle(this.wrapClassName("footer-btn-playing"), false);
-            },
-            500,
-            "returnPlay"
-          );
-        };
+        this.$btnPlay = $btnPlay;
         this.sideEffect.addEventListener($btnPlay, "click", () => {
           if (this.readonly) {
             return;
           }
-          $btnPlay.classList.toggle(this.wrapClassName("footer-btn-playing"), true);
+          this.setPlaying();
           if (this.onPlay) {
             this.onPlay();
           }
-          returnPlay();
         });
 
         $pageJumps.appendChild($btnPlay);
@@ -303,7 +313,7 @@ export class DocsViewer {
       });
 
       const $totalPage = document.createElement("span");
-      $totalPage.textContent = " / " + this.pages.length;
+      $totalPage.textContent = " / …";
       this.$totalPage = $totalPage;
 
       $pageNumber.appendChild($pageNumberInput);

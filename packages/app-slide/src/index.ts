@@ -1,5 +1,5 @@
 import type { NetlessApp } from "@netless/window-manager";
-import type { Event } from "white-web-sdk";
+import type { Event, ScenePathType } from "white-web-sdk";
 
 import { ensureAttributes } from "@netless/app-shared";
 import { Slide, SLIDE_EVENTS } from "@netless/slide";
@@ -21,6 +21,7 @@ export interface Attributes {
 const SlideApp: NetlessApp<Attributes> = {
   kind: "Slide",
   setup(context) {
+    const room = context.getRoom();
     const displayer = context.getDisplayer();
 
     const box = context.getBox();
@@ -41,6 +42,8 @@ const SlideApp: NetlessApp<Attributes> = {
 
     const sideEffect = new SideEffectManager();
 
+    let theSlide: Slide | undefined;
+
     const createSlide = (anchor: HTMLDivElement) => {
       const slide = new Slide({
         anchor,
@@ -52,15 +55,20 @@ const SlideApp: NetlessApp<Attributes> = {
       const channel = `channel-${context.appId}`;
       slide.on(SLIDE_EVENTS.syncDispatch, (payload: unknown) => {
         context.updateAttributes(["state"], slide.slideState);
-        context.getRoom()?.dispatchMagixEvent(channel, payload);
-      });
-      const magixEventListener = (ev: Event) => {
-        if (ev.event === channel && ev.authorId !== displayer.observerId) {
-          // TODO: slide.emit(SLIDE_EVENTS.syncReceive, ev.payload)
-          attrs.state && slide.setSlideState(attrs.state);
+        const room = context.getRoom();
+        if (room) {
+          room.dispatchMagixEvent(channel, { type: SLIDE_EVENTS.syncDispatch, payload });
         }
-      };
+      });
       sideEffect.add(() => {
+        const magixEventListener = (ev: Event) => {
+          if (ev.event === channel && ev.authorId !== displayer.observerId) {
+            const { type, payload } = ev.payload;
+            if (type === SLIDE_EVENTS.syncDispatch) {
+              slide.emit(SLIDE_EVENTS.syncReceive, payload);
+            }
+          }
+        };
         displayer.addMagixEventListener(channel, magixEventListener);
         return () => displayer.removeMagixEventListener(channel);
       });
@@ -70,7 +78,25 @@ const SlideApp: NetlessApp<Attributes> = {
         (window as any).slide = slide;
       }
 
+      theSlide = slide;
       return slide;
+    };
+
+    const baseScenePath = context.getInitScenePath();
+    const refreshScenes = (): void => {
+      if (theSlide?.slideCount && baseScenePath && room && context.getIsWritable()) {
+        const maxPage = theSlide.slideCount;
+        const scenePath = `${baseScenePath}/${maxPage}`;
+        if (room.scenePathType(scenePath) === ("none" as ScenePathType)) {
+          room.removeScenes(baseScenePath);
+          const scenes: { name: string }[] = [];
+          for (let i = 1; i <= maxPage; ++i) {
+            scenes.push({ name: `${i}` });
+          }
+          room.putScenes(baseScenePath, scenes);
+          context.setScenePath(`${baseScenePath}/${theSlide.slideState.currentSlideIndex || 1}`);
+        }
+      }
     };
 
     const docsViewer = new SlideDocsViewer({
@@ -83,9 +109,8 @@ const SlideApp: NetlessApp<Attributes> = {
       setSceneIndex: index => {
         context.getRoom()?.setSceneIndex(index);
       },
+      refreshScenes,
     }).mount();
-
-    context.mountView(docsViewer.$whiteboardView);
 
     if (import.meta.env.DEV) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
