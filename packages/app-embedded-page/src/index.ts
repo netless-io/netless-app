@@ -51,12 +51,6 @@ const EmbeddedPage: NetlessApp<Attributes> = {
 
     box.mountContent(container);
 
-    // eslint-disable-next-line @typescript-eslint/no-empty-function
-    let toggleClickThrough: (enable?: boolean) => void = () => {};
-    const shouldClickThrough = (tool?: ApplianceNames) => {
-      return ClickThroughAppliances.has(tool as ApplianceNames);
-    };
-
     if (view) {
       const viewBox = document.createElement("div");
       Object.assign(viewBox.style, {
@@ -69,11 +63,23 @@ const EmbeddedPage: NetlessApp<Attributes> = {
       container.appendChild(viewBox);
       context.mountView(viewBox);
 
-      toggleClickThrough = (enable?: boolean) => {
-        viewBox.style.pointerEvents = enable ? "none" : "auto";
-      };
+      if (room) {
+        const toggleClickThrough = (tool?: ApplianceNames) => {
+          viewBox.style.pointerEvents = !tool || ClickThroughAppliances.has(tool) ? "none" : "auto";
+        };
 
-      toggleClickThrough(shouldClickThrough(room?.state.memberState.currentApplianceName));
+        toggleClickThrough(room.state.memberState.currentApplianceName);
+
+        sideEffectManager.add(() => {
+          const onRoomStateChanged = (e: Partial<RoomState>) => {
+            if (e.memberState) {
+              toggleClickThrough(e.memberState.currentApplianceName);
+            }
+          };
+          room.callbacks.on("onRoomStateChanged", onRoomStateChanged);
+          return () => room.callbacks.off("onRoomStateChanged", onRoomStateChanged);
+        });
+      }
     }
 
     const postMessage = <T extends keyof SendMessages>(payload: {
@@ -95,18 +101,6 @@ const EmbeddedPage: NetlessApp<Attributes> = {
       displayer.addMagixEventListener(event, magixListener);
       return () => displayer.removeMagixEventListener(event);
     });
-
-    if (room) {
-      sideEffectManager.add(() => {
-        const onRoomStateChanged = (e: Partial<RoomState>) => {
-          if (e.memberState) {
-            toggleClickThrough(shouldClickThrough(e.memberState.currentApplianceName));
-          }
-        };
-        room.callbacks.on("onRoomStateChanged", onRoomStateChanged);
-        return () => room.callbacks.off("onRoomStateChanged", onRoomStateChanged);
-      });
-    }
 
     sideEffectManager.addEventListener(iframe, "load", () => {
       const memberId = displayer.observerId;
