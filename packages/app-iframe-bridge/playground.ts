@@ -3,6 +3,10 @@ import type { Attributes } from "./src";
 
 const demo: { title: string; src: string }[] = [
   {
+    title: "vf-engine",
+    src: "https://vf-cdn.yunkc.cn/platform/netless/v1/index.html?total=5&docKey=4821a83c-7d61-4e23-8f6f-c23391e19dc5",
+  },
+  {
     title: "cocos",
     src: "https://demo-edu.cocos.com/agora-demo/index.html",
   },
@@ -19,10 +23,6 @@ const demo: { title: string; src: string }[] = [
   //   title: "wzomo",
   //   src: "https://static.pre.wzomo.com/web/netless/index.html#/lesson1/page7?debug=1&role=teacher&origin=dev",
   // },
-  {
-    title: "testtt",
-    src: "https://vf-cdn.yunkc.cn/platform/netless/v1/index.html?total=25&debug=true&url=https://vf-cdn.yunkc.cn/platform/netless/v1/demo/demo.json",
-  },
 ];
 
 const options: PlaygroundConfigs<Attributes> = [
