@@ -1,11 +1,14 @@
 import type { ReadonlyTeleBox, View, Displayer, AnimationMode } from "@netless/window-manager";
+import type { ApplianceNames } from "white-web-sdk";
+import type { Slide } from "@netless/slide";
 import type { DocsViewerPage } from "../DocsViewer";
 
-import type { Slide } from "@netless/slide";
 import { SLIDE_EVENTS } from "@netless/slide";
 import { SideEffectManager } from "side-effect-manager";
 import { DocsViewer } from "../DocsViewer";
 import { clamp } from "../utils/helpers";
+
+const ClickThroughAppliances = new Set(["clicker", "selector"]);
 
 export interface SlideDocsViewerConfig {
   displayer: Displayer;
@@ -182,7 +185,7 @@ export class SlideDocsViewer {
         switch (ev.key) {
           case "ArrowUp":
           case "ArrowLeft": {
-            this.jumpToPage(this.getPageIndex());
+            this.slide.prevStep();
             break;
           }
           case "ArrowRight":
@@ -201,6 +204,11 @@ export class SlideDocsViewer {
       resizeObserver.observe(this.$slide);
       return () => resizeObserver.disconnect();
     });
+  }
+
+  public toggleClickThrough(tool?: ApplianceNames) {
+    this.$whiteboardView.style.pointerEvents =
+      !tool || ClickThroughAppliances.has(tool) ? "none" : "auto";
   }
 
   protected updateSlideScale = () => {

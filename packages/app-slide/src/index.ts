@@ -1,5 +1,5 @@
 import type { NetlessApp } from "@netless/window-manager";
-import type { Event, ScenePathType } from "white-web-sdk";
+import type { Event, RoomState, ScenePathType } from "white-web-sdk";
 
 import { ensureAttributes } from "@netless/app-shared";
 import { Slide, SLIDE_EVENTS } from "@netless/slide";
@@ -51,7 +51,7 @@ const SlideApp: NetlessApp<Attributes> = {
 
       slide.setResource(attrs.taskId, attrs.url);
       if (attrs.state) {
-        slide.setSlideState(attrs.state);
+        slide.setSlideState(JSON.parse(JSON.stringify(attrs.state)));
       } else {
         slide.renderSlide(initialSlideIndex);
       }
@@ -118,6 +118,20 @@ const SlideApp: NetlessApp<Attributes> = {
       setSceneIndex,
       refreshScenes,
     }).mount();
+
+    const room = context.getRoom();
+    if (room) {
+      docsViewer.toggleClickThrough(room.state.memberState.currentApplianceName);
+      sideEffect.add(() => {
+        const onRoomStateChanged = (e: Partial<RoomState>) => {
+          if (e.memberState) {
+            docsViewer.toggleClickThrough(e.memberState.currentApplianceName);
+          }
+        };
+        room.callbacks.on("onRoomStateChanged", onRoomStateChanged);
+        return () => room.callbacks.off("onRoomStateChanged", onRoomStateChanged);
+      });
+    }
 
     if (import.meta.env.DEV) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
