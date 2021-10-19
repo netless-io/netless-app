@@ -21,7 +21,6 @@ export interface Attributes {
 const SlideApp: NetlessApp<Attributes> = {
   kind: "Slide",
   setup(context) {
-    const room = context.getRoom();
     const displayer = context.getDisplayer();
 
     const box = context.getBox();
@@ -44,13 +43,18 @@ const SlideApp: NetlessApp<Attributes> = {
 
     let theSlide: Slide | undefined;
 
-    const createSlide = (anchor: HTMLDivElement) => {
+    const createSlide = (anchor: HTMLDivElement, initialSlideIndex: number) => {
       const slide = new Slide({
         anchor,
         interactive: true,
       });
 
       slide.setResource(attrs.taskId, attrs.url);
+      if (attrs.state) {
+        slide.setSlideState(attrs.state);
+      } else {
+        slide.renderSlide(initialSlideIndex);
+      }
 
       const channel = `channel-${context.appId}`;
       slide.on(SLIDE_EVENTS.syncDispatch, (payload: unknown) => {
@@ -84,6 +88,7 @@ const SlideApp: NetlessApp<Attributes> = {
 
     const baseScenePath = context.getInitScenePath();
     const refreshScenes = (): void => {
+      const room = context.getRoom();
       if (theSlide?.slideCount && baseScenePath && room && context.getIsWritable()) {
         const maxPage = theSlide.slideCount;
         const scenePath = `${baseScenePath}/${maxPage}`;
@@ -99,6 +104,10 @@ const SlideApp: NetlessApp<Attributes> = {
       }
     };
 
+    const setSceneIndex = (index: number) => {
+      context.getRoom()?.setSceneIndex(index);
+    };
+
     const docsViewer = new SlideDocsViewer({
       displayer,
       whiteboardView,
@@ -106,9 +115,7 @@ const SlideApp: NetlessApp<Attributes> = {
       box,
       mountWhiteboard: context.mountView.bind(context),
       readonly: box.readonly,
-      setSceneIndex: index => {
-        context.getRoom()?.setSceneIndex(index);
-      },
+      setSceneIndex,
       refreshScenes,
     }).mount();
 

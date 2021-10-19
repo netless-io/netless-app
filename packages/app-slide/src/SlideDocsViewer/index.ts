@@ -1,7 +1,8 @@
 import type { ReadonlyTeleBox, View, Displayer, AnimationMode } from "@netless/window-manager";
 import type { DocsViewerPage } from "../DocsViewer";
 
-import { Slide, SLIDE_EVENTS } from "@netless/slide";
+import type { Slide } from "@netless/slide";
+import { SLIDE_EVENTS } from "@netless/slide";
 import { SideEffectManager } from "side-effect-manager";
 import { DocsViewer } from "../DocsViewer";
 import { clamp } from "../utils/helpers";
@@ -11,7 +12,7 @@ export interface SlideDocsViewerConfig {
   whiteboardView: View;
   readonly: boolean;
   box: ReadonlyTeleBox;
-  createSlide: (anchor: HTMLDivElement) => Slide;
+  createSlide: (anchor: HTMLDivElement, initialSlideIndex: number) => Slide;
   setSceneIndex: (index: number) => void;
   mountWhiteboard: (dom: HTMLDivElement) => void;
   refreshScenes: () => void;
@@ -50,7 +51,7 @@ export class SlideDocsViewer {
   protected sideEffect = new SideEffectManager();
 
   protected slide!: Slide;
-  protected createSlide: (anchor: HTMLDivElement) => Slide;
+  protected createSlide: (anchor: HTMLDivElement, initialSlideIndex: number) => Slide;
   protected readonly: boolean;
   protected box: ReadonlyTeleBox;
   protected whiteboardView: View;
@@ -75,8 +76,7 @@ export class SlideDocsViewer {
 
   public mount(): this {
     this.viewer.mount();
-    this.slide = this.createSlide(this.$slide);
-    this.slide.renderSlide(this.getPageIndex() + 1);
+    this.slide = this.createSlide(this.$slide, this.getPageIndex() + 1);
 
     this.jumpToPage(this.getPageIndex());
 
@@ -94,7 +94,7 @@ export class SlideDocsViewer {
     this.slide.on(SLIDE_EVENTS.renderStart, this.setPlaying);
     this.slide.on(SLIDE_EVENTS.renderEnd, this.setPaused);
     this.slide.on(SLIDE_EVENTS.renderError, err => {
-      console.log("render Error", err);
+      console.warn("[Slide] render error", err);
     });
 
     return this;
