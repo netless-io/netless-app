@@ -1,1 +1,0 @@
-import{_ as t}from"./index.438f0a6c.js";import"./vendor.128cc1da.js";const a={kind:"Paint",src:()=>t(()=>import("./index.8769998a.js"),["assets/index.8769998a.js","assets/side-effect-manager.es.5f289aa4.js","assets/ensure-attributes.2c659353.js"]),options:{title:"Paint"}};export{a as default};
