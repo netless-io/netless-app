@@ -1,0 +1,1 @@
+import{_ as o}from"./index.f34e3151.js";import"./vendor.99b04728.js";const i={kind:"Vote",src:()=>o(()=>import("./index.354cdfed.js"),["assets/index.354cdfed.js","assets/vendor.99b04728.js"]),options:{title:"Vote"}};export{i as default};
