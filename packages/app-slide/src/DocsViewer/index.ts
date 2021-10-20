@@ -82,11 +82,8 @@ export class DocsViewer {
   public setReadonly(readonly: boolean): void {
     if (this.readonly !== readonly) {
       this.readonly = readonly;
-
       this.$content.classList.toggle(this.wrapClassName("readonly"), readonly);
-
       this.$footer.classList.toggle(this.wrapClassName("readonly"), readonly);
-
       this.$pageNumberInput.disabled = readonly;
     }
   }
@@ -104,7 +101,11 @@ export class DocsViewer {
   }
 
   public refreshTotalPage(): void {
-    this.$totalPage.textContent = " / " + this.pages.length;
+    if (this.pages.length) {
+      this.$totalPage.textContent = " / " + this.pages.length;
+    } else {
+      this.$totalPage.textContent = "";
+    }
   }
 
   public setSmallBox(isSmallBox: boolean): void {
@@ -224,7 +225,7 @@ export class DocsViewer {
   };
 
   public refreshBtnSidebar() {
-    this.$btnSidebar.style.display = this.pages.length > 0 ? "inline-block" : "none";
+    this.$btnSidebar.style.display = this.pages.length > 0 ? "" : "none";
   }
 
   protected renderFooter(): HTMLElement {
@@ -313,7 +314,6 @@ export class DocsViewer {
       });
 
       const $totalPage = document.createElement("span");
-      $totalPage.textContent = " / …";
       this.$totalPage = $totalPage;
 
       $pageNumber.appendChild($pageNumberInput);

@@ -53,6 +53,7 @@
     "geogebra",
     "Geos",
     "isequal",
+    "lazyload",
     "Magix",
     "Multiuser",
     "Mutex",

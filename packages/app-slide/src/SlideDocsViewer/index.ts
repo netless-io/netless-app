@@ -1,196 +1,62 @@
-import type { ReadonlyTeleBox, View, Displayer, AnimationMode } from "@netless/window-manager";
 import type { ApplianceNames } from "white-web-sdk";
-import type { Slide } from "@netless/slide";
-import type { DocsViewerPage } from "../DocsViewer";
+import type { ReadonlyTeleBox, AnimationMode, View } from "@netless/window-manager";
+import type { SlideController } from "../utils/slide";
 
-import { SLIDE_EVENTS } from "@netless/slide";
 import { SideEffectManager } from "side-effect-manager";
+import { createDocsViewerPages } from "../utils/slide";
 import { DocsViewer } from "../DocsViewer";
-import { clamp } from "../utils/helpers";
 
 const ClickThroughAppliances = new Set(["clicker", "selector"]);
 
 export interface SlideDocsViewerConfig {
-  displayer: Displayer;
-  whiteboardView: View;
-  readonly: boolean;
   box: ReadonlyTeleBox;
-  createSlide: (anchor: HTMLDivElement, initialSlideIndex: number) => Slide;
-  setSceneIndex: (index: number) => void;
+  view: View;
+  mountSlideController: (anchor: HTMLDivElement) => Promise<SlideController>;
   mountWhiteboard: (dom: HTMLDivElement) => void;
-  refreshScenes: () => void;
 }
 
 export class SlideDocsViewer {
-  public constructor({
-    displayer,
-    whiteboardView,
-    readonly,
-    box,
-    createSlide,
-    setSceneIndex,
-    mountWhiteboard,
-    refreshScenes,
-  }: SlideDocsViewerConfig) {
-    this.whiteboardView = whiteboardView;
-    this.readonly = readonly;
+  public viewer: DocsViewer;
+  public slideController?: SlideController;
+
+  protected readonly box: ReadonlyTeleBox;
+  protected readonly whiteboardView: SlideDocsViewerConfig["view"];
+  protected readonly mountSlideController: SlideDocsViewerConfig["mountSlideController"];
+  protected readonly mountWhiteboard: SlideDocsViewerConfig["mountWhiteboard"];
+
+  public constructor({ box, view, mountSlideController, mountWhiteboard }: SlideDocsViewerConfig) {
     this.box = box;
-    this.displayer = displayer;
-    this.createSlide = createSlide;
-    this.setSceneIndex = setSceneIndex;
+    this.whiteboardView = view;
+    this.mountSlideController = mountSlideController;
     this.mountWhiteboard = mountWhiteboard;
-    this.refreshScenes = refreshScenes;
 
     this.viewer = new DocsViewer({
-      readonly,
       box,
+      readonly: box.readonly,
       onNewPageIndex: this.onNewPageIndex,
-      onPlay: this.onPlayPPT,
+      onPlay: this.onPlay,
     });
 
     this.render();
   }
 
-  protected sideEffect = new SideEffectManager();
-
-  protected slide!: Slide;
-  protected createSlide: (anchor: HTMLDivElement, initialSlideIndex: number) => Slide;
-  protected readonly: boolean;
-  protected box: ReadonlyTeleBox;
-  protected whiteboardView: View;
-  protected displayer: Displayer;
-  protected setSceneIndex: (index: number) => void;
-  protected mountWhiteboard: (dom: HTMLDivElement) => void;
-  protected refreshScenes: () => void;
-
-  public set pages(value: DocsViewerPage[]) {
-    this.viewer.pages = value;
-  }
-
-  public get pages() {
-    return this.viewer.pages;
-  }
-
-  public viewer: DocsViewer;
-
   public $slide!: HTMLDivElement;
-  public $mask!: HTMLElement;
   public $whiteboardView!: HTMLDivElement;
 
-  public mount(): this {
-    this.viewer.mount();
-    this.slide = this.createSlide(this.$slide, this.getPageIndex() + 1);
-
-    this.jumpToPage(this.getPageIndex());
-
-    this.scaleDocsToFit();
-    this.sideEffect.add(() => {
-      this.whiteboardView.callbacks.on("onSizeUpdated", this.scaleDocsToFit);
-      return () => {
-        this.whiteboardView.callbacks.off("onSizeUpdated", this.scaleDocsToFit);
-      };
-    });
-
-    this.slide.on(SLIDE_EVENTS.slideChange, this.onSlideChange);
-    this.slide.on(SLIDE_EVENTS.mainSeqStepStart, this.setPlaying);
-    this.slide.on(SLIDE_EVENTS.mainSeqStepEnd, this.setPaused);
-    this.slide.on(SLIDE_EVENTS.renderStart, this.setPlaying);
-    this.slide.on(SLIDE_EVENTS.renderEnd, this.setPaused);
-    this.slide.on(SLIDE_EVENTS.renderError, err => {
-      console.warn("[Slide] render error", err);
-    });
-
-    return this;
-  }
-
-  public setPlaying = (): void => {
-    this.viewer.setPlaying();
-  };
-
-  public setPaused = (): void => {
-    this.viewer.setPaused();
-  };
-
-  public makePages(): DocsViewerPage[] {
-    const { width, height, slideCount, slideState } = this.slide;
-    const { taskId, url } = slideState;
-    const pages: DocsViewerPage[] = [];
-    for (let i = 1; i <= slideCount; ++i) {
-      pages.push({ width, height, thumbnail: `${url}/${taskId}/preview/${i}.png`, src: "ppt" });
-    }
-    return pages;
-  }
-
-  public onSlideChange = (page: number): void => {
-    if (this.slide.slideCount !== this.pages.length) {
-      this.pages = this.makePages();
-    }
-    this.refreshScenes();
-    this.updateSlideScale();
-    if (this.getPageIndex() !== page - 1) {
-      this.setSceneIndex(page - 1);
-    }
-    this.viewer.setPageIndex(page - 1);
-  };
-
-  public unmount(): this {
-    this.slide.destroy();
-    this.viewer.unmount();
-    return this;
-  }
-
-  public setReadonly(readonly: boolean): void {
-    if (this.readonly !== readonly) {
-      this.readonly = readonly;
-
-      this.viewer.setReadonly(readonly);
-    }
-  }
-
-  public destroy(): void {
-    this.sideEffect.flushAll();
-    this.unmount();
-    this.viewer.destroy();
-  }
-
-  public getPageIndex(): number {
-    return this.displayer.state.sceneState.index;
-  }
-
-  public jumpToPage(index: number): void {
-    if (this.pages.length <= 0) {
-      return;
-    }
-    index = clamp(index, 0, this.pages.length - 1);
-    if (index !== this.getPageIndex()) {
-      this.slide.renderSlide(index + 1);
-      this.setSceneIndex(index);
-      this.scaleDocsToFit();
-    }
-    if (index !== this.viewer.pageIndex) {
-      this.viewer.setPageIndex(index);
-    }
-  }
-
-  public onPlayPPT = (): void => {
-    return this.slide.nextStep();
-  };
-
-  public render(): void {
+  public render() {
     this.viewer.$content.appendChild(this.renderSlideContainer());
-    this.viewer.$content.appendChild(this.renderMask());
     this.viewer.$content.appendChild(this.renderWhiteboardView());
     this.sideEffect.addEventListener(window, "keydown", ev => {
-      if (this.box.focus) {
+      if (this.box.focus && this.slideController) {
         switch (ev.key) {
           case "ArrowUp":
           case "ArrowLeft": {
-            this.slide.prevStep();
+            this.slideController.slide.prevStep();
             break;
           }
           case "ArrowRight":
           case "ArrowDown": {
-            this.slide.nextStep();
+            this.slideController.slide.nextStep();
             break;
           }
           default: {
@@ -199,24 +65,7 @@ export class SlideDocsViewer {
         }
       }
     });
-    this.sideEffect.add(() => {
-      const resizeObserver = new ResizeObserver(this.updateSlideScale);
-      resizeObserver.observe(this.$slide);
-      return () => resizeObserver.disconnect();
-    });
   }
-
-  public toggleClickThrough(tool?: ApplianceNames) {
-    this.$whiteboardView.style.pointerEvents =
-      !tool || ClickThroughAppliances.has(tool) ? "none" : "auto";
-  }
-
-  protected updateSlideScale = () => {
-    const { width, height } = this.$slide.getBoundingClientRect();
-    const { scrollWidth, scrollHeight } = this.slide.view;
-    const scale = Math.min(width / scrollWidth, height / scrollHeight);
-    this.$slide.style.setProperty("--netless-app-slide-scale", String(scale));
-  };
 
   protected renderSlideContainer(): HTMLDivElement {
     if (!this.$slide) {
@@ -228,24 +77,6 @@ export class SlideDocsViewer {
     return this.$slide;
   }
 
-  protected renderMask(): HTMLElement {
-    if (!this.$mask) {
-      const $mask = document.createElement("div");
-      $mask.className = this.wrapClassName("mask");
-      this.$mask = $mask;
-
-      const $back = document.createElement("button");
-      $back.className = this.wrapClassName("back");
-
-      const $next = document.createElement("button");
-      $next.className = this.wrapClassName("next");
-
-      // this.$mask.appendChild($back)
-      // this.$mask.appendChild($next)
-    }
-    return this.$mask;
-  }
-
   protected renderWhiteboardView(): HTMLDivElement {
     if (!this.$whiteboardView) {
       this.$whiteboardView = document.createElement("div");
@@ -255,33 +86,73 @@ export class SlideDocsViewer {
     return this.$whiteboardView;
   }
 
-  protected _scaleDocsToFitImpl = (): void => {
-    const page = this.slide;
-    if (page) {
+  public async mount() {
+    this.viewer.mount();
+    this.slideController = await this.mountSlideController(this.$slide);
+    this.viewer.pages = createDocsViewerPages(this.slideController.slide);
+
+    this.scaleDocsToFit();
+    this.sideEffect.add(() => {
+      this.whiteboardView.callbacks.on("onSizeUpdated", this.scaleDocsToFit);
+      return () => this.whiteboardView.callbacks.off("onSizeUpdated", this.scaleDocsToFit);
+    });
+
+    return this;
+  }
+
+  public unmount() {
+    if (this.slideController) {
+      this.slideController.destroy();
+      this.viewer.unmount();
+    }
+    return this;
+  }
+
+  public setReadonly(readonly: boolean) {
+    this.viewer.setReadonly(readonly);
+  }
+
+  public destroy() {
+    this.sideEffect.flushAll();
+    this.unmount();
+    this.viewer.destroy();
+  }
+
+  public toggleClickThrough(tool?: ApplianceNames) {
+    this.$whiteboardView.style.pointerEvents =
+      !tool || ClickThroughAppliances.has(tool) ? "none" : "auto";
+  }
+
+  protected scaleDocsToFit = () => {
+    if (this.slideController) {
+      const { width, height } = this.slideController.slide;
       this.whiteboardView.moveCameraToContain({
-        originX: -page.width / 2,
-        originY: -page.height / 2,
-        width: page.width,
-        height: page.height,
-        animationMode: "immediately" as AnimationMode,
+        originX: -width / 2,
+        originY: -height / 2,
+        width,
+        height,
+        animationMode: "immediately" as AnimationMode.Immediately,
       });
     }
   };
 
-  protected _scaleDocsToFitDebounced = (): void => {
-    this.sideEffect.setTimeout(this._scaleDocsToFitImpl, 1000, "_scaleDocsToFitDebounced");
+  protected onPlay = () => {
+    if (this.slideController) {
+      this.slideController.slide.nextStep();
+    }
   };
 
-  protected scaleDocsToFit = (): void => {
-    this._scaleDocsToFitImpl();
-    this._scaleDocsToFitDebounced();
+  protected onNewPageIndex = (index: number) => {
+    if (this.slideController) {
+      this.slideController.jumpToPage(index + 1);
+    }
   };
 
-  protected onNewPageIndex = (index: number): void => {
-    this.jumpToPage(index);
-  };
+  protected sideEffect = new SideEffectManager();
 
-  protected wrapClassName(className: string): string {
-    return "netless-app-slide-" + className;
+  protected wrapClassName(className: string) {
+    return `${this.namespace}-${className}`;
   }
+
+  protected namespace = "netless-app-slide";
 }

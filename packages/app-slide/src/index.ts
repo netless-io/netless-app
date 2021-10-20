@@ -1,10 +1,13 @@
+import type { Event, RoomState } from "white-web-sdk";
+import type { Slide, SyncEvent } from "@netless/slide";
 import type { NetlessApp } from "@netless/window-manager";
-import type { Event, RoomState, ScenePathType } from "white-web-sdk";
+import type { SlideController } from "./utils/slide";
 
+import { SLIDE_EVENTS } from "@netless/slide";
 import { ensureAttributes } from "@netless/app-shared";
-import { Slide, SLIDE_EVENTS } from "@netless/slide";
 import { SideEffectManager } from "side-effect-manager";
 import { SlideDocsViewer } from "./SlideDocsViewer";
+import { mountSlideController, syncSceneWithSlide } from "./utils/slide";
 import styles from "./style.scss?inline";
 
 export type SlideState = Slide["slideState"];
@@ -20,106 +23,118 @@ export interface Attributes {
 
 const SlideApp: NetlessApp<Attributes> = {
   kind: "Slide",
-  setup(context) {
-    const displayer = context.getDisplayer();
-
+  async setup(context) {
     const box = context.getBox();
-
-    const whiteboardView = context.getView();
-
+    const view = context.getView();
+    const room = context.getRoom();
+    const displayer = context.getDisplayer();
     const attrs = ensureAttributes(context, {
-      state: null,
       taskId: "",
       url: "",
+      state: null,
     });
 
-    if (!whiteboardView) {
-      throw new Error("[Slide]: no whiteboard view.");
+    if (!attrs.taskId || !attrs.url) {
+      throw new Error(`[Slide] no taskId or url`);
+    }
+
+    if (!view) {
+      throw new Error(`[Slide] no view, please set scenePath on addApp()`);
     }
 
     box.mountStyles(styles);
 
     const sideEffect = new SideEffectManager();
+    // 因为 view 存在，init scene path 必定存在
+    const baseScenePath = context.getInitScenePath() as string;
+    const showController = import.meta.env.DEV;
+    const channel = `channel-${context.appId}`;
 
-    let theSlide: Slide | undefined;
+    let theController: SlideController | undefined;
 
-    const createSlide = (anchor: HTMLDivElement, initialSlideIndex: number) => {
-      const slide = new Slide({
-        anchor,
-        interactive: true,
-      });
-
-      slide.setResource(attrs.taskId, attrs.url);
-      if (attrs.state) {
-        slide.setSlideState(JSON.parse(JSON.stringify(attrs.state)));
-      } else {
-        slide.renderSlide(initialSlideIndex);
+    const onPageChanged = (page: number) => {
+      console.log("[Slide] page to", page);
+      if (context.getIsWritable() && room && theController) {
+        syncSceneWithSlide(room, theController.slide, baseScenePath);
+        docsViewer.viewer.setPageIndex(page - 1);
       }
+    };
 
-      const channel = `channel-${context.appId}`;
+    const onTransitionStart = () => {
+      docsViewer.viewer.setPlaying();
+    };
+
+    const onTransitionEnd = () => {
+      docsViewer.viewer.setPaused();
+    };
+
+    const onDispatchSyncEvent = (event: SyncEvent) => {
+      if (context.getIsWritable() && theController) {
+        context.updateAttributes(["state"], theController.slide.slideState);
+        if (room) {
+          room.dispatchMagixEvent(channel, { type: SLIDE_EVENTS.syncDispatch, event });
+        }
+      }
+    };
+
+    function registerMagixEvent(theController: SlideController) {
+      const { slide } = theController;
       slide.on(SLIDE_EVENTS.syncDispatch, (payload: unknown) => {
         context.updateAttributes(["state"], slide.slideState);
-        const room = context.getRoom();
         if (room) {
           room.dispatchMagixEvent(channel, { type: SLIDE_EVENTS.syncDispatch, payload });
         }
       });
       sideEffect.add(() => {
         const magixEventListener = (ev: Event) => {
-          if (ev.event === channel && ev.authorId !== displayer.observerId) {
+          if (
+            ev.event === channel &&
+            ev.authorId !== displayer.observerId &&
+            typeof ev.payload === "object" &&
+            ev.payload !== null
+          ) {
             const { type, payload } = ev.payload;
             if (type === SLIDE_EVENTS.syncDispatch) {
-              slide.emit(SLIDE_EVENTS.syncReceive, payload);
+              theController?.receiveSyncEvent(payload);
             }
           }
         };
         displayer.addMagixEventListener(channel, magixEventListener);
-        return () => displayer.removeMagixEventListener(channel);
+        return () => displayer.removeMagixEventListener(channel, magixEventListener);
       });
-
-      if (import.meta.env.DEV) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (window as any).slide = slide;
-      }
-
-      theSlide = slide;
-      return slide;
-    };
-
-    const baseScenePath = context.getInitScenePath();
-    const refreshScenes = (): void => {
-      const room = context.getRoom();
-      if (theSlide?.slideCount && baseScenePath && room && context.getIsWritable()) {
-        const maxPage = theSlide.slideCount;
-        const scenePath = `${baseScenePath}/${maxPage}`;
-        if (room.scenePathType(scenePath) === ("none" as ScenePathType)) {
-          room.removeScenes(baseScenePath);
-          const scenes: { name: string }[] = [];
-          for (let i = 1; i <= maxPage; ++i) {
-            scenes.push({ name: `${i}` });
-          }
-          room.putScenes(baseScenePath, scenes);
-          context.setScenePath(`${baseScenePath}/${theSlide.slideState.currentSlideIndex || 1}`);
-        }
-      }
-    };
-
-    const setSceneIndex = (index: number) => {
-      context.getRoom()?.setSceneIndex(index);
-    };
+    }
 
     const docsViewer = new SlideDocsViewer({
-      displayer,
-      whiteboardView,
-      createSlide,
       box,
-      mountWhiteboard: context.mountView.bind(context),
-      readonly: box.readonly,
-      setSceneIndex,
-      refreshScenes,
-    }).mount();
+      view,
+      mountSlideController: async anchor => {
+        theController = await mountSlideController(
+          anchor,
+          attrs.taskId,
+          attrs.url,
+          showController,
+          JSON.parse(JSON.stringify(attrs.state)),
+          displayer.state.sceneState.index + 1,
+          onPageChanged,
+          onTransitionStart,
+          onTransitionEnd,
+          onDispatchSyncEvent
+        );
 
-    const room = context.getRoom();
+        registerMagixEvent(theController);
+
+        return theController;
+      },
+      mountWhiteboard: dom => context.mountView(dom),
+    });
+
+    await docsViewer.mount();
+
+    if (import.meta.env.DEV) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (window as any).slideDoc = docsViewer;
+    }
+
     if (room) {
       docsViewer.toggleClickThrough(room.state.memberState.currentApplianceName);
       sideEffect.add(() => {
@@ -133,15 +148,6 @@ const SlideApp: NetlessApp<Attributes> = {
       });
     }
 
-    if (import.meta.env.DEV) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (window as any).slideDoc = docsViewer;
-    }
-
-    context.emitter.on("sceneStateChange", sceneState => {
-      docsViewer.jumpToPage(sceneState.index);
-    });
-
     box.events.on("readonly", readonly => {
       docsViewer.setReadonly(readonly);
     });
@@ -149,6 +155,7 @@ const SlideApp: NetlessApp<Attributes> = {
     context.emitter.on("destroy", () => {
       console.log("[Slide]: destroy");
       sideEffect.flushAll();
+      docsViewer.destroy();
     });
   },
 };
