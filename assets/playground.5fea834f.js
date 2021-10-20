@@ -1,0 +1,1 @@
+import{_ as t}from"./index.de3844a9.js";import"./vendor.99b04728.js";const r={kind:"Browser",src:()=>t(()=>import("./index.3cf92e41.js"),["assets/index.3cf92e41.js","assets/vendor.99b04728.js"]),options:{title:"Browser"},attributes:{url:"https://example.org/"}};export{r as default};
