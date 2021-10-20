@@ -90,6 +90,7 @@ export class SlideDocsViewer {
     this.viewer.mount();
     this.slideController = await this.mountSlideController(this.$slide);
     this.viewer.pages = createDocsViewerPages(this.slideController.slide);
+    this.viewer.setPageIndex(this.getPageIndex(this.slideController));
 
     this.scaleDocsToFit();
     this.sideEffect.add(() => {
@@ -98,6 +99,10 @@ export class SlideDocsViewer {
     });
 
     return this;
+  }
+
+  protected getPageIndex(slideController: SlideController) {
+    return (slideController.slide.slideState.currentSlideIndex || 1) - 1;
   }
 
   public unmount() {
