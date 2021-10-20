@@ -24,6 +24,7 @@ export class MonacoEditor {
   public readonly yText: Text;
 
   public readonly $container: HTMLDivElement;
+  public readonly $footer: HTMLDivElement | undefined;
 
   public readonly compiler = new Judge0(import.meta.env.VITE_JUDGE0_KEY);
   public readonly terminal: Terminal;
@@ -56,8 +57,8 @@ export class MonacoEditor {
     });
 
     // set footer after editor creation
-    const $footer = this.renderFooter();
-    this.$container.appendChild($footer);
+    this.$footer = this.renderFooter();
+    this.$container.appendChild(this.$footer);
 
     this.yBinding = new YMonaco(
       context,
@@ -74,19 +75,19 @@ export class MonacoEditor {
   public setReadonly(readonly: boolean): void {
     if (readonly !== this.readonly) {
       this.readonly = readonly;
-      this.$container.classList.toggle(this.wrapClassName("readonly"), readonly);
       this.editor.updateOptions({ readOnly: readonly });
       this.yBinding.setReadonly(readonly);
+      if (this.$footer) {
+        this.$footer.querySelectorAll("input").forEach(input => (input.disabled = readonly));
+        this.$footer.querySelectorAll("select").forEach(select => (select.disabled = readonly));
+        this.$footer.querySelectorAll("button").forEach(button => (button.disabled = readonly));
+      }
     }
   }
 
   private renderContainer(): HTMLDivElement {
     const $container = document.createElement("div");
     $container.className = this.wrapClassName("editor-container");
-
-    if (this.readonly) {
-      $container.classList.add(this.wrapClassName("cursor-readonly"));
-    }
 
     return $container;
   }
@@ -95,16 +96,13 @@ export class MonacoEditor {
     const $footer = document.createElement("div");
     $footer.className = this.wrapClassName("footer");
 
-    if (this.readonly) {
-      $footer.classList.add(this.wrapClassName("readonly"));
-    }
-
     const $ctrl = document.createElement("div");
     $ctrl.className = this.wrapClassName("footer-ctrl");
     $footer.appendChild($ctrl);
 
     const $langSelect = document.createElement("select");
     $langSelect.className = this.wrapClassName("lang-select");
+    $langSelect.disabled = this.readonly;
 
     this.monaco.languages.getLanguages().forEach(lang => {
       const opt = document.createElement("option");
@@ -119,7 +117,7 @@ export class MonacoEditor {
     const $runCode = document.createElement("button");
     $runCode.className = this.wrapClassName("run-code");
     $runCode.textContent = "Run";
-    $runCode.disabled = !this.compiler.hasLanguage(this.attrs.lang);
+    $runCode.disabled = !this.compiler.hasLanguage(this.attrs.lang) || this.readonly;
     $ctrl.appendChild($runCode);
 
     this.sideEffect.addEventListener($langSelect, "change", () => {

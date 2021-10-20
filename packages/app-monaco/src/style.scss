@@ -82,6 +82,7 @@ $namespace: "netless-app-monaco";
 .#{$namespace}-footer {
   box-sizing: border-box;
   max-height: 30%;
+  min-height: 60px;
   display: flex;
   flex-direction: column;
   border-top: 1px solid #eeeef7;
@@ -89,21 +90,24 @@ $namespace: "netless-app-monaco";
   font-size: 12px;
 }
 
-.#{$namespace}-readonly {
-  pointer-events: none;
-
-  .#{$namespace}-lang-select {
-    pointer-events: none;
-  }
-}
-
 .#{$namespace}-footer-ctrl {
   width: 100%;
   padding: 5px 16px;
+  user-select: none;
+}
+
+.#{$namespace}-lang-select {
+  &:disabled {
+    cursor: not-allowed;
+  }
 }
 
 .#{$namespace}-run-code {
   margin-left: 5px;
+
+  &:disabled {
+    cursor: not-allowed;
+  }
 }
 
 .#{$namespace}-terminal {
