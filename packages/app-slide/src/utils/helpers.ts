@@ -12,3 +12,7 @@ export function preventEvent(ev: Event): void {
     ev.preventDefault();
   }
 }
+
+export function isObj(obj: unknown) {
+  return typeof obj === "object" && obj !== null;
+}

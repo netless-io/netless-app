@@ -8,6 +8,7 @@ import { ensureAttributes } from "@netless/app-shared";
 import { SideEffectManager } from "side-effect-manager";
 import { SlideDocsViewer } from "./SlideDocsViewer";
 import { mountSlideController, syncSceneWithSlide } from "./utils/slide";
+import { isObj } from "./utils/helpers";
 import styles from "./style.scss?inline";
 
 export type SlideState = Slide["slideState"];
@@ -88,14 +89,14 @@ const SlideApp: NetlessApp<Attributes> = {
       sideEffect.add(() => {
         const magixEventListener = (ev: Event) => {
           if (
+            theController &&
             ev.event === channel &&
             ev.authorId !== displayer.observerId &&
-            typeof ev.payload === "object" &&
-            ev.payload !== null
+            isObj(ev.payload)
           ) {
             const { type, payload } = ev.payload;
             if (type === SLIDE_EVENTS.syncDispatch) {
-              theController?.receiveSyncEvent(payload);
+              theController.receiveSyncEvent(payload);
             }
           }
         };
