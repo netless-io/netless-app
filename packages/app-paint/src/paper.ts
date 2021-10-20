@@ -1,5 +1,7 @@
-import { nanoid } from "nanoid";
 import type { Curve as CurveShape, PID, Point } from "./typings";
+
+import { nanoid } from "nanoid";
+import BezierQ from "./bezier-q?worker";
 
 export function createSVGElement(): SVGSVGElement {
   return document.createElementNS("http://www.w3.org/2000/svg", "svg");
@@ -62,6 +64,36 @@ export class Curve extends PathBase {
     }
   }
 }
+
+const DrawingStep = 3;
+const bezierQ = new BezierQ();
+const tasks = new Map<string, (points: Point[]) => void>();
+const nextFrame = () => new Promise<number>(resolve => requestAnimationFrame(resolve));
+
+bezierQ.onmessage = (ev: MessageEvent<{ id: string; points: Point[] }>) => {
+  const { id, points } = ev.data;
+  const task = tasks.get(id);
+  if (task) task(points);
+};
+
+async function startDrawing(paper: Paper, points: Point[]) {
+  const path = paper.newPath();
+  const { length } = points;
+  for (let i = 2; i < length; ++i) {
+    path.replace(points.slice(0, i));
+    await nextFrame();
+  }
+  path.replace(points);
+}
+
+export function simulateDrawing(paper: Paper, curves: CurveShape[]): void {
+  curves = curves.map(curve => curve.map(point => ({ ...point }))) as CurveShape[];
+  const id = nanoid();
+  tasks.set(id, points => startDrawing(paper, points));
+  bezierQ.postMessage({ id, curves, step: DrawingStep });
+}
+
+export class DrawingSimulator {}
 
 // ha ha, i'm not paper.js
 export default class Paper {

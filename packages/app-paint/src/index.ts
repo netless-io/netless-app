@@ -1,11 +1,12 @@
-import { ensureAttributes } from "@netless/app-shared";
-import type { NetlessApp } from "@netless/window-manager";
-import { SideEffectManager } from "side-effect-manager";
 import type { Event } from "white-web-sdk";
-import FitCurve from "./fit-curve-worker?worker";
+import type { NetlessApp } from "@netless/window-manager";
 import type { Path } from "./paper";
-import Paper from "./paper";
 import type { BroadcastEvent, Curve, PID, Point } from "./typings";
+
+import { ensureAttributes } from "@netless/app-shared";
+import { SideEffectManager } from "side-effect-manager";
+import FitCurve from "./fit-curve-worker?worker";
+import Paper, { simulateDrawing } from "./paper";
 
 export interface Attributes {
   curves: Record<PID, Curve[]>;
@@ -56,22 +57,14 @@ const Paint: NetlessApp<Attributes> = {
 
     const magixEventListener = (ev: Event) => {
       if (ev.event === channel && ev.authorId !== displayer.observerId) {
-        const { clear, pid, point, done }: BroadcastEvent = ev.payload;
+        const { clear, pid, done }: BroadcastEvent = ev.payload;
         if (clear) {
           paper.clear();
           paper.initCurves(attrs.curves);
         }
         if (pid) {
-          let item = paths[pid];
-          if (!item) {
-            item = paths[pid] = { points: [], path: paper.newPath() };
-          }
-          if (point) {
-            item.points.push(point);
-            item.path.replace(item.points);
-          }
           if (done) {
-            delete paths[pid];
+            simulateDrawing(paper, attrs.curves[pid]);
           }
         }
       }
@@ -93,8 +86,6 @@ const Paint: NetlessApp<Attributes> = {
         item.points.push(point);
         item.path.replace(item.points);
         item.timeStamp = timeStamp;
-
-        broadcast({ pid, point });
       },
       // onDrawEnd
       (pid: PID) => {
@@ -106,8 +97,6 @@ const Paint: NetlessApp<Attributes> = {
           fitCurve.postMessage({ id: pid, path: item.points, error: 5 });
         }
         delete paths[pid];
-
-        broadcast({ pid, done: true });
       }
     );
 
@@ -117,6 +106,7 @@ const Paint: NetlessApp<Attributes> = {
       const { id: pid, curves } = ev.data;
       if (context.getIsWritable()) {
         context.updateAttributes(["curves", pid], curves);
+        broadcast({ pid, done: true });
       }
     };
 
