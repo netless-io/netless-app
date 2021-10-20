@@ -43,6 +43,7 @@ export function createDocsViewerPages(slide: Slide): DocsViewerPage[] {
 export class SlideController {
   readonly ready: Promise<this>;
   private resolveReady!: (slideController: this) => void;
+  private reject!: () => void;
 
   constructor(
     public readonly slide: Slide,
@@ -75,18 +76,23 @@ export class SlideController {
       slide.renderSlide(initialPage);
     }
 
-    this.ready = new Promise(resolve => {
+    this.ready = new Promise((resolve, reject) => {
       this.resolveReady = resolve;
+      this.reject = reject;
     });
 
     this.pollReadyState();
   }
 
+  private pollCount = 0;
   private pollReadyState = () => {
     if (this.isReady()) {
       this.resolveReady(this);
-    } else {
+    } else if (this.pollCount < 20) {
+      this.pollCount++;
       setTimeout(this.pollReadyState, 500);
+    } else {
+      this.reject();
     }
   };
 

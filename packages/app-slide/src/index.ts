@@ -129,7 +129,14 @@ const SlideApp: NetlessApp<Attributes> = {
       mountWhiteboard: dom => context.mountView(dom),
     });
 
-    await docsViewer.mount();
+    try {
+      await docsViewer.mount();
+    } catch {
+      console.log("[Slide]: destroy by error");
+      sideEffect.flushAll();
+      docsViewer.destroy();
+      return;
+    }
 
     if (import.meta.env.DEV) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any

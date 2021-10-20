@@ -103,8 +103,8 @@ export class SlideDocsViewer {
   public unmount() {
     if (this.slideController) {
       this.slideController.destroy();
-      this.viewer.unmount();
     }
+    this.viewer.unmount();
     return this;
   }
 
