@@ -1,10 +1,9 @@
 {
-  "private": true,
   "name": "@netless/app-slide",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "main": "dist/main.cjs.js",
   "module": "dist/main.es.js",
-  "types": "src/index.ts",
+  "types": "dist/index.d.ts",
   "scripts": {
     "types": "cross-env NODE_ENV=production tsc --declaration --emitDeclarationOnly --outDir dist",
     "build": "vite build && npm run types",
