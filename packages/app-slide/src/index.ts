@@ -73,19 +73,12 @@ const SlideApp: NetlessApp<Attributes> = {
       if (context.getIsWritable() && theController) {
         context.updateAttributes(["state"], theController.slide.slideState);
         if (room) {
-          room.dispatchMagixEvent(channel, { type: SLIDE_EVENTS.syncDispatch, event });
+          room.dispatchMagixEvent(channel, { type: SLIDE_EVENTS.syncDispatch, payload: event });
         }
       }
     };
 
-    function registerMagixEvent(theController: SlideController) {
-      const { slide } = theController;
-      slide.on(SLIDE_EVENTS.syncDispatch, (payload: unknown) => {
-        context.updateAttributes(["state"], slide.slideState);
-        if (room) {
-          room.dispatchMagixEvent(channel, { type: SLIDE_EVENTS.syncDispatch, payload });
-        }
-      });
+    function registerMagixEvent() {
       sideEffect.add(() => {
         const magixEventListener = (ev: Event) => {
           if (
@@ -122,7 +115,7 @@ const SlideApp: NetlessApp<Attributes> = {
           onDispatchSyncEvent
         );
 
-        registerMagixEvent(theController);
+        registerMagixEvent();
 
         return theController;
       },
