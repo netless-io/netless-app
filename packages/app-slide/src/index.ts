@@ -48,7 +48,7 @@ const SlideApp: NetlessApp<Attributes> = {
     const sideEffect = new SideEffectManager();
     // 因为 view 存在，init scene path 必定存在
     const baseScenePath = context.getInitScenePath() as string;
-    const showController = import.meta.env.DEV;
+    const showController = import.meta.env.DEV || context.getAppOptions()?.debug;
     const channel = `channel-${context.appId}`;
 
     let theController: SlideController | undefined;
