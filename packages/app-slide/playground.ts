@@ -26,6 +26,18 @@ const options: PlaygroundConfigs<Attributes> = [
       url: "https://convertcdn.netless.group/dynamicConvert",
     },
   },
+  {
+    kind: "Slide",
+    src: () => import("./src"),
+    options: {
+      title: "星空",
+      scenePath: `/Slide/f188fa60321911ec861a599bb5efdecf`,
+    },
+    attributes: {
+      taskId: "f188fa60321911ec861a599bb5efdecf",
+      url: "https://convertcdn.netless.link/dynamicConvert",
+    },
+  },
 ];
 
 export default options;

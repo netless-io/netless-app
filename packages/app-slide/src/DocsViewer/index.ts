@@ -64,14 +64,6 @@ export class DocsViewer {
   public mount(): void {
     this.box.mountContent(this.$content);
     this.box.mountFooter(this.$footer);
-
-    this.sideEffect.add(() => {
-      const previewLazyLoad = new LazyLoad({
-        container: this.$preview,
-        elements_selector: `.${this.wrapClassName("preview-page>img")}`,
-      });
-      return () => previewLazyLoad.destroy();
-    }, "preview-lazyload");
   }
 
   public unmount(): void {
@@ -198,6 +190,14 @@ export class DocsViewer {
       $page.appendChild($name);
       $preview.appendChild($page);
     });
+
+    this.sideEffect.add(() => {
+      const previewLazyLoad = new LazyLoad({
+        container: this.$preview,
+        elements_selector: `.${this.wrapClassName("preview-page>img")}`,
+      });
+      return () => previewLazyLoad.destroy();
+    }, "preview-lazyload");
   }
 
   protected renderPreviewMask(): HTMLElement {
