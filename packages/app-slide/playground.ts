@@ -35,7 +35,6 @@ const options: PlaygroundConfigs<Attributes> = [
     },
     attributes: {
       taskId: "f188fa60321911ec861a599bb5efdecf",
-      url: "https://convertcdn.netless.link/dynamicConvert",
     },
   },
 ];

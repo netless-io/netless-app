@@ -35,8 +35,8 @@ const SlideApp: NetlessApp<Attributes> = {
       state: null,
     });
 
-    if (!attrs.taskId || !attrs.url) {
-      throw new Error(`[Slide] no taskId or url`);
+    if (!attrs.taskId) {
+      throw new Error(`[Slide] no taskId`);
     }
 
     if (!view) {
@@ -105,7 +105,7 @@ const SlideApp: NetlessApp<Attributes> = {
         theController = await mountSlideController(
           anchor,
           attrs.taskId,
-          attrs.url,
+          attrs.url || "https://convertcdn.netless.link/dynamicConvert",
           showController,
           JSON.parse(JSON.stringify(attrs.state)),
           displayer.state.sceneState.index + 1,
