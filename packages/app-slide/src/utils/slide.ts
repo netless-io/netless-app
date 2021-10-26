@@ -54,7 +54,10 @@ export class SlideController {
     readonly initialState: Slide["slideState"] | null,
     readonly initialPage: number
   ) {
-    slide.on(SLIDE_EVENTS.slideChange, onPageChanged);
+    slide.on(SLIDE_EVENTS.slideChange, page => {
+      this.targetingPage = -1;
+      onPageChanged(page);
+    });
 
     slide.on(SLIDE_EVENTS.renderStart, onTransitionStart);
     slide.on(SLIDE_EVENTS.renderEnd, onTransitionEnd);
