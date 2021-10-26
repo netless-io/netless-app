@@ -1,14 +1,17 @@
 import { svelte } from "@sveltejs/vite-plugin-svelte";
-import type { UserConfigFn } from "vite";
+import peerDepsExternal from "rollup-plugin-peer-deps-external";
+import type { LibraryFormats, Plugin, UserConfigFn } from "vite";
 import { defineConfig } from "vite";
 import path from "path";
 
 export function createViteConfig({
   entry = path.resolve(process.cwd(), "src/index.ts"),
   name,
+  formats = ["es", "cjs", "iife"],
 }: {
   entry?: string;
   name?: string;
+  formats?: LibraryFormats[];
 } = {}): UserConfigFn {
   return defineConfig(({ mode }) => {
     const isProd = mode === "production";
@@ -35,7 +38,7 @@ export function createViteConfig({
       build: {
         lib: {
           entry,
-          formats: ["es", "cjs", "iife"],
+          formats,
           fileName: "main",
           name: name || "Netless" + varName,
         },
@@ -48,6 +51,7 @@ export function createViteConfig({
             inlineDynamicImports: true,
             exports: "named",
           },
+          plugins: [peerDepsExternal() as Plugin],
         },
         minify: isProd,
       },

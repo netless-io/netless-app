@@ -8,6 +8,7 @@ importers:
       '@sveltejs/vite-plugin-svelte': ^1.0.0-next.30
       '@tsconfig/svelte': ^2.0.1
       '@types/node': ^16.11.4
+      '@types/rollup-plugin-peer-deps-external': ^2.2.1
       '@typescript-eslint/eslint-plugin': ^5.1.0
       '@typescript-eslint/parser': ^5.1.0
       cross-env: ^7.0.3
@@ -18,6 +19,7 @@ importers:
       prettier: ^2.4.1
       prettier-plugin-svelte: ^2.4.0
       rimraf: ^3.0.2
+      rollup-plugin-peer-deps-external: ^2.2.4
       sass: ^1.43.3
       svelte: ^3.44.0
       typescript: ^4.4.4
@@ -28,6 +30,7 @@ importers:
       '@sveltejs/vite-plugin-svelte': 1.0.0-next.30_svelte@3.44.0+vite@2.6.10
       '@tsconfig/svelte': 2.0.1
       '@types/node': 16.11.4
+      '@types/rollup-plugin-peer-deps-external': 2.2.1
       '@typescript-eslint/eslint-plugin': 5.1.0_273a00ec265649c49755eee7222c1c12
       '@typescript-eslint/parser': 5.1.0_eslint@8.1.0+typescript@4.4.4
       cross-env: 7.0.3
@@ -38,6 +41,7 @@ importers:
       prettier: 2.4.1
       prettier-plugin-svelte: 2.4.0_prettier@2.4.1+svelte@3.44.0
       rimraf: 3.0.2
+      rollup-plugin-peer-deps-external: 2.2.4
       sass: 1.43.3
       svelte: 3.44.0
       typescript: 4.4.4
@@ -412,6 +416,10 @@ packages:
     resolution: {integrity: sha512-aqkICXbM1oX5FfgZd2qSSAGdyo/NRxjWCamxoyi3T8iVQnzGge19HhDYzZ6NrVOW7bhcWNSq9XexWFtMzbB24A==}
     dev: true
 
+  /@types/estree/0.0.39:
+    resolution: {integrity: sha512-EYNwp3bU+98cpU4lAWYYL7Zz+2gryWH1qbdDTidVd6hkiR6weksdbMadyXKXNPEkQFhXM+hVO9ZygomHXp+AIw==}
+    dev: true
+
   /@types/faker/5.5.9:
     resolution: {integrity: sha512-uCx6mP3UY5SIO14XlspxsGjgaemrxpssJI0Ol+GfhxtcKpv9pgRZYsS4eeKeHVLje6Qtc8lGszuBI461+gVZBA==}
     dev: true
@@ -434,6 +442,13 @@ packages:
 
   /@types/retry/0.12.1:
     resolution: {integrity: sha512-xoDlM2S4ortawSWORYqsdU+2rxdh4LRW9ytc3zmT37RIKQh6IHyKwwtKhKis9ah8ol07DCkZxPt8BBvPjC6v4g==}
+    dev: true
+
+  /@types/rollup-plugin-peer-deps-external/2.2.1:
+    resolution: {integrity: sha512-CUK4Mi3M3A/0coRUeo4McvUFOxR5H6UYd6Wt3D+K4c4fJupolMSoIxsZaBG1g/BJQOaujf78Pf7KhgfhrX1FZA==}
+    dependencies:
+      '@types/node': 16.11.4
+      rollup: 0.63.5
     dev: true
 
   /@typescript-eslint/eslint-plugin/5.1.0_273a00ec265649c49755eee7222c1c12:
@@ -1968,6 +1983,20 @@ packages:
     hasBin: true
     dependencies:
       glob: 7.2.0
+    dev: true
+
+  /rollup-plugin-peer-deps-external/2.2.4:
+    resolution: {integrity: sha512-AWdukIM1+k5JDdAqV/Cxd+nejvno2FVLVeZ74NKggm3Q5s9cbbcOgUPGdbxPi4BXu7xGaZ8HG12F+thImYu/0g==}
+    peerDependencies:
+      rollup: '*'
+    dev: true
+
+  /rollup/0.63.5:
+    resolution: {integrity: sha512-dFf8LpUNzIj3oE0vCvobX6rqOzHzLBoblyFp+3znPbjiSmSvOoK2kMKx+Fv9jYduG1rvcCfCveSgEaQHjWRF6g==}
+    hasBin: true
+    dependencies:
+      '@types/estree': 0.0.39
+      '@types/node': 16.11.4
     dev: true
 
   /rollup/2.58.0:
