@@ -4,8 +4,8 @@
   "private": true,
   "scripts": {
     "dev": "vite --open --host",
-    "build": "vite build",
-    "build:dev": "vite build --mode development"
+    "build:ci": "vite build",
+    "cleanup": "rimraf dist"
   },
   "devDependencies": {
     "@netless/app-embedded-page-sdk": "workspace:*",

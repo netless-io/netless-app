@@ -19,7 +19,8 @@
     }
   ],
   "scripts": {
-    "build": "rimraf ./dist && tsc --declaration --outDir dist"
+    "build": "rimraf ./dist && tsc --declaration --outDir dist",
+    "cleanup": "rimraf ./dist"
   },
   "peerDependencies": {
     "side-effect-manager": ">=0"
