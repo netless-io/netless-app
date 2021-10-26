@@ -20,7 +20,7 @@ Clone or fork this project, at project root run:
 
 ```bash
 pnpm i
-pnpm build --filter \*app-shared
+pnpm build-all
 pnpm dev
 ```
 
@@ -38,10 +38,10 @@ pnpm add @netless/app-hello-world --workspace --filter playground
 # it updates packages/app/package.json
 # dependencies -> @netless/app-hello-world -> "workspace:^0.1.0"
 
-'learn more about workspace in https://pnpm.io/workspaces'
+'learn more about workspace at https://pnpm.io/workspaces'
 
 # update dependencies (-L = latest, -i = interactive)
-pnpm up -Li
+pnpm up -Li --recursive
 
 # start playground
 pnpm dev --filter playground
