@@ -1,0 +1,24 @@
+{
+  "name": "@netless/app-scratch-sdk",
+  "version": "0.0.1",
+  "main": "dist/main.cjs.js",
+  "module": "dist/main.es.js",
+  "scripts": {
+    "build": "vite build",
+    "build:dev": "vite build --mode development",
+    "cleanup": "rimraf ./dist"
+  },
+  "peerDependencies": {
+    "react": ">=16",
+    "redux": ">=3",
+    "react-intl": ">=2"
+  },
+  "devDependencies": {
+    "react": "^17.0.2",
+    "redux": "^4.1.1"
+  },
+  "dependencies": {
+    "@netless/app-embedded-page-sdk": "workspace:^0.0.3",
+    "side-effect-manager": "^0.1.3"
+  }
+}
