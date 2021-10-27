@@ -133,8 +133,10 @@ export function createEmbeddedApp<State = Record<string, any>, Message = any>(
       if (state[key] !== diff.newValue) {
         if (diff.newValue === void 0) {
           delete state[key];
+          oldValues.delete(key);
         } else {
           state[key] = diff.newValue as any;
+          oldValues.set(key, state[key])
         }
       }
     }
