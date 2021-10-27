@@ -1,3 +1,5 @@
+/** base on https://github.com/zasource-dev/React-Serialize/blob/c9704e56bf14facbe8b0c645f9fa4e7d167d232f/src/index.js */
+
 import React from "react";
 
 /**
