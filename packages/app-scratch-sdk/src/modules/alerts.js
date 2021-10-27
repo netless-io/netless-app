@@ -73,32 +73,36 @@ export const compareAppState = (diff, appState, reduxState) => {
   Helpers
 \*------------------------------------*/
 
+function inflateAlertsListItem(item) {
+  if (item.content) {
+    return {
+      ...item,
+      content: serialize(item.content),
+    };
+  }
+  return item;
+}
+
 function inflateAlertsList(alertsList) {
   if (!alertsList || alertsList.length <= 0) {
     return alertsList;
   }
-  return alertsList.map(item => {
-    if (item.content) {
-      return {
-        ...item,
-        content: serialize(item.content),
-      };
-    }
-    return item;
-  });
+  return alertsList.map(inflateAlertsListItem);
+}
+
+function deflateAlertsListItem(item) {
+  if (item.content) {
+    return {
+      ...item,
+      content: deserialize(item.content, { components: { FormattedMessage } }),
+    };
+  }
+  return item;
 }
 
 function deflateAlertsList(alertsList) {
   if (!alertsList || alertsList.length <= 0) {
     return alertsList;
   }
-  return alertsList.map(item => {
-    if (item.content) {
-      return {
-        ...item,
-        content: deserialize(item.content, { components: { FormattedMessage } }),
-      };
-    }
-    return item;
-  });
+  return alertsList.map(deflateAlertsListItem);
 }
