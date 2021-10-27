@@ -4,7 +4,7 @@ import { SideEffectManager } from "side-effect-manager";
 
 export const UPDATE_STATE = "NETLESS/UPDATE_STATE";
 
-const scratchModules = Object.values(import.meta.globEager("./modules/*.js"));
+const scratchModules = Object.values(import.meta.globEager("./modules/*.js")).map(m => m.default);
 
 export class NetlessAppScratchSDK {
   constructor() {
@@ -37,15 +37,11 @@ export class NetlessAppScratchSDK {
 
     const store = createStore(enhancedReducer, preloadedState, enhancer);
 
-    window.store = store;
-    window.showAlert = () =>
-      store.dispatch({
-        type: "scratch-gui/alerts/SHOW_ALERT",
-        alertId: "importingAsset",
-      });
-
     createEmbeddedApp().then(app => {
-      window.app = app;
+      if (import.meta.env.DEV) {
+        window.app = app;
+        window.store = store;
+      }
 
       this.sideEffect.add(() => {
         const handler = diff => {
@@ -89,8 +85,13 @@ export class NetlessAppScratchSDK {
           this.sideEffect.setTimeout(
             () => {
               const currReduxState = store.getState();
+              const currAppState = app.state;
               const newAppState = scratchModules.reduce((appState, scratchModule) => {
-                const result = scratchModule.compareReduxState(this.lastReduxState, currReduxState);
+                const result = scratchModule.compareReduxState(
+                  this.lastReduxState,
+                  currReduxState,
+                  currAppState
+                );
                 return result ? { ...appState, ...result } : appState;
               }, {});
               if (Object.keys(newAppState).length > 0) {

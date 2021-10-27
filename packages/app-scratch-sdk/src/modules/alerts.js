@@ -1,72 +1,88 @@
-import { mergeArray } from "../helpers";
-import { serialize, deserialize } from "../react-serialize";
+import { size } from "lodash-es";
 import { FormattedMessage } from "react-intl";
+import { mergeArray, isEqualArrayWithKey } from "../utils/array";
+import { serialize, deserialize } from "../utils/react-serialize";
 
 const ALERTS_VISIBLE = "alerts.visible";
 const ALERTS_ALERTS_LIST = "alerts.alertsList";
 
-/*------------------------------------*\
-  Author side
-\*------------------------------------*/
+export default {
+  /*------------------------------------*\
+    Author side
+  \*------------------------------------*/
 
-export const initialAppState = reduxState => ({
-  [ALERTS_VISIBLE]: reduxState.scratchGui.alerts.visible,
-  [ALERTS_ALERTS_LIST]: inflateAlertsList(reduxState.scratchGui.alerts.alertsList),
-});
+  initialAppState: reduxState => ({
+    [ALERTS_VISIBLE]: reduxState.scratchGui.alerts.visible,
+    [ALERTS_ALERTS_LIST]: inflateAlertsList(reduxState.scratchGui.alerts.alertsList),
+  }),
 
-export const compareReduxState = (prevReduxState, currReduxState) => {
-  const prevAlerts = prevReduxState.scratchGui.alerts;
-  const currAlerts = currReduxState.scratchGui.alerts;
-  if (prevAlerts !== currAlerts) {
-    const newState = {};
-    if (prevAlerts.visible !== currAlerts.visible) {
-      newState[ALERTS_VISIBLE] = currAlerts.visible;
+  compareReduxState: (prevReduxState, currReduxState, appState) => {
+    const prevAlerts = prevReduxState.scratchGui.alerts;
+    const currAlerts = currReduxState.scratchGui.alerts;
+    if (prevAlerts !== currAlerts) {
+      const newState = {};
+      if (
+        prevAlerts.visible !== currAlerts.visible &&
+        appState[ALERTS_VISIBLE] !== currAlerts.visible
+      ) {
+        newState[ALERTS_VISIBLE] = currAlerts.visible;
+      }
+      if (
+        prevAlerts.alertsList !== currAlerts.alertsList &&
+        !isEqualArrayWithKey(appState[ALERTS_ALERTS_LIST], currAlerts.alertsList, "alertId")
+      ) {
+        newState[ALERTS_ALERTS_LIST] = inflateAlertsList(currAlerts.alertsList);
+      }
+      if (size(newState) > 0) {
+        return newState;
+      }
     }
-    if (prevAlerts.alertsList !== currAlerts.alertsList) {
-      newState[ALERTS_ALERTS_LIST] = inflateAlertsList(currAlerts.alertsList);
-    }
-    return newState;
-  }
-};
-
-/*------------------------------------*\
-  Audience side
-\*------------------------------------*/
-
-export const initialReduxState = appState => [
-  {
-    path: ["scratchGui", "alerts"],
-    value: {
-      visible: appState[ALERTS_VISIBLE],
-      alertsList: deflateAlertsList(appState[ALERTS_ALERTS_LIST]),
-    },
   },
-];
 
-export const compareAppState = (diff, appState, reduxState) => {
-  if (diff[ALERTS_VISIBLE] || diff[ALERTS_ALERTS_LIST]) {
-    const { alerts } = reduxState.scratchGui;
-    const newState = {
-      visible: alerts.visible,
-      alertsList: alerts.alertsList,
-    };
-    if (diff[ALERTS_VISIBLE]) {
-      newState.visible = appState[ALERTS_VISIBLE];
-    }
-    if (diff[ALERTS_ALERTS_LIST]) {
-      newState.alertsList = mergeArray(
-        alerts.alertsList,
-        deflateAlertsList(appState[ALERTS_ALERTS_LIST]),
-        "alertId"
-      );
-    }
-    return [
-      {
-        path: ["scratchGui", "alerts"],
-        value: newState,
+  /*------------------------------------*\
+    Audience side
+  \*------------------------------------*/
+
+  initialReduxState: appState => [
+    {
+      path: ["scratchGui", "alerts"],
+      value: {
+        visible: appState[ALERTS_VISIBLE],
+        alertsList: deflateAlertsList(appState[ALERTS_ALERTS_LIST]),
       },
-    ];
-  }
+    },
+  ],
+
+  compareAppState: (diff, appState, reduxState) => {
+    if (diff[ALERTS_VISIBLE] || diff[ALERTS_ALERTS_LIST]) {
+      const { alerts } = reduxState.scratchGui;
+      const newState = {};
+      if (diff[ALERTS_VISIBLE] && appState[ALERTS_VISIBLE] !== alerts.visible) {
+        newState.visible = appState[ALERTS_VISIBLE];
+      }
+      if (
+        diff[ALERTS_ALERTS_LIST] &&
+        !isEqualArrayWithKey(appState[ALERTS_ALERTS_LIST], alerts.alertsList, "alertId")
+      ) {
+        newState.alertsList = mergeArray(
+          alerts.alertsList,
+          deflateAlertsList(appState[ALERTS_ALERTS_LIST]),
+          "alertId"
+        );
+      }
+      if (size(newState) > 0) {
+        return [
+          {
+            path: ["scratchGui", "alerts"],
+            value: {
+              ...alerts,
+              ...newState,
+            },
+          },
+        ];
+      }
+    }
+  },
 };
 
 /*------------------------------------*\
