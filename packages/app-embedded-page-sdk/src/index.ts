@@ -116,6 +116,7 @@ export function createEmbeddedApp<State = Record<string, any>, Message = any>(
       if (isRef(oldValue)) {
         if (oldValues.has(key)) {
           diff.oldValue = oldValues.get(key);
+          oldValues.delete(key);
         } else {
           diff.oldValue = oldValue.v;
         }
@@ -126,6 +127,14 @@ export function createEmbeddedApp<State = Record<string, any>, Message = any>(
           diff.newValue = state[key] as any;
         } else {
           diff.newValue = newValue.v;
+        }
+      }
+
+      if (state[key] !== diff.newValue) {
+        if (diff.newValue === void 0) {
+          delete state[key];
+        } else {
+          state[key] = diff.newValue as any;
         }
       }
     }
