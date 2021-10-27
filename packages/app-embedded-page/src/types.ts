@@ -8,6 +8,7 @@ export interface CameraState {
 
 // iframe --> me
 export interface ReceiveMessages {
+  Init: void;
   GetState: void;
   SetState: State;
   SendMessage: unknown;
@@ -19,6 +20,7 @@ export interface ReceiveMessages {
 
 type CheckReceiveMessageType<T extends { type: keyof ReceiveMessages }> = T;
 export type ReceiveMessage = CheckReceiveMessageType<
+  | { type: "Init" }
   | { type: "GetState" }
   | { type: "SetState"; payload: State }
   | { type: "SendMessage"; payload: unknown }

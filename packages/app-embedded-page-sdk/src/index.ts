@@ -8,11 +8,12 @@ import type {
 } from "@netless/app-embedded-page";
 
 import { SideEffectManager } from "side-effect-manager";
-import { isObj } from "./utils";
+import { isObj, isRef, makeRef } from "./utils";
 
 type CheckSendMessageType<T extends { type: keyof ReceiveMessages }> = T;
 
 export type SendMessage<State = any, Message = any> = CheckSendMessageType<
+  | { type: "Init" }
   | { type: "GetState" }
   | { type: "SetState"; payload: Partial<State> }
   | { type: "SendMessage"; payload: Message }
@@ -85,6 +86,9 @@ export interface EmbeddedApp<State = Record<string, any>, Message = any> {
 export function createEmbeddedApp<State = Record<string, any>, Message = any>(
   callback?: (app: EmbeddedApp<State, Message>) => void
 ): Promise<EmbeddedApp<State, Message>> {
+  const identityMap = new WeakMap<any, string>();
+  const oldValues = new Map<keyof State, any>();
+
   let state: State;
   let page: string | undefined;
   let writable = false;
@@ -102,6 +106,31 @@ export function createEmbeddedApp<State = Record<string, any>, Message = any>(
   let onPageChangedPayload: DiffOne<string> | undefined;
   let onWritableChangedPayload: DiffOne<boolean> | undefined;
 
+  function refactorStateChangedPayload() {
+    if (!onStateChangedPayload) return;
+
+    for (const [key_, diff] of Object.entries(onStateChangedPayload)) {
+      const key = key_ as keyof State;
+      const { oldValue, newValue } = diff;
+
+      if (isRef(oldValue)) {
+        if (oldValues.has(key)) {
+          diff.oldValue = oldValues.get(key);
+        } else {
+          diff.oldValue = oldValue.v;
+        }
+      }
+
+      if (isRef(newValue)) {
+        if (newValue.k === identityMap.get(state[key])) {
+          diff.newValue = state[key] as any;
+        } else {
+          diff.newValue = newValue.v;
+        }
+      }
+    }
+  }
+
   function postMessage(message: SendMessage) {
     parent.postMessage(message, "*");
   }
@@ -118,6 +147,13 @@ export function createEmbeddedApp<State = Record<string, any>, Message = any>(
       case "Init": {
         const { payload } = event;
         state = payload.state as unknown as State;
+        for (const [key, value] of Object.entries(state)) {
+          if (isRef(value)) {
+            // TODO: arrays (value.v) are represented as {"0":1}
+            //       wait embedded-page to fix it
+            state[key as keyof State] = value.v as any;
+          }
+        }
         page = payload.page;
         writable = payload.writable;
         meta = payload.meta;
@@ -130,15 +166,12 @@ export function createEmbeddedApp<State = Record<string, any>, Message = any>(
       }
       case "StateChanged": {
         onStateChangedPayload = event.payload;
-        postMessage({ type: "GetState" });
+        refactorStateChangedPayload();
+        onStateChanged.dispatch(onStateChangedPayload);
         break;
       }
       case "GetState": {
         state = event.payload;
-        if (onStateChangedPayload) {
-          onStateChanged.dispatch(onStateChangedPayload);
-          onStateChangedPayload = void 0;
-        }
         break;
       }
       case "PageChanged": {
@@ -174,15 +207,30 @@ export function createEmbeddedApp<State = Record<string, any>, Message = any>(
     state = { ...initialState, ...state };
   };
 
-  const setState = (newState: Partial<State>) => {
-    for (const [key, value] of Object.entries(newState)) {
+  const setState = (newState_: Partial<State>) => {
+    const newState: Partial<State> = {};
+    let changed = false;
+    for (const [key_, value_] of Object.entries(newState_)) {
+      const key = key_ as keyof State;
+      let value = value_ as any;
+      oldValues.set(key, state[key]);
       if (value === void 0) {
-        delete state[key as keyof State];
-      } else {
-        state[key as keyof State] = value as State[keyof State];
+        delete state[key];
+        newState[key] = void 0;
+        changed = true;
+      } else if (state[key] !== value) {
+        state[key] = value;
+        if (isObj(value)) {
+          value = makeRef(value);
+          identityMap.set(value.v, value.k);
+        }
+        newState[key] = value;
+        changed = true;
       }
     }
-    postMessage({ type: "SetState", payload: newState });
+    if (changed) {
+      postMessage({ type: "SetState", payload: newState });
+    }
   };
 
   const setPage = (newPage: string) => {
@@ -224,6 +272,8 @@ export function createEmbeddedApp<State = Record<string, any>, Message = any>(
     onWritableChanged,
     onMessage,
   };
+
+  postMessage({ type: "Init" });
 
   return new Promise(resolve => {
     const handler = () => {

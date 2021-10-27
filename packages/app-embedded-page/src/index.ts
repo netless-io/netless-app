@@ -103,7 +103,7 @@ const EmbeddedPage: NetlessApp<Attributes> = {
       return () => displayer.removeMagixEventListener(event);
     });
 
-    sideEffectManager.addEventListener(iframe, "load", () => {
+    const sendInitMessage = () => {
       const memberId = displayer.observerId;
       const userPayload = displayer.state.roomMembers.find(
         member => member.memberId === memberId
@@ -121,7 +121,7 @@ const EmbeddedPage: NetlessApp<Attributes> = {
           },
         },
       });
-    });
+    };
 
     sideEffectManager.addEventListener(window, "message", e => {
       if (e.source !== iframe.contentWindow) return;
@@ -131,6 +131,10 @@ const EmbeddedPage: NetlessApp<Attributes> = {
       console.log("[EmbeddedPage] receive", data);
 
       switch (data.type) {
+        case "Init": {
+          sendInitMessage();
+          break;
+        }
         case "GetState": {
           postMessage({ type: "GetState", payload: attrs.state });
           break;
@@ -180,7 +184,7 @@ const EmbeddedPage: NetlessApp<Attributes> = {
               centerX: data.payload.x,
               centerY: data.payload.y,
               scale: data.payload.scale,
-              animationMode: "immediately" as AnimationMode,
+              animationMode: "immediately" as AnimationMode.Immediately,
             });
           }
           break;
