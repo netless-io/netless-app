@@ -6,12 +6,13 @@ import type {
   Event,
   RoomState,
   ScenePathType,
+  RoomMember as PlainRoomMember,
 } from "white-web-sdk";
 
 import { ensureAttributes } from "@netless/app-shared";
 import { SideEffectManager } from "side-effect-manager";
 
-import type { ReceiveMessage, SendMessages, State } from "./types";
+import type { ReceiveMessage, RoomMember, SendMessages, State } from "./types";
 import { isObj } from "./utils";
 import styles from "./style.scss?inline";
 
@@ -23,6 +24,7 @@ export type {
   SendMessages,
   State,
   CameraState,
+  RoomMember,
 } from "./types";
 
 export interface Attributes {
@@ -59,6 +61,28 @@ const EmbeddedPage: NetlessApp<Attributes> = {
     box.mountStyles(styles);
     box.mountContent(container);
 
+    function clone<T>(payload: T): T {
+      if (payload === void 0) return payload;
+      return JSON.parse(JSON.stringify(payload));
+    }
+
+    function transformRoomMembers(
+      array: ReadonlyArray<PlainRoomMember>
+    ): ReadonlyArray<RoomMember> {
+      return array.map(({ memberId, payload }) => ({
+        sessionUID: memberId,
+        uid: payload?.uid,
+        userPayload: clone(payload),
+      }));
+    }
+
+    const postMessage = <T extends keyof SendMessages>(payload: {
+      type: T;
+      payload: SendMessages[T];
+    }) => {
+      iframe.contentWindow?.postMessage(payload, "*");
+    };
+
     if (view) {
       const viewBox = document.createElement("div");
       viewBox.classList.add("netless-app-embedded-page-wb-view");
@@ -77,19 +101,18 @@ const EmbeddedPage: NetlessApp<Attributes> = {
             if (e.memberState) {
               toggleClickThrough(e.memberState.currentApplianceName);
             }
+            if (e.roomMembers) {
+              postMessage({
+                type: "RoomMembersChanged",
+                payload: transformRoomMembers(e.roomMembers),
+              });
+            }
           };
           room.callbacks.on("onRoomStateChanged", onRoomStateChanged);
           return () => room.callbacks.off("onRoomStateChanged", onRoomStateChanged);
         });
       }
     }
-
-    const postMessage = <T extends keyof SendMessages>(payload: {
-      type: T;
-      payload: SendMessages[T];
-    }) => {
-      iframe.contentWindow?.postMessage(payload, "*");
-    };
 
     const event = `channel-${context.appId}`;
 
@@ -115,9 +138,13 @@ const EmbeddedPage: NetlessApp<Attributes> = {
           state: attrs.state,
           page: attrs.page,
           writable: context.getIsWritable(),
+          roomMembers: transformRoomMembers(displayer.state.roomMembers),
           meta: {
+            sessionUID: memberId,
+            // TODO: uid: room?.uid,
+            uid: userPayload?.uid,
             roomUUID: room?.uuid,
-            userPayload: userPayload && JSON.parse(JSON.stringify(userPayload)),
+            userPayload: clone(userPayload),
           },
         },
       });
@@ -187,6 +214,13 @@ const EmbeddedPage: NetlessApp<Attributes> = {
               animationMode: "immediately" as AnimationMode.Immediately,
             });
           }
+          break;
+        }
+        case "GetRoomMembers": {
+          postMessage({
+            type: "GetRoomMembers",
+            payload: transformRoomMembers(displayer.state.roomMembers),
+          });
           break;
         }
       }

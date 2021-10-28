@@ -6,6 +6,12 @@ export interface CameraState {
   scale: number;
 }
 
+export interface RoomMember {
+  sessionUID: number;
+  uid: string;
+  userPayload: unknown;
+}
+
 // iframe --> me
 export interface ReceiveMessages {
   Init: void;
@@ -16,6 +22,7 @@ export interface ReceiveMessages {
   SetPage: string;
   GetWritable: void;
   MoveCamera: Partial<CameraState>;
+  GetRoomMembers: ReadonlyArray<RoomMember>;
 }
 
 type CheckReceiveMessageType<T extends { type: keyof ReceiveMessages }> = T;
@@ -28,11 +35,14 @@ export type ReceiveMessage = CheckReceiveMessageType<
   | { type: "SetPage"; payload: string }
   | { type: "GetWritable" }
   | { type: "MoveCamera"; payload: Partial<CameraState> }
+  | { type: "GetRoomMembers"; payload: ReadonlyArray<RoomMember> }
 >;
 
 export type DiffOne<T> = { oldValue?: T; newValue?: T };
 
 export interface MetaData {
+  sessionUID?: number;
+  uid?: string;
   roomUUID?: string;
   userPayload?: unknown;
 }
@@ -42,6 +52,7 @@ export interface InitData {
   page?: string;
   writable: boolean;
   meta: MetaData;
+  roomMembers: ReadonlyArray<RoomMember>;
 }
 
 // me --> iframe
@@ -54,4 +65,6 @@ export interface SendMessages {
   PageChanged: DiffOne<string>;
   GetWritable: boolean;
   WritableChanged: DiffOne<boolean>;
+  GetRoomMembers: ReadonlyArray<RoomMember>;
+  RoomMembersChanged: ReadonlyArray<RoomMember>;
 }

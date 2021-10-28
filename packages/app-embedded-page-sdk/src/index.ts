@@ -5,6 +5,7 @@ import type {
   DiffOne,
   InitData,
   CameraState,
+  RoomMember,
 } from "@netless/app-embedded-page";
 
 import { SideEffectManager } from "side-effect-manager";
@@ -21,6 +22,7 @@ export type SendMessage<State = any, Message = any> = CheckSendMessageType<
   | { type: "SetPage"; payload: string }
   | { type: "GetWritable" }
   | { type: "MoveCamera"; payload: Partial<CameraState> }
+  | { type: "GetRoomMembers"; payload: ReadonlyArray<RoomMember> }
 >;
 
 export type Diff<State> = State extends Record<infer K, unknown>
@@ -38,6 +40,8 @@ export type IncomingMessage<State = any, Message = any> = CheckIncomingMessageTy
   | { type: "PageChanged"; payload: DiffOne<string> }
   | { type: "GetWritable"; payload: boolean }
   | { type: "WritableChanged"; payload: DiffOne<boolean> }
+  | { type: "GetRoomMembers"; payload: ReadonlyArray<RoomMember> }
+  | { type: "RoomMembersChanged"; payload: ReadonlyArray<RoomMember> }
 >;
 
 export type Listener<T> = (event: T) => void;
@@ -62,6 +66,7 @@ export interface EmbeddedApp<State = Record<string, any>, Message = any> {
   readonly state: Readonly<State>;
   readonly page?: string;
   readonly isWritable: boolean;
+  readonly roomMembers: ReadonlyArray<RoomMember>;
   readonly meta: Readonly<InitData["meta"]>;
   ensureState(partialState: Partial<State>): void;
   setState(partialState: Partial<State>): void;
@@ -72,6 +77,7 @@ export interface EmbeddedApp<State = Record<string, any>, Message = any> {
   onStateChanged: Emitter<Diff<State>>;
   onPageChanged: Emitter<DiffOne<string>>;
   onWritableChanged: Emitter<DiffOne<boolean>>;
+  onRoomMembersChanged: Emitter<ReadonlyArray<RoomMember>>;
   onMessage: Emitter<Message>;
 }
 
@@ -92,6 +98,7 @@ export function createEmbeddedApp<State = Record<string, any>, Message = any>(
   let state: State;
   let page: string | undefined;
   let writable = false;
+  let roomMembers: ReadonlyArray<RoomMember> = [];
   let meta: Readonly<InitData["meta"]>;
 
   const onInit = createEmitter<InitData>();
@@ -100,6 +107,7 @@ export function createEmbeddedApp<State = Record<string, any>, Message = any>(
   const onStateChanged = createEmitter<Diff<State>>();
   const onPageChanged = createEmitter<DiffOne<string>>();
   const onWritableChanged = createEmitter<DiffOne<boolean>>();
+  const onRoomMembersChanged = createEmitter<ReadonlyArray<RoomMember>>();
 
   const sideEffectManager = new SideEffectManager();
   let onStateChangedPayload: Diff<State> | undefined;
@@ -175,6 +183,7 @@ export function createEmbeddedApp<State = Record<string, any>, Message = any>(
         }
         page = payload.page;
         writable = payload.writable;
+        roomMembers = payload.roomMembers;
         meta = payload.meta;
         onInit.dispatch(payload);
         break;
@@ -217,6 +226,12 @@ export function createEmbeddedApp<State = Record<string, any>, Message = any>(
           onWritableChanged.dispatch(onWritableChangedPayload);
           onWritableChangedPayload = void 0;
         }
+        break;
+      }
+      case "GetRoomMembers":
+      case "RoomMembersChanged": {
+        roomMembers = event.payload;
+        onRoomMembersChanged.dispatch(event.payload);
         break;
       }
     }
@@ -277,6 +292,9 @@ export function createEmbeddedApp<State = Record<string, any>, Message = any>(
     get isWritable() {
       return writable;
     },
+    get roomMembers() {
+      return roomMembers;
+    },
     get meta() {
       return meta;
     },
@@ -289,6 +307,7 @@ export function createEmbeddedApp<State = Record<string, any>, Message = any>(
     onStateChanged,
     onPageChanged,
     onWritableChanged,
+    onRoomMembersChanged,
     onMessage,
   };
 
