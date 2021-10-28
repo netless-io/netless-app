@@ -106,7 +106,7 @@ export function createEmbeddedApp<State = Record<string, any>, Message = any>(
   let onPageChangedPayload: DiffOne<string> | undefined;
   let onWritableChangedPayload: DiffOne<boolean> | undefined;
 
-  function refactorStateChangedPayload() {
+  function refactorAndApplyStateChangedPayload() {
     if (!onStateChangedPayload) return;
 
     for (const [key_, diff] of Object.entries(onStateChangedPayload)) {
@@ -136,10 +136,18 @@ export function createEmbeddedApp<State = Record<string, any>, Message = any>(
           oldValues.delete(key);
         } else {
           state[key] = diff.newValue as any;
-          oldValues.set(key, state[key])
+          oldValues.set(key, state[key]);
         }
       }
     }
+  }
+
+  function unwrapRawState(payload: State): State {
+    const result: Partial<State> = {};
+    for (const [key, value] of Object.entries(payload)) {
+      result[key as keyof State] = isRef(value) ? value.v : value;
+    }
+    return result as State;
   }
 
   function postMessage(message: SendMessage) {
@@ -177,12 +185,12 @@ export function createEmbeddedApp<State = Record<string, any>, Message = any>(
       }
       case "StateChanged": {
         onStateChangedPayload = event.payload;
-        refactorStateChangedPayload();
+        refactorAndApplyStateChangedPayload();
         onStateChanged.dispatch(onStateChangedPayload);
         break;
       }
       case "GetState": {
-        state = event.payload;
+        state = unwrapRawState(event.payload);
         break;
       }
       case "PageChanged": {
@@ -219,8 +227,8 @@ export function createEmbeddedApp<State = Record<string, any>, Message = any>(
   };
 
   const setState = (newState_: Partial<State>) => {
-    const newState: Partial<State> = {};
     let changed = false;
+    const newState: Partial<State> = {};
     for (const [key_, value_] of Object.entries(newState_)) {
       const key = key_ as keyof State;
       let value = value_ as any;
