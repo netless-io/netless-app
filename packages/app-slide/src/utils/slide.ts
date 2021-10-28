@@ -40,24 +40,25 @@ export function createDocsViewerPages(slide: Slide): DocsViewerPage[] {
   return pages;
 }
 
+/**
+ * slide 依赖事件回溯 (收到广播事件) 来进行同步进度，每次 `renderSlide()` 等操作都不会实际触发更改，
+ * 而是发出一条广播事件，等收到事件后，使用 `slide.emit(SLIDE_EVENTS.syncReceive)` 来实际触发。
+ *
+ * controller 要保证每个事件都正确反馈给 slide。
+ */
 export class SlideController {
-  readonly ready: Promise<this>;
-  private resolveReady!: (slideController: this) => void;
-  private reject!: () => void;
-
   constructor(
     public readonly slide: Slide,
     readonly onPageChanged: (page: number) => void,
     readonly onTransitionStart: () => void,
     readonly onTransitionEnd: () => void,
     readonly onDispatchSyncEvent: (event: SyncEvent) => void,
-    readonly initialState: Slide["slideState"] | null,
-    readonly initialPage: number
+    readonly onStateChange: (state: Slide["slideState"]) => void,
+    private readonly initialState: Slide["slideState"] | null,
+    private readonly initialPage: number
   ) {
-    slide.on(SLIDE_EVENTS.slideChange, page => {
-      this.targetingPage = -1;
-      onPageChanged(page);
-    });
+    slide.on(SLIDE_EVENTS.slideChange, onPageChanged);
+    slide.on(SLIDE_EVENTS.slideChange, this.resetTargetingPage);
 
     slide.on(SLIDE_EVENTS.renderStart, onTransitionStart);
     slide.on(SLIDE_EVENTS.renderEnd, onTransitionEnd);
@@ -68,34 +69,44 @@ export class SlideController {
 
     slide.on(SLIDE_EVENTS.syncDispatch, onDispatchSyncEvent);
 
-    slide.on(SLIDE_EVENTS.renderError, ({ error }: { error: Error }) => {
-      console.warn("[Slide] render error", error);
-      onTransitionEnd();
-    });
+    slide.on(SLIDE_EVENTS.renderError, onTransitionEnd);
+    slide.on(SLIDE_EVENTS.renderError, this.onRenderError);
 
-    if (initialState) {
-      slide.setSlideState(initialState);
-    } else {
-      slide.renderSlide(initialPage);
-    }
-
-    this.ready = new Promise((resolve, reject) => {
-      this.resolveReady = resolve;
-      this.reject = reject;
-    });
+    slide.on(SLIDE_EVENTS.stateChange, onStateChange);
 
     this.pollReadyState();
   }
 
+  private resolveReady!: (slideController: this) => void;
+  private reject!: (error: Error) => void;
+
+  readonly ready = new Promise<this>((resolve, reject) => {
+    this.resolveReady = resolve;
+    this.reject = reject;
+  });
+
+  private onRenderError = ({ error }: { error: Error }) => {
+    console.warn("[Slide] render error", error);
+  };
+
+  initialize() {
+    if (this.initialState) {
+      this.slide.setSlideState(this.initialState);
+    } else {
+      this.slide.renderSlide(this.initialPage);
+    }
+  }
+
   private pollCount = 0;
+
   private pollReadyState = () => {
     if (this.isReady()) {
       this.resolveReady(this);
-    } else if (this.pollCount < 20) {
+    } else if (this.pollCount < 60) {
       this.pollCount++;
       setTimeout(this.pollReadyState, 500);
     } else {
-      this.reject();
+      this.reject(new Error("slide init time out (30s)"));
     }
   };
 
@@ -108,6 +119,11 @@ export class SlideController {
   }
 
   private targetingPage = -1;
+
+  private resetTargetingPage = () => {
+    this.targetingPage = -1;
+  };
+
   jumpToPage(page: number) {
     if (!this.isReady()) return;
     page = clamp(page, 1, this.slide.slideCount);
@@ -121,7 +137,7 @@ export class SlideController {
   }
 }
 
-export async function mountSlideController(
+export function createSlideController(
   anchor: HTMLDivElement,
   taskId: string,
   url: string,
@@ -131,13 +147,17 @@ export async function mountSlideController(
   onPageChanged: (page: number) => void,
   onTransitionStart: () => void,
   onTransitionEnd: () => void,
-  onDispatchSyncEvent: (event: SyncEvent) => void
+  onDispatchSyncEvent: (event: SyncEvent) => void,
+  onStateChange: (state: Slide["slideState"]) => void,
+  timestamp: () => number
 ) {
   const slide = new Slide({
     anchor,
     interactive: true,
-    resize: true,
+    mode: "interactive",
+    resize: false, // TODO: fix it in next version
     controller,
+    timestamp,
   });
 
   if (import.meta.env.DEV) {
@@ -153,7 +173,8 @@ export async function mountSlideController(
     onTransitionStart,
     onTransitionEnd,
     onDispatchSyncEvent,
+    onStateChange,
     initialState,
     initialPage
-  ).ready;
+  );
 }

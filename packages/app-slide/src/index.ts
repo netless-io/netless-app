@@ -1,4 +1,4 @@
-import type { Event, RoomState } from "white-web-sdk";
+import type { Event, Player, RoomState } from "white-web-sdk";
 import type { Slide, SyncEvent } from "@netless/slide";
 import type { NetlessApp } from "@netless/window-manager";
 import type { SlideController } from "./utils/slide";
@@ -7,7 +7,7 @@ import { SLIDE_EVENTS } from "@netless/slide";
 import { ensureAttributes } from "@netless/app-shared";
 import { SideEffectManager } from "side-effect-manager";
 import { SlideDocsViewer } from "./SlideDocsViewer";
-import { mountSlideController, syncSceneWithSlide } from "./utils/slide";
+import { createSlideController, syncSceneWithSlide } from "./utils/slide";
 import { isObj } from "./utils/helpers";
 import styles from "./style.scss?inline";
 
@@ -53,6 +53,14 @@ const SlideApp: NetlessApp<Attributes> = {
 
     let theController: SlideController | undefined;
 
+    const timestamp = () => {
+      if (room) {
+        return room.calibrationTimestamp;
+      } else {
+        return (displayer as Player).beginTimestamp + (displayer as Player).progressTime;
+      }
+    };
+
     const onPageChanged = (page: number) => {
       console.log("[Slide] page to", page);
       if (context.getIsWritable() && room && theController) {
@@ -70,61 +78,59 @@ const SlideApp: NetlessApp<Attributes> = {
     };
 
     const onDispatchSyncEvent = (event: SyncEvent) => {
-      if (context.getIsWritable() && theController) {
-        context.updateAttributes(["state"], theController.slide.slideState);
-        if (room) {
-          room.dispatchMagixEvent(channel, { type: SLIDE_EVENTS.syncDispatch, payload: event });
-        }
+      if (context.getIsWritable() && theController && room) {
+        room.dispatchMagixEvent(channel, { type: SLIDE_EVENTS.syncDispatch, payload: event });
       }
     };
 
-    function registerMagixEvent() {
-      sideEffect.add(() => {
-        const magixEventListener = (ev: Event) => {
-          if (
-            theController &&
-            ev.event === channel &&
-            ev.authorId !== displayer.observerId &&
-            isObj(ev.payload)
-          ) {
-            const { type, payload } = ev.payload;
-            if (type === SLIDE_EVENTS.syncDispatch) {
-              theController.receiveSyncEvent(payload);
-            }
+    const onStateChange = (slideState: SlideState) => {
+      context.updateAttributes(["state"], slideState);
+    };
+
+    sideEffect.add(() => {
+      const magixEventListener = async (ev: Event) => {
+        if (theController && ev.event === channel && isObj(ev.payload)) {
+          const { type, payload } = ev.payload;
+          if (type === SLIDE_EVENTS.syncDispatch) {
+            theController.receiveSyncEvent(payload);
           }
-        };
-        displayer.addMagixEventListener(channel, magixEventListener);
-        return () => displayer.removeMagixEventListener(channel, magixEventListener);
-      });
-    }
+        }
+      };
+      displayer.addMagixEventListener(channel, magixEventListener);
+      return () => displayer.removeMagixEventListener(channel, magixEventListener);
+    });
+
+    const mountSlideController = async (anchor: HTMLDivElement) => {
+      theController = createSlideController(
+        anchor,
+        attrs.taskId,
+        attrs.url || "https://convertcdn.netless.link/dynamicConvert",
+        showController,
+        JSON.parse(JSON.stringify(attrs.state)),
+        displayer.state.sceneState.index + 1,
+        onPageChanged,
+        onTransitionStart,
+        onTransitionEnd,
+        onDispatchSyncEvent,
+        onStateChange,
+        timestamp
+      );
+      theController.initialize();
+      await theController.ready;
+      return theController;
+    };
 
     const docsViewer = new SlideDocsViewer({
       box,
       view,
-      mountSlideController: async anchor => {
-        theController = await mountSlideController(
-          anchor,
-          attrs.taskId,
-          attrs.url || "https://convertcdn.netless.link/dynamicConvert",
-          showController,
-          JSON.parse(JSON.stringify(attrs.state)),
-          displayer.state.sceneState.index + 1,
-          onPageChanged,
-          onTransitionStart,
-          onTransitionEnd,
-          onDispatchSyncEvent
-        );
-
-        registerMagixEvent();
-
-        return theController;
-      },
+      mountSlideController,
       mountWhiteboard: dom => context.mountView(dom),
     });
 
     try {
       await docsViewer.mount();
-    } catch {
+    } catch (err) {
+      console.warn(err);
       console.log("[Slide]: destroy by error");
       sideEffect.flushAll();
       docsViewer.destroy();
@@ -149,8 +155,8 @@ const SlideApp: NetlessApp<Attributes> = {
       });
     }
 
-    box.events.on("readonly", readonly => {
-      docsViewer.setReadonly(readonly);
+    context.emitter.on("writableChange", () => {
+      docsViewer.setReadonly(!context.getIsWritable());
     });
 
     context.emitter.on("destroy", () => {

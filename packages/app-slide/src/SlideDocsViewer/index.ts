@@ -1,5 +1,6 @@
 import type { ApplianceNames } from "white-web-sdk";
 import type { ReadonlyTeleBox, AnimationMode, View } from "@netless/window-manager";
+import type { Slide } from "@netless/slide";
 import type { SlideController } from "../utils/slide";
 
 import { SideEffectManager } from "side-effect-manager";
@@ -90,7 +91,7 @@ export class SlideDocsViewer {
     this.viewer.mount();
     this.slideController = await this.mountSlideController(this.$slide);
     this.viewer.pages = createDocsViewerPages(this.slideController.slide);
-    this.viewer.setPageIndex(this.getPageIndex(this.slideController));
+    this.viewer.setPageIndex(this.getPageIndex(this.slideController.slide));
 
     this.scaleDocsToFit();
     this.sideEffect.add(() => {
@@ -101,13 +102,14 @@ export class SlideDocsViewer {
     return this;
   }
 
-  protected getPageIndex(slideController: SlideController) {
-    return (slideController.slide.slideState.currentSlideIndex || 1) - 1;
+  protected getPageIndex(slide: Slide) {
+    return (slide.slideState.currentSlideIndex || 1) - 1;
   }
 
   public unmount() {
     if (this.slideController) {
       this.slideController.destroy();
+      this.slideController = void 0;
     }
     this.viewer.unmount();
     return this;
