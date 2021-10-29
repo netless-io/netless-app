@@ -1,18 +1,35 @@
 import { createStore } from "redux";
 import { createEmbeddedApp } from "@netless/app-embedded-page-sdk";
 import { SideEffectManager } from "side-effect-manager";
+import ScratchBlocks from "scratch-blocks";
+import { TargetsBinder } from "./vm/targets";
 
 export const UPDATE_STATE = "NETLESS/UPDATE_STATE";
 
 const scratchModules = Object.values(import.meta.globEager("./modules/*.js")).map(m => m.default);
 
 export class NetlessAppScratchSDK {
-  constructor() {
-    this.lastReduxState = null;
+  constructor(reactClassElement) {
     this.sideEffect = new SideEffectManager();
+
+    this.pApp = createEmbeddedApp().then(app => {
+      this.app = app;
+      return app;
+    });
+
+    const originalComponentWillUnmount = reactClassElement.componentWillUnmount;
+
+    reactClassElement.componentWillUnmount = (...args) => {
+      if (originalComponentWillUnmount) {
+        originalComponentWillUnmount.apply(reactClassElement, args);
+      }
+      this.destroy();
+    };
   }
 
   createStore(originReducer, preloadedState, enhancer) {
+    this.lastReduxState = null;
+
     const enhancedReducer = (state, action) => {
       if (action.type === UPDATE_STATE) {
         let newState = state;
@@ -37,22 +54,30 @@ export class NetlessAppScratchSDK {
 
     const store = createStore(enhancedReducer, preloadedState, enhancer);
 
-    createEmbeddedApp().then(app => {
+    this.pApp.then(app => {
       if (import.meta.env.DEV) {
         window.app = app;
         window.store = store;
+        window.makeAuthor = this.makeAuthor.bind(this);
       }
 
       this.sideEffect.add(() => {
+        const binder = new TargetsBinder(app, store, this.isAuthor.bind(this));
+        return () => binder.destroy();
+      });
+
+      this.sideEffect.add(() => {
         const handler = diff => {
-          const appState = app.state;
-          const reduxState = store.getState();
-          const payload = scratchModules.reduce((results, scratchModule) => {
-            const result = scratchModule.compareAppState(diff, appState, reduxState);
-            return Array.isArray(result) ? results.concat(result) : results;
-          }, []);
-          if (payload.length > 0) {
-            store.dispatch({ type: UPDATE_STATE, payload });
+          if (!this.isAuthor()) {
+            const appState = app.state;
+            const reduxState = store.getState();
+            const payload = scratchModules.reduce((results, scratchModule) => {
+              const result = scratchModule.compareAppState(diff, appState, reduxState);
+              return Array.isArray(result) ? results.concat(result) : results;
+            }, []);
+            if (payload.length > 0) {
+              store.dispatch({ type: UPDATE_STATE, payload });
+            }
           }
         };
         app.onStateChanged.addListener(handler);
@@ -70,11 +95,14 @@ export class NetlessAppScratchSDK {
         if (payload.length > 0) {
           store.dispatch({ type: UPDATE_STATE, payload });
         }
-      } else {
-        const newAppState = scratchModules.reduce((appState, scratchModule) => {
-          const result = scratchModule.initialAppState(this.lastReduxState);
-          return result ? { ...appState, ...result } : appState;
-        }, {});
+      } else if (this.isAuthor()) {
+        const newAppState = scratchModules.reduce(
+          (appState, scratchModule) => {
+            const result = scratchModule.initialAppState(this.lastReduxState);
+            return result ? { ...appState, ...result } : appState;
+          },
+          { netlessVersion: "v1" }
+        );
         if (Object.keys(newAppState).length > 0) {
           app.setState(newAppState);
         }
@@ -82,31 +110,78 @@ export class NetlessAppScratchSDK {
 
       this.sideEffect.add(() =>
         store.subscribe(() => {
-          this.sideEffect.setTimeout(
-            () => {
-              const currReduxState = store.getState();
-              const currAppState = app.state;
-              const newAppState = scratchModules.reduce((appState, scratchModule) => {
-                const result = scratchModule.compareReduxState(
-                  this.lastReduxState,
-                  currReduxState,
-                  currAppState
-                );
-                return result ? { ...appState, ...result } : appState;
-              }, {});
-              if (Object.keys(newAppState).length > 0) {
-                app.setState(newAppState);
-              }
-              this.lastReduxState = currReduxState;
-            },
-            50,
-            "CompareState"
-          );
+          if (this.isAuthor()) {
+            this.sideEffect.setTimeout(
+              () => {
+                const currReduxState = store.getState();
+                const currAppState = app.state;
+                const newAppState = scratchModules.reduce((appState, scratchModule) => {
+                  const result = scratchModule.compareReduxState(
+                    this.lastReduxState,
+                    currReduxState,
+                    currAppState
+                  );
+                  return result ? { ...appState, ...result } : appState;
+                }, {});
+                if (Object.keys(newAppState).length > 0) {
+                  app.setState(newAppState);
+                }
+                this.lastReduxState = currReduxState;
+              },
+              50,
+              "CompareState"
+            );
+          }
         })
       );
     });
 
     return store;
+  }
+
+  bindMainWorkSpace(workspace) {
+    this.pApp.then(app => {
+      const MAIN_WORKSPACE_EVENT = "MAIN_WORKSPACE_EVENT";
+
+      this.sideEffect.add(() => {
+        const handler = event => {
+          if (this.isAuthor()) {
+            app.sendMessage({ type: MAIN_WORKSPACE_EVENT, payload: event.toJson() });
+          }
+        };
+        workspace.addChangeListener(handler);
+        return () => workspace.removeChangeListener(handler);
+      });
+
+      this.sideEffect.add(() => {
+        const handler = message => {
+          if (!this.isAuthor()) {
+            if (message && message.type === MAIN_WORKSPACE_EVENT) {
+              console.log(message.payload, workspace);
+              var secondaryEvent = ScratchBlocks.Events.fromJson(message.payload, workspace);
+              secondaryEvent.run(true);
+            }
+          }
+        };
+        app.onMessage.addListener(handler);
+        return () => app.onMessage.removeListener(handler);
+      });
+    });
+  }
+
+  makeAuthor(uid) {
+    if (import.meta.env.DEV) {
+      NetlessAppScratchSDK.__isAuthor = true;
+      return;
+    }
+    this.app.setState({ __author: uid || this.app.meta.uid });
+  }
+
+  isAuthor() {
+    if (import.meta.env.DEV) {
+      return Boolean(NetlessAppScratchSDK.__isAuthor);
+    }
+    return this.app.isWritable && this.app.state["__author"] === this.app.meta.uid;
   }
 
   destroy() {
