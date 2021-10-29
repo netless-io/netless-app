@@ -71,7 +71,7 @@ const EmbeddedPage: NetlessApp<Attributes> = {
     ): ReadonlyArray<RoomMember> {
       return array.map(({ memberId, payload }) => ({
         sessionUID: memberId,
-        uid: payload?.uid,
+        uid: payload?.uid || "", // TODO: room.uid
         userPayload: clone(payload),
       }));
     }
