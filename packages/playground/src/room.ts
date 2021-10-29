@@ -60,6 +60,7 @@ export async function joinRoom(info: RoomInfo): Promise<Room> {
   }
   const room = await sdk.joinRoom({
     ...info,
+    uid,
     invisiblePlugins: [WindowManager],
     useMultiViews: true,
     disableNewPencil: false,

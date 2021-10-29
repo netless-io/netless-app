@@ -71,7 +71,7 @@ const EmbeddedPage: NetlessApp<Attributes> = {
     ): ReadonlyArray<RoomMember> {
       return array.map(({ memberId, payload }) => ({
         sessionUID: memberId,
-        uid: payload?.uid || "", // TODO: room.uid
+        uid: room?.uid || payload?.uid || "",
         userPayload: clone(payload),
       }));
     }
@@ -141,8 +141,7 @@ const EmbeddedPage: NetlessApp<Attributes> = {
           roomMembers: transformRoomMembers(displayer.state.roomMembers),
           meta: {
             sessionUID: memberId,
-            // TODO: uid: room?.uid,
-            uid: userPayload?.uid,
+            uid: room?.uid || userPayload?.uid || "",
             roomUUID: room?.uuid,
             userPayload: clone(userPayload),
           },
@@ -186,7 +185,7 @@ const EmbeddedPage: NetlessApp<Attributes> = {
             const scenePath = context.getInitScenePath();
             if (typeof value === "string" && context.getIsWritable() && scenePath && room) {
               const fullScenePath = [scenePath, value].join("/");
-              if (room.scenePathType(fullScenePath) === ("none" as ScenePathType)) {
+              if (room.scenePathType(fullScenePath) === ("none" as ScenePathType.None)) {
                 room.putScenes(scenePath, [{ name: value }]);
               }
               context.setScenePath(fullScenePath);

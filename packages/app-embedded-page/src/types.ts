@@ -41,10 +41,10 @@ export type ReceiveMessage = CheckReceiveMessageType<
 export type DiffOne<T> = { oldValue?: T; newValue?: T };
 
 export interface MetaData {
-  sessionUID?: number;
-  uid?: string;
+  sessionUID: number;
+  uid: string;
   roomUUID?: string;
-  userPayload?: unknown;
+  userPayload: unknown;
 }
 
 export interface InitData {
