@@ -100,10 +100,10 @@ function inflateAlertsListItem(item) {
 }
 
 function inflateAlertsList(alertsList) {
-  if (!alertsList || alertsList.length <= 0) {
-    return alertsList;
+  if (alertsList && alertsList.length > 0) {
+    return alertsList.map(inflateAlertsListItem);
   }
-  return alertsList.map(inflateAlertsListItem);
+  return Array.isArray(alertsList) ? alertsList : [];
 }
 
 function deflateAlertsListItem(item) {
@@ -117,8 +117,8 @@ function deflateAlertsListItem(item) {
 }
 
 function deflateAlertsList(alertsList) {
-  if (!alertsList || alertsList.length <= 0) {
-    return alertsList;
+  if (alertsList && alertsList.length > 0) {
+    return alertsList.map(deflateAlertsListItem);
   }
-  return alertsList.map(deflateAlertsListItem);
+  return Array.isArray(alertsList) ? alertsList : [];
 }
