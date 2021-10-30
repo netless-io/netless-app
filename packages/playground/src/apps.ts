@@ -1,26 +1,27 @@
 import type { AddAppParams } from "@netless/window-manager";
 import { WindowManager } from "@netless/window-manager";
 
-import type { PlaygroundConfig, PlaygroundConfigs } from "../typings";
+import type { PlaygroundConfigs } from "../typings";
 import { debug } from "./log";
 
-const CONFIGS = import.meta.glob("../../*/playground.ts");
+const CONFIGS = import.meta.globEager("../../*/playground.ts");
 
 export interface AppGroup {
+  url: string;
   kind: string;
   configs: AddAppParams[];
 }
 
 export async function registerApps(): Promise<AppGroup[]> {
-  const appConfigs = (await Promise.all(Object.values(CONFIGS).map(f => f()))) as {
-    default: PlaygroundConfig | PlaygroundConfigs;
-  }[];
-  const apps: AppGroup[] = [];
-  for (let { default: a } of appConfigs) {
-    if (!Array.isArray(a)) a = [a];
-    debug("[register]", a[0].kind);
-    const item: AppGroup = { kind: a[0].kind, configs: [] };
-    for (const { kind, src, ...rest } of a) {
+  const apps = Object.entries(CONFIGS).map(([path, m]) => {
+    const name = (/^(?:\.\.\/){2}([^/]+)/.exec(path) || ["", ""])[1];
+    const url = `https://github.com/netless-io/netless-app/tree/master/packages/${name}`;
+    const configs: PlaygroundConfigs = Array.isArray(m.default) ? m.default : [m.default];
+    const kind = configs[0].kind;
+    debug("[register]", kind);
+
+    const app: AppGroup = { kind, url, configs: [] };
+    for (const { kind, src, ...rest } of configs) {
       const wrapped = async () => {
         if (typeof src === "function") {
           const mod = await src();
@@ -30,10 +31,12 @@ export async function registerApps(): Promise<AppGroup[]> {
         }
       };
       WindowManager.register({ kind, src: wrapped });
-      item.configs.push({ kind, ...rest });
+      app.configs.push({ kind, ...rest });
     }
-    apps.push(item);
-  }
+
+    return app;
+  });
+
   window.apps = apps;
   return apps;
 }

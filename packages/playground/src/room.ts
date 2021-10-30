@@ -55,7 +55,7 @@ export async function prepare(): Promise<RoomInfo | undefined> {
 export async function joinRoom(info: RoomInfo): Promise<Room> {
   let uid = sessionStorage.getItem("uid");
   if (!uid) {
-    uid = Math.random().toString(36).slice(2);
+    uid = faker.datatype.uuid();
     sessionStorage.setItem("uid", uid);
   }
   const room = await sdk.joinRoom({

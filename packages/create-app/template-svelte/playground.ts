@@ -2,6 +2,7 @@ import { DeviceType, Room, WhiteWebSdk } from "white-web-sdk";
 
 import "@netless/window-manager/dist/style.css";
 import { WindowManager } from "@netless/window-manager";
+import faker from "faker";
 import TodoApp from "./src";
 
 declare global {
@@ -52,6 +53,7 @@ async function joinRoom() {
   }
 
   const room = await sdk.joinRoom({
+    uid: faker.datatype.uuid(),
     uuid: env.VITE_ROOM_UUID,
     roomToken: env.VITE_ROOM_TOKEN,
     invisiblePlugins: [WindowManager],

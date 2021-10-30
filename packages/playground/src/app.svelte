@@ -1,4 +1,7 @@
 <script context="module" lang="ts">
+  import catagorySVG from "./icons/catagory.svg";
+  import appSVG from "./icons/app.svg";
+
   import type { Room, RoomState, ApplianceNames } from "white-web-sdk";
 
   import { createRoom, env, replaceURL, share, store } from "./common";
@@ -122,47 +125,65 @@
 {:else if phase === "join-room"}
   <div>Joining Room...</div>
 {:else}
-  <div id="tools" on:click={changeTool}>
-    {#each tools as name}
-      <button data-tool={name} class:active={name === tool}>{name}</button>
-    {/each}
-    <button
-      class="new-page-btn"
-      title="copy share url to clipboard
-press ctrl/meta to clear address bar
-press shift to create new room (only available with sdk token)"
-      on:click={shareOrCreateRoom}
-    >
-      {shareMode
-        .split("-")
-        .map(e => e.toUpperCase())
-        .join(" ")}
-    </button>
-    <button
-      class="reset-btn"
-      title="remove all apps, reset camera
-press ctrl/meta to reload page
-press shift to clear screen"
-      on:click={resetAll}
-    >
-      RESET
-    </button>
-    <a class="github-btn" href="https://github.com/netless-io/netless-app" title="View my source">
-      GITHUB
-    </a>
-  </div>
   <div class="two-side">
-    <div id="actions" on:click={openApp}>
-      {#each apps as { kind, configs }}
-        <strong>{kind}</strong>
+    <div id="actions" class="app-list" on:click={openApp}>
+      {#each apps as { kind, configs, url }}
+        <h2 class="app-list-kind">
+          <a class="app-list-kind-link" href={url} target="_blank"
+            ><img class="app-list-kind-icon" src={catagorySVG} alt={kind} />{kind}</a
+          >
+        </h2>
         {#each configs as app, i}
-          <button data-app-kind={kind} data-app-index={i}>
+          <button class="app-list-open" data-app-kind={kind} data-app-index={i}>
+            <img class="app-list-open-icon" src={appSVG} alt={app.options?.title} />
             {app.options?.title || `${app.kind} ${i + 1}`}
           </button>
         {/each}
       {/each}
     </div>
-    <div id="whiteboard" use:init />
+    <div class="right-side">
+      <div class="nav-bar" on:click={changeTool}>
+        <div class="nav-bar-tools-cursor-hider">
+          <div class="nav-bar-tools">
+            {#each tools as name}
+              <button data-tool={name} class:active={name === tool}>{name}</button>
+            {/each}
+          </div>
+        </div>
+        <div class="nav-bar-btns">
+          <button
+            class="new-page-btn"
+            title="copy share url to clipboard
+    press ctrl/meta to clear address bar
+    press shift to create new room (only available with sdk token)"
+            on:click={shareOrCreateRoom}
+          >
+            {shareMode
+              .split("-")
+              .map(e => e.toUpperCase())
+              .join(" ")}
+          </button>
+          <button
+            class="reset-btn"
+            title="remove all apps, reset camera
+    press ctrl/meta to reload page
+    press shift to clear screen"
+            on:click={resetAll}
+          >
+            RESET
+          </button>
+          <a
+            class="github-btn"
+            href="https://github.com/netless-io/netless-app"
+            target="_blank"
+            title="View my source"
+          >
+            GITHUB
+          </a>
+        </div>
+      </div>
+      <div id="whiteboard" use:init />
+    </div>
   </div>
 {/if}
 
