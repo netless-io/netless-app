@@ -13,6 +13,7 @@ body {
 #app {
   box-sizing: border-box;
   height: 100vh;
+  min-width: 750px;
   display: flex;
   flex-flow: column nowrap;
   gap: 0.5em;
