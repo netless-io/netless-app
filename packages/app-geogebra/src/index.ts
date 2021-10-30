@@ -39,7 +39,7 @@ const GeoGebra: NetlessApp<Attributes> = {
     const memberId = displayer.observerId;
     const userPayload: UserPayload | undefined = displayer.state.roomMembers.find(
       member => member.memberId === memberId
-    )?.payload;
+    )?.payload as UserPayload;
     const uid = userPayload?.uid || "";
     const nickName = userPayload?.nickName || uid;
 
