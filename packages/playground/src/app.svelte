@@ -16,13 +16,23 @@
 <script lang="ts">
   import { onMount } from "svelte";
   import { fade, fly } from "svelte/transition";
+  import Loading from "./loading.svelte";
 
-  let phase: "prepare" | "404" | "register-apps" | "join-room" | "main" = "prepare";
+  let phase: "prepare" | "404" | "join-room" | "main" = "prepare";
   let apps: AppGroup[];
   let room: Room;
   let tool: ApplianceNames;
   let shareMode: "share" | "new-room" = "share";
   let copyTip = "";
+
+  $: PhaseLoadingMsg =
+    phase === "prepare"
+      ? "Preparing..."
+      : phase === "404"
+      ? "404 Room Not Found."
+      : phase === "join-room"
+      ? "Joining Room..."
+      : "Loading...";
 
   onMount(async () => {
     const roomInfo = await prepare();
@@ -31,8 +41,7 @@
       return;
     }
 
-    phase = "register-apps";
-    apps = await registerApps();
+    apps = registerApps();
 
     phase = "join-room";
     room = await joinRoom(roomInfo);
@@ -116,14 +125,10 @@
 
 <svelte:window on:keydown={keydown} on:keyup={keyup} />
 
-{#if phase === "prepare"}
-  <div>Preparing...</div>
-{:else if phase === "404"}
-  <div>404 Not Found Room.</div>
-{:else if phase === "register-apps"}
-  <div>Registering Apps...</div>
-{:else if phase === "join-room"}
-  <div>Joining Room...</div>
+{#if phase !== "main"}
+  <div class="page-loading-wrap" transition:fade>
+    <Loading>{PhaseLoadingMsg}</Loading>
+  </div>
 {:else}
   <div class="two-side">
     <div id="actions" class="app-list" on:click={openApp}>

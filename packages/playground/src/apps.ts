@@ -12,7 +12,7 @@ export interface AppGroup {
   configs: AddAppParams[];
 }
 
-export async function registerApps(): Promise<AppGroup[]> {
+export function registerApps(): AppGroup[] {
   const apps = Object.entries(CONFIGS).map(([path, m]) => {
     const name = (/^(?:\.\.\/){2}([^/]+)/.exec(path) || ["", ""])[1];
     const url = `https://github.com/netless-io/netless-app/tree/master/packages/${name}`;

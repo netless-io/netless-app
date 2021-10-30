@@ -14,8 +14,6 @@ body {
   box-sizing: border-box;
   height: 100vh;
   min-width: 750px;
-  display: flex;
-  flex-flow: column nowrap;
   gap: 0.5em;
   font-family: $sans-serif;
 }
@@ -240,7 +238,7 @@ body {
 }
 
 .two-side {
-  flex: 1;
+  height: 100%;
   display: flex;
   flex-flow: row nowrap;
   overflow: hidden;
@@ -278,4 +276,13 @@ body {
   text-decoration: none;
   display: inline-flex;
   align-items: center;
+}
+
+.page-loading-wrap {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 100;
+  width: 100vw;
+  height: 100vh;
 }
