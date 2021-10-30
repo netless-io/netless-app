@@ -8,7 +8,7 @@ import { ensureAttributes } from "@netless/app-shared";
 import { SideEffectManager } from "side-effect-manager";
 import { SlideDocsViewer } from "./SlideDocsViewer";
 import { createSlideController, syncSceneWithSlide } from "./utils/slide";
-import { isObj } from "./utils/helpers";
+import { isObj, wait } from "./utils/helpers";
 import styles from "./style.scss?inline";
 
 export type SlideState = Slide["slideState"];
@@ -41,6 +41,17 @@ const SlideApp: NetlessApp<Attributes> = {
 
     if (!view) {
       throw new Error(`[Slide] no view, please set scenePath on addApp()`);
+    }
+
+    if (!attrs.state && !context.isAddApp) {
+      // 初始化的时候，其他人必须等待创建者的初始状态存下来，才能继续进行
+      // 轮询 3 秒，还没有就不管了
+      for (let i = 0; i < 15; ++i) {
+        await wait(200);
+        if (attrs.state) {
+          break;
+        }
+      }
     }
 
     box.mountStyles(styles);

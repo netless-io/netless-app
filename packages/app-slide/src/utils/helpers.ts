@@ -16,3 +16,7 @@ export function preventEvent(ev: Event): void {
 export function isObj(obj: unknown) {
   return typeof obj === "object" && obj !== null;
 }
+
+export function wait(ms: number) {
+  return new Promise<void>(resolve => setTimeout(resolve, ms));
+}
