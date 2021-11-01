@@ -43,6 +43,8 @@ const SlideApp: NetlessApp<Attributes> = {
       throw new Error(`[Slide] no view, please set scenePath on addApp()`);
     }
 
+    const debug = import.meta.env.DEV || context.getAppOptions()?.debug;
+
     if (!attrs.state && !context.isAddApp) {
       // 初始化的时候，其他人必须等待创建者的初始状态存下来，才能继续进行
       // 轮询 3 秒，还没有就不管了
@@ -59,7 +61,6 @@ const SlideApp: NetlessApp<Attributes> = {
     const sideEffect = new SideEffectManager();
     // 因为 view 存在，init scene path 必定存在
     const baseScenePath = context.getInitScenePath() as string;
-    const showController = import.meta.env.DEV || context.getAppOptions()?.debug;
     const channel = `channel-${context.appId}`;
 
     let theController: SlideController | undefined;
@@ -89,6 +90,9 @@ const SlideApp: NetlessApp<Attributes> = {
     };
 
     const onDispatchSyncEvent = (event: SyncEvent) => {
+      if (debug) {
+        console.log("[Slide] dispatch", event);
+      }
       if (context.getIsWritable() && theController && room) {
         room.dispatchMagixEvent(channel, { type: SLIDE_EVENTS.syncDispatch, payload: event });
       }
@@ -100,6 +104,17 @@ const SlideApp: NetlessApp<Attributes> = {
 
     sideEffect.add(() => {
       const magixEventListener = async (ev: Event) => {
+        if (debug) {
+          console.log(
+            "[Slide] receive",
+            ev.payload.payload,
+            "(",
+            !!theController,
+            ev.event === channel,
+            ev.payload.type === SLIDE_EVENTS.syncDispatch,
+            ")"
+          );
+        }
         if (theController && ev.event === channel && isObj(ev.payload)) {
           const { type, payload } = ev.payload;
           if (type === SLIDE_EVENTS.syncDispatch) {
@@ -116,7 +131,7 @@ const SlideApp: NetlessApp<Attributes> = {
         anchor,
         attrs.taskId,
         attrs.url || "https://convertcdn.netless.link/dynamicConvert",
-        showController,
+        debug,
         JSON.parse(JSON.stringify(attrs.state)),
         displayer.state.sceneState.index + 1,
         onPageChanged,

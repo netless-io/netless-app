@@ -91,6 +91,7 @@ export class SlideController {
 
   initialize() {
     if (this.initialState) {
+      console.log("[Slide] init with state", this.initialState);
       this.slide.setSlideState(this.initialState);
     } else {
       this.slide.renderSlide(this.initialPage);
