@@ -2,7 +2,7 @@
   "name": "netless-app-monorepo",
   "private": true,
   "devDependencies": {
-    "@netless/window-manager": "^0.2.10",
+    "@netless/window-manager": "^0.2.11",
     "@sveltejs/vite-plugin-svelte": "^1.0.0-next.30",
     "@tsconfig/svelte": "^2.0.1",
     "@types/node": "^16.11.6",
@@ -10,7 +10,7 @@
     "@typescript-eslint/eslint-plugin": "^5.2.0",
     "@typescript-eslint/parser": "^5.2.0",
     "cross-env": "^7.0.3",
-    "esbuild": "^0.13.11",
+    "esbuild": "^0.13.12",
     "eslint": "^8.1.0",
     "eslint-config-prettier": "^8.3.0",
     "eslint-plugin-svelte3": "^3.2.1",

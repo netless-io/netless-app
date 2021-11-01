@@ -162,7 +162,7 @@ const EmbeddedPage: NetlessApp<Attributes> = {
           break;
         }
         case "GetState": {
-          postMessage({ type: "GetState", payload: attrs.state });
+          postMessage({ type: "GetState", payload: context.mobxUtils.toJS(attrs.state) });
           break;
         }
         case "SetState": {
@@ -226,13 +226,13 @@ const EmbeddedPage: NetlessApp<Attributes> = {
     });
 
     sideEffectManager.add(() => {
-      let oldState = { ...attrs.state };
+      let oldState = context.mobxUtils.toJS(attrs.state);
       const updateListener: AkkoObjectUpdatedListener<State> = updatedProperties => {
         const payload: SendMessages["StateChanged"] = {};
         for (const { key, value } of updatedProperties) {
-          payload[key] = { oldValue: oldState[key], newValue: value };
+          payload[key] = { oldValue: oldState[key], newValue: context.mobxUtils.toJS(value) };
         }
-        oldState = { ...attrs.state };
+        oldState = context.mobxUtils.toJS(attrs.state);
         postMessage({ type: "StateChanged", payload });
       };
       const listen = () => context.objectUtils.listenUpdated(attrs.state, updateListener);
