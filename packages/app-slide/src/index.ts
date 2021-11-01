@@ -65,7 +65,7 @@ const SlideApp: NetlessApp<Attributes> = {
     const onPageChanged = (page: number) => {
       console.log("[Slide] page to", page);
       if (context.getIsWritable() && room && theController) {
-        syncSceneWithSlide(room, theController.slide, baseScenePath);
+        syncSceneWithSlide(room, context, theController.slide, baseScenePath);
         docsViewer.viewer.setPageIndex(page - 1);
       }
     };

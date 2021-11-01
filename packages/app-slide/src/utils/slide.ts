@@ -1,7 +1,8 @@
 import type { SyncEvent } from "@netless/slide";
 import type { Room, ScenePathType } from "white-web-sdk";
+import type { AppContext } from "@netless/window-manager";
 import type { DocsViewerPage } from "../DocsViewer";
-import type { SlideState } from "../index";
+import type { Attributes, SlideState } from "../index";
 
 import { SLIDE_EVENTS, Slide } from "@netless/slide";
 import { clamp } from "./helpers";
@@ -12,7 +13,12 @@ import { clamp } from "./helpers";
  * 同时，UI 也应该和 slide 对齐。考虑到快速点击下一页的情况：slide 无法立刻切到下一页。我们应该记住当前的
  * "目标页"，slide 的 `renderEnd` 没触发前不再继续调用 `renderSlide()`。
  */
-export function syncSceneWithSlide(room: Room, slide: Slide, baseScenePath: string) {
+export function syncSceneWithSlide(
+  room: Room,
+  context: AppContext<Attributes>,
+  slide: Slide,
+  baseScenePath: string
+) {
   const page = slide.slideState.currentSlideIndex;
   // 如果不存在 currentSlideIndex，可能没初始化完，此时什么都不做
   if (page == null) return;
@@ -28,7 +34,7 @@ export function syncSceneWithSlide(room: Room, slide: Slide, baseScenePath: stri
     room.putScenes(baseScenePath, scenes);
   }
 
-  room.setScenePath(scenePath);
+  context.setScenePath(scenePath);
 }
 
 export function createDocsViewerPages(slide: Slide): DocsViewerPage[] {
