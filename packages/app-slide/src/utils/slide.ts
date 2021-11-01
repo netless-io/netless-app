@@ -1,6 +1,7 @@
 import type { SyncEvent } from "@netless/slide";
 import type { Room, ScenePathType } from "white-web-sdk";
 import type { DocsViewerPage } from "../DocsViewer";
+import type { SlideState } from "../index";
 
 import { SLIDE_EVENTS, Slide } from "@netless/slide";
 import { clamp } from "./helpers";
@@ -53,12 +54,12 @@ export class SlideController {
     readonly onTransitionStart: () => void,
     readonly onTransitionEnd: () => void,
     readonly onDispatchSyncEvent: (event: SyncEvent) => void,
-    readonly onStateChange: (state: Slide["slideState"]) => void,
-    private readonly initialState: Slide["slideState"] | null,
+    readonly onStateChange: (state: SlideState) => void,
+    private readonly initialState: SlideState | null,
     private readonly initialPage: number
   ) {
-    slide.on(SLIDE_EVENTS.slideChange, onPageChanged);
     slide.on(SLIDE_EVENTS.slideChange, this.resetTargetingPage);
+    slide.on(SLIDE_EVENTS.slideChange, onPageChanged);
 
     slide.on(SLIDE_EVENTS.renderStart, onTransitionStart);
     slide.on(SLIDE_EVENTS.renderEnd, onTransitionEnd);
@@ -69,8 +70,8 @@ export class SlideController {
 
     slide.on(SLIDE_EVENTS.syncDispatch, onDispatchSyncEvent);
 
-    slide.on(SLIDE_EVENTS.renderError, onTransitionEnd);
     slide.on(SLIDE_EVENTS.renderError, this.onRenderError);
+    slide.on(SLIDE_EVENTS.renderError, onTransitionEnd);
 
     slide.on(SLIDE_EVENTS.stateChange, onStateChange);
 
@@ -113,6 +114,10 @@ export class SlideController {
 
   receiveSyncEvent(event: SyncEvent) {
     this.slide.emit(SLIDE_EVENTS.syncReceive, event);
+  }
+
+  setState(state: SlideState) {
+    this.slide.setSlideState(state);
   }
 
   isReady() {

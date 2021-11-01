@@ -8,7 +8,7 @@ import { ensureAttributes } from "@netless/app-shared";
 import { SideEffectManager } from "side-effect-manager";
 import { SlideDocsViewer } from "./SlideDocsViewer";
 import { createSlideController, syncSceneWithSlide } from "./utils/slide";
-import { isObj, wait } from "./utils/helpers";
+import { isObj } from "./utils/helpers";
 import styles from "./style.scss?inline";
 
 export type SlideState = Slide["slideState"];
@@ -44,17 +44,6 @@ const SlideApp: NetlessApp<Attributes> = {
     }
 
     const debug = import.meta.env.DEV || context.getAppOptions()?.debug;
-
-    if (!attrs.state && !context.isAddApp) {
-      // 初始化的时候，其他人必须等待创建者的初始状态存下来，才能继续进行
-      // 轮询 3 秒，还没有就不管了
-      for (let i = 0; i < 15; ++i) {
-        await wait(200);
-        if (attrs.state) {
-          break;
-        }
-      }
-    }
 
     box.mountStyles(styles);
 
@@ -103,6 +92,7 @@ const SlideApp: NetlessApp<Attributes> = {
     };
 
     sideEffect.add(() => {
+      let first = !context.isAddApp;
       const magixEventListener = async (ev: Event) => {
         if (debug) {
           console.log(
@@ -118,6 +108,10 @@ const SlideApp: NetlessApp<Attributes> = {
         if (theController && ev.event === channel && isObj(ev.payload)) {
           const { type, payload } = ev.payload;
           if (type === SLIDE_EVENTS.syncDispatch) {
+            if (first && attrs.state) {
+              first = false;
+              theController.setState(attrs.state);
+            }
             theController.receiveSyncEvent(payload);
           }
         }
