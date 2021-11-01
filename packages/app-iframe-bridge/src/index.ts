@@ -66,6 +66,7 @@ const IframeBridge: NetlessApp<Attributes> = {
         position: "absolute",
         top: 0,
         left: 0,
+        overflow: "hidden",
       });
       container.appendChild(viewBox);
       context.mountView(viewBox);

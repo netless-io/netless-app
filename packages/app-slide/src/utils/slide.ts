@@ -155,7 +155,7 @@ export function createSlideController(
     anchor,
     interactive: true,
     mode: "interactive",
-    resize: false, // TODO: fix it in next version
+    resize: true,
     controller,
     timestamp,
   });
