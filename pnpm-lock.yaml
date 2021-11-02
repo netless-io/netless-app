@@ -155,7 +155,10 @@ importers:
 
   packages/app-shared:
     specifiers:
+      randomcolor: ^0.6.2
       side-effect-manager: ^0.1.3
+    dependencies:
+      randomcolor: 0.6.2
     devDependencies:
       side-effect-manager: 0.1.3
 
@@ -1928,7 +1931,6 @@ packages:
 
   /randomcolor/0.6.2:
     resolution: {integrity: sha512-Mn6TbyYpFgwFuQ8KJKqf3bqqY9O1y37/0jgSK/61PUxV4QfIMv0+K2ioq8DfOjkBslcjwSzRfIDEXfzA9aCx7A==}
-    dev: true
 
   /rangetouch/2.0.1:
     resolution: {integrity: sha512-sln+pNSc8NGaHoLzwNBssFSf/rSYkqeBXzX1AtJlkJiUaVSJSbRAWJk+4omsXkN+EJalzkZhWQ3th1m0FpR5xA==}

@@ -27,5 +27,8 @@
   },
   "devDependencies": {
     "side-effect-manager": "^0.1.3"
+  },
+  "dependencies": {
+    "randomcolor": "^0.6.2"
   }
 }
