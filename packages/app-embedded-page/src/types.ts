@@ -1,4 +1,10 @@
-export type State = Record<string, unknown>;
+type TransformMessage<TKey extends keyof Messages, Messages> = TKey extends keyof Messages
+  ? Messages[TKey] extends void
+    ? { type: TKey; payload?: Messages[TKey] }
+    : { type: TKey; payload: Messages[TKey] }
+  : never;
+
+export type DefaultState = Record<string, unknown>;
 
 export interface CameraState {
   x: number;
@@ -12,59 +18,57 @@ export interface RoomMember {
   userPayload: unknown;
 }
 
-// iframe --> me
-export interface ReceiveMessages {
-  Init: void;
-  GetState: void;
-  SetState: State;
-  SendMessage: unknown;
-  GetPage: void;
-  SetPage: string;
-  GetWritable: void;
-  MoveCamera: Partial<CameraState>;
-  GetRoomMembers: ReadonlyArray<RoomMember>;
+// me --> iframe
+export interface ToSDKMessagePayloads<TState = DefaultState, TMagix = unknown> {
+  Init: InitData<TState>;
+  StateChanged: { state: TState; diff: Diff<TState> };
+  PageChanged: DiffOne<string>;
+  ReceiveMagixMessage: TMagix;
+  WritableChanged: DiffOne<boolean>;
+  RoomMembersChanged: ReadonlyArray<RoomMember>;
 }
 
-type CheckReceiveMessageType<T extends { type: keyof ReceiveMessages }> = T;
-export type ReceiveMessage = CheckReceiveMessageType<
-  | { type: "Init" }
-  | { type: "GetState" }
-  | { type: "SetState"; payload: State }
-  | { type: "SendMessage"; payload: unknown }
-  | { type: "GetPage" }
-  | { type: "SetPage"; payload: string }
-  | { type: "GetWritable" }
-  | { type: "MoveCamera"; payload: Partial<CameraState> }
-  | { type: "GetRoomMembers"; payload: ReadonlyArray<RoomMember> }
->;
+export type ToSDKMessageKey = keyof ToSDKMessagePayloads;
+
+export type ToSDKMessage<
+  TKey extends ToSDKMessageKey = ToSDKMessageKey,
+  TState = DefaultState,
+  TMagix = unknown
+> = TransformMessage<TKey, ToSDKMessagePayloads<TState, TMagix>>;
+
+// iframe --> me
+export interface FromSDKMessagePayloads<TState = DefaultState, TMagix = unknown> {
+  Init: void;
+  SetState: Partial<TState>;
+  SetPage: string;
+  SendMagixMessage: TMagix;
+  MoveCamera: Partial<CameraState>;
+}
+
+export type FromSDKMessageKey = keyof FromSDKMessagePayloads;
+
+export type FromSDKMessage<
+  TKey extends FromSDKMessageKey = FromSDKMessageKey,
+  TState = DefaultState,
+  TMagix = unknown
+> = TransformMessage<TKey, FromSDKMessagePayloads<TState, TMagix>>;
 
 export type DiffOne<T> = { oldValue?: T; newValue?: T };
 
+export type Diff<T> = { [K in keyof T]?: DiffOne<T[K]> };
+
 export interface MetaData {
-  sessionUID: number;
-  uid: string;
-  roomUUID?: string;
-  userPayload: unknown;
+  readonly sessionUID: number;
+  readonly uid: string;
+  readonly roomUUID?: string;
+  readonly userPayload: unknown;
 }
 
-export interface InitData {
-  state: State;
+export interface InitData<TState = DefaultState> {
+  state: TState;
   page?: string;
   writable: boolean;
   meta: MetaData;
   roomMembers: ReadonlyArray<RoomMember>;
-}
-
-// me --> iframe
-export interface SendMessages {
-  Init: InitData;
-  GetState: State;
-  StateChanged: Record<string, DiffOne<unknown>>;
-  ReceiveMessage: unknown;
-  GetPage: string | undefined;
-  PageChanged: DiffOne<string>;
-  GetWritable: boolean;
-  WritableChanged: DiffOne<boolean>;
-  GetRoomMembers: ReadonlyArray<RoomMember>;
-  RoomMembersChanged: ReadonlyArray<RoomMember>;
+  debug?: boolean;
 }
