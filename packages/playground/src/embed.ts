@@ -5,11 +5,14 @@ import { createEmbeddedApp } from "@netless/app-embedded-page-sdk";
 
 const $ = <T = HTMLElement>(sel: string) => document.querySelector(sel) as unknown as T;
 
-async function main(): Promise<void> {
-  const app = await createEmbeddedApp();
+interface AppState {
+  count: number;
+}
 
-  // set key value to app.state only if the key does not exists
-  app.ensureState({ count: 0 });
+type AppMessage = string;
+
+async function main(): Promise<void> {
+  const app = await createEmbeddedApp<AppState, AppMessage>({ ensureState: { count: 0 } });
 
   // ------ Listen State Change ------
   const refreshCount = () => {
