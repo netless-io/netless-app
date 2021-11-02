@@ -1,7 +1,6 @@
 import { createStore } from "redux";
 import { createEmbeddedApp } from "@netless/app-embedded-page-sdk";
 import { SideEffectManager } from "side-effect-manager";
-import ScratchBlocks from "scratch-blocks";
 import { TargetsBinder } from "./vm/targets";
 
 export const UPDATE_STATE = "NETLESS/UPDATE_STATE";
@@ -139,7 +138,7 @@ export class NetlessAppScratchSDK {
     return store;
   }
 
-  bindMainWorkSpace(workspace) {
+  bindMainWorkSpace(workspace, ScratchBlocks) {
     this.pApp.then(app => {
       const MAIN_WORKSPACE_EVENT = "MAIN_WORKSPACE_EVENT";
 
@@ -157,9 +156,13 @@ export class NetlessAppScratchSDK {
         const handler = message => {
           if (!this.isAuthor()) {
             if (message && message.type === MAIN_WORKSPACE_EVENT) {
-              console.log(message.payload, workspace);
-              var secondaryEvent = ScratchBlocks.Events.fromJson(message.payload, workspace);
-              secondaryEvent.run(true);
+              try {
+                message.payload.workspaceId = workspace.id;
+                const secondaryEvent = ScratchBlocks.Events.fromJson(message.payload, workspace);
+                secondaryEvent.run(true);
+              } catch (e) {
+                console.error(e);
+              }
             }
           }
         };
