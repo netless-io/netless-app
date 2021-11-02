@@ -18,7 +18,7 @@ export interface SlideDocsViewerConfig {
 
 export class SlideDocsViewer {
   public viewer: DocsViewer;
-  public slideController?: SlideController;
+  public slideController: SlideController | null = null;
 
   protected readonly box: ReadonlyTeleBox;
   protected readonly whiteboardView: SlideDocsViewerConfig["view"];
@@ -109,7 +109,7 @@ export class SlideDocsViewer {
   public unmount() {
     if (this.slideController) {
       this.slideController.destroy();
-      this.slideController = void 0;
+      this.slideController = null;
     }
     this.viewer.unmount();
     return this;
