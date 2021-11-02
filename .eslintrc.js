@@ -10,6 +10,7 @@ const config = {
   rules: {
     "@typescript-eslint/consistent-type-imports": "warn",
     "@typescript-eslint/no-empty-interface": "off",
+    "@typescript-eslint/no-unused-vars": ["error", { ignoreRestSiblings: true }],
   },
   overrides: [
     {
