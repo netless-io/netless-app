@@ -234,13 +234,13 @@ export class TargetsBinder {
       });
     }
 
-    // console.log("deflateTargetList", jsonTargetList);
+    console.log("deflateTargetList", jsonTargetList);
 
     return fromUint8Array(pako.deflate(JSON.stringify(jsonTargetList)));
   }
 
   deflateTarget(target) {
-    const result = { ...target };
+    const { costume, ...result } = target;
     if (target.comments && size(target.comments) > 0) {
       result.comments = mapValues(target.comments, clone);
     }
@@ -256,12 +256,12 @@ export class TargetsBinder {
     if (target.costumes && target.costumes.length > 0) {
       result.costumes = target.costumes.map(this.omitAsset, this);
     }
-    if (target.costume) {
+    if (costume) {
       result.currentCostume = 0;
       if (target.costumes) {
         result.currentCostume = Math.max(
           0,
-          target.costumes.findIndex(costume => costume.assetId === result.costume.assetId)
+          target.costumes.findIndex(costume => costume.assetId === costume.assetId)
         );
       }
     }
