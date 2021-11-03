@@ -19,7 +19,6 @@ import type {
   ToSDKMessage,
   DefaultState,
   CameraState,
-  Diff,
 } from "./types";
 import { isObj } from "./utils";
 import styles from "./style.scss?inline";
@@ -58,7 +57,7 @@ const EmbeddedPage: NetlessApp<Attributes, void, AppOptions> = {
 
     const toJSON = <T = unknown>(o: T): T => {
       try {
-        return JSON.parse(JSON.stringify(o));
+        return isObj(o) ? JSON.parse(JSON.stringify(o)) : o;
       } catch (e) {
         logger.error("Cannot parse to JSON object", o);
         throw e;
@@ -143,15 +142,8 @@ const EmbeddedPage: NetlessApp<Attributes, void, AppOptions> = {
     };
 
     sideEffectManager.add(() => {
-      let oldState = toJSON(attrs.state);
       const updateListener: AkkoObjectUpdatedListener<DefaultState> = updatedProperties => {
-        const state = toJSON(attrs.state);
-        const diff: Diff<DefaultState> = {};
-        for (const { key, value } of updatedProperties) {
-          diff[key] = { oldValue: oldState[key], newValue: toJSON(value) };
-        }
-        oldState = state;
-        postMessage({ type: "StateChanged", payload: { state, diff } });
+        postMessage({ type: "StateChanged", payload: toJSON(updatedProperties) });
       };
       const listen = () => context.objectUtils.listenUpdated(attrs.state, updateListener);
       return context.mobxUtils.reaction(() => attrs.state, listen, { fireImmediately: true });

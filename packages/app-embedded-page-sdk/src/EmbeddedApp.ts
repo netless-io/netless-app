@@ -22,6 +22,10 @@ import { isDiffOne, isObj, isRef, makeRef, plainObjectKeys } from "./utils";
 export class EmbeddedApp<TState = DefaultState, TMessage = unknown> {
   constructor(initData: InitData<TState>, ensureState?: TState) {
     this._state = this._initState(initData.state);
+    if (ensureState) {
+      this.ensureState(ensureState);
+    }
+
     this._writable = initData.writable;
     this._page = initData.page;
     this._meta = initData.meta;
@@ -48,10 +52,6 @@ export class EmbeddedApp<TState = DefaultState, TMessage = unknown> {
         }
       }
     });
-
-    if (ensureState) {
-      this.ensureState(ensureState);
-    }
   }
 
   /**
@@ -216,62 +216,46 @@ export class EmbeddedApp<TState = DefaultState, TMessage = unknown> {
   }
 
   private _handleMsgStateChanged(payload: unknown): void {
-    if (payload) {
+    if (Array.isArray(payload) && payload.length > 0) {
       const lastState = this._state;
-      const { state, diff } = payload as ToSDKMessagePayloads<TState, TMessage>["StateChanged"];
+      const newState = { ...lastState };
+      const diffs: Diff<TState> = {};
+      const updatedProperties = payload as ToSDKMessagePayloads<TState, TMessage>["StateChanged"];
 
-      if (state) {
-        plainObjectKeys(state).forEach(key => {
-          const rawValue = state[key];
-          if (isRef<TState[keyof TState]>(rawValue)) {
-            const { k, v } = rawValue;
-            const curValue = lastState[key];
-            if (isObj(curValue) && this.kMap.get(curValue) === k) {
-              state[key] = curValue;
-            } else {
-              state[key] = v;
-              if (isObj(v)) {
-                this.kMap.set(v, k);
-              }
-            }
+      updatedProperties.forEach(({ key, value, kind }) => {
+        switch (kind) {
+          // Removed
+          case 2: {
+            delete newState[key];
+            diffs[key] = { oldValue: lastState[key] };
+            break;
           }
-        });
-
-        this._state = state;
-      }
-
-      if (diff) {
-        plainObjectKeys(diff).forEach(key => {
-          const diffValue = diff[key];
-          if (diffValue) {
-            if (isRef<TState[keyof TState]>(diffValue.oldValue)) {
-              const { k, v } = diffValue.oldValue;
+          default: {
+            if (isRef<TState[Extract<keyof TState, string>]>(value)) {
+              const { k, v } = value;
               const curValue = lastState[key];
               if (isObj(curValue) && this.kMap.get(curValue) === k) {
-                diffValue.oldValue = curValue;
+                newState[key] = curValue;
               } else {
-                diffValue.oldValue = v;
-              }
-            }
-
-            if (isRef<TState[keyof TState]>(diffValue.newValue)) {
-              if (this.debug) {
-                const curValue = state[key];
-                if (!isObj(curValue) || this.kMap.get(curValue) !== diffValue.newValue.k) {
-                  this.logger.warn(
-                    `StateChanged ${key} with un-cached newValue`,
-                    diffValue.newValue
-                  );
+                newState[key] = v;
+                if (isObj(v)) {
+                  this.kMap.set(v, k);
                 }
               }
-
-              diffValue.newValue = state[key];
+            } else {
+              newState[key] = value;
             }
-          }
-        });
 
-        this.onStateChanged.dispatch(diff);
-      }
+            diffs[key] = has(lastState, key)
+              ? { newValue: value, oldValue: lastState[key] }
+              : { newValue: value };
+            break;
+          }
+        }
+      });
+
+      this._state = newState;
+      this.onStateChanged.dispatch(diffs);
     }
   }
 

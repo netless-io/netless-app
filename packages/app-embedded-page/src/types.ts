@@ -1,3 +1,5 @@
+import type { AkkoObjectUpdatedProperty } from "white-web-sdk";
+
 type TransformMessage<TKey extends keyof Messages, Messages> = TKey extends keyof Messages
   ? Messages[TKey] extends void
     ? { type: TKey; payload?: Messages[TKey] }
@@ -21,7 +23,7 @@ export interface RoomMember {
 // me --> iframe
 export interface ToSDKMessagePayloads<TState = DefaultState, TMagix = unknown> {
   Init: InitData<TState>;
-  StateChanged: { state: TState; diff: Diff<TState> };
+  StateChanged: ReadonlyArray<AkkoObjectUpdatedProperty<TState, Extract<keyof TState, string>>>;
   PageChanged: DiffOne<string>;
   ReceiveMagixMessage: TMagix;
   WritableChanged: boolean;
