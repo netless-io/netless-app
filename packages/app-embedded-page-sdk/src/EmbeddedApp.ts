@@ -118,9 +118,12 @@ export class EmbeddedApp<TState = DefaultState, TMessage = unknown> {
   private _writable: boolean;
 
   private _handleMsgWritableChanged(payload: unknown): void {
-    if (isDiffOne<boolean>(payload)) {
-      this._writable = Boolean(payload.newValue);
-      this.onWritableChanged.dispatch(payload);
+    const newValue = Boolean(payload);
+    const oldValue = this._writable;
+
+    if (newValue !== oldValue) {
+      this._writable = newValue;
+      this.onWritableChanged.dispatch({ oldValue, newValue });
     }
   }
 

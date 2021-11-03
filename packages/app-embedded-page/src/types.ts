@@ -24,7 +24,7 @@ export interface ToSDKMessagePayloads<TState = DefaultState, TMagix = unknown> {
   StateChanged: { state: TState; diff: Diff<TState> };
   PageChanged: DiffOne<string>;
   ReceiveMagixMessage: TMagix;
-  WritableChanged: DiffOne<boolean>;
+  WritableChanged: boolean;
   RoomMembersChanged: ReadonlyArray<RoomMember>;
 }
 

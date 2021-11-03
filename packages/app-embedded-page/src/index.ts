@@ -206,17 +206,14 @@ const EmbeddedPage: NetlessApp<Attributes, void, AppOptions> = {
     \* --------------------------------------------- */
 
     sideEffectManager.add(() => {
-      let oldValue = context.getIsWritable();
       const updateListener = () => {
-        const newValue = context.getIsWritable();
         postMessage({
           type: "WritableChanged",
-          payload: { oldValue, newValue },
+          payload: context.getIsWritable(),
         });
         if (debug) {
-          logger.log(`writableChange from ${oldValue} to ${newValue}`);
+          logger.log(`writableChange changed to ${context.getIsWritable()}`);
         }
-        oldValue = newValue;
       };
       context.emitter.on("writableChange", updateListener);
       return () => context.emitter.off("writableChange", updateListener);
