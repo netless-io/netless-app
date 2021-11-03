@@ -29,7 +29,7 @@ interface UserPayload {
 
 /**
  * NOTE: GeoGebra is licensed under GPLv3 and is free only in non-commercial use.
- * If you want to use it, please refer to their licence first:
+ * If you want to use it, please refer to their license first:
  * https://www.geogebra.org/license
  *
  * KNOWN ISSUE: The GeoGebra sync is based on sending & receiving data about
