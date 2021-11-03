@@ -56,6 +56,15 @@ const EmbeddedPage: NetlessApp<Attributes, void, AppOptions> = {
     const sideEffectManager = new SideEffectManager();
     const logger = new Logger("EmbeddedPage", debug);
 
+    const toJSON = <T = unknown>(o: T): T => {
+      try {
+        return JSON.parse(JSON.stringify(o));
+      } catch (e) {
+        logger.error("Cannot parse to JSON object", o);
+        throw e;
+      }
+    };
+
     const container = document.createElement("div");
     container.dataset.appKind = "EmbeddedPage";
     container.classList.add("netless-app-embedded-page");
@@ -72,7 +81,7 @@ const EmbeddedPage: NetlessApp<Attributes, void, AppOptions> = {
       array.map(({ memberId, payload }) => ({
         sessionUID: memberId,
         uid: room?.uid || payload?.uid || "",
-        userPayload: JSON.parse(JSON.stringify(payload)), // context.mobxUtils.toJS(payload),
+        userPayload: toJSON(payload),
       }));
 
     const postMessage = <T extends ToSDKMessageKey>(message: ToSDKMessage<T>) => {
@@ -134,12 +143,12 @@ const EmbeddedPage: NetlessApp<Attributes, void, AppOptions> = {
     };
 
     sideEffectManager.add(() => {
-      let oldState = context.mobxUtils.toJS(attrs.state);
+      let oldState = toJSON(attrs.state);
       const updateListener: AkkoObjectUpdatedListener<DefaultState> = updatedProperties => {
-        const state = context.mobxUtils.toJS(attrs.state);
+        const state = toJSON(attrs.state);
         const diff: Diff<DefaultState> = {};
         for (const { key, value } of updatedProperties) {
-          diff[key] = { oldValue: oldState[key], newValue: context.mobxUtils.toJS(value) };
+          diff[key] = { oldValue: oldState[key], newValue: toJSON(value) };
         }
         oldState = state;
         postMessage({ type: "StateChanged", payload: { state, diff } });
@@ -249,7 +258,7 @@ const EmbeddedPage: NetlessApp<Attributes, void, AppOptions> = {
       postMessage({
         type: "Init",
         payload: {
-          state: context.mobxUtils.toJS(attrs.state),
+          state: toJSON(attrs.state),
           page: attrs.page,
           writable: context.getIsWritable(),
           roomMembers: transformRoomMembers(displayer.state.roomMembers),
@@ -258,7 +267,7 @@ const EmbeddedPage: NetlessApp<Attributes, void, AppOptions> = {
             sessionUID: memberId,
             uid: room?.uid || userPayload?.uid || "",
             roomUUID: room?.uuid,
-            userPayload: JSON.parse(JSON.stringify(userPayload)), // context.mobxUtils.toJS(userPayload),
+            userPayload: toJSON(userPayload),
           },
         },
       });
