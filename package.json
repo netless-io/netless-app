@@ -2,6 +2,8 @@
   "name": "netless-app-monorepo",
   "private": true,
   "devDependencies": {
+    "@commitlint/cli": "^14.1.0",
+    "@commitlint/config-conventional": "^14.1.0",
     "@netless/window-manager": "^0.2.12-canary.1",
     "@sveltejs/vite-plugin-svelte": "^1.0.0-next.30",
     "@tsconfig/svelte": "^2.0.1",
@@ -14,6 +16,7 @@
     "eslint": "^8.1.0",
     "eslint-config-prettier": "^8.3.0",
     "eslint-plugin-svelte3": "^3.2.1",
+    "husky": "^7.0.4",
     "prettier": "^2.4.1",
     "prettier-plugin-svelte": "^2.4.0",
     "rimraf": "^3.0.2",
