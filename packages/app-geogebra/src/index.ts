@@ -31,6 +31,10 @@ interface UserPayload {
  * NOTE: GeoGebra is licensed under GPLv3 and is free only in non-commercial use.
  * If you want to use it, please refer to their licence first:
  * https://www.geogebra.org/license
+ *
+ * KNOWN ISSUE: The GeoGebra sync is based on sending & receiving data about
+ * partial info of the full picture, this can cause errors because of the order
+ * of executing them.
  */
 const GeoGebra: NetlessApp<Attributes> = {
   kind: "GeoGebra",
@@ -42,6 +46,8 @@ const GeoGebra: NetlessApp<Attributes> = {
     )?.payload as UserPayload;
     const uid = userPayload?.uid || "";
     const nickName = userPayload?.nickName || uid;
+
+    const codebase = context.getAppOptions()?.HTML5Codebase;
 
     const attrs = ensureAttributes(context, {
       uid: "",
@@ -121,8 +127,11 @@ const GeoGebra: NetlessApp<Attributes> = {
       app?.remove();
     });
 
-    const GGBApplet = await getGGBApplet();
+    const GGBApplet = await getGGBApplet(codebase);
     const applet = new GGBApplet(params);
+    if (codebase) {
+      applet.setHTML5Codebase(codebase);
+    }
     applet.inject(content);
   },
 };

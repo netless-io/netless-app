@@ -1,4 +1,4 @@
-import type { AddAppParams } from "@netless/window-manager";
+import type { AddAppParams, RegisterParams } from "@netless/window-manager";
 import { WindowManager } from "@netless/window-manager";
 
 import type { PlaygroundConfigs } from "../typings";
@@ -30,7 +30,17 @@ export function registerApps(): AppGroup[] {
           return src;
         }
       };
-      WindowManager.register({ kind, src: wrapped });
+      const params: RegisterParams = { kind, src: wrapped };
+      // https://wiki.geogebra.org/en/Reference:GeoGebra_Apps_Embedding#Offline_and_Self-Hosted_Solution
+      if (kind === "GeoGebra") {
+        Object.assign(params, {
+          appOptions: {
+            HTML5Codebase:
+              "https://flat-storage-cn-hz.whiteboard.agora.io/GeoGebra/HTML5/5.0/web3d",
+          },
+        } as RegisterParams);
+      }
+      WindowManager.register(params);
       app.configs.push({ kind, ...rest });
     }
 
