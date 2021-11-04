@@ -22,8 +22,8 @@ import { has } from "./utils";
 import { isDiffOne, isObj } from "./utils";
 
 export type PostFromSDKMessage<TState = unknown, TMessage = unknown> = <
-  S = TState,
-  TType extends FromSDKMessageKey = FromSDKMessageKey
+  TType extends FromSDKMessageKey = FromSDKMessageKey,
+  S = TState
 >(
   message: FromSDKMessage<TType, { [K in keyof S]: MaybeRefValue<S[K]> }, TMessage>
 ) => void;
@@ -194,7 +194,7 @@ export class EmbeddedApp<TState = DefaultState, TMessage = unknown> {
         logger: this._logger,
         getIsWritable: () => this._writable,
         onSetState: state =>
-          this._postMessage<S>({ type: "SetState", payload: { storeId, state } }),
+          this._postMessage<"SetState", S>({ type: "SetState", payload: { storeId, state } }),
       }) as Store<S>;
 
       this._stores.set(storeId, store);

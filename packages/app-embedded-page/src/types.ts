@@ -81,3 +81,15 @@ export interface InitData<TState = DefaultState> {
   store: { [k: string]: TState };
   mainStoreId: string;
 }
+
+export type PostToSDKMessage<TState = unknown, TMessage = unknown> = <
+  TType extends ToSDKMessageKey = ToSDKMessageKey,
+  S = TState
+>(
+  message: ToSDKMessage<TType, S, TMessage>
+) => void;
+
+export type AddFromSDKMessageListener<TState = unknown, TMessage = unknown> = (
+  listener: (message: FromSDKMessage<FromSDKMessageKey, TState, TMessage>) => void,
+  options?: boolean | AddEventListenerOptions
+) => () => void;

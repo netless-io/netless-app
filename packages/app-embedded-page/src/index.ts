@@ -1,3 +1,5 @@
+import styles from "./style.scss?inline";
+
 import type { NetlessApp } from "@netless/window-manager";
 import type {
   AkkoObjectUpdatedListener,
@@ -12,27 +14,28 @@ import type {
 import { ensureAttributes, Logger } from "@netless/app-shared";
 import { SideEffectManager } from "side-effect-manager";
 
+import { isObj } from "./utils";
 import type {
   FromSDKMessage,
   RoomMember,
-  ToSDKMessageKey,
-  ToSDKMessage,
   DefaultState,
   CameraState,
+  PostToSDKMessage,
+  AddFromSDKMessageListener,
 } from "./types";
-import { isObj } from "./utils";
-import styles from "./style.scss?inline";
 
 export * from "./types";
 
 export type Attributes = {
   src: string;
-  store: Record<string, unknown>;
+  store: DefaultState;
   page: string;
 };
 
-export interface AppOptions {
+export interface AppOptions<TState = DefaultState, TMessage = unknown> {
   debug?: boolean;
+  postMessage?: PostToSDKMessage<TState, TMessage>;
+  addMessageListener?: AddFromSDKMessageListener<TState, TMessage>;
 }
 
 const ClickThroughAppliances = new Set(["clicker", "selector"]);
@@ -41,14 +44,17 @@ const EmbeddedPage: NetlessApp<Attributes, void, AppOptions> = {
   kind: "EmbeddedPage",
   setup(context) {
     if (import.meta.env.DEV) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (window as any).EmbeddedPageContext = context;
     }
+
+    const appOptions = context.getAppOptions() || {};
 
     const displayer = context.getDisplayer();
     const room = context.getRoom();
     const box = context.getBox();
     const view = context.getView();
-    const debug = context.getAppOptions()?.debug;
+    const debug = appOptions.debug;
     const mainStoreId = "state";
 
     const attrs = ensureAttributes<Attributes>(context, {
@@ -113,10 +119,32 @@ const EmbeddedPage: NetlessApp<Attributes, void, AppOptions> = {
       };
     };
 
-    const postMessage = <T extends ToSDKMessageKey>(message: ToSDKMessage<T>) => {
-      logger.log("Message to SDK", message);
-      iframe.contentWindow?.postMessage(message, "*");
-    };
+    const postMessage: PostToSDKMessage<DefaultState> =
+      appOptions.postMessage ||
+      (message => {
+        logger.log("Message to SDK", message);
+        iframe.contentWindow?.postMessage(message, "*");
+      });
+
+    const addMessageListener: AddFromSDKMessageListener<DefaultState> =
+      appOptions.addMessageListener ||
+      ((listener, options) => {
+        const handler = ({ data, source }: MessageEvent<FromSDKMessage>) => {
+          if (source !== iframe.contentWindow) return;
+          if (!isObj(data)) {
+            logger.error("window message data should be object, instead got", data);
+            return;
+          }
+          logger.log("Message from SDK", data);
+          listener(data);
+        };
+
+        window.addEventListener("message", handler, options);
+
+        return () => {
+          window.removeEventListener("message", handler, options);
+        };
+      });
 
     /* --------------------------------------------- *\
      # Whiteboard panel
@@ -353,43 +381,36 @@ const EmbeddedPage: NetlessApp<Attributes, void, AppOptions> = {
      # Setup iframe message hub
     \* --------------------------------------------- */
 
-    sideEffectManager.addEventListener(window, "message", e => {
-      if (e.source !== iframe.contentWindow) return;
-      if (!isObj(e.data)) {
-        logger.error("window message data should be object, instead got", e.data);
-        return;
-      }
-
-      const data = e.data as FromSDKMessage;
-      logger.log("Message From SDK", data);
-
-      switch (data.type) {
-        case "Init": {
-          sendInitData();
-          break;
+    sideEffectManager.add(() =>
+      addMessageListener(message => {
+        switch (message.type) {
+          case "Init": {
+            sendInitData();
+            break;
+          }
+          case "SetState": {
+            setState(message.payload);
+            break;
+          }
+          case "SetStore": {
+            setStore(message.payload);
+            break;
+          }
+          case "SetPage": {
+            setPage(message.payload);
+            break;
+          }
+          case "SendMagixMessage": {
+            sendMagixMessage(message.payload);
+            break;
+          }
+          case "MoveCamera": {
+            moveCamera(message.payload);
+            break;
+          }
         }
-        case "SetState": {
-          setState(data.payload);
-          break;
-        }
-        case "SetStore": {
-          setStore(data.payload);
-          break;
-        }
-        case "SetPage": {
-          setPage(data.payload);
-          break;
-        }
-        case "SendMagixMessage": {
-          sendMagixMessage(data.payload);
-          break;
-        }
-        case "MoveCamera": {
-          moveCamera(data.payload);
-          break;
-        }
-      }
-    });
+      })
+    );
 
     context.emitter.on("destroy", () => {
       logger.log("destroy");

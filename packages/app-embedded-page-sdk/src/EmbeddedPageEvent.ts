@@ -1,7 +1,7 @@
-export type Listener<T> = (event: T) => void;
+export type EmbeddedPageEventListener<T> = (event: T) => void;
 
 export class EmbeddedPageEvent<TMessage> {
-  listeners = new Set<Listener<TMessage>>();
+  listeners = new Set<EmbeddedPageEventListener<TMessage>>();
 
   get length(): number {
     return this.listeners.size;
@@ -11,11 +11,11 @@ export class EmbeddedPageEvent<TMessage> {
     this.listeners.forEach(callback => callback(message));
   }
 
-  addListener(listener: Listener<TMessage>): void {
+  addListener(listener: EmbeddedPageEventListener<TMessage>): void {
     this.listeners.add(listener);
   }
 
-  removeListener(listener: Listener<TMessage>): void {
+  removeListener(listener: EmbeddedPageEventListener<TMessage>): void {
     this.listeners.delete(listener);
   }
 }

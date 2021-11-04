@@ -1,22 +1,28 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import type {
-  FromSDKMessage,
-  ToSDKMessage,
-  ToSDKMessageKey,
-  DefaultState,
-  FromSDKMessageKey,
-} from "@netless/app-embedded-page";
+import type { ToSDKMessage, ToSDKMessageKey, DefaultState } from "@netless/app-embedded-page";
 import type { LoggerDebugLevel } from "@netless/app-shared";
 import { Logger } from "@netless/app-shared";
 
+import type { PostFromSDKMessage, AddToSDKMessageListener } from "./EmbeddedApp";
 import { EmbeddedApp } from "./EmbeddedApp";
-import type { MaybeRefValue } from "./utils";
 import { isObj } from "./utils";
 
-export interface EmbeddedAppConfig<TState> {
-  ensureState: TState;
+export * from "./EmbeddedApp";
+export * from "./EmbeddedPageEvent";
+
+export type EmbeddedAppConfigBase<TState = unknown, TMessage = unknown> = {
   debug?: LoggerDebugLevel;
-}
+  postMessage?: PostFromSDKMessage<TState, TMessage>;
+  addMessageListener?: AddToSDKMessageListener<TState, TMessage>;
+};
+
+export type EmbeddedAppConfigWithState<TState = unknown, TMessage = unknown> = {
+  ensureState: TState;
+} & EmbeddedAppConfigBase<TState, TMessage>;
+
+export type EmbeddedAppConfig<TState = unknown, TMessage = unknown> = {
+  ensureState?: TState;
+} & EmbeddedAppConfigBase<TState, TMessage>;
 
 let singleApp: EmbeddedApp<any, any> | undefined;
 
@@ -32,14 +38,14 @@ export function createEmbeddedApp<TState = DefaultState, TMessage = unknown>(): 
   EmbeddedApp<TState | Record<string, unknown>, TMessage>
 >;
 export function createEmbeddedApp<TState = DefaultState, TMessage = unknown>(
-  config: EmbeddedAppConfig<TState>
+  config: EmbeddedAppConfigWithState<TState, TMessage>
 ): Promise<EmbeddedApp<TState, TMessage>>;
 export function createEmbeddedApp<TState = DefaultState, TMessage = unknown>(
-  config: Partial<EmbeddedAppConfig<TState>>
+  config: EmbeddedAppConfigBase<TState, TMessage>
 ): Promise<EmbeddedApp<TState | Record<string, unknown>, TMessage>>;
 export function createEmbeddedApp<TState = DefaultState, TMessage = unknown>(
-  config: Partial<EmbeddedAppConfig<TState>> = {}
-): Promise<EmbeddedApp<TState | Record<string, unknown>, TMessage>> {
+  config: EmbeddedAppConfig<TState, TMessage> = {}
+): Promise<EmbeddedApp<TState, TMessage>> {
   if (!parent) {
     throw new Error("[EmbeddedPageSDK]: SDK is not running in a iframe.");
   }
@@ -50,36 +56,35 @@ export function createEmbeddedApp<TState = DefaultState, TMessage = unknown>(
 
   const logger = new Logger("EmbeddedPageSDK", config.debug);
 
-  const postMessage = <S = TState, TType extends FromSDKMessageKey = FromSDKMessageKey>(
-    message: FromSDKMessage<TType, { [K in keyof S]: MaybeRefValue<S[K]> }, TMessage>
-  ): void => {
-    logger.log("Message to parent", message);
-    parent.postMessage(message, "*");
-  };
+  const postMessage: PostFromSDKMessage<TState, TMessage> =
+    config.postMessage ||
+    (message => {
+      logger.log("Message to parent", message);
+      parent.postMessage(message, "*");
+    });
 
-  const addMessageListener = (
-    listener: (message: ToSDKMessage<ToSDKMessageKey, TState, TMessage>) => any,
-    options?: boolean | AddEventListenerOptions
-  ): (() => void) => {
-    const handler = ({
-      data,
-      source,
-    }: MessageEvent<ToSDKMessage<ToSDKMessageKey, TState, TMessage>>) => {
-      if (!parent || source !== parent) return;
-      if (!isObj(data)) {
-        console.warn("window message data should be object, instead got", data);
-        return;
-      }
-      logger.log("Message from parent", data);
-      listener(data);
-    };
+  const addMessageListener: AddToSDKMessageListener<TState, TMessage> =
+    config.addMessageListener ||
+    ((listener, options) => {
+      const handler = ({
+        data,
+        source,
+      }: MessageEvent<ToSDKMessage<ToSDKMessageKey, TState, TMessage>>) => {
+        if (!parent || source !== parent) return;
+        if (!isObj(data)) {
+          console.warn("window message data should be object, instead got", data);
+          return;
+        }
+        logger.log("Message from parent", data);
+        listener(data);
+      };
 
-    window.addEventListener("message", handler, options);
+      window.addEventListener("message", handler, options);
 
-    return () => {
-      window.removeEventListener("message", handler, options);
-    };
-  };
+      return () => {
+        window.removeEventListener("message", handler, options);
+      };
+    });
 
   postMessage({ type: "Init" });
 
@@ -93,9 +98,9 @@ export function createEmbeddedApp<TState = DefaultState, TMessage = unknown>(
 
       if (message.type === "Init") {
         disposer();
-        const app = new EmbeddedApp<TState | Record<string, unknown>, TMessage>(
+        const app = new EmbeddedApp<TState, TMessage>(
           message.payload,
-          config.ensureState || {},
+          config.ensureState || ({} as TState),
           postMessage,
           addMessageListener,
           logger
