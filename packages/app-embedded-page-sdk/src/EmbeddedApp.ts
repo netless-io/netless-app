@@ -12,7 +12,7 @@ import type {
   ToSDKMessageKey,
   ToSDKMessagePayloads,
 } from "@netless/app-embedded-page";
-import { Logger } from "@netless/app-shared";
+import type { Logger } from "@netless/app-shared";
 import { SideEffectManager } from "side-effect-manager";
 import { EmbeddedPageEvent } from "./EmbeddedPageEvent";
 import type { Store } from "./Store/Store";
@@ -21,8 +21,31 @@ import type { MaybeRefValue } from "./utils";
 import { has } from "./utils";
 import { isDiffOne, isObj } from "./utils";
 
+export type PostFromSDKMessage<TState = unknown, TMessage = unknown> = <
+  S = TState,
+  TType extends FromSDKMessageKey = FromSDKMessageKey
+>(
+  message: FromSDKMessage<TType, { [K in keyof S]: MaybeRefValue<S[K]> }, TMessage>
+) => void;
+
+export type AddToSDKMessageListener<TState = unknown, TMessage = unknown> = (
+  listener: (message: ToSDKMessage<ToSDKMessageKey, TState, TMessage>) => void,
+  options?: boolean | AddEventListenerOptions
+) => () => void;
+
 export class EmbeddedApp<TState = DefaultState, TMessage = unknown> {
-  constructor(initData: InitData<TState>, ensureState: TState) {
+  private logger: Logger;
+  private postMessage: PostFromSDKMessage<TState, TMessage>;
+
+  constructor(
+    initData: InitData<TState>,
+    ensureState: TState,
+    postMessage: PostFromSDKMessage<TState, TMessage>,
+    addMessageListener: AddToSDKMessageListener<TState, TMessage>,
+    logger: Logger
+  ) {
+    this.postMessage = postMessage;
+
     this.storeNSPrefix = initData.storeConfig.nsPrefix;
     this.mainStoreId = initData.storeConfig.mainId;
     this._storeRawData = initData.store || {
@@ -34,26 +57,23 @@ export class EmbeddedApp<TState = DefaultState, TMessage = unknown> {
     this._meta = initData.meta;
     this._roomMembers = initData.roomMembers;
 
-    this.logger = new Logger("EmbeddedPageSDK", initData.debug);
+    this.logger = logger;
 
-    this.sideEffect.addEventListener(window, "message", e => {
-      if (!parent || e.source !== parent) return;
-      if (!isObj(e.data)) {
-        this.logger.error("window message data should be object, instead got", e.data);
-        return;
-      }
-
-      const message = e.data as
-        | ToSDKMessage<Exclude<ToSDKMessageKey, "Init">, TState, TMessage>
-        | undefined;
-
-      if (message?.type) {
-        const method = `_handleMsg${message.type}` as const;
-        if (this[method]) {
-          this[method](message.payload);
+    this.sideEffect.add(() =>
+      addMessageListener(message => {
+        const { type, payload } = message as ToSDKMessage<
+          Exclude<ToSDKMessageKey, "Init">,
+          TState,
+          TMessage
+        >;
+        if (type) {
+          const method = `_handleMsg${type}` as const;
+          if (this[method]) {
+            this[method](payload);
+          }
         }
-      }
-    });
+      })
+    );
 
     this._mainStore = this.connectStore(initData.storeConfig.mainId, ensureState);
     this.onStateChanged = this._mainStore.onStateChanged;
@@ -176,6 +196,7 @@ export class EmbeddedApp<TState = DefaultState, TMessage = unknown> {
       store = new StoreImpl<S>({
         id,
         state: this._storeRawData[namespace] as S,
+        logger: this.logger,
         getIsWritable: () => this._writable,
         onSetState: state =>
           this.postMessage<S>({ type: "SetState", payload: { namespace, state } }),
@@ -303,12 +324,4 @@ export class EmbeddedApp<TState = DefaultState, TMessage = unknown> {
   }
 
   private sideEffect = new SideEffectManager();
-  private logger: Logger;
-
-  private postMessage<S = TState, TType extends FromSDKMessageKey = FromSDKMessageKey>(
-    message: FromSDKMessage<TType, { [K in keyof S]: MaybeRefValue<S[K]> }, TMessage>
-  ): void {
-    this.logger.log("postMessage", message);
-    parent.postMessage(message, "*");
-  }
 }

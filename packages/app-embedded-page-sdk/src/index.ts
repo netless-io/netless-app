@@ -4,14 +4,21 @@ import type {
   ToSDKMessage,
   ToSDKMessageKey,
   DefaultState,
+  FromSDKMessageKey,
 } from "@netless/app-embedded-page";
+import type { LoggerDebugLevel } from "@netless/app-shared";
+import { Logger } from "@netless/app-shared";
 
 import { EmbeddedApp } from "./EmbeddedApp";
+import type { MaybeRefValue } from "./utils";
 import { isObj } from "./utils";
 
 export interface EmbeddedAppConfig<TState> {
   ensureState: TState;
+  debug?: LoggerDebugLevel;
 }
+
+let singleApp: EmbeddedApp<any, any> | undefined;
 
 /**
  * @example
@@ -37,9 +44,23 @@ export function createEmbeddedApp<TState = DefaultState, TMessage = unknown>(
     throw new Error("[EmbeddedPageSDK]: SDK is not running in a iframe.");
   }
 
-  parent.postMessage({ type: "Init" } as FromSDKMessage<"Init", TState, TMessage>, "*");
+  if (singleApp) {
+    return Promise.resolve(singleApp);
+  }
 
-  return new Promise(resolve => {
+  const logger = new Logger("EmbeddedPageSDK", config.debug);
+
+  const postMessage = <S = TState, TType extends FromSDKMessageKey = FromSDKMessageKey>(
+    message: FromSDKMessage<TType, { [K in keyof S]: MaybeRefValue<S[K]> }, TMessage>
+  ): void => {
+    logger.log("Message to parent", message);
+    parent.postMessage(message, "*");
+  };
+
+  const addMessageListener = (
+    listener: (message: ToSDKMessage<ToSDKMessageKey, TState, TMessage>) => any,
+    options?: boolean | AddEventListenerOptions
+  ): (() => void) => {
     const handler = ({
       data,
       source,
@@ -49,18 +70,39 @@ export function createEmbeddedApp<TState = DefaultState, TMessage = unknown>(
         console.warn("window message data should be object, instead got", data);
         return;
       }
+      logger.log("Message from parent", data);
+      listener(data);
+    };
 
-      if (data.type === "Init") {
-        window.removeEventListener("message", handler);
+    window.addEventListener("message", handler, options);
 
+    return () => {
+      window.removeEventListener("message", handler, options);
+    };
+  };
+
+  postMessage({ type: "Init" });
+
+  return new Promise(resolve => {
+    const disposer = addMessageListener(message => {
+      if (singleApp) {
+        disposer();
+        resolve(singleApp);
+        return;
+      }
+
+      if (message.type === "Init") {
+        disposer();
         const app = new EmbeddedApp<TState | Record<string, unknown>, TMessage>(
-          data.payload,
-          config.ensureState || {}
+          message.payload,
+          config.ensureState || {},
+          postMessage,
+          addMessageListener,
+          logger
         );
-
+        singleApp = app;
         resolve(app);
       }
-    };
-    window.addEventListener("message", handler);
+    });
   });
 }

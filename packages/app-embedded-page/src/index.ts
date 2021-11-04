@@ -118,7 +118,7 @@ const EmbeddedPage: NetlessApp<Attributes, void, AppOptions> = {
     };
 
     const postMessage = <T extends ToSDKMessageKey>(message: ToSDKMessage<T>) => {
-      logger.log("postMessage", message);
+      logger.log("Message to SDK", message);
       iframe.contentWindow?.postMessage(message, "*");
     };
 
@@ -365,7 +365,7 @@ const EmbeddedPage: NetlessApp<Attributes, void, AppOptions> = {
       }
 
       const data = e.data as FromSDKMessage;
-      logger.log("receive", data);
+      logger.log("Message From SDK", data);
 
       switch (data.type) {
         case "Init": {
