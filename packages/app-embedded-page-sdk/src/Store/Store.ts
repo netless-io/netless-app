@@ -143,38 +143,44 @@ export class StoreImpl<TState = unknown> implements Store<TState> {
       const diffs: Diff<TState> = {};
 
       actions.forEach(({ key, value, kind }) => {
+        let oldValue: TState[Extract<keyof TState, string>] | undefined;
+        if (this._lastValue.has(key)) {
+          oldValue = this._lastValue.get(key);
+          this._lastValue.delete(key);
+        }
+
         switch (kind) {
           case 2: {
             // Removed
             if (has(this._state, key)) {
-              this._lastValue.set(key, this._state[key]);
+              oldValue = this._state[key];
               delete this._state[key];
             }
-            diffs[key] = { oldValue: this._lastValue.get(key) };
+            diffs[key] = { oldValue };
             break;
           }
           default: {
-            let realValue = value;
+            let newValue = value;
 
             if (isRef<TState[Extract<keyof TState, string>]>(value)) {
               const { k, v } = value;
               const curValue = this._state[key];
               if (isObj(curValue) && this._kMap.get(curValue) === k) {
-                realValue = curValue;
+                newValue = curValue;
               } else {
-                realValue = v;
+                newValue = v;
                 if (isObj(v)) {
                   this._kMap.set(v, k);
                 }
               }
             }
 
-            if (realValue !== this._state[key]) {
-              this._lastValue.set(key, this._state[key]);
-              this._state[key] = realValue;
+            if (newValue !== this._state[key]) {
+              oldValue = this._state[key];
+              this._state[key] = newValue;
             }
 
-            diffs[key] = { newValue: realValue, oldValue: this._lastValue.get(key) };
+            diffs[key] = { newValue, oldValue };
             break;
           }
         }
