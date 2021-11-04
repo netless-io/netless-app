@@ -38,14 +38,14 @@ export class StoreImpl<TState = unknown> implements Store<TState> {
   getIsWritable: StoreConfig["getIsWritable"];
 
   private _state: TState;
-  private onSetState: StoreConfig["onSetState"];
-  private logger: Logger | Console;
+  private _onSetState: StoreConfig["onSetState"];
+  private _logger: Logger | Console;
 
   constructor({ id, state, onSetState, getIsWritable, logger = console }: StoreConfig<TState>) {
     this.id = id;
-    this.onSetState = onSetState;
+    this._onSetState = onSetState;
     this.getIsWritable = getIsWritable;
-    this.logger = logger;
+    this._logger = logger;
 
     this._state = {} as TState;
 
@@ -56,7 +56,7 @@ export class StoreImpl<TState = unknown> implements Store<TState> {
           const { k, v } = rawValue;
           this._state[key] = v;
           if (isObj(v)) {
-            this.kMap.set(v, k);
+            this._kMap.set(v, k);
           }
         } else {
           this._state[key] = rawValue;
@@ -84,12 +84,12 @@ export class StoreImpl<TState = unknown> implements Store<TState> {
 
   setState(state: Partial<TState>): void {
     if (this._destroyed) {
-      this.logger.error(`Cannot call setState on Store ${this.id} which is destroyed.`);
+      this._logger.error(`Cannot call setState on Store ${this.id} which is destroyed.`);
       return;
     }
 
     if (!this.getIsWritable()) {
-      this.logger.error(`Cannot setState on store ${this.id} without writable access`, state);
+      this._logger.error(`Cannot setState on store ${this.id} without writable access`, state);
       return;
     }
 
@@ -107,7 +107,7 @@ export class StoreImpl<TState = unknown> implements Store<TState> {
           this._state[key] = value as TState[Extract<keyof TState, string>];
           if (isObj(value)) {
             const refValue = makeRef(value);
-            this.kMap.set(refValue.v, refValue.k);
+            this._kMap.set(refValue.v, refValue.k);
             payload[key] = refValue as MaybeRefValue<TState[Extract<keyof TState, string>]>;
           } else {
             payload[key] = value;
@@ -115,7 +115,7 @@ export class StoreImpl<TState = unknown> implements Store<TState> {
         }
       });
       if (Object.keys(payload).length > 0) {
-        this.onSetState(payload);
+        this._onSetState(payload);
       }
     }
   }
@@ -135,7 +135,7 @@ export class StoreImpl<TState = unknown> implements Store<TState> {
 
   _updateProperties(actions: StoreStateChangedPayload<TState>): void {
     if (this._destroyed) {
-      this.logger.error(`Cannot call _updateProperties on Store ${this.id} which is destroyed.`);
+      this._logger.error(`Cannot call _updateProperties on Store ${this.id} which is destroyed.`);
       return;
     }
 
@@ -159,12 +159,12 @@ export class StoreImpl<TState = unknown> implements Store<TState> {
             if (isRef<TState[Extract<keyof TState, string>]>(value)) {
               const { k, v } = value;
               const curValue = this._state[key];
-              if (isObj(curValue) && this.kMap.get(curValue) === k) {
+              if (isObj(curValue) && this._kMap.get(curValue) === k) {
                 realValue = curValue;
               } else {
                 realValue = v;
                 if (isObj(v)) {
-                  this.kMap.set(v, k);
+                  this._kMap.set(v, k);
                 }
               }
             }
@@ -184,7 +184,7 @@ export class StoreImpl<TState = unknown> implements Store<TState> {
     }
   }
 
-  private kMap = new WeakMap<object, string>();
+  private _kMap = new WeakMap<object, string>();
 
   /**
    * `setState` alters local state immediately before sending to server. This will cache the old value for onStateChanged diffing.
