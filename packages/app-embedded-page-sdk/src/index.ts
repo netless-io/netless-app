@@ -10,7 +10,7 @@ import { EmbeddedApp } from "./EmbeddedApp";
 import { isObj } from "./utils";
 
 export interface EmbeddedAppConfig<TState> {
-  ensureState?: TState;
+  ensureState: TState;
 }
 
 /**
@@ -21,9 +21,18 @@ export interface EmbeddedAppConfig<TState> {
  *   app.ensureState({ count: 0 })
  * });
  */
-export function createEmbeddedApp<TState = DefaultState, TMessage = unknown>({
-  ensureState,
-}: EmbeddedAppConfig<TState> = {}): Promise<EmbeddedApp<TState, TMessage>> {
+export function createEmbeddedApp<TState = DefaultState, TMessage = unknown>(): Promise<
+  EmbeddedApp<TState | Record<string, unknown>, TMessage>
+>;
+export function createEmbeddedApp<TState = DefaultState, TMessage = unknown>(
+  config: EmbeddedAppConfig<TState>
+): Promise<EmbeddedApp<TState, TMessage>>;
+export function createEmbeddedApp<TState = DefaultState, TMessage = unknown>(
+  config: Partial<EmbeddedAppConfig<TState>>
+): Promise<EmbeddedApp<TState | Record<string, unknown>, TMessage>>;
+export function createEmbeddedApp<TState = DefaultState, TMessage = unknown>(
+  config: Partial<EmbeddedAppConfig<TState>> = {}
+): Promise<EmbeddedApp<TState | Record<string, unknown>, TMessage>> {
   if (!parent) {
     throw new Error("[EmbeddedPageSDK]: SDK is not running in a iframe.");
   }
@@ -44,7 +53,10 @@ export function createEmbeddedApp<TState = DefaultState, TMessage = unknown>({
       if (data.type === "Init") {
         window.removeEventListener("message", handler);
 
-        const app = new EmbeddedApp<TState, TMessage>(data.payload, ensureState);
+        const app = new EmbeddedApp<TState | Record<string, unknown>, TMessage>(
+          data.payload,
+          config.ensureState || {}
+        );
 
         resolve(app);
       }

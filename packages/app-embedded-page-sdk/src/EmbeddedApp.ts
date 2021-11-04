@@ -15,22 +15,24 @@ import type {
 import { Logger } from "@netless/app-shared";
 import { SideEffectManager } from "side-effect-manager";
 import { EmbeddedPageEvent } from "./EmbeddedPageEvent";
+import type { Store } from "./Store/Store";
+import { StoreImpl } from "./Store/Store";
 import type { MaybeRefValue } from "./utils";
 import { has } from "./utils";
-import { isDiffOne, isObj, isRef, makeRef, plainObjectKeys } from "./utils";
+import { isDiffOne, isObj } from "./utils";
 
 export class EmbeddedApp<TState = DefaultState, TMessage = unknown> {
-  constructor(initData: InitData<TState>, ensureState?: TState) {
-    this._state = this._initState(initData.state);
-    if (ensureState) {
-      this.ensureState(ensureState);
-    }
+  constructor(initData: InitData<TState>, ensureState: TState) {
+    this.storeNSPrefix = initData.storeConfig.nsPrefix;
+    this.mainStoreId = initData.storeConfig.mainId;
+    this._storeRawData = initData.store || {
+      [this.getStoreNamespace(this.mainStoreId)]: {},
+    };
 
     this._writable = initData.writable;
     this._page = initData.page;
     this._meta = initData.meta;
     this._roomMembers = initData.roomMembers;
-    this.debug = initData.debug;
 
     this.logger = new Logger("EmbeddedPageSDK", initData.debug);
 
@@ -52,6 +54,9 @@ export class EmbeddedApp<TState = DefaultState, TMessage = unknown> {
         }
       }
     });
+
+    this._mainStore = this.connectStore(initData.storeConfig.mainId, ensureState);
+    this.onStateChanged = this._mainStore.onStateChanged;
   }
 
   /**
@@ -151,111 +156,143 @@ export class EmbeddedApp<TState = DefaultState, TMessage = unknown> {
   }
 
   /**
-   * App State
+   * App Store
    */
-  get state() {
-    return this._state;
+  private _storeRawData: Record<string, unknown>;
+
+  private _stores = new Map<string, Store>();
+
+  connectStore<S>(id: string, ensureState: S): Store<S> {
+    const namespace = this.getStoreNamespace(id);
+
+    let store = this._stores.get(namespace) as Store<S> | undefined;
+    if (!store) {
+      if (!has(this._storeRawData, namespace)) {
+        const storeState = {};
+        this.postMessage({ type: "SetStore", payload: { [namespace]: storeState } });
+        this._storeRawData[namespace] = storeState;
+      }
+
+      store = new StoreImpl<S>({
+        id,
+        state: this._storeRawData[namespace] as S,
+        getIsWritable: () => this._writable,
+        onSetState: state =>
+          this.postMessage<S>({ type: "SetState", payload: { namespace, state } }),
+      }) as Store<S>;
+
+      this._stores.set(namespace, store);
+    }
+
+    store.ensureState(ensureState);
+
+    return store;
   }
 
-  readonly onStateChanged = new EmbeddedPageEvent<Diff<TState>>();
-
-  ensureState(state: Partial<TState>): void {
-    return this.setState(
-      plainObjectKeys(state).reduce((payload, key) => {
-        if (!has(this._state, key)) {
-          payload[key] = state[key];
-        }
-        return payload;
-      }, {} as Partial<TState>)
-    );
+  hasStore(id: string): boolean {
+    return this._stores.has(this.getStoreNamespace(id));
   }
 
-  setState(state: Partial<TState>): void {
-    const keys = plainObjectKeys(state);
-    if (
-      keys.length > 0 &&
-      keys.some(key => state[key] === void 0 || state[key] !== this._state[key])
-    ) {
-      const newState = { ...this._state };
-      const payload: { [K in keyof TState]?: MaybeRefValue<TState[K]> } = {};
-      keys.forEach(key => {
-        const value = state[key];
-        payload[key] = value;
-        if (value === void 0) {
-          delete newState[key];
-        } else if (value !== newState[key]) {
-          newState[key] = value as TState[keyof TState];
-          if (isObj(value)) {
-            const refValue = makeRef(value);
-            this.kMap.set(refValue.v, refValue.k);
-            payload[key] = refValue as MaybeRefValue<TState[keyof TState]>;
+  removeStore(id: string): void {
+    if (id === this.mainStoreId) {
+      this.logger.error(`Store "${id}" is not removable.`);
+      return;
+    }
+    const namespace = this.getStoreNamespace(id);
+    const store = this._stores.get(namespace) as StoreImpl<TState>;
+    if (store) {
+      this._stores.delete(namespace);
+      store._destroy();
+    }
+    if (this._storeRawData[namespace]) {
+      this.postMessage({ type: "SetStore", payload: { [namespace]: void 0 } });
+    }
+  }
+
+  private _handleMsgStoreChanged(payload: unknown): void {
+    if (Array.isArray(payload) && payload.length > 0) {
+      const actions = payload as ToSDKMessagePayloads<TState, TMessage>["StoreChanged"];
+
+      actions.forEach(({ key, value, kind }) => {
+        switch (kind) {
+          case 2: {
+            // Removed
+            delete this._storeRawData[key];
+            const store = this._stores.get(key);
+            if (store) {
+              this._stores.delete(key);
+              (store as StoreImpl)._destroy();
+            }
+            break;
+          }
+          default: {
+            this._storeRawData[key] = value;
+            break;
           }
         }
-        this._state = newState;
-        this.postMessage({ type: "SetState", payload });
       });
     }
   }
 
-  private _state: TState;
+  private storeNSPrefix: string;
+  private mainStoreId: string;
 
-  private kMap = new WeakMap<object, string>();
+  getStoreNamespace(id: string): string {
+    return this.storeNSPrefix + id;
+  }
 
-  private _initState(state: { [K in keyof TState]?: MaybeRefValue<TState[K]> }): TState {
-    plainObjectKeys(state).forEach(key => {
-      const rawValue = state[key];
-      if (isRef<TState[keyof TState]>(rawValue)) {
-        const { k, v } = rawValue;
-        state[key] = v;
-        if (isObj(v)) {
-          this.kMap.set(v, k);
-        }
-      }
-    });
-    return state as TState;
+  get state() {
+    return this._mainStore.state;
+  }
+
+  private _mainStore: Store<TState>;
+
+  readonly onStateChanged: EmbeddedPageEvent<Diff<TState>>;
+
+  ensureState(state: Partial<TState>): void {
+    return this._mainStore.ensureState(state);
+  }
+
+  setState(state: Partial<TState>): void {
+    return this._mainStore.setState(state);
   }
 
   private _handleMsgStateChanged(payload: unknown): void {
-    if (Array.isArray(payload) && payload.length > 0) {
-      const lastState = this._state;
-      const newState = { ...lastState };
-      const diffs: Diff<TState> = {};
-      const updatedProperties = payload as ToSDKMessagePayloads<TState, TMessage>["StateChanged"];
+    if (
+      isObj(payload) &&
+      payload.namespace &&
+      Array.isArray(payload.actions) &&
+      payload.actions.length > 0
+    ) {
+      const { namespace, actions } = payload as ToSDKMessagePayloads<
+        TState,
+        TMessage
+      >["StateChanged"];
 
-      updatedProperties.forEach(({ key, value, kind }) => {
+      actions.forEach(({ key, value, kind }) => {
         switch (kind) {
           // Removed
           case 2: {
-            delete newState[key];
-            diffs[key] = { oldValue: lastState[key] };
+            const storeData = this._storeRawData[namespace];
+            if (isObj(storeData)) {
+              delete storeData[key];
+            }
             break;
           }
           default: {
-            if (isRef<TState[Extract<keyof TState, string>]>(value)) {
-              const { k, v } = value;
-              const curValue = lastState[key];
-              if (isObj(curValue) && this.kMap.get(curValue) === k) {
-                newState[key] = curValue;
-              } else {
-                newState[key] = v;
-                if (isObj(v)) {
-                  this.kMap.set(v, k);
-                }
-              }
-            } else {
-              newState[key] = value;
+            const storeData = this._storeRawData[namespace];
+            if (isObj(storeData)) {
+              storeData[key] = value;
             }
-
-            diffs[key] = has(lastState, key)
-              ? { newValue: value, oldValue: lastState[key] }
-              : { newValue: value };
             break;
           }
         }
       });
 
-      this._state = newState;
-      this.onStateChanged.dispatch(diffs);
+      const store = this._stores.get(namespace) as StoreImpl<TState> | undefined;
+      if (store) {
+        store._updateProperties(actions);
+      }
     }
   }
 
@@ -265,10 +302,9 @@ export class EmbeddedApp<TState = DefaultState, TMessage = unknown> {
 
   private sideEffect = new SideEffectManager();
   private logger: Logger;
-  private debug?: boolean;
 
-  private postMessage<TType extends FromSDKMessageKey = FromSDKMessageKey>(
-    message: FromSDKMessage<TType, { [K in keyof TState]: MaybeRefValue<TState[K]> }, TMessage>
+  private postMessage<S = TState, TType extends FromSDKMessageKey = FromSDKMessageKey>(
+    message: FromSDKMessage<TType, { [K in keyof S]: MaybeRefValue<S[K]> }, TMessage>
   ): void {
     this.logger.log("postMessage", message);
     parent.postMessage(message, "*");

@@ -25,11 +25,11 @@ import styles from "./style.scss?inline";
 
 export * from "./types";
 
-export interface Attributes {
+export type Attributes = {
   src: string;
-  state: DefaultState;
+  store: Record<string, unknown>;
   page: string;
-}
+};
 
 export interface AppOptions {
   debug?: boolean;
@@ -44,18 +44,23 @@ const EmbeddedPage: NetlessApp<Attributes, void, AppOptions> = {
     const room = context.getRoom();
     const box = context.getBox();
     const view = context.getView();
-    const debug = import.meta.env.DEV || context.getAppOptions()?.debug;
+    const debug = context.getAppOptions()?.debug;
+    const storeConfig = {
+      mainId: "state",
+      nsPrefix: "$scope-",
+    };
+    const stateNamespace = storeConfig.nsPrefix + storeConfig.nsPrefix;
 
     const attrs = ensureAttributes<Attributes>(context, {
       src: "https://example.org",
-      state: {},
+      store: { [stateNamespace]: {} },
       page: "",
     });
 
     const sideEffectManager = new SideEffectManager();
     const logger = new Logger("EmbeddedPage", debug);
 
-    const toJSON = <T = unknown>(o: T): T => {
+    const toJSON = <T = unknown>(o: unknown): T => {
       try {
         return isObj(o) ? JSON.parse(JSON.stringify(o)) : o;
       } catch (e) {
@@ -82,6 +87,31 @@ const EmbeddedPage: NetlessApp<Attributes, void, AppOptions> = {
         uid: room?.uid || payload?.uid || "",
         userPayload: toJSON(payload),
       }));
+
+    const safeListenPropsUpdated = <T>(
+      getProps: () => T,
+      callback: AkkoObjectUpdatedListener<T>
+    ) => {
+      let disposeListenUpdated: (() => void) | null = null;
+      const disposeReaction = context.mobxUtils.reaction(
+        getProps,
+        () => {
+          if (disposeListenUpdated) {
+            disposeListenUpdated();
+            disposeListenUpdated = null;
+          }
+          const props = getProps();
+          disposeListenUpdated = () => context.objectUtils.unlistenUpdated(props, callback);
+          context.objectUtils.listenUpdated(props, callback);
+        },
+        { fireImmediately: true }
+      );
+
+      return () => {
+        disposeListenUpdated?.();
+        disposeReaction();
+      };
+    };
 
     const postMessage = <T extends ToSDKMessageKey>(message: ToSDKMessage<T>) => {
       logger.log("postMessage", message);
@@ -130,23 +160,71 @@ const EmbeddedPage: NetlessApp<Attributes, void, AppOptions> = {
     };
 
     /* --------------------------------------------- *\
-     # App State
+     # App store
     \* --------------------------------------------- */
 
-    const setState = (state: unknown): void => {
-      if (isObj(state) && context.getIsWritable()) {
-        for (const [key, value] of Object.entries(state)) {
-          context.updateAttributes(["state", key], value);
+    const setStore = (payload: unknown): void => {
+      if (isObj(payload)) {
+        Object.keys(payload).forEach(namespace => {
+          if (namespace !== stateNamespace) {
+            const state = payload[namespace];
+            context.updateAttributes(["store", namespace], state);
+          }
+        });
+      }
+    };
+
+    const setState = (payload: unknown): void => {
+      if (isObj(payload) && payload.namespace && isObj(payload.state)) {
+        const { namespace, state } = payload as FromSDKMessage<"SetState", DefaultState>["payload"];
+        if (!context.getIsWritable()) {
+          logger.error(`Cannot setState on store ${namespace} without writable access`, state);
+          return;
         }
+        Object.keys(state).forEach(key => {
+          context.updateAttributes(["store", namespace, key], state[key]);
+        });
       }
     };
 
     sideEffectManager.add(() => {
-      const updateListener: AkkoObjectUpdatedListener<DefaultState> = updatedProperties => {
-        postMessage({ type: "StateChanged", payload: toJSON(updatedProperties) });
+      const storeSideEffect = new SideEffectManager();
+      const disposer = safeListenPropsUpdated(
+        () => attrs.store,
+        storeActions => {
+          if (attrs.store) {
+            const namespaces = Object.keys(attrs.store);
+            postMessage({ type: "StoreChanged", payload: storeActions });
+
+            namespaces.forEach(namespace => {
+              if (!storeSideEffect.disposers.has(namespace)) {
+                storeSideEffect.add(
+                  () =>
+                    safeListenPropsUpdated(
+                      () => attrs.store[namespace],
+                      actions => {
+                        postMessage({ type: "StateChanged", payload: { namespace, actions } });
+                      }
+                    ),
+                  namespace
+                );
+              }
+            });
+
+            if (namespaces.length !== storeSideEffect.disposers.size) {
+              storeSideEffect.disposers.forEach((_, namespace) => {
+                if (!attrs.store[namespace]) {
+                  storeSideEffect.flush(namespace);
+                }
+              });
+            }
+          }
+        }
+      );
+      return () => {
+        storeSideEffect.flushAll();
+        disposer();
       };
-      const listen = () => context.objectUtils.listenUpdated(attrs.state, updateListener);
-      return context.mobxUtils.reaction(() => attrs.state, listen, { fireImmediately: true });
     });
 
     /* --------------------------------------------- *\
@@ -199,13 +277,12 @@ const EmbeddedPage: NetlessApp<Attributes, void, AppOptions> = {
 
     sideEffectManager.add(() => {
       const updateListener = () => {
+        const isWritable = context.getIsWritable();
         postMessage({
           type: "WritableChanged",
-          payload: context.getIsWritable(),
+          payload: isWritable,
         });
-        if (debug) {
-          logger.log(`writableChange changed to ${context.getIsWritable()}`);
-        }
+        logger.log(`WritableChange changed to ${isWritable}`);
       };
       context.emitter.on("writableChange", updateListener);
       return () => context.emitter.off("writableChange", updateListener);
@@ -247,11 +324,12 @@ const EmbeddedPage: NetlessApp<Attributes, void, AppOptions> = {
       postMessage({
         type: "Init",
         payload: {
-          state: toJSON(attrs.state),
           page: attrs.page,
           writable: context.getIsWritable(),
           roomMembers: transformRoomMembers(displayer.state.roomMembers),
           debug,
+          store: toJSON(attrs.store),
+          storeConfig,
           meta: {
             sessionUID: memberId,
             uid: room?.uid || userPayload?.uid || "",
@@ -285,6 +363,10 @@ const EmbeddedPage: NetlessApp<Attributes, void, AppOptions> = {
           setState(data.payload);
           break;
         }
+        case "SetStore": {
+          setStore(data.payload);
+          break;
+        }
         case "SetPage": {
           setPage(data.payload);
           break;
@@ -301,9 +383,7 @@ const EmbeddedPage: NetlessApp<Attributes, void, AppOptions> = {
     });
 
     context.emitter.on("destroy", () => {
-      if (debug) {
-        logger.log("destroy");
-      }
+      logger.log("destroy");
       sideEffectManager.flushAll();
     });
 

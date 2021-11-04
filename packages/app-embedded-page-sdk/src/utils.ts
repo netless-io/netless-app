@@ -11,7 +11,7 @@ export type MaybeRefValue<TValue> = TValue | AutoRefValue<TValue>;
 export const has = (o: unknown, k: string | number | symbol): boolean =>
   Object.prototype.hasOwnProperty.call(o, k);
 
-export const plainObjectKeys = Object.keys as <T>(o: T) => Array<keyof T>;
+export const plainObjectKeys = Object.keys as <T>(o: T) => Array<Extract<keyof T, string>>;
 
 export function isObj<T = Record<string, unknown>>(e: unknown): e is T {
   return typeof e === "object" && e !== null;
