@@ -40,6 +40,10 @@ const ClickThroughAppliances = new Set(["clicker", "selector"]);
 const EmbeddedPage: NetlessApp<Attributes, void, AppOptions> = {
   kind: "EmbeddedPage",
   setup(context) {
+    if (import.meta.env.DEV) {
+      (window as any).EmbeddedPageContext = context;
+    }
+
     const displayer = context.getDisplayer();
     const room = context.getRoom();
     const box = context.getBox();
@@ -189,38 +193,47 @@ const EmbeddedPage: NetlessApp<Attributes, void, AppOptions> = {
 
     sideEffectManager.add(() => {
       const storeSideEffect = new SideEffectManager();
+
+      const listenStateUpdated = (namespace: string): void => {
+        storeSideEffect.add(
+          () =>
+            safeListenPropsUpdated(
+              () => attrs.store[namespace],
+              actions => {
+                postMessage({
+                  type: "StateChanged",
+                  payload: { namespace, actions: toJSON(actions) },
+                });
+              }
+            ),
+          namespace
+        );
+      };
+
+      Object.keys(attrs.store).forEach(listenStateUpdated);
+
       const disposer = safeListenPropsUpdated(
         () => attrs.store,
-        storeActions => {
-          if (attrs.store) {
-            const namespaces = Object.keys(attrs.store);
-            postMessage({ type: "StoreChanged", payload: storeActions });
+        actions => {
+          postMessage({ type: "StoreChanged", payload: toJSON(actions) });
 
-            namespaces.forEach(namespace => {
-              if (!storeSideEffect.disposers.has(namespace)) {
-                storeSideEffect.add(
-                  () =>
-                    safeListenPropsUpdated(
-                      () => attrs.store[namespace],
-                      actions => {
-                        postMessage({ type: "StateChanged", payload: { namespace, actions } });
-                      }
-                    ),
-                  namespace
-                );
+          if (attrs.store) {
+            actions.forEach(({ key, kind }) => {
+              switch (kind) {
+                case 2: {
+                  storeSideEffect.flush(key);
+                  break;
+                }
+                default: {
+                  listenStateUpdated(key);
+                  break;
+                }
               }
             });
-
-            if (namespaces.length !== storeSideEffect.disposers.size) {
-              storeSideEffect.disposers.forEach((_, namespace) => {
-                if (!attrs.store[namespace]) {
-                  storeSideEffect.flush(namespace);
-                }
-              });
-            }
           }
         }
       );
+
       return () => {
         storeSideEffect.flushAll();
         disposer();
