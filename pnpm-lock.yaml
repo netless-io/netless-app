@@ -6,7 +6,7 @@ importers:
     specifiers:
       '@commitlint/cli': ^14.1.0
       '@commitlint/config-conventional': ^14.1.0
-      '@netless/window-manager': ^0.2.12-canary.1
+      '@netless/window-manager': ^0.2.16
       '@sveltejs/vite-plugin-svelte': ^1.0.0-next.30
       '@tsconfig/svelte': ^2.0.1
       '@types/node': ^16.11.6
@@ -27,11 +27,11 @@ importers:
       svelte: ^3.44.1
       typescript: ^4.4.4
       vite: ^2.6.13
-      white-web-sdk: 2.15.1
+      white-web-sdk: 2.15.2
     devDependencies:
       '@commitlint/cli': 14.1.0
       '@commitlint/config-conventional': 14.1.0
-      '@netless/window-manager': 0.2.12-canary.1_white-web-sdk@2.15.1
+      '@netless/window-manager': 0.2.16_white-web-sdk@2.15.2
       '@sveltejs/vite-plugin-svelte': 1.0.0-next.30_svelte@3.44.1+vite@2.6.13
       '@tsconfig/svelte': 2.0.1
       '@types/node': 16.11.6
@@ -52,7 +52,7 @@ importers:
       svelte: 3.44.1
       typescript: 4.4.4
       vite: 2.6.13_sass@1.43.4
-      white-web-sdk: 2.15.1
+      white-web-sdk: 2.15.2
 
   packages/app-browser:
     specifiers: {}
@@ -469,8 +469,8 @@ packages:
       stylefire: 7.0.3
     dev: true
 
-  /@netless/window-manager/0.2.12-canary.1_white-web-sdk@2.15.1:
-    resolution: {integrity: sha512-hc5O3wPpALDkd78rNx3oeS8sgbSIRDZGB6lKQ1dzaJd2vwythDNXDxB8Ob7iBgOgCnGwvWAzec0Jz/Fhy94AIw==}
+  /@netless/window-manager/0.2.16_white-web-sdk@2.15.2:
+    resolution: {integrity: sha512-kyLkosPXj6qBIY6R5ftlEcyeq/Zhlj6GAE5/g4Q29rs2Bbu+P8seOP6k5u+xSedbIGDm6ytYqiouuvmzuzwN/g==}
     peerDependencies:
       white-web-sdk: ^2.13.16
     dependencies:
@@ -483,7 +483,7 @@ packages:
       p-retry: 4.6.1
       uuid: 7.0.3
       video.js: 7.15.4
-      white-web-sdk: 2.15.1
+      white-web-sdk: 2.15.2
     dev: true
 
   /@netless/xml-js/1.6.15:
@@ -1087,8 +1087,8 @@ packages:
     requiresBuild: true
     dev: true
 
-  /core-js/3.19.0:
-    resolution: {integrity: sha512-L1TpFRWXZ76vH1yLM+z6KssLZrP8Z6GxxW4auoCj+XiViOzNPJCAuTIkn03BGdFe6Z5clX5t64wRIRypsZQrUg==}
+  /core-js/3.19.1:
+    resolution: {integrity: sha512-Tnc7E9iKd/b/ff7GFbhwPVzJzPztGrChB8X8GLqoYGdEOG8IpLnK1xPyo3ZoO3HsK6TodJS58VGPOxA+hLHQMg==}
     requiresBuild: true
     dev: true
 
@@ -2260,8 +2260,8 @@ packages:
     resolution: {integrity: sha512-FM9nNUYrRBAELZQT3xeZQ7fmMOBg6nWNmJKTcgsJeaLstP/UODVpGsr5OhXhhXg6f+qtJ8uiZ+PUxkDWcgIXLw==}
     dev: false
 
-  /mobx-react-lite/3.2.1_24f30eaac39749ec85aeea469cdc7d1e:
-    resolution: {integrity: sha512-hwURgfmP2apX3HQrB55V9DN47kuN3C6KlQvI5UIfJRibXma72C/JudcNt2r9dWjAdFMrcZoz1ivvtXMCkJ2aQA==}
+  /mobx-react-lite/3.2.2_bc1ec53ee6d0f1f86c80ae9a802f4920:
+    resolution: {integrity: sha512-FxJJMqmHcnQYOVVs2DdjNHioGlFsXF5/9VHztS9NAfIT3DYrxNZzVi119Zr/OmlWKkWNkAsssSNzPkqautfL4A==}
     peerDependencies:
       mobx: ^6.1.0
       react: ^16.8.0 || ^17
@@ -2273,12 +2273,12 @@ packages:
       react-native:
         optional: true
     dependencies:
-      mobx: 6.3.5
+      mobx: 6.3.6
       react: 16.14.0
       react-dom: 16.14.0_react@16.14.0
     dev: true
 
-  /mobx-react/7.2.1_24f30eaac39749ec85aeea469cdc7d1e:
+  /mobx-react/7.2.1_bc1ec53ee6d0f1f86c80ae9a802f4920:
     resolution: {integrity: sha512-LZS99KFLn75VWDXPdRJhILzVQ7qLcRjQbzkK+wVs0Qg4kWw5hOI2USp7tmu+9zP9KYsVBmKyx2k/8cTTBfsymw==}
     peerDependencies:
       mobx: ^6.1.0
@@ -2291,14 +2291,14 @@ packages:
       react-native:
         optional: true
     dependencies:
-      mobx: 6.3.5
-      mobx-react-lite: 3.2.1_24f30eaac39749ec85aeea469cdc7d1e
+      mobx: 6.3.6
+      mobx-react-lite: 3.2.2_bc1ec53ee6d0f1f86c80ae9a802f4920
       react: 16.14.0
       react-dom: 16.14.0_react@16.14.0
     dev: true
 
-  /mobx/6.3.5:
-    resolution: {integrity: sha512-MeDfqtiSbhVoJgXqQsrJwvq2klj7Xk9pPdMThCdFiwFt33vgWJe82ATppPwVzQoz0AI3QpSSwQzcp3TBDK4syg==}
+  /mobx/6.3.6:
+    resolution: {integrity: sha512-TeCp8BTco5cmXKY7Zt5VSL5fHBEAHTSA6xs+KWmcxi3cFN1C+Xqs2m3giyGT/e6TSjtdDysVX5+cCZZhEyiJmA==}
     dev: true
 
   /monaco-editor/0.29.1:
@@ -3242,8 +3242,8 @@ packages:
       isexe: 2.0.0
     dev: true
 
-  /white-web-sdk/2.15.1:
-    resolution: {integrity: sha512-zf4hVqoU639J5MqGPIKOpai296u7aNREW8EghzIcUNU8ztQr5WgiRToJAAweB/D4GftFc+h9TK1Mmi3h8fQ1UA==}
+  /white-web-sdk/2.15.2:
+    resolution: {integrity: sha512-jRQJJZE9hiiuxAqOaSo2h7mlan/xP0N3Peh4CVMFcP+0cy1pe26Qx1gSanR3rto5pqrGhdNuWSBnlCN2wKjeww==}
     dependencies:
       '@juggle/resize-observer': 3.3.1
       '@netless/canvas-polyfill': 0.0.4
@@ -3251,12 +3251,12 @@ packages:
       atob: 2.1.2
       bezier-js: 2.6.1
       color: 3.2.1
-      core-js: 3.19.0
+      core-js: 3.19.1
       detect-it: 3.0.7
       eventemitter3: 4.0.7
       mathjs: 6.6.5
-      mobx: 6.3.5
-      mobx-react: 7.2.1_24f30eaac39749ec85aeea469cdc7d1e
+      mobx: 6.3.6
+      mobx-react: 7.2.1_bc1ec53ee6d0f1f86c80ae9a802f4920
       protobufjs: 6.11.2
       query-string: 5.1.1
       react: 16.14.0

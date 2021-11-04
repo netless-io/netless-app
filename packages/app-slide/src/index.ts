@@ -116,7 +116,9 @@ const SlideApp: NetlessApp<Attributes> = {
           }
         }
       };
-      displayer.addMagixEventListener(channel, magixEventListener);
+      displayer.addMagixEventListener(channel, magixEventListener, {
+        fireSelfEventAfterCommit: true,
+      });
       return () => displayer.removeMagixEventListener(channel, magixEventListener);
     });
 
