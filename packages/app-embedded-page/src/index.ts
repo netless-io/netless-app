@@ -49,15 +49,11 @@ const EmbeddedPage: NetlessApp<Attributes, void, AppOptions> = {
     const box = context.getBox();
     const view = context.getView();
     const debug = context.getAppOptions()?.debug;
-    const storeConfig = {
-      mainId: "state",
-      nsPrefix: "$scope-",
-    };
-    const stateNamespace = storeConfig.nsPrefix + storeConfig.mainId;
+    const mainStoreId = "state";
 
     const attrs = ensureAttributes<Attributes>(context, {
       src: "https://example.org",
-      store: { [stateNamespace]: {} },
+      store: { [mainStoreId]: {} },
       page: "",
     });
 
@@ -169,24 +165,24 @@ const EmbeddedPage: NetlessApp<Attributes, void, AppOptions> = {
 
     const setStore = (payload: unknown): void => {
       if (isObj(payload)) {
-        Object.keys(payload).forEach(namespace => {
-          if (namespace !== stateNamespace) {
-            const state = payload[namespace];
-            context.updateAttributes(["store", namespace], state);
+        Object.keys(payload).forEach(id => {
+          if (id !== mainStoreId) {
+            const state = payload[id];
+            context.updateAttributes(["store", id], state);
           }
         });
       }
     };
 
     const setState = (payload: unknown): void => {
-      if (isObj(payload) && payload.namespace && isObj(payload.state)) {
-        const { namespace, state } = payload as FromSDKMessage<"SetState", DefaultState>["payload"];
+      if (isObj(payload) && payload.storeId && isObj(payload.state)) {
+        const { storeId, state } = payload as FromSDKMessage<"SetState", DefaultState>["payload"];
         if (!context.getIsWritable()) {
-          logger.error(`Cannot setState on store ${namespace} without writable access`, state);
+          logger.error(`Cannot setState on store ${storeId} without writable access`, state);
           return;
         }
         Object.keys(state).forEach(key => {
-          context.updateAttributes(["store", namespace, key], state[key]);
+          context.updateAttributes(["store", storeId, key], state[key]);
         });
       }
     };
@@ -194,19 +190,19 @@ const EmbeddedPage: NetlessApp<Attributes, void, AppOptions> = {
     sideEffectManager.add(() => {
       const storeSideEffect = new SideEffectManager();
 
-      const listenStateUpdated = (namespace: string): void => {
+      const listenStateUpdated = (storeId: string): void => {
         storeSideEffect.add(
           () =>
             safeListenPropsUpdated(
-              () => attrs.store[namespace],
+              () => attrs.store[storeId],
               actions => {
                 postMessage({
                   type: "StateChanged",
-                  payload: { namespace, actions: toJSON(actions) },
+                  payload: { storeId, actions: toJSON(actions) },
                 });
               }
             ),
-          namespace
+          storeId
         );
       };
 
@@ -342,7 +338,7 @@ const EmbeddedPage: NetlessApp<Attributes, void, AppOptions> = {
           roomMembers: transformRoomMembers(displayer.state.roomMembers),
           debug,
           store: toJSON(attrs.store),
-          storeConfig,
+          mainStoreId,
           meta: {
             sessionUID: memberId,
             uid: room?.uid || userPayload?.uid || "",

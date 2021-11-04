@@ -46,11 +46,8 @@ export class EmbeddedApp<TState = DefaultState, TMessage = unknown> {
   ) {
     this.postMessage = postMessage;
 
-    this.storeNSPrefix = initData.storeConfig.nsPrefix;
-    this.mainStoreId = initData.storeConfig.mainId;
-    this._storeRawData = initData.store || {
-      [this.getStoreNamespace(this.mainStoreId)]: {},
-    };
+    this.mainStoreId = initData.mainStoreId;
+    this._storeRawData = initData.store || { [this.mainStoreId]: {} };
 
     this._writable = initData.writable;
     this._page = initData.page;
@@ -75,7 +72,7 @@ export class EmbeddedApp<TState = DefaultState, TMessage = unknown> {
       })
     );
 
-    this._mainStore = this.connectStore(initData.storeConfig.mainId, ensureState);
+    this._mainStore = this.connectStore(initData.mainStoreId, ensureState);
     this.onStateChanged = this._mainStore.onStateChanged;
   }
 
@@ -182,27 +179,24 @@ export class EmbeddedApp<TState = DefaultState, TMessage = unknown> {
 
   private _stores = new Map<string, Store>();
 
-  connectStore<S>(id: string, ensureState: S): Store<S> {
-    const namespace = this.getStoreNamespace(id);
-
-    let store = this._stores.get(namespace) as Store<S> | undefined;
+  connectStore<S>(storeId: string, ensureState?: S): Store<S> {
+    let store = this._stores.get(storeId) as Store<S> | undefined;
     if (!store) {
-      if (!has(this._storeRawData, namespace)) {
+      if (!has(this._storeRawData, storeId)) {
         const storeState = {};
-        this.postMessage({ type: "SetStore", payload: { [namespace]: storeState } });
-        this._storeRawData[namespace] = storeState;
+        this.postMessage({ type: "SetStore", payload: { [storeId]: storeState } });
+        this._storeRawData[storeId] = storeState;
       }
 
       store = new StoreImpl<S>({
-        id,
-        state: this._storeRawData[namespace] as S,
+        id: storeId,
+        state: this._storeRawData[storeId] as S,
         logger: this.logger,
         getIsWritable: () => this._writable,
-        onSetState: state =>
-          this.postMessage<S>({ type: "SetState", payload: { namespace, state } }),
+        onSetState: state => this.postMessage<S>({ type: "SetState", payload: { storeId, state } }),
       }) as Store<S>;
 
-      this._stores.set(namespace, store);
+      this._stores.set(storeId, store);
     }
 
     if (ensureState) {
@@ -212,8 +206,8 @@ export class EmbeddedApp<TState = DefaultState, TMessage = unknown> {
     return store;
   }
 
-  hasStore(id: string): boolean {
-    return this._stores.has(this.getStoreNamespace(id));
+  isStoreConnected(id: string): boolean {
+    return this._stores.has(id);
   }
 
   removeStore(id: string): void {
@@ -221,14 +215,13 @@ export class EmbeddedApp<TState = DefaultState, TMessage = unknown> {
       this.logger.error(`Store "${id}" is not removable.`);
       return;
     }
-    const namespace = this.getStoreNamespace(id);
-    const store = this._stores.get(namespace) as StoreImpl<TState>;
+    const store = this._stores.get(id) as StoreImpl<TState>;
     if (store) {
-      this._stores.delete(namespace);
+      this._stores.delete(id);
       store._destroy();
     }
-    if (this._storeRawData[namespace]) {
-      this.postMessage({ type: "SetStore", payload: { [namespace]: void 0 } });
+    if (this._storeRawData[id]) {
+      this.postMessage({ type: "SetStore", payload: { [id]: void 0 } });
     }
   }
 
@@ -257,12 +250,7 @@ export class EmbeddedApp<TState = DefaultState, TMessage = unknown> {
     }
   }
 
-  private storeNSPrefix: string;
   private mainStoreId: string;
-
-  getStoreNamespace(id: string): string {
-    return this.storeNSPrefix + id;
-  }
 
   get state() {
     return this._mainStore.state;
@@ -283,11 +271,11 @@ export class EmbeddedApp<TState = DefaultState, TMessage = unknown> {
   private _handleMsgStateChanged(payload: unknown): void {
     if (
       isObj(payload) &&
-      payload.namespace &&
+      payload.storeId &&
       Array.isArray(payload.actions) &&
       payload.actions.length > 0
     ) {
-      const { namespace, actions } = payload as ToSDKMessagePayloads<
+      const { storeId, actions } = payload as ToSDKMessagePayloads<
         TState,
         TMessage
       >["StateChanged"];
@@ -296,14 +284,14 @@ export class EmbeddedApp<TState = DefaultState, TMessage = unknown> {
         switch (kind) {
           // Removed
           case 2: {
-            const storeData = this._storeRawData[namespace];
+            const storeData = this._storeRawData[storeId];
             if (isObj(storeData)) {
               delete storeData[key];
             }
             break;
           }
           default: {
-            const storeData = this._storeRawData[namespace];
+            const storeData = this._storeRawData[storeId];
             if (isObj(storeData)) {
               storeData[key] = value;
             }
@@ -312,7 +300,7 @@ export class EmbeddedApp<TState = DefaultState, TMessage = unknown> {
         }
       });
 
-      const store = this._stores.get(namespace) as StoreImpl<TState> | undefined;
+      const store = this._stores.get(storeId) as StoreImpl<TState> | undefined;
       if (store) {
         store._updateProperties(actions);
       }

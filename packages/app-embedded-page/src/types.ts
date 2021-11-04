@@ -24,7 +24,7 @@ export interface RoomMember {
 export interface ToSDKMessagePayloads<TState = DefaultState, TMagix = unknown> {
   Init: InitData<TState>;
   StateChanged: {
-    namespace: string;
+    storeId: string;
     actions: ReadonlyArray<AkkoObjectUpdatedProperty<TState, Extract<keyof TState, string>>>;
   };
   StoreChanged: ReadonlyArray<AkkoObjectUpdatedProperty<{ [K: string]: TState }>>;
@@ -45,9 +45,9 @@ export type ToSDKMessage<
 // iframe --> me
 export interface FromSDKMessagePayloads<TState = DefaultState, TMagix = unknown> {
   Init: void;
-  SetState: { namespace: string; state: Partial<TState> };
-  GetState: { namespace: string; ensureState: TState };
-  SetStore: { [namespace: string]: unknown };
+  SetState: { storeId: string; state: Partial<TState> };
+  GetState: { storeId: string; ensureState: TState };
+  SetStore: { [id: string]: unknown };
   SetPage: string;
   SendMagixMessage: TMagix;
   MoveCamera: Partial<CameraState>;
@@ -79,8 +79,5 @@ export interface InitData<TState = DefaultState> {
   roomMembers: ReadonlyArray<RoomMember>;
   debug?: boolean;
   store: { [k: string]: TState };
-  storeConfig: {
-    mainId: string;
-    nsPrefix: string;
-  };
+  mainStoreId: string;
 }
