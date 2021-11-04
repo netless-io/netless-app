@@ -34,8 +34,8 @@ export type AddToSDKMessageListener<TState = unknown, TMessage = unknown> = (
 ) => () => void;
 
 export class EmbeddedApp<TState = DefaultState, TMessage = unknown> {
-  private logger: Logger;
-  private postMessage: PostFromSDKMessage<TState, TMessage>;
+  private _logger: Logger;
+  private _postMessage: PostFromSDKMessage<TState, TMessage>;
 
   constructor(
     initData: InitData<TState>,
@@ -44,19 +44,19 @@ export class EmbeddedApp<TState = DefaultState, TMessage = unknown> {
     addMessageListener: AddToSDKMessageListener<TState, TMessage>,
     logger: Logger
   ) {
-    this.postMessage = postMessage;
+    this._postMessage = postMessage;
 
-    this.mainStoreId = initData.mainStoreId;
-    this._storeRawData = initData.store || { [this.mainStoreId]: {} };
+    this._mainStoreId = initData.mainStoreId;
+    this._storeRawData = initData.store || { [this._mainStoreId]: {} };
 
     this._writable = initData.writable;
     this._page = initData.page;
     this._meta = initData.meta;
     this._roomMembers = initData.roomMembers;
 
-    this.logger = logger;
+    this._logger = logger;
 
-    this.sideEffect.add(() =>
+    this._sideEffect.add(() =>
       addMessageListener(message => {
         const { type, payload } = message as ToSDKMessage<
           Exclude<ToSDKMessageKey, "Init">,
@@ -111,7 +111,7 @@ export class EmbeddedApp<TState = DefaultState, TMessage = unknown> {
    * Move the camera
    */
   moveCamera(camera: Partial<CameraState>) {
-    this.postMessage({ type: "MoveCamera", payload: camera });
+    this._postMessage({ type: "MoveCamera", payload: camera });
   }
 
   /*
@@ -119,7 +119,7 @@ export class EmbeddedApp<TState = DefaultState, TMessage = unknown> {
    */
 
   sendMessage(payload: TMessage) {
-    this.postMessage({ type: "SendMagixMessage", payload });
+    this._postMessage({ type: "SendMagixMessage", payload });
   }
 
   readonly onMessage = new EmbeddedPageEvent<TMessage>();
@@ -158,7 +158,7 @@ export class EmbeddedApp<TState = DefaultState, TMessage = unknown> {
 
   setPage(page: string): void {
     this._page = page;
-    this.postMessage({ type: "SetPage", payload: page });
+    this._postMessage({ type: "SetPage", payload: page });
   }
 
   readonly onPageChanged = new EmbeddedPageEvent<DiffOne<string>>();
@@ -184,16 +184,17 @@ export class EmbeddedApp<TState = DefaultState, TMessage = unknown> {
     if (!store) {
       if (!has(this._storeRawData, storeId)) {
         const storeState = {};
-        this.postMessage({ type: "SetStore", payload: { [storeId]: storeState } });
+        this._postMessage({ type: "SetStore", payload: { [storeId]: storeState } });
         this._storeRawData[storeId] = storeState;
       }
 
       store = new StoreImpl<S>({
         id: storeId,
         state: this._storeRawData[storeId] as S,
-        logger: this.logger,
+        logger: this._logger,
         getIsWritable: () => this._writable,
-        onSetState: state => this.postMessage<S>({ type: "SetState", payload: { storeId, state } }),
+        onSetState: state =>
+          this._postMessage<S>({ type: "SetState", payload: { storeId, state } }),
       }) as Store<S>;
 
       this._stores.set(storeId, store);
@@ -211,8 +212,8 @@ export class EmbeddedApp<TState = DefaultState, TMessage = unknown> {
   }
 
   removeStore(id: string): void {
-    if (id === this.mainStoreId) {
-      this.logger.error(`Store "${id}" is not removable.`);
+    if (id === this._mainStoreId) {
+      this._logger.error(`Store "${id}" is not removable.`);
       return;
     }
     const store = this._stores.get(id) as StoreImpl<TState>;
@@ -221,7 +222,7 @@ export class EmbeddedApp<TState = DefaultState, TMessage = unknown> {
       store._destroy();
     }
     if (this._storeRawData[id]) {
-      this.postMessage({ type: "SetStore", payload: { [id]: void 0 } });
+      this._postMessage({ type: "SetStore", payload: { [id]: void 0 } });
     }
   }
 
@@ -250,7 +251,7 @@ export class EmbeddedApp<TState = DefaultState, TMessage = unknown> {
     }
   }
 
-  private mainStoreId: string;
+  private _mainStoreId: string;
 
   get state() {
     return this._mainStore.state;
@@ -308,8 +309,8 @@ export class EmbeddedApp<TState = DefaultState, TMessage = unknown> {
   }
 
   destroy() {
-    this.sideEffect.flushAll();
+    this._sideEffect.flushAll();
   }
 
-  private sideEffect = new SideEffectManager();
+  private _sideEffect = new SideEffectManager();
 }
