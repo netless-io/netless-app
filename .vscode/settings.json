@@ -46,6 +46,7 @@
     "editor.defaultFormatter": "esbenp.prettier-vscode"
   },
   "cSpell.words": [
+    "Akko",
     "autorun",
     "Emittery",
     "fittoscreen",
@@ -64,6 +65,7 @@
     "Tele",
     "tubeid",
     "ungroup",
+    "unlisten",
     "Xcoord",
     "xscale",
     "Ycoord",
