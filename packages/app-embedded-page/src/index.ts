@@ -49,7 +49,7 @@ const EmbeddedPage: NetlessApp<Attributes, void, AppOptions> = {
       mainId: "state",
       nsPrefix: "$scope-",
     };
-    const stateNamespace = storeConfig.nsPrefix + storeConfig.nsPrefix;
+    const stateNamespace = storeConfig.nsPrefix + storeConfig.mainId;
 
     const attrs = ensureAttributes<Attributes>(context, {
       src: "https://example.org",
