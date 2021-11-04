@@ -149,6 +149,7 @@ const SlideApp: NetlessApp<Attributes> = {
 
     try {
       await docsViewer.mount();
+      view.disableCameraTransform = true;
     } catch (err) {
       console.warn(err);
       console.log("[Slide]: destroy by error");
