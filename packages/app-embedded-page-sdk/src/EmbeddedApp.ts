@@ -184,7 +184,9 @@ export class EmbeddedApp<TState = DefaultState, TMessage = unknown> {
       this._stores.set(namespace, store);
     }
 
-    store.ensureState(ensureState);
+    if (ensureState) {
+      store.ensureState(ensureState);
+    }
 
     return store;
   }
