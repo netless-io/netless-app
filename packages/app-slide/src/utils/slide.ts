@@ -161,13 +161,15 @@ export function createSlideController(
   onTransitionEnd: () => void,
   onDispatchSyncEvent: (event: SyncEvent) => void,
   onStateChange: (state: Slide["slideState"]) => void,
-  timestamp: () => number
+  timestamp: () => number,
+  fixElectron: boolean
 ) {
   const slide = new Slide({
     anchor,
     interactive: true,
     mode: "interactive",
-    resize: true,
+    // electron can not { resize: true }
+    resize: fixElectron ? false : true,
     controller,
     timestamp,
   });
