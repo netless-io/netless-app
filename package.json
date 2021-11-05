@@ -4,7 +4,7 @@
   "devDependencies": {
     "@commitlint/cli": "^14.1.0",
     "@commitlint/config-conventional": "^14.1.0",
-    "@netless/window-manager": "^0.2.16",
+    "@netless/window-manager": "^0.2.17",
     "@sveltejs/vite-plugin-svelte": "^1.0.0-next.30",
     "@tsconfig/svelte": "^2.0.1",
     "@types/node": "^16.11.6",

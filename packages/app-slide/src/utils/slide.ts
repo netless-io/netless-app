@@ -167,7 +167,7 @@ export function createSlideController(
     anchor,
     interactive: true,
     mode: "interactive",
-    resize: false, // TODO: wait for @netless/slide to fix this
+    resize: true,
     controller,
     timestamp,
   });
