@@ -45,6 +45,7 @@ const SlideApp: NetlessApp<Attributes> = {
 
     const debug = import.meta.env.DEV || context.getAppOptions()?.debug;
     const fixElectron = !!context.getAppOptions()?.fixElectron;
+    const resolution = context.getAppOptions()?.resolution;
 
     box.mountStyles(styles);
 
@@ -137,7 +138,8 @@ const SlideApp: NetlessApp<Attributes> = {
         onDispatchSyncEvent,
         onStateChange,
         timestamp,
-        fixElectron
+        fixElectron,
+        resolution
       );
       theController.initialize();
       await theController.ready;

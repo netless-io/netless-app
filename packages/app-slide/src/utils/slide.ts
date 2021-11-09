@@ -162,15 +162,22 @@ export function createSlideController(
   onDispatchSyncEvent: (event: SyncEvent) => void,
   onStateChange: (state: Slide["slideState"]) => void,
   timestamp: () => number,
-  fixElectron: boolean
+  _fixElectron: boolean, // eslint-disable-line @typescript-eslint/no-unused-vars
+  resolution?: number
 ) {
   const slide = new Slide({
     anchor,
     interactive: true,
     mode: "interactive",
-    // electron can not { resize: true }
-    resize: fixElectron ? false : true,
+    resize: true,
     controller,
+    renderOptions: {
+      minFPS: 25,
+      maxFPS: 30,
+      autoFPS: true,
+      autoResolution: true,
+      resolution,
+    },
     timestamp,
   });
 
