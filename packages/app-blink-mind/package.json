@@ -1,0 +1,35 @@
+{
+  "private": true,
+  "name": "@netless/app-blink-mind",
+  "version": "0.0.0",
+  "main": "dist/main.cjs.js",
+  "module": "dist/main.es.js",
+  "types": "src/index.ts",
+  "scripts": {
+    "types": "cross-env NODE_ENV=production tsc --declaration --emitDeclarationOnly --outDir dist",
+    "build": "vite build && npm run types",
+    "build:dev": "vite build --mode development && npm run types",
+    "cleanup": "rimraf ./dist"
+  },
+  "peerDependencies": {
+    "react": ">=16.9.0",
+    "react-dom": ">=16.9.0"
+  },
+  "dependencies": {
+    "@blink-mind/core": "^0.0.20-beta.12",
+    "@blink-mind/icons": "^0.0.20-beta.12",
+    "@blink-mind/plugin-json-serializer": "^0.0.20-beta.12",
+    "@blink-mind/plugin-rich-text-editor": "^0.0.20-beta.12",
+    "@blink-mind/plugin-theme-selector": "^0.0.20-beta.12",
+    "@blink-mind/plugin-topology-diagram": "^0.0.20-beta.12",
+    "@blink-mind/plugins": "^0.0.20-beta.12",
+    "@blink-mind/renderer-react": "^0.0.20-beta.12"
+  },
+  "devDependencies": {
+    "@netless/app-shared": "workspace:^0.1.2",
+    "@types/react": "^17.0.34",
+    "@types/react-dom": "^17.0.11",
+    "react": "^17.0.2",
+    "react-dom": "^17.0.2"
+  }
+}
