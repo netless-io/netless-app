@@ -184,10 +184,6 @@ const SlideApp: NetlessApp<Attributes> = {
       });
     }
 
-    box.events.on("readonly", readonly => {
-      docsViewer.setReadonly(readonly);
-    });
-
     context.emitter.on("destroy", () => {
       console.log("[Slide]: destroy");
       sideEffect.flushAll();

@@ -38,6 +38,14 @@ export class SlideDocsViewer {
       onPlay: this.onPlay,
     });
 
+    this.sideEffect.add(() => {
+      const handler = (readonly: boolean): void => {
+        this.setReadonly(readonly);
+      };
+      box.events.on("readonly", handler);
+      return () => box.events.off("readonly", handler);
+    });
+
     this.render();
   }
 
