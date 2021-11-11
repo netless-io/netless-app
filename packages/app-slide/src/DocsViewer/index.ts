@@ -5,6 +5,7 @@ import { playSVG } from "./icons/play";
 import { pauseSVG } from "./icons/pause";
 
 import type { ReadonlyTeleBox } from "@netless/window-manager";
+import type { ILazyLoadInstance } from "vanilla-lazyload";
 import LazyLoad from "vanilla-lazyload";
 import { SideEffectManager } from "side-effect-manager";
 
@@ -127,11 +128,21 @@ export class DocsViewer {
     return this.$content;
   }
 
+  private previewLazyLoad?: ILazyLoadInstance;
+
   protected renderPreview(): HTMLElement {
     if (!this.$preview) {
       const $preview = document.createElement("div");
       $preview.className = this.wrapClassName("preview") + " tele-fancy-scrollbar";
       this.$preview = $preview;
+      this.sideEffect.add(() => {
+        this.previewLazyLoad = new LazyLoad({
+          container: this.$preview,
+          elements_selector: `.${this.wrapClassName("preview-page>img")}`,
+        });
+        return () => this.previewLazyLoad?.destroy();
+      });
+
       this.refreshPreview();
 
       this.sideEffect.addEventListener($preview, "click", ev => {
@@ -189,13 +200,7 @@ export class DocsViewer {
       $preview.appendChild($page);
     });
 
-    this.sideEffect.add(() => {
-      const previewLazyLoad = new LazyLoad({
-        container: this.$preview,
-        elements_selector: `.${this.wrapClassName("preview-page>img")}`,
-      });
-      return () => previewLazyLoad.destroy();
-    }, "preview-lazyload");
+    this.previewLazyLoad?.update();
   }
 
   protected renderPreviewMask(): HTMLElement {
