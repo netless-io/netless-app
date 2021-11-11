@@ -72,12 +72,10 @@ export class DocsViewer {
   }
 
   public setReadonly(readonly: boolean): void {
-    if (this.readonly !== readonly) {
-      this.readonly = readonly;
-      this.$content.classList.toggle(this.wrapClassName("readonly"), readonly);
-      this.$footer.classList.toggle(this.wrapClassName("readonly"), readonly);
-      this.$pageNumberInput.disabled = readonly;
-    }
+    this.readonly = readonly;
+    this.$content.classList.toggle(this.wrapClassName("readonly"), readonly);
+    this.$footer.classList.toggle(this.wrapClassName("readonly"), readonly);
+    this.$pageNumberInput.disabled = readonly;
   }
 
   public destroy(): void {

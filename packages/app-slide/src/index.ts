@@ -90,7 +90,9 @@ const SlideApp: NetlessApp<Attributes> = {
     };
 
     const onStateChange = (slideState: SlideState) => {
-      context.updateAttributes(["state"], slideState);
+      if (context.getIsWritable()) {
+        context.updateAttributes(["state"], slideState);
+      }
     };
 
     sideEffect.add(() => {

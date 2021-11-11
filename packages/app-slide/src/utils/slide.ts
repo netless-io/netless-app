@@ -22,6 +22,8 @@ export function syncSceneWithSlide(
   const page = slide.slideState.currentSlideIndex;
   // 如果不存在 currentSlideIndex，可能没初始化完，此时什么都不做
   if (page == null) return;
+  // 如果 room 不可写，什么也不做
+  if (!context.getIsWritable()) return;
 
   const scenePath = [baseScenePath, page].join("/");
   // 这里用 === none 而不是 !== page，是因为这个接口有 bug，最新的 sdk 才修掉
