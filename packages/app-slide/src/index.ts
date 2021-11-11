@@ -24,7 +24,7 @@ export interface Attributes {
 
 const SlideApp: NetlessApp<Attributes> = {
   kind: "Slide",
-  async setup(context) {
+  setup(context) {
     const box = context.getBox();
     const view = context.getView();
     const room = context.getRoom();
@@ -155,16 +155,13 @@ const SlideApp: NetlessApp<Attributes> = {
       mountWhiteboard: dom => context.mountView(dom),
     });
 
-    try {
-      await docsViewer.mount();
-      view.disableCameraTransform = true;
-    } catch (err) {
+    view.disableCameraTransform = true;
+    docsViewer.mount().catch(err => {
       console.warn(err);
       console.log("[Slide]: destroy by error");
       sideEffect.flushAll();
       docsViewer.destroy();
-      return;
-    }
+    });
 
     if (import.meta.env.DEV) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
