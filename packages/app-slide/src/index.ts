@@ -184,8 +184,8 @@ const SlideApp: NetlessApp<Attributes> = {
       });
     }
 
-    context.emitter.on("writableChange", () => {
-      docsViewer.setReadonly(!context.getIsWritable());
+    box.events.on("readonly", readonly => {
+      docsViewer.setReadonly(readonly);
     });
 
     context.emitter.on("destroy", () => {
