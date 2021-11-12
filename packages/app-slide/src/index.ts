@@ -5,11 +5,18 @@ import type { Attributes } from "./typings";
 
 import { SideEffectManager } from "side-effect-manager";
 import { ensureAttributes } from "@netless/app-shared";
-import { EmptyAttributes, syncSceneWithSlide, SlideController } from "./SlideController";
+import {
+  DefaultUrl,
+  EmptyAttributes,
+  syncSceneWithSlide,
+  SlideController,
+} from "./SlideController";
 import { SlideDocsViewer } from "./SlideDocsViewer";
 import styles from "./style.scss?inline";
 
 export type { Attributes };
+
+export { DefaultUrl };
 
 const SlideApp: NetlessApp<Attributes> = {
   kind: "Slide",
