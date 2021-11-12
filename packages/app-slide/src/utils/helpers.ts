@@ -20,3 +20,7 @@ export function isObj(obj: unknown) {
 export function wait(ms: number) {
   return new Promise<void>(resolve => setTimeout(resolve, ms));
 }
+
+export function deepClone<T>(obj: T): T {
+  return JSON.parse(JSON.stringify(obj));
+}
