@@ -1,5 +1,4 @@
 import type { ReadonlyTeleBox, AnimationMode, View } from "@netless/window-manager";
-import type { Slide } from "@netless/slide";
 import type { SlideController, SlideControllerOptions } from "../SlideController";
 
 import { SideEffectManager } from "side-effect-manager";
@@ -126,13 +125,13 @@ export class SlideDocsViewer {
   protected refreshPages = () => {
     if (this.slideController) {
       this.viewer.pages = createDocsViewerPages(this.slideController.slide);
-      this.viewer.setPageIndex(this.getPageIndex(this.slideController.slide));
+      this.viewer.setPageIndex(this.getPageIndex(this.slideController.page));
       this.scaleDocsToFit();
     }
   };
 
-  protected getPageIndex(slide: Slide) {
-    return (slide.slideState.currentSlideIndex || 1) - 1;
+  protected getPageIndex(page: number) {
+    return (page > 0 ? page : 1) - 1;
   }
 
   public unmount() {
