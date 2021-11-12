@@ -4,6 +4,10 @@
   "main": "dist/main.cjs.js",
   "module": "dist/main.es.js",
   "types": "dist/index.d.ts",
+  "files": [
+    "src",
+    "dist"
+  ],
   "scripts": {
     "types": "cross-env NODE_ENV=production tsc --declaration --emitDeclarationOnly --outDir dist",
     "build": "vite build && npm run types",

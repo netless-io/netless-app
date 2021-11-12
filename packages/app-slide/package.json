@@ -10,6 +10,11 @@
     "build:dev": "vite build --mode development && npm run types",
     "cleanup": "rimraf ./dist"
   },
+  "files": [
+    "src",
+    "dist",
+    "README-zh.md"
+  ],
   "devDependencies": {
     "@netless/app-shared": "workspace:^0.1.1",
     "@netless/slide": "^0.1.18",
