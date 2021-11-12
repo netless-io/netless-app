@@ -1,18 +1,21 @@
-import type { ApplianceNames } from "white-web-sdk";
 import type { ReadonlyTeleBox, AnimationMode, View } from "@netless/window-manager";
 import type { Slide } from "@netless/slide";
-import type { SlideController } from "../utils/slide";
+import type { SlideController, SlideControllerOptions } from "../SlideController";
 
 import { SideEffectManager } from "side-effect-manager";
-import { createDocsViewerPages } from "../utils/slide";
+import { createDocsViewerPages } from "../SlideController";
 import { DocsViewer } from "../DocsViewer";
 
-const ClickThroughAppliances = new Set(["clicker", "selector"]);
+export const ClickThroughAppliances = new Set(["clicker", "selector"]);
+
+export type MountSlideOptions = Omit<SlideControllerOptions, "context" | "onPageChanged"> & {
+  onReady: () => void;
+};
 
 export interface SlideDocsViewerConfig {
   box: ReadonlyTeleBox;
   view: View;
-  mountSlideController: (anchor: HTMLDivElement) => Promise<SlideController>;
+  mountSlideController: (options: MountSlideOptions) => SlideController;
   mountWhiteboard: (dom: HTMLDivElement) => void;
 }
 
@@ -95,11 +98,16 @@ export class SlideDocsViewer {
     return this.$whiteboardView;
   }
 
-  public async mount() {
+  public mount() {
     this.viewer.mount();
-    this.slideController = await this.mountSlideController(this.$slide);
-    this.viewer.pages = createDocsViewerPages(this.slideController.slide);
-    this.viewer.setPageIndex(this.getPageIndex(this.slideController.slide));
+
+    this.slideController = this.mountSlideController({
+      anchor: this.$slide,
+      onTransitionStart: this.viewer.setPlaying,
+      onTransitionEnd: this.viewer.setPaused,
+      onReady: this.refreshPages,
+      onError: this.onError,
+    });
 
     this.scaleDocsToFit();
     this.sideEffect.add(() => {
@@ -109,6 +117,19 @@ export class SlideDocsViewer {
 
     return this;
   }
+
+  protected onError = ({ error }: { error: Error }) => {
+    this.viewer.setPaused();
+    console.warn("[Slide] render error", error);
+  };
+
+  protected refreshPages = () => {
+    if (this.slideController) {
+      this.viewer.pages = createDocsViewerPages(this.slideController.slide);
+      this.viewer.setPageIndex(this.getPageIndex(this.slideController.slide));
+      this.scaleDocsToFit();
+    }
+  };
 
   protected getPageIndex(slide: Slide) {
     return (slide.slideState.currentSlideIndex || 1) - 1;
@@ -133,7 +154,7 @@ export class SlideDocsViewer {
     this.viewer.destroy();
   }
 
-  public toggleClickThrough(tool?: ApplianceNames) {
+  public toggleClickThrough(tool?: string) {
     this.$whiteboardView.style.pointerEvents =
       !tool || ClickThroughAppliances.has(tool) ? "none" : "auto";
   }
