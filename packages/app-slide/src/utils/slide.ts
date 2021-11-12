@@ -64,7 +64,8 @@ export class SlideController {
     readonly onDispatchSyncEvent: (event: SyncEvent) => void,
     readonly onStateChange: (state: SlideState) => void,
     private readonly initialState: SlideState | null,
-    private readonly initialPage: number
+    private readonly initialPage: number,
+    private readonly fireInitEvent: boolean
   ) {
     slide.on(SLIDE_EVENTS.slideChange, this.resetTargetingPage);
     slide.on(SLIDE_EVENTS.slideChange, onPageChanged);
@@ -102,10 +103,18 @@ export class SlideController {
     if (this.initialState) {
       console.log("[Slide] init with state", this.initialState);
       this.slide.setSlideState(this.initialState);
-    } else {
+    } else if (this.fireInitEvent) {
       this.slide.renderSlide(this.initialPage);
+    } else {
+      setTimeout(this.kickStartIfNotReady, 5000);
     }
   }
+
+  private kickStartIfNotReady = () => {
+    if (!this.isReady()) {
+      this.slide.renderSlide(this.initialPage);
+    }
+  };
 
   private pollCount = 0;
 
@@ -165,7 +174,8 @@ export function createSlideController(
   onStateChange: (state: Slide["slideState"]) => void,
   timestamp: () => number,
   _fixElectron: boolean, // eslint-disable-line @typescript-eslint/no-unused-vars
-  resolution?: number
+  resolution?: number,
+  fireInitEvent?: boolean
 ) {
   const slide = new Slide({
     anchor,
@@ -198,6 +208,7 @@ export function createSlideController(
     onDispatchSyncEvent,
     onStateChange,
     initialState,
-    initialPage
+    initialPage,
+    fireInitEvent
   );
 }

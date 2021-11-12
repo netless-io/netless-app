@@ -141,7 +141,8 @@ const SlideApp: NetlessApp<Attributes> = {
         onStateChange,
         timestamp,
         fixElectron,
-        resolution
+        resolution,
+        !context.isAddApp
       );
       theController.initialize();
       await theController.ready;
