@@ -160,7 +160,6 @@ export class TargetsBinder {
 
     this.sideEffect.add(() => {
       const handler = diff => {
-        console.log("changed", diff);
         if (!this.isAuthor()) {
           if (diff[VM_MONITORS]) {
             this.inflateMonitors(this.vm.runtime.targets);
