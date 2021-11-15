@@ -16,7 +16,7 @@
     "scratch-vm": ">=0"
   },
   "devDependencies": {
-    "@netless/app-embedded-page-sdk": "workspace:^0.0.3",
+    "@netless/app-embedded-page-sdk": "workspace:^0.0.5",
     "eventemitter3": "^4.0.7",
     "js-base64": "^3.7.2",
     "lodash-es": "^4.17.21",
