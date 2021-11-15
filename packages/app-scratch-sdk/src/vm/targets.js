@@ -1,4 +1,4 @@
-import { mapValues, clone, size, has, get, each } from "lodash-es";
+import { mapValues, clone, size, has, get, each, isEqual } from "lodash-es";
 import Variable from "scratch-vm/src/engine/variable";
 import Comment from "scratch-vm/src/engine/comment";
 import Blocks from "scratch-vm/src/engine/blocks";
@@ -8,18 +8,18 @@ import Sprite from "scratch-vm/src/sprites/sprite";
 import MathUtil from "scratch-vm/src/util/math-util";
 import StringUtil from "scratch-vm/src/util/string-util";
 import { SideEffectManager } from "side-effect-manager";
-import pako from "pako";
-import { fromUint8Array, toUint8Array } from "js-base64";
 
 const VM_TARGETS = "VM_TARGETS";
 const VM_EDITING_TARGETS = "VM_EDITING_TARGETS";
 const VM_MONITORS = "VM_MONITORS";
 
 export class TargetsBinder {
-  constructor(app, store, isAuthor) {
+  constructor(app, reduxStore, isAuthor) {
+    this.sideEffect = new SideEffectManager();
+
     this.app = app;
-    this.store = store;
-    this.vm = store.getState().scratchGui.vm;
+    this.reduxStore = reduxStore;
+    this.vm = reduxStore.getState().scratchGui.vm;
     this.storage = this.vm.runtime.storage;
     this.isAuthor = isAuthor;
     if (!this.storage) {
@@ -27,24 +27,18 @@ export class TargetsBinder {
       return Promise.resolve(null);
     }
 
-    this.sideEffect = new SideEffectManager();
-
     const uploadTargetList = (targetList, editingTarget) => {
       if (targetList) {
         try {
-          let monitors = this.deflateMonitors();
-          if (
-            monitors.length <= 0 &&
-            app.state[VM_MONITORS] &&
-            app.state[VM_MONITORS].length <= 0
-          ) {
-            monitors = app.state[VM_MONITORS];
-          }
-          app.setState({
+          const payload = {
             [VM_EDITING_TARGETS]: editingTarget,
             [VM_TARGETS]: this.deflateTargetList(targetList),
-            [VM_MONITORS]: monitors,
-          });
+          };
+          const monitors = this.deflateMonitors();
+          if (!isEqual(monitors, app.state[VM_MONITORS])) {
+            payload[VM_MONITORS] = monitors;
+          }
+          app.setState(payload);
         } catch (e) {
           console.log(e);
         }
@@ -80,81 +74,7 @@ export class TargetsBinder {
             });
           }
 
-          if (app.state[VM_MONITORS] && app.state[VM_MONITORS].length > 0) {
-            app.state[VM_MONITORS].forEach(monitorData => {
-              if (monitorData.spriteName) {
-                const filteredTargets = targetList.filter(
-                  t => t.sprite.name === monitorData.spriteName
-                );
-                if (filteredTargets && filteredTargets.length > 0) {
-                  monitorData.targetId = filteredTargets[0].id;
-                } else {
-                  console.warn(
-                    `Tried to deserialize sprite specific monitor ${monitorData.opcode} but could not find sprite ${monitorData.spriteName}.`
-                  );
-                }
-              }
-
-              const monitorBlockInfo = this.vm.runtime.monitorBlockInfo[monitorData.opcode];
-
-              if (monitorData.opcode === "data_listcontents") {
-                const listTarget = monitorData.targetId
-                  ? targetList.find(t => t.id === monitorData.targetId)
-                  : targetList.find(t => t.isStage);
-                if (listTarget && has(listTarget.variables, monitorData.id)) {
-                  monitorData.params.LIST = listTarget.variables[monitorData.id].name;
-                }
-              }
-
-              const fields = mapValues(monitorData.params, (value, name) => ({ name, value }));
-
-              if (
-                monitorData.opcode !== "data_variable" &&
-                monitorData.opcode !== "data_listcontents" &&
-                monitorBlockInfo &&
-                monitorBlockInfo.isSpriteSpecific
-              ) {
-                monitorData.id = monitorBlockInfo.getId(monitorData.targetId, fields);
-              } else {
-                monitorData.id = StringUtil.replaceUnsafeChars(monitorData.id);
-              }
-
-              const existingMonitorBlock = this.vm.runtime.monitorBlocks._blocks[monitorData.id];
-              if (existingMonitorBlock) {
-                existingMonitorBlock.isMonitored = monitorData.visible;
-                existingMonitorBlock.targetId = monitorData.targetId;
-              } else {
-                const monitorBlock = {
-                  id: monitorData.id,
-                  opcode: monitorData.opcode,
-                  inputs: {},
-                  fields: fields,
-                  topLevel: true,
-                  next: null,
-                  parent: null,
-                  shadow: false,
-                  x: 0,
-                  y: 0,
-                  isMonitored: monitorData.visible,
-                  targetId: monitorData.targetId,
-                };
-
-                if (monitorData.opcode === "data_variable") {
-                  const field = monitorBlock.fields.VARIABLE;
-                  field.id = monitorData.id;
-                  field.variableType = Variable.SCALAR_TYPE;
-                } else if (monitorData.opcode === "data_listcontents") {
-                  const field = monitorBlock.fields.LIST;
-                  field.id = monitorData.id;
-                  field.variableType = Variable.LIST_TYPE;
-                }
-
-                this.vm.runtime.monitorBlocks.createBlock(monitorBlock);
-              }
-
-              this.runtime.requestAddMonitor(MonitorRecord(monitorData));
-            });
-          }
+          this.inflateMonitors(targetList);
 
           let editingTarget = targetList[0];
           if (app.state[VM_EDITING_TARGETS]) {
@@ -206,10 +126,42 @@ export class TargetsBinder {
     });
 
     this.sideEffect.add(() => {
+      const handler = () => {
+        if (this.isAuthor()) {
+          try {
+            const monitors = this.deflateMonitors();
+            if (!isEqual(monitors, app.state[VM_MONITORS])) {
+              app.setState({
+                [VM_MONITORS]: monitors,
+              });
+            }
+          } catch (e) {
+            console.error(e);
+          }
+        }
+      };
+      this.vm.on("MONITORS_UPDATE", handler);
+      return () => this.vm.off("MONITORS_UPDATE", handler);
+    });
+
+    this.sideEffect.add(() => {
       const handler = diff => {
         if (!this.isAuthor()) {
           if (diff[VM_TARGETS]) {
             applyTargetList();
+          }
+        }
+      };
+      app.onStateChanged.addListener(handler);
+      return () => app.onStateChanged.removeListener(handler);
+    });
+
+    this.sideEffect.add(() => {
+      const handler = diff => {
+        console.log("changed", diff);
+        if (!this.isAuthor()) {
+          if (diff[VM_MONITORS]) {
+            this.inflateMonitors(this.vm.runtime.targets);
           }
         }
       };
@@ -236,47 +188,36 @@ export class TargetsBinder {
 
     console.log("deflateTargetList", jsonTargetList);
 
-    return fromUint8Array(pako.deflate(JSON.stringify(jsonTargetList)));
+    return jsonTargetList;
   }
 
-  deflateTarget(target) {
-    const { costume, ...result } = target;
-    if (target.comments && size(target.comments) > 0) {
-      result.comments = mapValues(target.comments, clone);
-    }
-    if (target.variables && size(target.variables) > 0) {
-      result.variables = mapValues(target.variables, clone);
-    }
-    if (target.lists && size(target.lists) > 0) {
-      result.lists = mapValues(target.lists, clone);
-    }
-    if (target.broadcasts && size(target.broadcasts) > 0) {
-      result.broadcasts = mapValues(target.broadcasts, clone);
-    }
-    if (target.costumes && target.costumes.length > 0) {
-      result.costumes = target.costumes.map(this.omitAsset, this);
-    }
-    if (costume) {
-      result.currentCostume = 0;
-      if (target.costumes) {
-        result.currentCostume = Math.max(
-          0,
-          target.costumes.findIndex(costume => costume.assetId === costume.assetId)
-        );
-      }
-    }
-    if (target.sounds && target.sounds.length > 0) {
-      result.sounds = target.sounds.map(this.omitAsset, this);
-    }
-    return result;
-  }
-
-  inflateTargetList(bin) {
-    const jsonTargetList = JSON.parse(pako.inflate(toUint8Array(bin), { to: "string" }));
-
+  inflateTargetList(jsonTargetList) {
     // console.log("inflateTargetList", jsonTargetList);
 
     return jsonTargetList.filter(Boolean).map(this.inflateTarget, this);
+  }
+
+  deflateTarget(targetJSON) {
+    const { comments, variables, lists, broadcasts, costume, costumes, sounds, ...result } =
+      targetJSON;
+
+    result.comments = deflateObjectOfObjects(comments);
+    result.variables = deflateObjectOfObjects(variables);
+    result.lists = deflateObjectOfObjects(lists);
+    result.broadcasts = deflateObjectOfObjects(broadcasts);
+    result.sounds = deflateMedia(sounds);
+    result.costumes = deflateMedia(costumes);
+
+    if (costume) {
+      result.currentCostume = Math.max(
+        0,
+        result.costumes.findIndex(c => c.assetId === costume.assetId)
+      );
+    } else {
+      result.currentCostume = 0;
+    }
+
+    return result;
   }
 
   inflateTarget(json) {
@@ -341,21 +282,21 @@ export class TargetsBinder {
       });
     }
     if (json.lists && size(json.lists) > 0) {
-      target.lists = mapValues(json.lists, (variable, varId) => {
+      each(json.lists, (variable, varId) => {
         const newVariable = new Variable(varId, variable.name, Variable.LIST_TYPE, false);
         newVariable.value = variable.value;
-        return newVariable;
+        target.variables[varId] = newVariable;
       });
     }
     if (json.broadcasts && size(json.broadcasts) > 0) {
-      target.broadcasts = mapValues(json.broadcasts, (variable, varId) => {
+      each(json.broadcasts, (variable, varId) => {
         const newVariable = new Variable(
           varId,
           variable.name,
           Variable.BROADCAST_MESSAGE_TYPE,
           false
         );
-        return newVariable;
+        target.variables[varId] = newVariable;
       });
     }
     if (json.comments && size(json.comments) > 0) {
@@ -379,8 +320,7 @@ export class TargetsBinder {
   }
 
   deflateMonitors() {
-    const monitors = [];
-    this.vm.runtime
+    return this.vm.runtime
       .getMonitorState()
       .valueSeq()
       .map(monitorData => {
@@ -402,10 +342,85 @@ export class TargetsBinder {
           serializedMonitor.sliderMax = monitorData.sliderMax;
           serializedMonitor.isDiscrete = monitorData.isDiscrete;
         }
-        monitors.push(serializedMonitor);
-      });
+        return serializedMonitor;
+      })
+      .toArray();
+  }
 
-    return monitors;
+  inflateMonitors(targetList) {
+    if (this.app.state[VM_MONITORS] && this.app.state[VM_MONITORS].length > 0) {
+      this.app.state[VM_MONITORS].forEach(monitorData => {
+        if (monitorData.spriteName) {
+          const filteredTargets = targetList.filter(t => t.sprite.name === monitorData.spriteName);
+          if (filteredTargets && filteredTargets.length > 0) {
+            monitorData.targetId = filteredTargets[0].id;
+          } else {
+            console.warn(
+              `Tried to deserialize sprite specific monitor ${monitorData.opcode} but could not find sprite ${monitorData.spriteName}.`
+            );
+          }
+        }
+
+        const monitorBlockInfo = this.vm.runtime.monitorBlockInfo[monitorData.opcode];
+
+        if (monitorData.opcode === "data_listcontents") {
+          const listTarget = monitorData.targetId
+            ? targetList.find(t => t.id === monitorData.targetId)
+            : targetList.find(t => t.isStage);
+          if (listTarget && has(listTarget.variables, monitorData.id)) {
+            monitorData.params.LIST = listTarget.variables[monitorData.id].name;
+          }
+        }
+
+        const fields = mapValues(monitorData.params, (value, name) => ({ name, value }));
+
+        if (
+          monitorData.opcode !== "data_variable" &&
+          monitorData.opcode !== "data_listcontents" &&
+          monitorBlockInfo &&
+          monitorBlockInfo.isSpriteSpecific
+        ) {
+          monitorData.id = monitorBlockInfo.getId(monitorData.targetId, fields);
+        } else {
+          monitorData.id = StringUtil.replaceUnsafeChars(monitorData.id);
+        }
+
+        const existingMonitorBlock = this.vm.runtime.monitorBlocks._blocks[monitorData.id];
+        if (existingMonitorBlock) {
+          existingMonitorBlock.isMonitored = monitorData.visible;
+          existingMonitorBlock.targetId = monitorData.targetId;
+        } else {
+          const monitorBlock = {
+            id: monitorData.id,
+            opcode: monitorData.opcode,
+            inputs: {},
+            fields: fields,
+            topLevel: true,
+            next: null,
+            parent: null,
+            shadow: false,
+            x: 0,
+            y: 0,
+            isMonitored: monitorData.visible,
+            targetId: monitorData.targetId,
+          };
+
+          if (monitorData.opcode === "data_variable") {
+            const field = monitorBlock.fields.VARIABLE;
+            field.id = monitorData.id;
+            field.variableType = Variable.SCALAR_TYPE;
+          } else if (monitorData.opcode === "data_listcontents") {
+            const field = monitorBlock.fields.LIST;
+            field.id = monitorData.id;
+            field.variableType = Variable.LIST_TYPE;
+          }
+
+          this.vm.runtime.monitorBlocks.createBlock(monitorBlock);
+        }
+
+        this.vm.runtime.requestAddMonitor(MonitorRecord(monitorData));
+      });
+    }
   }
 
   pickAsset(media) {
@@ -421,11 +436,6 @@ export class TargetsBinder {
     return media;
   }
 
-  omitAsset(media) {
-    const { asset, ...rest } = media;
-    return rest;
-  }
-
   getSimplifiedLayerOrdering(targets) {
     const layerOrders = targets.map(t => t.getLayerOrder());
     return MathUtil.reducedSortOrdering(layerOrders);
@@ -438,4 +448,27 @@ export class TargetsBinder {
       }
     });
   }
+}
+
+function deflateMedia(mediaList) {
+  return Array.isArray(mediaList) ? mediaList.map(omitAsset) : [];
+}
+
+function deflateObjectOfObjects(objects = {}) {
+  return Object.keys(objects).reduce((result, id) => {
+    const obj = deflateObject(objects[id]);
+    if (obj) {
+      result[id] = obj;
+    }
+    return result;
+  }, {});
+}
+
+function deflateObject(obj) {
+  return obj && mapValues(obj, clone);
+}
+
+function omitAsset(media) {
+  const { asset, ...rest } = media;
+  return rest;
 }

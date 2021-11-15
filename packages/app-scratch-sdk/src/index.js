@@ -16,6 +16,13 @@ export class NetlessAppScratchSDK {
       return app;
     });
 
+    this.isAuthor = () => {
+      if (import.meta.env.DEV) {
+        return Boolean(NetlessAppScratchSDK.__isAuthor);
+      }
+      return this.app.isWritable && this.app.state["__author"] === this.app.meta.uid;
+    };
+
     const originalComponentWillUnmount = reactClassElement.componentWillUnmount;
 
     reactClassElement.componentWillUnmount = (...args) => {
@@ -61,7 +68,7 @@ export class NetlessAppScratchSDK {
       }
 
       this.sideEffect.add(() => {
-        const binder = new TargetsBinder(app, store, this.isAuthor.bind(this));
+        const binder = new TargetsBinder(app, store, this.isAuthor);
         return () => binder.destroy();
       });
 
@@ -178,13 +185,6 @@ export class NetlessAppScratchSDK {
       return;
     }
     this.app.setState({ __author: uid || this.app.meta.uid });
-  }
-
-  isAuthor() {
-    if (import.meta.env.DEV) {
-      return Boolean(NetlessAppScratchSDK.__isAuthor);
-    }
-    return this.app.isWritable && this.app.state["__author"] === this.app.meta.uid;
   }
 
   destroy() {
