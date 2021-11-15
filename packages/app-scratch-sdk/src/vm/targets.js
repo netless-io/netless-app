@@ -7,6 +7,8 @@ import MonitorRecord from "scratch-vm/src/engine/monitor-record";
 import Sprite from "scratch-vm/src/sprites/sprite";
 import MathUtil from "scratch-vm/src/util/math-util";
 import StringUtil from "scratch-vm/src/util/string-util";
+import { loadCostumeFromAsset } from "scratch-vm/src/import/load-costume";
+import { loadSoundFromAsset } from "scratch-vm/src/import/load-sound";
 import { SideEffectManager } from "side-effect-manager";
 
 const VM_TARGETS = "VM_TARGETS";
@@ -259,10 +261,12 @@ export class TargetsBinder {
     ]);
 
     if (json.costumes && json.costumes.length > 0) {
-      sprite.costumes = json.costumes.map(this.pickAsset, this).filter(Boolean);
+      sprite.costumes = json.costumes.map(this.loadCostume, this).filter(Boolean);
     }
     if (json.sounds && json.sounds.length > 0) {
-      sprite.sounds = json.sounds.map(this.pickAsset, this).filter(Boolean);
+      sprite.sounds = json.sounds
+        .map(sound => this.loadSound(sound, sprite.soundBank))
+        .filter(Boolean);
     }
     if (json.variables && size(json.variables) > 0) {
       target.variables = mapValues(json.variables, (variable, varId) => {
@@ -423,17 +427,32 @@ export class TargetsBinder {
     }
   }
 
-  pickAsset(media) {
-    if (media.assetId) {
-      const asset = this.storage.get(media.assetId);
+  loadSound(sound, soundBank) {
+    if (sound.assetId) {
+      const asset = this.storage.get(sound.assetId);
       if (asset) {
-        media.asset = asset;
+        sound.asset = asset;
+        loadSoundFromAsset(sound, asset, this.vm.runtime, soundBank);
       } else {
-        console.error("Missing asset for " + media.assetId);
+        console.error("Missing asset for " + sound.assetId);
         return null;
       }
     }
-    return media;
+    return sound;
+  }
+
+  loadCostume(costume) {
+    if (costume.assetId) {
+      const asset = this.storage.get(costume.assetId);
+      if (asset) {
+        costume.asset = asset;
+        loadCostumeFromAsset(costume, this.vm.runtime);
+      } else {
+        console.error("Missing asset for " + costume.assetId);
+        return null;
+      }
+    }
+    return costume;
   }
 
   getSimplifiedLayerOrdering(targets) {
