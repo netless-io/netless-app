@@ -5,7 +5,7 @@ import { Logger } from "@netless/app-shared";
 
 import type { PostFromSDKMessage, AddToSDKMessageListener } from "./EmbeddedApp";
 import { EmbeddedApp } from "./EmbeddedApp";
-import { isObj } from "./utils";
+import { has, isObj } from "./utils";
 
 export * from "./EmbeddedApp";
 export * from "./EmbeddedPageEvent";
@@ -101,6 +101,7 @@ export function createEmbeddedApp<TState = DefaultState, TMessage = unknown>(
         const app = new EmbeddedApp<TState, TMessage>(
           message.payload,
           config.ensureState || ({} as TState),
+          Boolean(has(config, "debug") ? config.debug : message.payload || import.meta.env.DEV),
           postMessage,
           addMessageListener,
           logger

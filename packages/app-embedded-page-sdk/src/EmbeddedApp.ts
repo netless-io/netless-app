@@ -34,16 +34,20 @@ export type AddToSDKMessageListener<TState = unknown, TMessage = unknown> = (
 ) => () => void;
 
 export class EmbeddedApp<TState = DefaultState, TMessage = unknown> {
+  public readonly debug: boolean;
   private _logger: Logger;
   private _postMessage: PostFromSDKMessage<TState, TMessage>;
 
   constructor(
     initData: InitData<TState>,
     ensureState: TState,
+    debug: boolean,
     postMessage: PostFromSDKMessage<TState, TMessage>,
     addMessageListener: AddToSDKMessageListener<TState, TMessage>,
     logger: Logger
   ) {
+    this.debug = debug;
+
     this._postMessage = postMessage;
 
     this._mainStoreId = initData.mainStoreId;
