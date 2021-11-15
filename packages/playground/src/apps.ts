@@ -30,11 +30,16 @@ export function registerApps(): AppGroup[] {
           return src;
         }
       };
-      const params: RegisterParams = { kind, src: wrapped };
+      const params: RegisterParams = {
+        kind,
+        appOptions: { debug: true },
+        src: wrapped,
+      };
       // https://wiki.geogebra.org/en/Reference:GeoGebra_Apps_Embedding#Offline_and_Self-Hosted_Solution
       if (kind === "GeoGebra") {
         Object.assign(params, {
           appOptions: {
+            ...params.appOptions,
             HTML5Codebase:
               "https://flat-storage-cn-hz.whiteboard.agora.io/GeoGebra/HTML5/5.0/web3d",
           },
