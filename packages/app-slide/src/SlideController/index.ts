@@ -109,6 +109,23 @@ export class SlideController {
   private registerEventListeners() {
     const { context, slide } = this;
 
+    // it is possible that we miss the first `renderSlide(1)` event
+    // and the attributes has no value yet, so we need to sync state
+    // when there's state change. we only have to do it once
+    this.sideEffect.add(() => {
+      const disposer = context.mobxUtils.reaction(
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        () => context.getAttributes()!.state,
+        () => {
+          this.syncStateOnce();
+          disposer();
+        }
+      );
+      // mobx already has a "disposed" flag in reaction,
+      // so we don't need to check it here
+      return disposer;
+    });
+
     this.sideEffect.add(() => {
       const displayer = context.getDisplayer();
       displayer.addMagixEventListener(this.channel, this.magixEventListener, {
