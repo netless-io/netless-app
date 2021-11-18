@@ -50,6 +50,8 @@ export class SlideController {
   private readonly onTransitionEnd: SlideControllerOptions["onTransitionEnd"];
   private readonly onError: SlideControllerOptions["onError"];
 
+  private syncStateOnceFlag: boolean;
+
   public constructor({
     context,
     anchor,
@@ -68,6 +70,8 @@ export class SlideController {
     this.player = this.room ? undefined : (context.getDisplayer() as Player);
     this.debug = import.meta.env.DEV || !!context.getAppOptions()?.debug;
     this.slide = this.createSlide(anchor);
+    // the adder does not need to sync state
+    this.syncStateOnceFlag = !this.context.isAddApp;
     this.initialize();
   }
 
@@ -167,12 +171,14 @@ export class SlideController {
         if (this.debug) {
           console.log("[Slide] receive", payload);
         }
-        this.slide.emit(SLIDE_EVENTS.syncReceive, payload);
+        // only emit the event if the slide state is sync-ed
+        if (!this.syncStateOnceFlag) {
+          this.slide.emit(SLIDE_EVENTS.syncReceive, payload);
+        }
       }
     }
   };
 
-  private syncStateOnceFlag = true;
   private syncStateOnce() {
     // sync state before the first event, so that they can be in the correct order
     if (this.syncStateOnceFlag) {
