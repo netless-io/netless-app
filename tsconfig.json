@@ -11,7 +11,7 @@
     "noImplicitOverride": true,
     "module": "ESNext",
     "lib": ["DOM", "ESNext"],
-    "types": ["vite/client", "svelte"],
+    "types": ["vite/client"],
     "moduleResolution": "Node",
     "esModuleInterop": true,
     "resolveJsonModule": true,

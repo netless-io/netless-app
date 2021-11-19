@@ -245,6 +245,7 @@ export class SlideController {
         autoFPS: true,
         autoResolution: true,
         resolution: this.context.getAppOptions()?.resolution,
+        transactionBgColor: "#f9f9fc",
       },
       timestamp: this.timestamp,
     });

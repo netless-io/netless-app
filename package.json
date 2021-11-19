@@ -2,12 +2,12 @@
   "name": "netless-app-monorepo",
   "private": true,
   "devDependencies": {
-    "@commitlint/cli": "^14.1.0",
-    "@commitlint/config-conventional": "^14.1.0",
+    "@commitlint/cli": "^15.0.0",
+    "@commitlint/config-conventional": "^15.0.0",
     "@netless/window-manager": "^0.2.19",
     "@sveltejs/vite-plugin-svelte": "^1.0.0-next.30",
     "@tsconfig/svelte": "^2.0.1",
-    "@types/node": "^16.11.7",
+    "@types/node": "^16.11.8",
     "@types/rollup-plugin-peer-deps-external": "^2.2.1",
     "@typescript-eslint/eslint-plugin": "^5.4.0",
     "@typescript-eslint/parser": "^5.4.0",
@@ -23,9 +23,9 @@
     "rollup-plugin-peer-deps-external": "^2.2.4",
     "sass": "^1.43.4",
     "svelte": "^3.44.1",
-    "typescript": "^4.4.4",
+    "typescript": "^4.5.2",
     "vite": "^2.6.14",
-    "white-web-sdk": "2.15.4"
+    "white-web-sdk": "2.15.5"
   },
   "scripts": {
     "prettier": "prettier --write .",

@@ -1,4 +1,4 @@
-/** @type {import("eslint").Linter.Config */
+/** @type {import("eslint").Linter.Config} */
 const config = {
   root: true,
   env: {
