@@ -35,7 +35,14 @@ export function syncSceneWithSlide(
     room.putScenes(baseScenePath, scenes);
   }
 
-  if (context.getView()?.focusScenePath !== scenePath) {
+  let currentScenePath: string;
+  if (context.getBox().focus) {
+    currentScenePath = room.state.sceneState.scenePath;
+  } else {
+    currentScenePath = context.getView()?.focusScenePath || "";
+  }
+
+  if (currentScenePath !== scenePath) {
     context.setScenePath(scenePath);
   }
 }

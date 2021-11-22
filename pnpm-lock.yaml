@@ -6,7 +6,7 @@ importers:
     specifiers:
       '@commitlint/cli': ^15.0.0
       '@commitlint/config-conventional': ^15.0.0
-      '@netless/window-manager': ^0.2.19
+      '@netless/window-manager': ^0.3.2
       '@sveltejs/vite-plugin-svelte': ^1.0.0-next.30
       '@tsconfig/svelte': ^2.0.1
       '@types/node': ^16.11.9
@@ -31,7 +31,7 @@ importers:
     devDependencies:
       '@commitlint/cli': 15.0.0
       '@commitlint/config-conventional': 15.0.0
-      '@netless/window-manager': 0.2.19_white-web-sdk@2.15.5
+      '@netless/window-manager': 0.3.2_white-web-sdk@2.15.5
       '@sveltejs/vite-plugin-svelte': 1.0.0-next.30_svelte@3.44.2+vite@2.6.14
       '@tsconfig/svelte': 2.0.1
       '@types/node': 16.11.9
@@ -171,12 +171,12 @@ importers:
   packages/app-slide:
     specifiers:
       '@netless/app-shared': workspace:^0.1.1
-      '@netless/slide': ^0.1.29
+      '@netless/slide': ^0.1.30
       side-effect-manager: ^0.1.5
       vanilla-lazyload: ^17.5.0
     devDependencies:
       '@netless/app-shared': link:../app-shared
-      '@netless/slide': 0.1.29
+      '@netless/slide': 0.1.30
       side-effect-manager: 0.1.5
       vanilla-lazyload: 17.5.0
 
@@ -451,8 +451,8 @@ packages:
     resolution: {integrity: sha512-7NzsJrba0R/mq/l10SkIZQwbrNVJyPxZYrjK6xL3Ts732iWAVuS2UB0u3s6iGeUVcqV39A679yva8APWRl4M0A==}
     dev: true
 
-  /@netless/slide/0.1.29:
-    resolution: {integrity: sha512-faxzYR12v4Roa8tL6XuiwIKKJVcgVF/WsaBWvifoyip84Mna4J/qv29b4XJcP6Ioz/Ai3jB19i0Ro6kZYTGtNw==}
+  /@netless/slide/0.1.30:
+    resolution: {integrity: sha512-I5cPVFWDBNyfelVBxKORhOoT6mNfCIl+jZ9AM3mB+/vquGprVvglSBFKpIPB/IcIaHdDoskwd44etBi4e0IkPA==}
     dependencies:
       '@juggle/resize-observer': 3.3.1
       '@types/dat.gui': 0.7.7
@@ -461,23 +461,26 @@ packages:
       localforage: 1.10.0
     dev: true
 
-  /@netless/telebox-insider/0.1.19:
-    resolution: {integrity: sha512-xyoY/Tj+ve9qxOjZKKglF2Nf4mdzEpxqNBGXWhvRvW/KBX/5fpZ1wF0MaxCeHFZbpG9hHM+tdP/K6qbf00BQxQ==}
+  /@netless/telebox-insider/0.2.4:
+    resolution: {integrity: sha512-StaxotnLXU09/VSLyJVqbpaYvZVSmOTMgw0c+3++xqh9ayoSNQNLsL1eEWGoa3qqK/4ni7A3D77QpCS+VZtcQw==}
     dependencies:
+      '@types/shallowequal': 1.1.1
       eventemitter3: 4.0.7
-      side-effect-manager: 0.1.3
+      shallowequal: 1.1.0
+      side-effect-manager: 0.1.5
       stylefire: 7.0.3
+      value-enhancer: 0.0.7
     dev: true
 
-  /@netless/window-manager/0.2.19_white-web-sdk@2.15.5:
-    resolution: {integrity: sha512-voVwcBUbNAriOypBSUOcGjscvm0949I4DICyb1coDZboWZGH4gHNWyxUeQx4dZ88jF0Xvu368duKrfVOl5tSDw==}
+  /@netless/window-manager/0.3.2_white-web-sdk@2.15.5:
+    resolution: {integrity: sha512-1tNPPGYz2ypkOD+6Opv3E0ie5js0PQ1ie17kaZqmv1nXDKlaYwyGvt7aMRh6qBXyP5tQBzd/Q+yGqAgr1RrCeg==}
     peerDependencies:
       white-web-sdk: ^2.13.16
     dependencies:
       '@juggle/resize-observer': 3.3.1
       '@netless/app-docs-viewer': 0.1.21
       '@netless/app-media-player': 0.1.0-beta.5
-      '@netless/telebox-insider': 0.1.19
+      '@netless/telebox-insider': 0.2.4
       emittery: 0.9.2
       lodash: 4.17.21
       p-retry: 4.6.1
@@ -653,6 +656,10 @@ packages:
     dependencies:
       '@types/node': 16.11.9
       rollup: 0.63.5
+    dev: true
+
+  /@types/shallowequal/1.1.1:
+    resolution: {integrity: sha512-Lhni3aX80zbpdxRuWhnuYPm8j8UQaa571lHP/xI4W+7BAFhSIhRReXnqjEgT/XzPoXZTJkCqstFMJ8CZTK6IlQ==}
     dev: true
 
   /@typescript-eslint/eslint-plugin/5.4.0_5c8ff4cecd5a55e744866c0654edac32:
@@ -2813,6 +2820,10 @@ packages:
       lru-cache: 6.0.0
     dev: true
 
+  /shallowequal/1.1.0:
+    resolution: {integrity: sha512-y0m1JoUZSlPAjXVtPPW70aZWfIL/dSP7AFkRnniLCrK/8MDKog3TySTBmckD+RObVxH0v4Tox67+F14PdED2oQ==}
+    dev: true
+
   /shebang-command/2.0.0:
     resolution: {integrity: sha512-kHxr2zZpYtdmrN1qDjrrX/Z1rR1kG8Dx+gkpK1G4eXmvXswmcE1hTWBWYUzlraYw1/yZp6YuDY77YtvbN0dmDA==}
     engines: {node: '>=8'}
@@ -2823,10 +2834,6 @@ packages:
   /shebang-regex/3.0.0:
     resolution: {integrity: sha512-7++dFhtcx3353uBaq8DDR4NuxBetBzC7ZQOhmTQInHEd6bSrXdiEyzCvG07Z44UYdLShWUyXt5M/yhz8ekcb1A==}
     engines: {node: '>=8'}
-    dev: true
-
-  /side-effect-manager/0.1.3:
-    resolution: {integrity: sha512-Ej2ig3xtMkpYoQeTP94ym/qP5k0UWQE3RlIgIkQys209S1B4wZRsY7Kh+CzSwlN+R1u9Gt6Ls6d8jnclVUWm1g==}
     dev: true
 
   /side-effect-manager/0.1.5:
@@ -3152,6 +3159,12 @@ packages:
     dependencies:
       spdx-correct: 3.1.1
       spdx-expression-parse: 3.0.1
+    dev: true
+
+  /value-enhancer/0.0.7:
+    resolution: {integrity: sha512-Gns+pJcsv2+AXHf3p4l9Vry4wKYPb52a/YsGqJ7wOe1jXYqXetTL3p/9iwUPtFesJE3p7y80hX4HuX1tb6Hj1g==}
+    dependencies:
+      side-effect-manager: 0.1.5
     dev: true
 
   /vanilla-lazyload/17.5.0:
