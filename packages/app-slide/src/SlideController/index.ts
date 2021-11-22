@@ -262,7 +262,7 @@ export class SlideController {
     this.sideEffect.flushAll();
     if (!this.destroyed) {
       if (this.debug) {
-        console.log("[Slide] destroy (once)");
+        console.log("[Slide] destroy slide (once)");
       }
       this.slide.destroy();
       this.destroyed = true;

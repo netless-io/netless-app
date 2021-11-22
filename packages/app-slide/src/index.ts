@@ -70,7 +70,7 @@ const SlideApp: NetlessApp<Attributes> = {
       box,
       view,
       mountSlideController,
-      mountWhiteboard: dom => context.mountView(dom),
+      mountWhiteboard: context.mountView.bind(context),
     });
 
     if (import.meta.env.DEV) {

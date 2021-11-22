@@ -26,6 +26,18 @@ const options: PlaygroundConfigs<Attributes> = [
       url: "https://convertcdn.netless.group/dynamicConvert",
     },
   },
+  {
+    kind: "Slide",
+    src: () => import("./src"),
+    options: {
+      title: "开屏动画",
+      scenePath: `/Slide/deb46e004b5611ecb2fbe336515f58dd`,
+    },
+    attributes: {
+      taskId: "deb46e004b5611ecb2fbe336515f58dd",
+      url: "https://convertcdn.netless.group/dynamicConvert",
+    },
+  },
 ];
 
 export default options;

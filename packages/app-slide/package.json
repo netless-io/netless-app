@@ -1,6 +1,6 @@
 {
   "name": "@netless/app-slide",
-  "version": "0.0.23",
+  "version": "0.0.24",
   "main": "dist/main.cjs.js",
   "module": "dist/main.es.js",
   "types": "dist/index.d.ts",
@@ -17,8 +17,8 @@
   ],
   "devDependencies": {
     "@netless/app-shared": "workspace:^0.1.1",
-    "@netless/slide": "^0.1.28",
-    "side-effect-manager": "^0.1.4",
+    "@netless/slide": "^0.1.29",
+    "side-effect-manager": "^0.1.5",
     "vanilla-lazyload": "^17.5.0"
   }
 }
