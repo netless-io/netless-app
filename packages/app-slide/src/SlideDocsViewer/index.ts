@@ -26,6 +26,7 @@ export class SlideDocsViewer {
   protected readonly whiteboardView: SlideDocsViewerConfig["view"];
   protected readonly mountSlideController: SlideDocsViewerConfig["mountSlideController"];
   protected readonly mountWhiteboard: SlideDocsViewerConfig["mountWhiteboard"];
+  private isViewMounted = false;
 
   public constructor({ box, view, mountSlideController, mountWhiteboard }: SlideDocsViewerConfig) {
     this.box = box;
@@ -92,7 +93,6 @@ export class SlideDocsViewer {
     if (!this.$whiteboardView) {
       this.$whiteboardView = document.createElement("div");
       this.$whiteboardView.className = this.wrapClassName("wb-view");
-      this.mountWhiteboard(this.$whiteboardView);
     }
     return this.$whiteboardView;
   }
@@ -168,6 +168,11 @@ export class SlideDocsViewer {
         height,
         animationMode: "immediately" as AnimationMode.Immediately,
       });
+      if (!this.isViewMounted && width && height) {
+        this.isViewMounted = true;
+        console.log("[Slide] mount whiteboard view");
+        this.mountWhiteboard(this.$whiteboardView);
+      }
     }
   };
 
