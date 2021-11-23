@@ -172,11 +172,15 @@ importers:
     specifiers:
       '@netless/app-shared': workspace:^0.1.1
       '@netless/slide': ^0.1.32
+      '@types/color-string': ^1.5.0
+      color-string: ^1.6.0
       side-effect-manager: ^0.1.5
       vanilla-lazyload: ^17.5.0
     devDependencies:
       '@netless/app-shared': link:../app-shared
       '@netless/slide': 0.1.32
+      '@types/color-string': 1.5.0
+      color-string: 1.6.0
       side-effect-manager: 0.1.5
       vanilla-lazyload: 17.5.0
 
@@ -605,6 +609,10 @@ packages:
 
   /@tsconfig/svelte/2.0.1:
     resolution: {integrity: sha512-aqkICXbM1oX5FfgZd2qSSAGdyo/NRxjWCamxoyi3T8iVQnzGge19HhDYzZ6NrVOW7bhcWNSq9XexWFtMzbB24A==}
+    dev: true
+
+  /@types/color-string/1.5.0:
+    resolution: {integrity: sha512-17/8LWbkfvoKgfnnBvKbUnPTzPtzBlSELf5FPvVt9dRTQW88igOYZZ78us9dmbY1301VtTBEnuPTKspvmtGDxA==}
     dev: true
 
   /@types/dat.gui/0.7.7:

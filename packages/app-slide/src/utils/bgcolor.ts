@@ -1,20 +1,24 @@
+import ColorString from "color-string";
+
 export function guessBgColor(el: HTMLElement): string {
-  const bg = window.getComputedStyle(el).backgroundColor;
-  if (bg !== "rgba(0, 0, 0, 0)" && bg !== "transparent") {
-    return bg;
-  }
-  if (el.parentElement) {
-    return guessBgColor(el.parentElement);
+  try {
+    const bg = window.getComputedStyle(el).backgroundColor;
+    if (bg !== "rgba(0, 0, 0, 0)" && bg !== "transparent") {
+      return bg;
+    }
+    if (el.parentElement) {
+      return guessBgColor(el.parentElement);
+    }
+  } catch {
+    // ignore any error
   }
   return "#ffffff";
 }
 
 export function toHex(color: string): string {
-  if (color.startsWith("rgb(")) {
-    const args = color
-      .slice(4, -1)
-      .split(/\s*,\s*/)
-      .map(e => Number(e)) as [number, number, number];
+  const result = ColorString.get(color);
+  if (result && result.model === "rgb") {
+    const args = result.value;
 
     // https://github.com/Qix-/color-convert/blob/8dfdbbc6b46fa6a305bf394d942cc1b08e23fca5/conversions.js#L616
     const integer =
