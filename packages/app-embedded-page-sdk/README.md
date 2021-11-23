@@ -44,11 +44,23 @@ npm add @netless/app-embedded-page-sdk
 
 - **app.meta**
 
-  Type: `{ roomUUID?: string; userPayload?: unknown }`
+  Type: `{ sessionUID: number; uid: string; roomUUID?: string; userPayload: unknown }`
 
   Room information, including
 
+  - `sessionUID`: a unique number of current session. will change after refreshing.
+  - `uid`: a unique id of current user passed in when calling `joinRoom()`.
   - `roomUUID`: current room's UUID.
+  - `userPayload`: the object passed in when calling `joinRoom()`.
+
+- **app.roomMembers**
+
+  Type: `ReadonlyArray<{ sessionUID: number; uid: string; userPayload: unknown }>`
+
+  All members in the room.
+
+  - `sessionUID`: a unique number of current session. will change after refreshing.
+  - `uid`: a unique id of current user passed in when calling `joinRoom()`.
   - `userPayload`: the object passed in when calling `joinRoom()`.
 
 - **app.ensureState(partialState)**
@@ -166,6 +178,26 @@ npm add @netless/app-embedded-page-sdk
   ```js
   app.onWritableChanged.addListener(diff => {
     console.log("my writable becomes", app.isWritable);
+  });
+  ```
+
+- **app.onRoomMembersChanged**
+
+  It fires when room members changes.
+
+  Type: `Emitter<{ oldValue?: RoomMember[], newValue?: RoomMember[] }>`
+
+  ```ts
+  interface RoomMember {
+    sessionUID: number;
+    uid: string;
+    userPayload: unknown;
+  }
+  ```
+
+  ```js
+  app.onRoomMembersChanged.addListener(diff => {
+    console.log("room members changed", app.roomMembers);
   });
   ```
 

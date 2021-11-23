@@ -41,11 +41,23 @@ npm add @netless/app-embedded-page-sdk
 
 - **app.meta**
 
-  类型: `{ roomUUID?: string; userPayload?: unknown }`
+  类型: `{ sessionUID: number; uid: string; roomUUID?: string; userPayload: unknown }`
 
   一些房间元信息，包括
 
+  - `sessionUID`: 当前会话唯一标识，刷新后就会改变
+  - `uid`: 当前用户的唯一标识，由用户 `joinRoom()` 时传入
   - `roomUUID`: 当前房间的 UUID
+  - `userPayload`: `joinRoom()` 时传入的同名对象
+
+- **app.roomMembers**
+
+  类型: `ReadonlyArray<{ sessionUID: number; uid: string; userPayload: unknown }>`
+
+  房间内所有用户的信息，包括自己。
+
+  - `sessionUID`: 当前会话唯一标识，刷新后就会改变
+  - `uid`: 当前用户的唯一标识，由用户 `joinRoom()` 时传入
   - `userPayload`: `joinRoom()` 时传入的同名对象
 
 - **app.ensureState(partialState)**
@@ -166,6 +178,26 @@ npm add @netless/app-embedded-page-sdk
   });
   ```
 
+- **app.onRoomMembersChanged**
+
+  当房间成员变化时调用。
+
+  类型: `Emitter<{ oldValue?: RoomMember[], newValue?: RoomMember[] }>`
+
+  ```ts
+  interface RoomMember {
+    sessionUID: number;
+    uid: string;
+    userPayload: unknown;
+  }
+  ```
+
+  ```js
+  app.onRoomMembersChanged.addListener(diff => {
+    console.log("房间成员变化", app.roomMembers);
+  });
+  ```
+
 - **app.onMessage**
 
   当收到其他客户端通过调用 `app.sendMessage()` 发送的消息时调用。
@@ -216,6 +248,6 @@ app.onMessage.addListener(({ type, payload }) => {
 });
 ```
 
-### Licence
+### License
 
 MIT @ [netless](https://github.com/netless-io)
