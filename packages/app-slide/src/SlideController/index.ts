@@ -96,6 +96,7 @@ export class SlideController {
       if (this.debug) {
         console.log("[Slide] init with state", deepClone(state));
       }
+      this.syncStateOnceFlag = false;
       slide.setSlideState(deepClone(state));
     } else if (context.isAddApp) {
       // otherwise, maybe this slide is just added, let the adder kick start first render
@@ -195,6 +196,9 @@ export class SlideController {
 
   private onStateChange = (state: SlideState) => {
     if (this.context.getIsWritable()) {
+      if (import.meta.env.DEV) {
+        console.log("[Slide] state change", JSON.stringify(state, null, 2));
+      }
       this.context.updateAttributes(["state"], state);
     }
   };

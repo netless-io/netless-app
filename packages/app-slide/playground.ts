@@ -49,6 +49,17 @@ const options: PlaygroundConfigs<Attributes> = [
       taskId: "e20da510429811eca24d2965b39c697a",
     },
   },
+  {
+    kind: "Slide",
+    src: () => import("./src"),
+    options: {
+      title: "简约蓝色多边形",
+      scenePath: `/Slide/c98945a0478211ec82699ff3907ab497`,
+    },
+    attributes: {
+      taskId: "c98945a0478211ec82699ff3907ab497",
+    },
+  },
 ];
 
 export default options;
