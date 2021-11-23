@@ -25,6 +25,7 @@ export const EmptyAttributes: Attributes = {
   url: "",
   state: null,
 };
+export const DefaultBgColor = "#f9f9fc";
 
 export interface SlideControllerOptions {
   context: AppContext<Attributes>;
@@ -249,7 +250,7 @@ export class SlideController {
         autoFPS: true,
         autoResolution: true,
         resolution: this.context.getAppOptions()?.resolution,
-        transactionBgColor: this.context.getAppOptions()?.bgColor || "#f9f9fc",
+        transactionBgColor: this.context.getAppOptions()?.bgColor || DefaultBgColor,
       },
       timestamp: this.timestamp,
     });
