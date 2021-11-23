@@ -16,6 +16,7 @@ import type { Attributes, MagixPayload, SlideState } from "../typings";
 import { SideEffectManager } from "side-effect-manager";
 import { Slide, SLIDE_EVENTS } from "@netless/slide";
 import { clamp, deepClone, isObj } from "../utils/helpers";
+import { cachedGetBgColor } from "../utils/bgcolor";
 export { syncSceneWithSlide, createDocsViewerPages } from "./helpers";
 
 export const DefaultUrl = "https://convertcdn.netless.link/dynamicConvert";
@@ -25,7 +26,6 @@ export const EmptyAttributes: Attributes = {
   url: "",
   state: null,
 };
-export const DefaultBgColor = "#f9f9fc";
 
 export interface SlideControllerOptions {
   context: AppContext<Attributes>;
@@ -250,7 +250,7 @@ export class SlideController {
         autoFPS: true,
         autoResolution: true,
         resolution: this.context.getAppOptions()?.resolution,
-        transactionBgColor: this.context.getAppOptions()?.bgColor || DefaultBgColor,
+        transactionBgColor: this.context.getAppOptions()?.bgColor || cachedGetBgColor(anchor),
       },
       timestamp: this.timestamp,
     });

@@ -7,7 +7,6 @@ import { SideEffectManager } from "side-effect-manager";
 import { ensureAttributes } from "@netless/app-shared";
 import {
   DefaultUrl,
-  DefaultBgColor,
   EmptyAttributes,
   syncSceneWithSlide,
   SlideController,
@@ -17,7 +16,7 @@ import styles from "./style.scss?inline";
 
 export type { Attributes };
 
-export { DefaultUrl, DefaultBgColor };
+export { DefaultUrl };
 
 const SlideApp: NetlessApp<Attributes> = {
   kind: "Slide",
