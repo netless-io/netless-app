@@ -60,6 +60,17 @@ const options: PlaygroundConfigs<Attributes> = [
       taskId: "c98945a0478211ec82699ff3907ab497",
     },
   },
+  {
+    kind: "Slide",
+    src: () => import("./src"),
+    options: {
+      title: "开始使用 Flat",
+      scenePath: `/Slide/9c8a8d50436011ec81562b933562aa06`,
+    },
+    attributes: {
+      taskId: "9c8a8d50436011ec81562b933562aa06",
+    },
+  },
 ];
 
 export default options;
