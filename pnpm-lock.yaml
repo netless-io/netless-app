@@ -6,7 +6,7 @@ importers:
     specifiers:
       '@commitlint/cli': ^15.0.0
       '@commitlint/config-conventional': ^15.0.0
-      '@netless/window-manager': ^0.3.2
+      '@netless/window-manager': ^0.3.4
       '@sveltejs/vite-plugin-svelte': ^1.0.0-next.30
       '@tsconfig/svelte': ^2.0.1
       '@types/node': ^16.11.9
@@ -31,7 +31,7 @@ importers:
     devDependencies:
       '@commitlint/cli': 15.0.0
       '@commitlint/config-conventional': 15.0.0
-      '@netless/window-manager': 0.3.2_white-web-sdk@2.15.5
+      '@netless/window-manager': 0.3.4_white-web-sdk@2.15.5
       '@sveltejs/vite-plugin-svelte': 1.0.0-next.30_svelte@3.44.2+vite@2.6.14
       '@tsconfig/svelte': 2.0.1
       '@types/node': 16.11.9
@@ -461,8 +461,8 @@ packages:
       localforage: 1.10.0
     dev: true
 
-  /@netless/telebox-insider/0.2.4:
-    resolution: {integrity: sha512-StaxotnLXU09/VSLyJVqbpaYvZVSmOTMgw0c+3++xqh9ayoSNQNLsL1eEWGoa3qqK/4ni7A3D77QpCS+VZtcQw==}
+  /@netless/telebox-insider/0.2.5:
+    resolution: {integrity: sha512-nJCEGZDElZcXVIHnfWg8WGjNwVGdh9T2Z+fxYh62lOGHIVevN1K6gnnhlzRCjkboD+z0dxhjSTF2yrIivHu3jA==}
     dependencies:
       '@types/shallowequal': 1.1.1
       eventemitter3: 4.0.7
@@ -472,15 +472,15 @@ packages:
       value-enhancer: 0.0.7
     dev: true
 
-  /@netless/window-manager/0.3.2_white-web-sdk@2.15.5:
-    resolution: {integrity: sha512-1tNPPGYz2ypkOD+6Opv3E0ie5js0PQ1ie17kaZqmv1nXDKlaYwyGvt7aMRh6qBXyP5tQBzd/Q+yGqAgr1RrCeg==}
+  /@netless/window-manager/0.3.4_white-web-sdk@2.15.5:
+    resolution: {integrity: sha512-wmdlX290Qi6cr+lC23U/YKfVorGpb9GAIjX6j5TZ/HVXD+zqEisxlTFxrRKcXjFEs7+x/TTHjturqvzm4p6Bcg==}
     peerDependencies:
       white-web-sdk: ^2.13.16
     dependencies:
       '@juggle/resize-observer': 3.3.1
       '@netless/app-docs-viewer': 0.1.21
       '@netless/app-media-player': 0.1.0-beta.5
-      '@netless/telebox-insider': 0.2.4
+      '@netless/telebox-insider': 0.2.5
       emittery: 0.9.2
       lodash: 4.17.21
       p-retry: 4.6.1
