@@ -2,6 +2,7 @@ import type { NetlessApp } from "@netless/window-manager";
 import type { RoomState } from "white-web-sdk";
 import type { MountSlideOptions } from "./SlideDocsViewer";
 import type { Attributes } from "./typings";
+import type { AddHooks, FreezableSlide } from "./utils/freezer";
 
 import { SideEffectManager } from "side-effect-manager";
 import { ensureAttributes } from "@netless/app-shared";
@@ -12,11 +13,12 @@ import {
   SlideController,
 } from "./SlideController";
 import { SlideDocsViewer } from "./SlideDocsViewer";
+import { apps, FreezerLength, addHooks } from "./utils/freezer";
 import styles from "./style.scss?inline";
 
-export type { Attributes };
+export type { Attributes, AddHooks, FreezableSlide };
 
-export { DefaultUrl };
+export { DefaultUrl, apps, FreezerLength, addHooks };
 
 const SlideApp: NetlessApp<Attributes> = {
   kind: "Slide",
@@ -58,6 +60,7 @@ const SlideApp: NetlessApp<Attributes> = {
         ...options,
         onPageChanged,
       });
+      apps.set(context.appId, slideController);
       if (import.meta.env.DEV) {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (window as any).slideController = slideController;
@@ -95,6 +98,7 @@ const SlideApp: NetlessApp<Attributes> = {
 
     context.emitter.on("destroy", () => {
       console.log("[Slide]: destroy");
+      apps.delete(context.appId);
       sideEffect.flushAll();
       if (docsViewer) {
         docsViewer.destroy();

@@ -6,10 +6,10 @@ importers:
     specifiers:
       '@commitlint/cli': ^15.0.0
       '@commitlint/config-conventional': ^15.0.0
-      '@netless/window-manager': ^0.3.4
+      '@netless/window-manager': ^0.3.5
       '@sveltejs/vite-plugin-svelte': ^1.0.0-next.30
       '@tsconfig/svelte': ^2.0.1
-      '@types/node': ^16.11.9
+      '@types/node': ^16.11.10
       '@types/rollup-plugin-peer-deps-external': ^2.2.1
       '@typescript-eslint/eslint-plugin': ^5.4.0
       '@typescript-eslint/parser': ^5.4.0
@@ -31,10 +31,10 @@ importers:
     devDependencies:
       '@commitlint/cli': 15.0.0
       '@commitlint/config-conventional': 15.0.0
-      '@netless/window-manager': 0.3.4_white-web-sdk@2.15.5
+      '@netless/window-manager': 0.3.5_white-web-sdk@2.15.5
       '@sveltejs/vite-plugin-svelte': 1.0.0-next.30_svelte@3.44.2+vite@2.6.14
       '@tsconfig/svelte': 2.0.1
-      '@types/node': 16.11.9
+      '@types/node': 16.11.10
       '@types/rollup-plugin-peer-deps-external': 2.2.1
       '@typescript-eslint/eslint-plugin': 5.4.0_5c8ff4cecd5a55e744866c0654edac32
       '@typescript-eslint/parser': 5.4.0_eslint@8.3.0+typescript@4.5.2
@@ -59,9 +59,9 @@ importers:
 
   packages/app-countdown:
     specifiers:
-      preact: ^10.5.15
+      preact: ^10.6.0
     devDependencies:
-      preact: 10.5.15
+      preact: 10.6.0
 
   packages/app-docs-viewer:
     specifiers:
@@ -476,8 +476,8 @@ packages:
       value-enhancer: 0.0.7
     dev: true
 
-  /@netless/window-manager/0.3.4_white-web-sdk@2.15.5:
-    resolution: {integrity: sha512-wmdlX290Qi6cr+lC23U/YKfVorGpb9GAIjX6j5TZ/HVXD+zqEisxlTFxrRKcXjFEs7+x/TTHjturqvzm4p6Bcg==}
+  /@netless/window-manager/0.3.5_white-web-sdk@2.15.5:
+    resolution: {integrity: sha512-uI3eH3w5Bn2DxdqP1WiHRopaenLq2m7df7B51pGzbQiuwZhhLMpmRKEZrr3wE6H4pmr/VOsV0iyQTS8SfxaYpg==}
     peerDependencies:
       white-web-sdk: ^2.13.16
     dependencies:
@@ -639,8 +639,8 @@ packages:
     resolution: {integrity: sha512-jhuKLIRrhvCPLqwPcx6INqmKeiA5EWrsCOPhrlFSrbrmU4ZMPjj5Ul/oLCMDO98XRUIwVm78xICz4EPCektzeQ==}
     dev: true
 
-  /@types/node/16.11.9:
-    resolution: {integrity: sha512-MKmdASMf3LtPzwLyRrFjtFFZ48cMf8jmX5VRYrDQiJa8Ybu5VAmkqBWqKU8fdCwD8ysw4mQ9nrEHvzg6gunR7A==}
+  /@types/node/16.11.10:
+    resolution: {integrity: sha512-3aRnHa1KlOEEhJ6+CvyHKK5vE9BcLGjtUpwvqYLRvYNQKMfabu3BwfJaA/SLW8dxe28LsNDjtHwePTuzn3gmOA==}
     dev: true
 
   /@types/normalize-package-data/2.4.1:
@@ -662,7 +662,7 @@ packages:
   /@types/rollup-plugin-peer-deps-external/2.2.1:
     resolution: {integrity: sha512-CUK4Mi3M3A/0coRUeo4McvUFOxR5H6UYd6Wt3D+K4c4fJupolMSoIxsZaBG1g/BJQOaujf78Pf7KhgfhrX1FZA==}
     dependencies:
-      '@types/node': 16.11.9
+      '@types/node': 16.11.10
       rollup: 0.63.5
     dev: true
 
@@ -2506,8 +2506,8 @@ packages:
       source-map-js: 0.6.2
     dev: true
 
-  /preact/10.5.15:
-    resolution: {integrity: sha512-5chK29n6QcJc3m1lVrKQSQ+V7K1Gb8HeQY6FViQ5AxCAEGu3DaHffWNDkC9+miZgsLvbvU9rxbV1qinGHMHzqA==}
+  /preact/10.6.0:
+    resolution: {integrity: sha512-5gpdQkPsfl8ycSQSLSZxSvkifZ9FM4Zqc1OSToSpgygvgmXjcj6Q5jNRt86ote8dn0RkdOaKv9UAZTU7a6wP+g==}
     dev: true
 
   /prelude-ls/1.2.1:
@@ -2578,7 +2578,7 @@ packages:
       '@protobufjs/pool': 1.1.0
       '@protobufjs/utf8': 1.1.0
       '@types/long': 4.0.1
-      '@types/node': 16.11.9
+      '@types/node': 16.11.10
       long: 4.0.0
     dev: true
 
@@ -2763,7 +2763,7 @@ packages:
     hasBin: true
     dependencies:
       '@types/estree': 0.0.39
-      '@types/node': 16.11.9
+      '@types/node': 16.11.10
     dev: true
 
   /rollup/2.59.0:

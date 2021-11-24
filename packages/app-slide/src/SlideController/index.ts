@@ -76,6 +76,16 @@ export class SlideController {
     this.initialize();
   }
 
+  public ready = false;
+  private resolveReady!: () => void;
+  public readonly readyPromise = new Promise<void>(resolve => {
+    this.resolveReady = () =>
+      setTimeout(() => {
+        this.ready = true;
+        resolve();
+      }, 1000);
+  });
+
   public jumpToPage(page: number) {
     if (this.ready) {
       page = clamp(page, 1, this.pageCount);
@@ -150,6 +160,8 @@ export class SlideController {
     slide.on(SLIDE_EVENTS.renderError, this.onError);
     slide.on(SLIDE_EVENTS.stateChange, this.onStateChange);
     slide.on(SLIDE_EVENTS.syncDispatch, this.onSyncDispatch);
+
+    slide.on(SLIDE_EVENTS.renderEnd, this.resolveReady);
   }
 
   private onSyncDispatch = (event: SyncEvent) => {
@@ -204,15 +216,10 @@ export class SlideController {
     }
   };
 
-  private resolveReady!: () => void;
-  public readonly readyPromise = new Promise<void>(resolve => {
-    this.resolveReady = resolve;
-  });
-
   private pollCount = 0;
   private pollReadyState = () => {
     if (this.ready) {
-      this.resolveReady();
+      return;
     } else if (this.pollCount < MaxPollCount) {
       this.pollCount++;
       setTimeout(this.pollReadyState, 500);
@@ -225,12 +232,13 @@ export class SlideController {
     }
   };
 
-  public get ready() {
-    return this.slide.slideCount > 0;
-  }
-
+  // cache `slideCount`, because once the slide is frozen,
+  // the `slideCount` will be 0
+  private _pageCount = 0;
   public get pageCount() {
-    return this.slide.slideCount;
+    if (this._pageCount > 0) return this._pageCount;
+    this._pageCount = this.slide.slideCount;
+    return this._pageCount;
   }
 
   public get page() {
@@ -281,6 +289,36 @@ export class SlideController {
       return this.player.beginTimestamp + this.player.progressTime;
     } else {
       return Date.now();
+    }
+  };
+
+  public isFrozen = false;
+  public freeze = () => {
+    if (this.ready) {
+      if (this.debug) {
+        console.log("[Slide] freeze", this.context.appId);
+      }
+      this.slide.frozen();
+      this.isFrozen = true;
+    } else {
+      this.readyPromise.then(this.freeze);
+    }
+  };
+
+  private unfreezePromise: Promise<void> | null = null;
+  private afterUnfreeze = () => {
+    this.unfreezePromise = null;
+    this.isFrozen = false;
+  };
+  public unfreeze = async () => {
+    if (this.ready) {
+      await this.unfreezePromise;
+      if (this.isFrozen) {
+        if (this.debug) {
+          console.log("[Slide] unfreeze", this.context.appId);
+        }
+        this.unfreezePromise = this.slide.release().then(this.afterUnfreeze);
+      }
     }
   };
 }

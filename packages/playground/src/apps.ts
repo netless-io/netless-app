@@ -14,8 +14,13 @@ export interface AppGroup {
 
 export function registerApps(): AppGroup[] {
   const registered = new Set<string>();
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const registerApp = (src: any, kind: string, appOptions: Record<string, unknown> | undefined) => {
+  const registerApp = (
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    src: any,
+    kind: string,
+    appOptions: Record<string, unknown> | undefined,
+    addHooks: RegisterParams["addHooks"]
+  ) => {
     const wrapped = async () => {
       if (typeof src === "function") {
         const mod = await src();
@@ -28,6 +33,7 @@ export function registerApps(): AppGroup[] {
       kind,
       appOptions: { debug: true, ...appOptions },
       src: wrapped,
+      addHooks,
     };
     log("[register]", params.kind, params.appOptions);
     WindowManager.register(params);
@@ -40,10 +46,10 @@ export function registerApps(): AppGroup[] {
     const kind = configs[0].kind;
 
     const app: AppGroup = { kind, url, configs: [] };
-    for (const { kind, src, appOptions, ...rest } of configs) {
+    for (const { kind, src, appOptions, addHooks, ...rest } of configs) {
       if (!registered.has(kind)) {
         registered.add(kind);
-        registerApp(src, kind, appOptions);
+        registerApp(src, kind, appOptions, addHooks);
       }
       app.configs.push({ kind, ...rest });
     }
