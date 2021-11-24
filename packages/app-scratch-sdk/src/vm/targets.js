@@ -16,94 +16,39 @@ const VM_EDITING_TARGETS = "VM_EDITING_TARGETS";
 const VM_MONITORS = "VM_MONITORS";
 
 export class TargetsBinder {
-  constructor(app, reduxStore, isAuthor) {
+  constructor(app, vm, isAuthor$) {
     this.sideEffect = new SideEffectManager();
 
     this.app = app;
-    this.reduxStore = reduxStore;
-    this.vm = reduxStore.getState().scratchGui.vm;
+    this.appStore = app.connectStore("TargetStore");
+    this.vm = vm;
     this.storage = this.vm.runtime.storage;
-    this.isAuthor = isAuthor;
+    this.isAuthor$ = isAuthor$;
     if (!this.storage) {
       console.error("No storage module present");
       return Promise.resolve(null);
     }
 
-    const uploadTargetList = (targetList, editingTarget) => {
-      if (targetList) {
-        try {
-          const payload = {
-            [VM_EDITING_TARGETS]: editingTarget,
-            [VM_TARGETS]: this.deflateTargetList(targetList),
-          };
-          const monitors = this.deflateMonitors();
-          if (!isEqual(monitors, app.state[VM_MONITORS])) {
-            payload[VM_MONITORS] = monitors;
+    this.sideEffect.add(() =>
+      this.isAuthor$.subscribe(isAuthor => {
+        this.initSync();
+        this.sideEffect.add(() => {
+          if (isAuthor) {
+            return this.syncLocalStateToRemote();
+          } else {
+            return this.syncRemoteStateToLocal();
           }
-          app.setState(payload);
-        } catch (e) {
-          console.log(e);
-        }
-      }
-    };
+        }, "sync-target-app");
+      })
+    );
+  }
 
-    const applyTargetList = () => {
-      if (app.state[VM_TARGETS]) {
-        try {
-          const targetList = this.inflateTargetList(app.state[VM_TARGETS]);
-          // console.log("incoming targetList", targetList);
-
-          this.vm.clear();
-
-          targetList.forEach(target => {
-            this.vm.runtime.targets.length = 0;
-            this.vm.runtime.executableTargets.length = 0;
-
-            this.vm.runtime.addTarget(target);
-            target.updateAllDrawableProperties();
-            // Ensure unique sprite name
-            if (target.isSprite()) {
-              this.vm.renameSprite(target.id, target.getName());
-            }
-          });
-
-          if (targetList.every(target => has(target, "layerOrder"))) {
-            // Sort the executable targets by layerOrder.
-            // Remove layerOrder property after use.
-            this.vm.runtime.executableTargets.sort((a, b) => a.layerOrder - b.layerOrder);
-            targetList.forEach(target => {
-              delete target.layerOrder;
-            });
-          }
-
-          this.inflateMonitors(targetList);
-
-          let editingTarget = targetList[0];
-          if (app.state[VM_EDITING_TARGETS]) {
-            const target = targetList.find(target => target.id === app.state[VM_EDITING_TARGETS]);
-            // console.log("findEditingTarget", target, targetList);
-            if (target) {
-              editingTarget = target;
-            }
-          }
-          this.vm.editingTarget = editingTarget;
-          this.vm.editingTarget.fixUpVariableReferences();
-
-          this.vm.emitTargetsUpdate(false /* Don't emit project change */);
-          if (this.vm.runtime.targets.some(target => target.isStage)) {
-            this.vm.emitWorkspaceUpdate();
-          }
-          this.vm.runtime.setEditingTarget(this.vm.editingTarget);
-          this.vm.runtime.ioDevices.cloud.setStage(this.vm.runtime.getTargetForStage());
-        } catch (e) {
-          console.error(e);
-        }
-      }
-    };
-
-    if (this.isAuthor()) {
-      if (!app.state[VM_TARGETS] && this.vm.runtime.targets) {
-        uploadTargetList(
+  initSync() {
+    if (size(this.appStore.state) > 0) {
+      this.applyTargetList();
+    } else {
+      if (this.isAuthor$.value && this.vm.runtime.targets) {
+        this.uploadTargetList(
           this.vm.runtime.targets
             .filter(target => !has(target, "isOriginal") || target.isOriginal)
             .map(target => target.toJSON()),
@@ -111,68 +56,132 @@ export class TargetsBinder {
             (this.vm.runtime.targets[0] && this.vm.runtime.targets[0].id)
         );
       }
-    } else {
-      applyTargetList();
     }
+  }
 
-    this.sideEffect.add(() => {
-      const handler = data => {
-        if (this.isAuthor()) {
-          if (data) {
-            uploadTargetList(data.targetList, data.editingTarget);
-          }
+  syncLocalStateToRemote() {
+    const handlerTargetsUpdate = data => {
+      if (this.isAuthor$.value) {
+        if (data) {
+          this.uploadTargetList(data.targetList, data.editingTarget);
         }
-      };
-      this.vm.addListener("targetsUpdate", handler);
-      return () => this.vm.removeListener("targetsUpdate", handler);
-    });
+      }
+    };
 
-    this.sideEffect.add(() => {
-      const handler = () => {
-        if (this.isAuthor()) {
-          try {
-            const monitors = this.deflateMonitors();
-            if (!isEqual(monitors, app.state[VM_MONITORS])) {
-              app.setState({
-                [VM_MONITORS]: monitors,
-              });
-            }
-          } catch (e) {
-            console.error(e);
+    const handlerMonitorUpdate = () => {
+      if (this.isAuthor$.value) {
+        try {
+          const monitors = this.deflateMonitors();
+          if (!isEqual(monitors, this.appStore.state[VM_MONITORS])) {
+            this.appStore.setState({
+              [VM_MONITORS]: monitors,
+            });
           }
+        } catch (e) {
+          console.error(e);
         }
-      };
-      this.vm.on("MONITORS_UPDATE", handler);
-      return () => this.vm.off("MONITORS_UPDATE", handler);
-    });
+      }
+    };
 
-    this.sideEffect.add(() => {
-      const handler = diff => {
-        if (!this.isAuthor()) {
-          if (diff[VM_TARGETS]) {
-            applyTargetList();
-          }
-        }
-      };
-      app.onStateChanged.addListener(handler);
-      return () => app.onStateChanged.removeListener(handler);
-    });
+    this.vm.addListener("targetsUpdate", handlerTargetsUpdate);
+    this.vm.on("MONITORS_UPDATE", handlerMonitorUpdate);
+    return () => {
+      this.vm.removeListener("targetsUpdate", handlerTargetsUpdate);
+      this.vm.off("MONITORS_UPDATE", handlerMonitorUpdate);
+    };
+  }
 
-    this.sideEffect.add(() => {
-      const handler = diff => {
-        if (!this.isAuthor()) {
-          if (diff[VM_MONITORS]) {
-            this.inflateMonitors(this.vm.runtime.targets);
-          }
+  syncRemoteStateToLocal() {
+    const handler = diff => {
+      if (!this.isAuthor$.value) {
+        if (diff[VM_MONITORS]) {
+          this.inflateMonitors(this.vm.runtime.targets);
         }
-      };
-      app.onStateChanged.addListener(handler);
-      return () => app.onStateChanged.removeListener(handler);
-    });
+        if (diff[VM_TARGETS]) {
+          this.applyTargetList();
+        }
+      }
+    };
+    this.appStore.onStateChanged.addListener(handler);
+    return () => this.appStore.onStateChanged.removeListener(handler);
   }
 
   destroy() {
     this.sideEffect.flushAll();
+  }
+
+  uploadTargetList(targetList, editingTarget) {
+    if (targetList) {
+      try {
+        const payload = {
+          [VM_EDITING_TARGETS]: editingTarget,
+          [VM_TARGETS]: this.deflateTargetList(targetList),
+        };
+        const monitors = this.deflateMonitors();
+        if (!isEqual(monitors, this.appStore.state[VM_MONITORS])) {
+          payload[VM_MONITORS] = monitors;
+        }
+        this.appStore.setState(payload);
+      } catch (e) {
+        console.log(e);
+      }
+    }
+  }
+
+  applyTargetList() {
+    if (this.appStore.state[VM_TARGETS]) {
+      try {
+        const targetList = this.inflateTargetList(this.appStore.state[VM_TARGETS]);
+        // console.log("incoming targetList", targetList);
+
+        this.vm.clear();
+
+        targetList.forEach(target => {
+          this.vm.runtime.targets.length = 0;
+          this.vm.runtime.executableTargets.length = 0;
+
+          this.vm.runtime.addTarget(target);
+          target.updateAllDrawableProperties();
+          // Ensure unique sprite name
+          if (target.isSprite()) {
+            this.vm.renameSprite(target.id, target.getName());
+          }
+        });
+
+        if (targetList.every(target => has(target, "layerOrder"))) {
+          // Sort the executable targets by layerOrder.
+          // Remove layerOrder property after use.
+          this.vm.runtime.executableTargets.sort((a, b) => a.layerOrder - b.layerOrder);
+          targetList.forEach(target => {
+            delete target.layerOrder;
+          });
+        }
+
+        this.inflateMonitors(targetList);
+
+        let editingTarget = targetList[0];
+        if (this.appStore.state[VM_EDITING_TARGETS]) {
+          const target = targetList.find(
+            target => target.id === this.appStore.state[VM_EDITING_TARGETS]
+          );
+          // console.log("findEditingTarget", target, targetList);
+          if (target) {
+            editingTarget = target;
+          }
+        }
+        this.vm.editingTarget = editingTarget;
+        this.vm.editingTarget.fixUpVariableReferences();
+
+        this.vm.emitTargetsUpdate(false /* Don't emit project change */);
+        if (this.vm.runtime.targets.some(target => target.isStage)) {
+          this.vm.emitWorkspaceUpdate();
+        }
+        this.vm.runtime.setEditingTarget(this.vm.editingTarget);
+        this.vm.runtime.ioDevices.cloud.setStage(this.vm.runtime.getTargetForStage());
+      } catch (e) {
+        console.error(e);
+      }
+    }
   }
 
   deflateTargetList(targetList) {
@@ -351,8 +360,8 @@ export class TargetsBinder {
   }
 
   inflateMonitors(targetList) {
-    if (this.app.state[VM_MONITORS] && this.app.state[VM_MONITORS].length > 0) {
-      this.app.state[VM_MONITORS].forEach(monitorData => {
+    if (this.appStore.state[VM_MONITORS] && this.appStore.state[VM_MONITORS].length > 0) {
+      this.appStore.state[VM_MONITORS].forEach(monitorData => {
         if (monitorData.spriteName) {
           const filteredTargets = targetList.filter(t => t.sprite.name === monitorData.spriteName);
           if (filteredTargets && filteredTargets.length > 0) {

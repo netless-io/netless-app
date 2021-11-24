@@ -16,7 +16,7 @@
     "scratch-vm": ">=0"
   },
   "devDependencies": {
-    "@netless/app-embedded-page-sdk": "workspace:^0.0.5",
+    "@netless/app-embedded-page-sdk": "workspace:^0.0.6",
     "eventemitter3": "^4.0.7",
     "js-base64": "^3.7.2",
     "lodash-es": "^4.17.21",
@@ -25,6 +25,7 @@
     "redux": "^4.1.1",
     "scratch-blocks": "^0.1.0-prerelease.20211027052803",
     "scratch-vm": "^0.2.0-prerelease.20211028133128",
-    "side-effect-manager": "^0.1.3"
+    "side-effect-manager": "^0.1.3",
+    "value-enhancer": "^0.0.7"
   }
 }

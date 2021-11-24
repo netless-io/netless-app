@@ -1,10 +1,12 @@
 import { createStore } from "redux";
+import { size } from "lodash-es";
+import { Gui } from "../gui";
 import { TargetsBinder } from "../vm/targets";
 import { ScratchAdapter } from "./scratch-adapter";
 
 const UPDATE_STATE = "NETLESS/UPDATE_STATE";
 
-const scratchModules = Object.values(import.meta.globEager("./modules/*.js")).map(m => m.default);
+const scratchModules = Object.values(import.meta.globEager("../modules/*.js")).map(m => m.default);
 
 export class ScratchVMAdapter extends ScratchAdapter {
   createStore(originReducer, preloadedState, enhancer) {
@@ -32,84 +34,116 @@ export class ScratchVMAdapter extends ScratchAdapter {
       return originReducer(state, action);
     };
 
-    const store = createStore(enhancedReducer, preloadedState, enhancer);
+    this.reduxStore = createStore(enhancedReducer, preloadedState, enhancer);
 
     this.pApp.then(app => {
       if (app.debug) {
-        window.app = app;
-        window.store = store;
-        window.makeAuthor = this.makeAuthor.bind(this);
+        window.vmAdapter = this;
       }
 
+      this.reduxAppStore = app.connectStore("ReduxStore");
+
       this.sideEffect.add(() => {
-        const binder = new TargetsBinder(app, store, this.isAuthor);
+        const binder = new TargetsBinder(
+          app,
+          this.reduxStore.getState().scratchGui.vm,
+          this.isAuthor$
+        );
         return () => binder.destroy();
       });
 
-      this.sideEffect.add(() => {
-        const handler = diff => {
-          if (!this.isAuthor()) {
-            const appState = app.state;
-            const reduxState = store.getState();
-            const payload = scratchModules.reduce((results, scratchModule) => {
-              const result = scratchModule.compareAppState(diff, appState, reduxState);
-              return Array.isArray(result) ? results.concat(result) : results;
-            }, []);
-            if (payload.length > 0) {
-              store.dispatch({ type: UPDATE_STATE, payload });
+      this.lastReduxState = this.reduxStore.getState();
+
+      this.sideEffect.add(() =>
+        this.isAuthor$.subscribe(isAuthor => {
+          this.sideEffect.add(() => {
+            this.initSync();
+            if (isAuthor) {
+              return this.syncReduxStateToApp();
+            } else {
+              return this.syncAppStateToRedux();
             }
-          }
-        };
-        app.onStateChanged.addListener(handler);
-        return () => app.onStateChanged.removeListener(handler);
+          }, "sync-redux-app-state");
+        })
+      );
+
+      if (app.debug) {
+        window.vmAdapter = this;
+      }
+
+      this.gui = new Gui({
+        app,
+        author$: this.author$,
+        isAuthor$: this.isAuthor$,
+        makeAuthor: this.makeAuthor,
+        isWritable$: this.isWritable$,
       });
 
-      this.lastReduxState = store.getState();
+      this.gui.render();
+    });
 
-      if (app.state.netlessVersion) {
-        const appState = app.state;
+    return this.reduxStore;
+  }
+
+  initSync() {
+    const appState = this.reduxAppStore.state;
+    if (size(appState) > 0) {
+      const payload = scratchModules.reduce((results, scratchModule) => {
+        const result = scratchModule.initialReduxState(appState);
+        return Array.isArray(result) ? results.concat(result) : results;
+      }, []);
+      if (payload.length > 0) {
+        this.reduxStore.dispatch({ type: UPDATE_STATE, payload });
+      }
+    } else {
+      if (this.isAuthor$.value) {
+        const newAppState = scratchModules.reduce((appState, scratchModule) => {
+          const result = scratchModule.initialAppState(this.lastReduxState);
+          return result ? { ...appState, ...result } : appState;
+        }, {});
+        if (Object.keys(newAppState).length > 0) {
+          this.reduxAppStore.setState(newAppState);
+        }
+      }
+    }
+  }
+
+  syncReduxStateToApp() {
+    return this.reduxStore.subscribe(() => {
+      if (this.isAuthor$.value) {
+        const currReduxState = this.reduxStore.getState();
+        const currAppState = this.reduxAppStore.state;
+        const newAppState = scratchModules.reduce((appState, scratchModule) => {
+          const result = scratchModule.compareReduxState(
+            this.lastReduxState,
+            currReduxState,
+            currAppState
+          );
+          return result ? { ...appState, ...result } : appState;
+        }, {});
+        if (Object.keys(newAppState).length > 0) {
+          this.reduxAppStore.setState(newAppState);
+        }
+        this.lastReduxState = currReduxState;
+      }
+    });
+  }
+
+  syncAppStateToRedux() {
+    const handler = diff => {
+      if (!this.isAuthor$.value) {
+        const reduxState = this.reduxStore.getState();
+        const appState = this.reduxAppStore.state;
         const payload = scratchModules.reduce((results, scratchModule) => {
-          const result = scratchModule.initialReduxState(appState);
+          const result = scratchModule.compareAppState(diff, appState, reduxState);
           return Array.isArray(result) ? results.concat(result) : results;
         }, []);
         if (payload.length > 0) {
-          store.dispatch({ type: UPDATE_STATE, payload });
-        }
-      } else if (this.isAuthor()) {
-        const newAppState = scratchModules.reduce(
-          (appState, scratchModule) => {
-            const result = scratchModule.initialAppState(this.lastReduxState);
-            return result ? { ...appState, ...result } : appState;
-          },
-          { netlessVersion: "v1" }
-        );
-        if (Object.keys(newAppState).length > 0) {
-          app.setState(newAppState);
+          this.reduxStore.dispatch({ type: UPDATE_STATE, payload });
         }
       }
-
-      this.sideEffect.add(() =>
-        store.subscribe(() => {
-          if (this.isAuthor()) {
-            const currReduxState = store.getState();
-            const currAppState = app.state;
-            const newAppState = scratchModules.reduce((appState, scratchModule) => {
-              const result = scratchModule.compareReduxState(
-                this.lastReduxState,
-                currReduxState,
-                currAppState
-              );
-              return result ? { ...appState, ...result } : appState;
-            }, {});
-            if (Object.keys(newAppState).length > 0) {
-              app.setState(newAppState);
-            }
-            this.lastReduxState = currReduxState;
-          }
-        })
-      );
-    });
-
-    return store;
+    };
+    this.reduxAppStore.onStateChanged.addListener(handler);
+    return () => this.reduxAppStore.onStateChanged.removeListener(handler);
   }
 }
