@@ -90,7 +90,7 @@ const EmbeddedPage: NetlessApp<Attributes, void, AppOptions> = {
     ): ReadonlyArray<RoomMember> =>
       array.map(({ memberId, payload }) => ({
         sessionUID: memberId,
-        uid: room?.uid || payload?.uid || "",
+        uid: payload?.uid || "",
         userPayload: toJSON(payload),
       }));
 
