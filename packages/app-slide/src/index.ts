@@ -50,6 +50,9 @@ const SlideApp: NetlessApp<Attributes> = {
       const room = context.getRoom();
       if (docsViewer && docsViewer.slideController && room && context.getIsWritable()) {
         syncSceneWithSlide(room, context, docsViewer.slideController.slide, baseScenePath);
+        if (context.getAppOptions()?.debug || import.meta.env.DEV) {
+          console.log("[Slide] page to", page);
+        }
         docsViewer.viewer.setPageIndex(page - 1);
       }
     };
