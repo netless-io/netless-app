@@ -161,17 +161,19 @@ export class SlideDocsViewer {
   protected scaleDocsToFit = () => {
     if (this.slideController) {
       const { width, height } = this.slideController.slide;
-      this.whiteboardView.moveCameraToContain({
-        originX: -width / 2,
-        originY: -height / 2,
-        width,
-        height,
-        animationMode: "immediately" as AnimationMode.Immediately,
-      });
-      if (!this.isViewMounted && width && height) {
-        this.isViewMounted = true;
-        console.log("[Slide] mount whiteboard view");
-        this.mountWhiteboard(this.$whiteboardView);
+      if (width && height) {
+        this.whiteboardView.moveCameraToContain({
+          originX: -width / 2,
+          originY: -height / 2,
+          width,
+          height,
+          animationMode: "immediately" as AnimationMode.Immediately,
+        });
+        if (!this.isViewMounted) {
+          this.isViewMounted = true;
+          console.log("[Slide] mount whiteboard view");
+          this.mountWhiteboard(this.$whiteboardView);
+        }
       }
     }
   };

@@ -219,7 +219,11 @@ export class SlideController {
   private pollCount = 0;
   private pollReadyState = () => {
     if (this.ready) {
-      return;
+      if (this._toFreeze === 1) {
+        this.freeze();
+      } else if (this._toFreeze === -1) {
+        this.unfreeze();
+      }
     } else if (this.pollCount < MaxPollCount) {
       this.pollCount++;
       setTimeout(this.pollReadyState, 500);
@@ -293,32 +297,54 @@ export class SlideController {
   };
 
   public isFrozen = false;
+  private _toFreeze: -1 | 0 | 1 = 0; // -1: unfreeze, 0: no change, 1: freeze
+  private freezePromise: Promise<void> | null = null;
+
+  private afterFreeze(from: -1 | 1) {
+    if (from === 1) {
+      this.isFrozen = true;
+      this.freezePromise = null;
+      if (this._toFreeze === -1) {
+        this.unfreeze();
+      }
+    } else if (from === -1) {
+      this.isFrozen = false;
+      this.freezePromise = null;
+      if (this._toFreeze === 1) {
+        this.freeze();
+      }
+    }
+  }
+
   public freeze = () => {
     if (this.ready) {
       if (this.debug) {
         console.log("[Slide] freeze", this.context.appId);
       }
-      this.slide.frozen();
-      this.isFrozen = true;
+      if (this.freezePromise) {
+        this._toFreeze = 1;
+      } else if (!this.isFrozen) {
+        this._toFreeze = 0;
+        this.freezePromise = this.slide.frozen().then(this.afterFreeze.bind(this, 1));
+      }
     } else {
-      this.readyPromise.then(this.freeze);
+      this._toFreeze = 1;
     }
   };
 
-  private unfreezePromise: Promise<void> | null = null;
-  private afterUnfreeze = () => {
-    this.unfreezePromise = null;
-    this.isFrozen = false;
-  };
   public unfreeze = async () => {
     if (this.ready) {
-      await this.unfreezePromise;
-      if (this.isFrozen) {
-        if (this.debug) {
-          console.log("[Slide] unfreeze", this.context.appId);
-        }
-        this.unfreezePromise = this.slide.release().then(this.afterUnfreeze);
+      if (this.debug) {
+        console.log("[Slide] unfreeze", this.context.appId);
       }
+      if (this.freezePromise) {
+        this._toFreeze = -1;
+      } else if (this.isFrozen) {
+        this._toFreeze = 0;
+        this.freezePromise = this.slide.release().then(this.afterFreeze.bind(this, -1));
+      }
+    } else {
+      this._toFreeze = -1;
     }
   };
 }
