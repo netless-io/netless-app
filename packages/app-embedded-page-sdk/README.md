@@ -29,9 +29,9 @@ npm add @netless/app-embedded-page-sdk
 
   The synchronized state across all clients. To change it, call `app.setState()`.
 
-- **app.page?**
+- **app.page**
 
-  Type: `string`
+  Type: `string | undefined`
 
   Current whiteboard scene. It works only if `scenePath` has been set when calling `addApp`.
   To switch between pages, call `app.setPage()`
@@ -71,8 +71,6 @@ npm add @netless/app-embedded-page-sdk
   // this code won't work because app.state is readonly
   app.state = { ...partialState, ...app.state };
   ```
-
-  This method modifies state locally.
 
   **partialState**
 

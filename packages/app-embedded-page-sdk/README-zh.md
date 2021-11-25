@@ -27,9 +27,9 @@ npm add @netless/app-embedded-page-sdk
 
   在所有客户端之间同步的状态，调用 `app.setState()` 来改变它。
 
-- **app.page?**
+- **app.page**
 
-  类型: `string`
+  类型: `string | undefined`
 
   当前白板的场景，只有在 `addApp` 时传入了 `scenePath` 才能使用。调用 `app.setPage()` 来切换白板页。
 
@@ -68,8 +68,6 @@ npm add @netless/app-embedded-page-sdk
   // 这段代码不能直接运行，因为 app.state 是只读的
   app.state = { ...partialState, ...app.state };
   ```
-
-  和 `app.setState()` 不一样，它不会同步这些初始值给所有客户端。
 
   **partialState**
 
