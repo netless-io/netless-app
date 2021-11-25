@@ -143,6 +143,11 @@ export class SlideController {
     });
 
     this.sideEffect.add(() => {
+      context.emitter.on("seek", this.onSeeked);
+      return () => context.emitter.off("seek", this.onSeeked);
+    });
+
+    this.sideEffect.add(() => {
       const displayer = context.getDisplayer();
       displayer.addMagixEventListener(this.channel, this.magixEventListener, {
         fireSelfEventAfterCommit: true,
@@ -215,6 +220,14 @@ export class SlideController {
       this.context.updateAttributes(["state"], state);
     }
   };
+
+  private onSeeked = () => {
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    const state = this.context.getAttributes()!.state
+    if (state) {
+      this.slide.setSlideState(deepClone(state));
+    }
+  }
 
   private pollCount = 0;
   private pollReadyState = () => {
