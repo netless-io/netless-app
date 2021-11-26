@@ -64,6 +64,7 @@ export async function joinRoom(info: RoomInfo): Promise<Room> {
     invisiblePlugins: [WindowManager],
     useMultiViews: true,
     disableNewPencil: false,
+    disableMagixEventDispatchLimit: true,
     floatBar: true,
     userPayload: {
       uid,
