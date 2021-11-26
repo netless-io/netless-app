@@ -4,6 +4,7 @@ import { has } from "lodash-es";
 export class ScratchWorkspaceAdapter extends ScratchAdapter {
   bindMainWorkSpace(workspace, ScratchBlocks) {
     this.workspace = workspace;
+    this.toolBox = workspace.getFlyout();
     this.ScratchBlocks = ScratchBlocks;
 
     this.pApp.then(app => {
@@ -12,6 +13,7 @@ export class ScratchWorkspaceAdapter extends ScratchAdapter {
       }
 
       this.workspaceStore = app.connectStore("workspace");
+      this.toolBoxStore = app.connectStore("toolBoxWorkspace");
 
       const style = document.createElement("style");
       style.textContent = `
@@ -24,66 +26,107 @@ export class ScratchWorkspaceAdapter extends ScratchAdapter {
       `;
       document.head.appendChild(style);
 
-      const MAIN_WORKSPACE_EVENT = "MAIN_WORKSPACE_EVENT";
+      this.bindEvents(this.workspace, "MAIN_WORKSPACE_EVENT");
+      this.syncMetrics(this.workspace, this.workspaceStore);
 
-      this.sideEffect.add(() => {
-        const handler = event => {
-          if (this.isAuthor$.value) {
-            app.sendMessage({ type: MAIN_WORKSPACE_EVENT, payload: event.toJson() });
-          }
-        };
-        workspace.addChangeListener(handler);
-        return () => workspace.removeChangeListener(handler);
-      });
-
-      this.sideEffect.add(() => {
-        const handler = message => {
-          if (!this.isAuthor$.value) {
-            if (message && message.type === MAIN_WORKSPACE_EVENT) {
-              try {
-                message.payload.workspaceId = workspace.id;
-                const secondaryEvent = ScratchBlocks.Events.fromJson(message.payload, workspace);
-                secondaryEvent.run(true);
-              } catch (e) {
-                console.error(e);
-              }
-            }
-          }
-        };
-        app.onMessage.addListener(handler);
-        return () => app.onMessage.removeListener(handler);
-      });
-
-      this.syncMetrics();
+      this.syncToolboxScroll(this.toolBox, this.toolBoxStore);
     });
   }
 
-  syncMetrics() {
-    if (this.isAuthor$.value) {
-      this.workspaceStore.setState({
-        scrollX: this.workspace.scrollX,
-        scrollY: this.workspace.scrollY,
-        scale: this.workspace.scale,
-      });
-    } else {
-      this.applyScroll();
-      this.applyScale();
+  bindEvents(workspace, eventType) {
+    this.sideEffect.add(() => {
+      const handler = event => {
+        if (this.isAuthor$.value) {
+          this.app.sendMessage({ type: eventType, payload: event.toJson() });
+        }
+      };
+      workspace.addChangeListener(handler);
+      return () => workspace.removeChangeListener(handler);
+    });
+
+    this.sideEffect.add(() => {
+      const handler = message => {
+        if (!this.isAuthor$.value) {
+          if (message && message.type === eventType) {
+            try {
+              message.payload.workspaceId = workspace.id;
+              const secondaryEvent = this.ScratchBlocks.Events.fromJson(message.payload, workspace);
+              secondaryEvent.run(true);
+            } catch (e) {
+              console.error(e);
+            }
+          }
+        }
+      };
+      this.app.onMessage.addListener(handler);
+      return () => this.app.onMessage.removeListener(handler);
+    });
+  }
+
+  syncToolboxScroll(toolBox, toolBoxStore) {
+    if (has(toolBoxStore.state, "scrollY")) {
+      applyToolboxScroll();
+    } else if (this.isAuthor$.value) {
+      uploadToolboxScroll();
     }
 
-    this.addFunctionListener(this.workspace, "translate", () => {
+    this.addFunctionListener(toolBox.getWorkspace(), "translate", () => {
       if (this.isAuthor$.value) {
-        this.workspaceStore.setState({
-          scrollX: this.workspace.scrollX,
-          scrollY: this.workspace.scrollY,
-        });
+        this.sideEffect.setTimeout(
+          () => {
+            uploadToolboxScroll();
+          },
+          50,
+          "toolbox-translate"
+        );
       }
     });
 
-    this.addFunctionListener(this.workspace, "zoom", () => {
+    this.sideEffect.add(() => {
+      const handler = diff => {
+        if (!this.isAuthor$.value && diff && diff.scrollY) {
+          applyToolboxScroll(toolBox, toolBoxStore);
+        }
+      };
+      toolBoxStore.onStateChanged.addListener(handler);
+      return () => toolBoxStore.onStateChanged.removeListener(handler);
+    });
+
+    function uploadToolboxScroll() {
+      toolBoxStore.setState({
+        scrollY: toolBox.getScrollPos() || 0.1, // blockly won't work on 0
+      });
+    }
+
+    function applyToolboxScroll() {
+      if (has(toolBoxStore.state, "scrollY")) {
+        toolBox.scrollTo(toolBoxStore.state.scrollY);
+      }
+    }
+  }
+
+  syncMetrics(workspace, workspaceStore) {
+    if (has(workspaceStore.state, "scrollX") || has(workspaceStore.state, "scrollY")) {
+      applyWorkspaceScroll();
+    } else if (this.isAuthor$.value) {
+      uploadWorkspaceScroll();
+    }
+
+    if (has(workspaceStore.state, "scale")) {
+      applyWorkspaceScale();
+    } else if (this.isAuthor$.value) {
+      uploadWorkspaceScale();
+    }
+
+    this.addFunctionListener(workspace, "translate", () => {
       if (this.isAuthor$.value) {
-        this.workspaceStore.setState({
-          scale: this.workspace.scale,
-        });
+        uploadWorkspaceScroll();
+      }
+    });
+
+    this.addFunctionListener(workspace, "zoom", () => {
+      if (this.isAuthor$.value) {
+        uploadWorkspaceScale();
       }
     });
 
@@ -91,34 +134,50 @@ export class ScratchWorkspaceAdapter extends ScratchAdapter {
       const handler = diff => {
         if (!this.isAuthor$.value && diff) {
           if (diff.scrollX || diff.scrollY) {
-            this.applyScroll();
+            applyWorkspaceScroll();
           }
           if (diff.scale) {
-            this.applyScale();
+            applyWorkspaceScale();
           }
         }
       };
-      this.workspaceStore.onStateChanged.addListener(handler);
-      return () => this.workspaceStore.onStateChanged.removeListener(handler);
+      workspaceStore.onStateChanged.addListener(handler);
+      return () => workspaceStore.onStateChanged.removeListener(handler);
     });
-  }
 
-  applyScroll() {
-    // make workspace.scroll work
-    this.workspace.startDragMetrics = this.workspace.getMetrics();
-    const state = this.workspaceStore.state;
-    if (has(state, "scrollX") || has(state, "scrollY")) {
-      this.workspace.scroll(
-        has(state, "scrollX") ? state.scrollX : this.workspace.scrollX,
-        has(state, "scrollY") ? state.scrollY : this.workspace.scrollY
-      );
+    function uploadWorkspaceScroll() {
+      workspaceStore.setState({
+        scrollX: workspace.scrollX,
+        scrollY: workspace.scrollY,
+      });
     }
-  }
 
-  applyScale() {
-    const state = this.workspaceStore.state;
-    if (has(state, "scale")) {
-      this.workspace.setScale(state.scale);
+    function applyWorkspaceScroll() {
+      const metrics = workspace.getMetrics();
+      if (!workspace.startDragMetrics) {
+        // make workspace.scroll work
+        workspace.startDragMetrics = metrics;
+      }
+      const state = workspaceStore.state;
+      if (has(state, "scrollX") || has(state, "scrollY")) {
+        workspace.scroll(
+          has(state, "scrollX") ? state.scrollX : workspace.scrollX,
+          has(state, "scrollY") ? state.scrollY : workspace.scrollY
+        );
+      }
+    }
+
+    function uploadWorkspaceScale() {
+      workspaceStore.setState({
+        scale: workspace.scale,
+      });
+    }
+
+    function applyWorkspaceScale() {
+      const state = workspaceStore.state;
+      if (has(state, "scale")) {
+        workspace.setScale(state.scale);
+      }
     }
   }
 
