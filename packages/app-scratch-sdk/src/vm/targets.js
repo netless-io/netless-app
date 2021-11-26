@@ -170,7 +170,9 @@ export class TargetsBinder {
           }
         }
         this.vm.editingTarget = editingTarget;
-        this.vm.editingTarget.fixUpVariableReferences();
+        if (this.vm.editingTarget) {
+          this.vm.editingTarget.fixUpVariableReferences();
+        }
 
         this.vm.emitTargetsUpdate(false /* Don't emit project change */);
         if (this.vm.runtime.targets.some(target => target.isStage)) {
@@ -372,9 +374,7 @@ export class TargetsBinder {
             );
           }
         }
-
         const monitorBlockInfo = this.vm.runtime.monitorBlockInfo[monitorData.opcode];
-
         if (monitorData.opcode === "data_listcontents") {
           const listTarget = monitorData.targetId
             ? targetList.find(t => t.id === monitorData.targetId)
@@ -383,9 +383,7 @@ export class TargetsBinder {
             monitorData.params.LIST = listTarget.variables[monitorData.id].name;
           }
         }
-
         const fields = mapValues(monitorData.params, (value, name) => ({ name, value }));
-
         if (
           monitorData.opcode !== "data_variable" &&
           monitorData.opcode !== "data_listcontents" &&
@@ -396,7 +394,6 @@ export class TargetsBinder {
         } else {
           monitorData.id = StringUtil.replaceUnsafeChars(monitorData.id);
         }
-
         const existingMonitorBlock = this.vm.runtime.monitorBlocks._blocks[monitorData.id];
         if (existingMonitorBlock) {
           existingMonitorBlock.isMonitored = monitorData.visible;
@@ -416,7 +413,6 @@ export class TargetsBinder {
             isMonitored: monitorData.visible,
             targetId: monitorData.targetId,
           };
-
           if (monitorData.opcode === "data_variable") {
             const field = monitorBlock.fields.VARIABLE;
             field.id = monitorData.id;
@@ -426,10 +422,8 @@ export class TargetsBinder {
             field.id = monitorData.id;
             field.variableType = Variable.LIST_TYPE;
           }
-
           this.vm.runtime.monitorBlocks.createBlock(monitorBlock);
         }
-
         this.vm.runtime.requestAddMonitor(MonitorRecord(monitorData));
       });
     }
