@@ -80,6 +80,8 @@ export class ScratchVMAdapter extends ScratchAdapter {
       });
 
       this.gui.render();
+
+      this.sideEffect.addDisposer(() => this.gui.destroy());
     });
 
     return this.reduxStore;
