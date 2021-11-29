@@ -66,6 +66,7 @@ const SlideApp: NetlessApp<Attributes> = {
         ...options,
         onPageChanged,
       });
+      apps.set(context.appId, slideController);
       (logger.apps[context.appId] ||= {}).controller = slideController;
       if (import.meta.env.DEV) {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
