@@ -17,6 +17,7 @@ import { SideEffectManager } from "side-effect-manager";
 import { Slide, SLIDE_EVENTS } from "@netless/slide";
 import { clamp, deepClone, isObj } from "../utils/helpers";
 import { cachedGetBgColor } from "../utils/bgcolor";
+import { logger, log, verbose } from "../utils/logger";
 export { syncSceneWithSlide, createDocsViewerPages } from "./helpers";
 
 export const DefaultUrl = "https://convertcdn.netless.link/dynamicConvert";
@@ -39,7 +40,6 @@ export interface SlideControllerOptions {
 export class SlideController {
   public readonly context: SlideControllerOptions["context"];
   public readonly slide: Slide;
-  public readonly debug: boolean;
 
   private readonly channel: string;
   private readonly room?: Room;
@@ -69,7 +69,6 @@ export class SlideController {
     this.channel = `channel-${context.appId}`;
     this.room = context.getRoom();
     this.player = this.room ? undefined : (context.getDisplayer() as Player);
-    this.debug = import.meta.env.DEV || !!context.getAppOptions()?.debug;
     this.slide = this.createSlide(anchor);
     // the adder does not need to sync state
     this.syncStateOnceFlag = !this.context.isAddApp;
@@ -104,16 +103,12 @@ export class SlideController {
     slide.setResource(taskId, url || DefaultUrl);
     if (state) {
       // if we already have state, try restore from it
-      if (this.debug) {
-        console.log("[Slide] init with state", deepClone(state));
-      }
+      log("[Slide] init with state", deepClone(state));
       this.syncStateOnceFlag = false;
       slide.setSlideState(deepClone(state));
     } else if (context.isAddApp) {
       // otherwise, maybe this slide is just added, let the adder kick start first render
-      if (this.debug) {
-        console.log("[Slide] init by renderSlide", 1);
-      }
+      log("[Slide] init by renderSlide", 1);
       slide.renderSlide(1);
     }
     // there's still some risk that the adder is left and no first render
@@ -175,9 +170,7 @@ export class SlideController {
         type: SLIDE_EVENTS.syncDispatch,
         payload: event,
       };
-      if (this.debug) {
-        console.log("[Slide] dispatch", event);
-      }
+      log("[Slide] dispatch", event);
       this.room.dispatchMagixEvent(this.channel, payload);
     }
   };
@@ -187,9 +180,7 @@ export class SlideController {
       const { type, payload } = ev.payload as MagixPayload;
       if (type === SLIDE_EVENTS.syncDispatch) {
         this.syncStateOnce();
-        if (this.debug) {
-          console.log("[Slide] receive", payload);
-        }
+        log("[Slide] receive", payload);
         // only emit the event if the slide state is sync-ed
         if (!this.syncStateOnceFlag) {
           this.slide.emit(SLIDE_EVENTS.syncReceive, payload);
@@ -203,9 +194,7 @@ export class SlideController {
     if (this.syncStateOnceFlag) {
       const { state } = { ...EmptyAttributes, ...this.context.getAttributes() };
       if (state) {
-        if (this.debug) {
-          console.log("[Slide] sync with state (once)", deepClone(state));
-        }
+        log("[Slide] sync with state (once)", deepClone(state));
         this.slide.setSlideState(deepClone(state));
         this.syncStateOnceFlag = false;
       }
@@ -214,20 +203,18 @@ export class SlideController {
 
   private onStateChange = (state: SlideState) => {
     if (this.context.getIsWritable()) {
-      if (import.meta.env.DEV) {
-        console.log("[Slide] state change", JSON.stringify(state, null, 2));
-      }
+      verbose("[Slide] state change", JSON.stringify(state, null, 2));
       this.context.updateAttributes(["state"], state);
     }
   };
 
   private onSeeked = () => {
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    const state = this.context.getAttributes()!.state
+    const state = this.context.getAttributes()!.state;
     if (state) {
       this.slide.setSlideState(deepClone(state));
     }
-  }
+  };
 
   private pollCount = 0;
   private pollReadyState = () => {
@@ -242,9 +229,7 @@ export class SlideController {
       setTimeout(this.pollReadyState, 500);
     } else {
       this.pollCount = 0;
-      if (this.debug) {
-        console.log("[Slide] renderSlide (retry after timeout)", 1);
-      }
+      log("[Slide] renderSlide (retry after timeout)", 1);
       this.slide.renderSlide(1);
     }
   };
@@ -268,7 +253,7 @@ export class SlideController {
       interactive: true,
       mode: "interactive",
       resize: true,
-      controller: this.debug,
+      controller: logger.enable,
       renderOptions: {
         minFPS: 25,
         maxFPS: 30,
@@ -279,7 +264,7 @@ export class SlideController {
       },
       timestamp: this.timestamp,
     });
-    if (this.debug) {
+    if (import.meta.env.DEV) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (window as any).slide = slide;
     }
@@ -291,9 +276,7 @@ export class SlideController {
   public destroy() {
     this.sideEffect.flushAll();
     if (!this.destroyed) {
-      if (this.debug) {
-        console.log("[Slide] destroy slide (once)");
-      }
+      log("[Slide] destroy slide (once)");
       this.slide.destroy();
       this.destroyed = true;
     }
@@ -331,9 +314,7 @@ export class SlideController {
 
   public freeze = () => {
     if (this.ready) {
-      if (this.debug) {
-        console.log("[Slide] freeze", this.context.appId);
-      }
+      log("[Slide] freeze", this.context.appId);
       if (this.freezePromise) {
         this._toFreeze = 1;
       } else if (!this.isFrozen) {
@@ -347,9 +328,7 @@ export class SlideController {
 
   public unfreeze = async () => {
     if (this.ready) {
-      if (this.debug) {
-        console.log("[Slide] unfreeze", this.context.appId);
-      }
+      log("[Slide] unfreeze", this.context.appId);
       if (this.freezePromise) {
         this._toFreeze = -1;
       } else if (this.isFrozen) {

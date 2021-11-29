@@ -1,4 +1,5 @@
 import ColorString from "color-string";
+import { log } from "./logger";
 
 export function guessBgColor(el: HTMLElement): string {
   try {
@@ -38,9 +39,7 @@ let cachedBgColor = "";
 export function cachedGetBgColor(el: HTMLElement): string {
   if (!cachedBgColor) {
     cachedBgColor = toHex(guessBgColor(el));
-    if (import.meta.env.DEV) {
-      console.log("[Slide] guess bg color", cachedBgColor);
-    }
+    log("[Slide] guess bg color", cachedBgColor);
   }
   return cachedBgColor;
 }

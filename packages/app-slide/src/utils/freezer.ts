@@ -1,4 +1,5 @@
 import type { RegisterParams } from "@netless/window-manager";
+import { log } from "./logger";
 
 export interface FreezableSlide {
   freeze: () => void;
@@ -11,24 +12,18 @@ export const apps = {
   map: new Map<string, FreezableSlide>(),
   queue: [] as string[],
   validateQueue() {
-    if (import.meta.env.DEV) {
-      console.log("[Slide] freezer: validate", this.queue);
-    }
+    log("[Slide] freezer: validate", this.queue);
     while (this.queue.length > FreezerLength) {
       const appId = this.queue.pop() as string;
       const slide = this.map.get(appId);
       if (slide) {
-        if (import.meta.env.DEV) {
-          console.log("[Slide] freezer: validate-freeze", appId, this.queue);
-        }
+        log("[Slide] freezer: validate-freeze", appId, this.queue);
         slide.freeze();
       }
     }
   },
   set(appId: string, slide: FreezableSlide) {
-    if (import.meta.env.DEV) {
-      console.log("[Slide] freezer: add", appId, this.queue);
-    }
+    log("[Slide] freezer: add", appId, this.queue);
     this.map.set(appId, slide);
     if (!this.queue.includes(appId)) {
       this.queue.unshift(appId);
@@ -36,9 +31,7 @@ export const apps = {
     this.validateQueue();
   },
   delete(appId: string) {
-    if (import.meta.env.DEV) {
-      console.log("[Slide] freezer: delete", appId, this.queue);
-    }
+    log("[Slide] freezer: delete", appId, this.queue);
     this.map.delete(appId);
     this.queue = this.queue.filter(id => id !== appId);
   },
@@ -50,9 +43,7 @@ export const apps = {
     }
     this.queue.unshift(appId);
     this.validateQueue();
-    if (import.meta.env.DEV) {
-      console.log("[Slide] freezer: focus", appId, this.queue);
-    }
+    log("[Slide] freezer: focus", appId, this.queue);
     if (slide) {
       slide.unfreeze();
     }

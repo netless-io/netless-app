@@ -14,6 +14,7 @@ import {
 } from "./SlideController";
 import { SlideDocsViewer } from "./SlideDocsViewer";
 import { apps, FreezerLength, addHooks } from "./utils/freezer";
+import { log, logger } from "./utils/logger";
 import styles from "./style.scss?inline";
 
 export type { Attributes, AddHooks, FreezableSlide };
@@ -48,11 +49,13 @@ const SlideApp: NetlessApp<Attributes> = {
 
     const onPageChanged = (page: number) => {
       const room = context.getRoom();
-      if (docsViewer && docsViewer.slideController && room && context.getIsWritable()) {
-        syncSceneWithSlide(room, context, docsViewer.slideController.slide, baseScenePath);
-        if (context.getAppOptions()?.debug || import.meta.env.DEV) {
-          console.log("[Slide] page to", page);
+      if (docsViewer && docsViewer.slideController) {
+        let synced = false;
+        if (room && context.getIsWritable()) {
+          syncSceneWithSlide(room, context, docsViewer.slideController.slide, baseScenePath);
+          synced = true;
         }
+        log("[Slide] page to", page, synced);
         docsViewer.viewer.setPageIndex(page - 1);
       }
     };
@@ -63,7 +66,7 @@ const SlideApp: NetlessApp<Attributes> = {
         ...options,
         onPageChanged,
       });
-      apps.set(context.appId, slideController);
+      (logger.apps[context.appId] ||= {}).controller = slideController;
       if (import.meta.env.DEV) {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (window as any).slideController = slideController;
@@ -86,6 +89,14 @@ const SlideApp: NetlessApp<Attributes> = {
 
     const room = context.getRoom();
     const sideEffect = new SideEffectManager();
+
+    sideEffect.add(() => {
+      (logger.apps[context.appId] ||= {}).context = context;
+      logger.enable = context.getAppOptions()?.debug || import.meta.env.DEV;
+      logger.level = import.meta.env.DEV ? "verbose" : "debug";
+      return () => logger.dispose(context.appId);
+    });
+
     if (room) {
       docsViewer.toggleClickThrough(room.state.memberState.currentApplianceName);
       sideEffect.add(() => {
@@ -100,7 +111,7 @@ const SlideApp: NetlessApp<Attributes> = {
     }
 
     context.emitter.on("destroy", () => {
-      console.log("[Slide]: destroy");
+      log("[Slide]: destroy");
       apps.delete(context.appId);
       sideEffect.flushAll();
       if (docsViewer) {
