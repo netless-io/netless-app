@@ -5,7 +5,7 @@ import { SideEffectManager } from "side-effect-manager";
 import { createDocsViewerPages } from "../SlideController";
 import { DocsViewer } from "../DocsViewer";
 
-export const ClickThroughAppliances = new Set(["clicker", "selector"]);
+export const ClickThroughAppliances = new Set(["clicker"]);
 
 export type MountSlideOptions = Omit<SlideControllerOptions, "context" | "onPageChanged"> & {
   onReady: () => void;
