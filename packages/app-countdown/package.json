@@ -11,6 +11,6 @@
     "cleanup": "rimraf ./dist"
   },
   "devDependencies": {
-    "preact": "^10.6.1"
+    "preact": "^10.6.2"
   }
 }
