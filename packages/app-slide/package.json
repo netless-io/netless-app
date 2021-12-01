@@ -1,6 +1,6 @@
 {
   "name": "@netless/app-slide",
-  "version": "0.0.32",
+  "version": "0.0.33",
   "main": "dist/main.cjs.js",
   "module": "dist/main.es.js",
   "types": "dist/index.d.ts",
@@ -18,8 +18,8 @@
   "devDependencies": {
     "@netless/app-shared": "workspace:^0.1.1",
     "@netless/slide": "^0.1.37",
-    "@types/color-string": "^1.5.1",
-    "color-string": "^1.7.4",
+    "@types/color-string": "^1.5.2",
+    "color-string": "^1.8.2",
     "side-effect-manager": "^0.1.5",
     "vanilla-lazyload": "^17.5.0"
   }
