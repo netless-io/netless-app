@@ -4,6 +4,7 @@ import { createDocsViewerPages, DefaultUrl } from "../SlideController";
 import { cachedGetBgColor } from "../utils/bgcolor";
 import { clamp } from "../utils/helpers";
 import { log } from "../utils/logger";
+import style from "../style.scss?inline";
 
 export interface PreviewParams {
   container: HTMLElement;
@@ -46,7 +47,7 @@ export class SlidePreviewer {
   public $slide!: HTMLDivElement;
   public ready = false;
   private resolveReady!: () => void;
-  public readonly readyPromise = new Promise<void>((resolve) => {
+  public readonly readyPromise = new Promise<void>(resolve => {
     this.resolveReady = () => {
       this.ready = true;
       resolve();
@@ -69,6 +70,7 @@ export class SlidePreviewer {
   }
 
   public mount(taskId: string, url: string) {
+    this.target.appendChild(this.renderStyle());
     this.target.appendChild(this.viewer.$content);
     this.target.appendChild(this.viewer.$footer);
 
@@ -91,6 +93,12 @@ export class SlidePreviewer {
 
     this.slide.setResource(taskId, url);
     this.slide.renderSlide(1);
+  }
+
+  protected renderStyle(): HTMLElement {
+    const element = document.createElement("style");
+    element.appendChild(document.createTextNode(style));
+    return element;
   }
 
   protected registerEventListeners() {
