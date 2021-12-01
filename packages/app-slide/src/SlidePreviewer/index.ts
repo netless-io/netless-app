@@ -146,7 +146,7 @@ export class SlidePreviewer {
   protected refreshPages = () => {
     if (this.slide) {
       this.viewer.pages = createDocsViewerPages(this.slide);
-      this.viewer.setPageIndex(this.getPageIndex(this.slide.slideCount));
+      this.viewer.setPageIndex(this.getPageIndex(this.slide.slideState.currentSlideIndex));
     }
   };
 
