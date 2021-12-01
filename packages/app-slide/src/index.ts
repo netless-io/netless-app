@@ -17,6 +17,9 @@ import { apps, FreezerLength, addHooks } from "./utils/freezer";
 import { log, logger } from "./utils/logger";
 import styles from "./style.scss?inline";
 
+export type { PreviewParams } from "./SlidePreviewer";
+export { SlidePreviewer, default as previewSlide } from "./SlidePreviewer";
+
 export type { Attributes, AddHooks, FreezableSlide };
 
 export { DefaultUrl, apps, FreezerLength, addHooks };

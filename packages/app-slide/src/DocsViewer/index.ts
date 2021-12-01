@@ -4,7 +4,6 @@ import { arrowRightSVG } from "./icons/arrow-right";
 import { playSVG } from "./icons/play";
 import { pauseSVG } from "./icons/pause";
 
-import type { ReadonlyTeleBox } from "@netless/window-manager";
 import type { ILazyLoadInstance } from "vanilla-lazyload";
 import LazyLoad from "vanilla-lazyload";
 import { SideEffectManager } from "side-effect-manager";
@@ -18,15 +17,13 @@ export interface DocsViewerPage {
 
 export interface DocsViewerConfig {
   readonly: boolean;
-  box: ReadonlyTeleBox;
   onNewPageIndex: (index: number) => void;
   onPlay?: () => void;
 }
 
 export class DocsViewer {
-  public constructor({ readonly, box, onNewPageIndex, onPlay }: DocsViewerConfig) {
+  public constructor({ readonly, onNewPageIndex, onPlay }: DocsViewerConfig) {
     this.readonly = readonly;
-    this.box = box;
     this.onNewPageIndex = onNewPageIndex;
     this.onPlay = onPlay;
 
@@ -34,7 +31,6 @@ export class DocsViewer {
   }
 
   protected readonly: boolean;
-  protected box: ReadonlyTeleBox;
   protected onNewPageIndex: (index: number) => void;
   protected onPlay?: () => void;
 
@@ -61,11 +57,6 @@ export class DocsViewer {
   public $btnSidebar!: HTMLButtonElement;
 
   public pageIndex = 0;
-
-  public mount(): void {
-    this.box.mountContent(this.$content);
-    this.box.mountFooter(this.$footer);
-  }
 
   public unmount(): void {
     this.$content.remove();

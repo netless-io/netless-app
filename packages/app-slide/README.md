@@ -50,6 +50,19 @@ Parameters:
 
    The base url of ppt resources, `https://convertcdn.netless.link/dynamicConvert` by default.
 
-### Licence
+### Preview
+
+```ts
+import { previewSlide } from "@netless/app-slide";
+
+const previewer = previewSlide({
+  container: document.getElementById("preview"),
+  taskId: "1234567...",
+});
+
+previewer.destroy();
+```
+
+### License
 
 MIT @ [netless](https://github.com/netless-io)

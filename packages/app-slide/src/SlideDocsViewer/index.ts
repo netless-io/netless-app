@@ -35,7 +35,6 @@ export class SlideDocsViewer {
     this.mountWhiteboard = mountWhiteboard;
 
     this.viewer = new DocsViewer({
-      box,
       readonly: box.readonly,
       onNewPageIndex: this.onNewPageIndex,
       onPlay: this.onPlay,
@@ -98,7 +97,8 @@ export class SlideDocsViewer {
   }
 
   public mount() {
-    this.viewer.mount();
+    this.box.mountContent(this.viewer.$content);
+    this.box.mountFooter(this.viewer.$footer);
 
     this.slideController = this.mountSlideController({
       anchor: this.$slide,
