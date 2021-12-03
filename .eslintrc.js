@@ -20,6 +20,9 @@ const config = {
   ],
   settings: {
     "svelte3/typescript": true,
+    "svelte3/ignore-styles": ({ lang }) => {
+      return lang === "scss";
+    },
   },
 };
 
