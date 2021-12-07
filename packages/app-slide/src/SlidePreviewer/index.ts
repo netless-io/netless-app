@@ -1,3 +1,4 @@
+import { SideEffectManager } from "side-effect-manager";
 import { Slide, SLIDE_EVENTS } from "@netless/slide";
 import { DocsViewer } from "../DocsViewer";
 import { createDocsViewerPages, DefaultUrl } from "../SlideController";
@@ -45,6 +46,9 @@ export class SlidePreviewer {
   public debug = import.meta.env.DEV;
 
   public $slide!: HTMLDivElement;
+
+  private readonly sideEffect = new SideEffectManager();
+
   public ready = false;
   private resolveReady!: () => void;
   public readonly readyPromise = new Promise<void>(resolve => {
@@ -67,6 +71,25 @@ export class SlidePreviewer {
 
   public render() {
     this.viewer.$content.appendChild(this.renderSlideContainer());
+    this.sideEffect.addEventListener(window, "keydown", ev => {
+      if (this.slide) {
+        switch (ev.key) {
+          case "ArrowUp":
+          case "ArrowLeft": {
+            this.slide.prevStep();
+            break;
+          }
+          case "ArrowRight":
+          case "ArrowDown": {
+            this.slide.nextStep();
+            break;
+          }
+          default: {
+            break;
+          }
+        }
+      }
+    });
   }
 
   public mount(taskId: string, url: string) {
@@ -135,6 +158,7 @@ export class SlidePreviewer {
 
   private destroyed = false;
   public destroy() {
+    this.sideEffect.flushAll();
     if (this.slide && !this.destroyed) {
       log("[Slide] destroy slide (once)");
       this.slide.destroy();

@@ -31,6 +31,7 @@ const options: PlaygroundConfigs<Attributes> = [
   definePPT("星空", "e20da510429811eca24d2965b39c697a"),
   definePPT("简约蓝色多边形", "c98945a0478211ec82699ff3907ab497"),
   definePPT("开始使用 Flat", "9c8a8d50436011ec81562b933562aa06"),
+  definePPT("语文第二讲", "efc96d80565f11ec810dcbdbe2db2bac"),
 ];
 
 export default options;
