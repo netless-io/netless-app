@@ -22,6 +22,8 @@ export { SlidePreviewer, default as previewSlide } from "./SlidePreviewer";
 
 export type { Attributes, AddHooks, FreezableSlide };
 
+export const version = "0.0.37";
+
 export { DefaultUrl, apps, FreezerLength, addHooks };
 
 const SlideApp: NetlessApp<Attributes> = {
@@ -44,6 +46,11 @@ const SlideApp: NetlessApp<Attributes> = {
 
     const box = context.getBox();
     box.mountStyles(styles);
+    try {
+      box.$content.dataset.appSlideVersion = version;
+    } catch {
+      // ignore
+    }
 
     // must exist because of view
     const baseScenePath = context.getInitScenePath() as string;
