@@ -17,6 +17,7 @@
     "eslint-config-prettier": "^8.3.0",
     "eslint-plugin-svelte3": "^3.2.1",
     "husky": "^7.0.4",
+    "npm-run-all": "^4.1.5",
     "prettier": "^2.5.1",
     "prettier-plugin-svelte": "^2.5.1",
     "rimraf": "^3.0.2",
@@ -32,9 +33,10 @@
     "lint": "eslint --ext .ts,.tsx,.svelte . && prettier --check .",
     "preinstall": "npx only-allow pnpm",
     "build-all": "pnpm run pre:build-all && pnpm build -r --filter ./packages",
-    "build-all:dev": "pnpm run pre:build-all:dev && pnpm build:dev -r --filter ./packages",
+    "build-all:dev": "pnpm run pre:build-all && pnpm build:dev -r --filter ./packages",
     "dev": "pnpm dev --filter playground",
-    "pre:build-all": "pnpm build --filter app-shared --filter app-embedded-page-sdk",
-    "pre:build-all:dev": "pnpm build:dev --filter app-shared --filter app-embedded-page-sdk"
+    "pre:build-all": "run-s pre:build-shared pre:build-embedded-page-sdk",
+    "pre:build-shared": "pnpm build --filter app-shared",
+    "pre:build-embedded-page-sdk": "pnpm build --filter app-embedded-page-sdk"
   }
 }

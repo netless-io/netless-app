@@ -25,7 +25,7 @@ jobs:
           version: latest
           run_install: true
       - run: pnpm lint
-      - run: pnpm build --filter app-shared --filter app-embedded-page-sdk
+      - run: pnpm pre:build-all
       - run: pnpm build:ci --filter playground
       - uses: peaceiris/actions-gh-pages@v3
         with:
