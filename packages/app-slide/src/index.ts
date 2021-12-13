@@ -22,7 +22,7 @@ export { SlidePreviewer, default as previewSlide } from "./SlidePreviewer";
 
 export type { Attributes, AddHooks, FreezableSlide };
 
-export const version = "0.0.39";
+export const version = "0.0.40";
 
 export { DefaultUrl, apps, FreezerLength, addHooks };
 
