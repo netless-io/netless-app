@@ -29,6 +29,8 @@ export { DefaultUrl, apps, FreezerLength, addHooks };
 const SlideApp: NetlessApp<Attributes> = {
   kind: "Slide",
   setup(context) {
+    console.log("[Slide] setup @ " + version);
+
     if (context.getIsWritable()) {
       ensureAttributes(context, EmptyAttributes);
     }
