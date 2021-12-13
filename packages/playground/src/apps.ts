@@ -10,6 +10,7 @@ export interface AppGroup {
   url: string;
   kind: string;
   configs: AddAppParams[];
+  getAttributes?: () => Record<string, unknown>;
 }
 
 export function registerApps(): AppGroup[] {
@@ -53,10 +54,19 @@ export function registerApps(): AppGroup[] {
       }
       app.configs.push({ kind, ...rest });
     }
+    if (kind === "EmbeddedPage") {
+      app.getAttributes = embeddedAppGetAttributes;
+    }
 
     return app;
   });
 
   window.apps = apps;
   return apps;
+}
+
+function embeddedAppGetAttributes() {
+  const result = { src: "" };
+  result.src = window.prompt("src?", "https://example.org") || "";
+  return result;
 }

@@ -1,5 +1,5 @@
 <script context="module" lang="ts">
-  import catagorySVG from "./icons/catagory.svg";
+  import categorySVG from "./icons/category.svg";
   import appSVG from "./icons/app.svg";
 
   import type { Room, RoomState, ApplianceNames } from "white-web-sdk";
@@ -69,8 +69,18 @@
     if (target?.dataset?.appKind && target?.dataset?.appIndex) {
       const kind = target.dataset.appKind;
       const index = +target.dataset.appIndex;
-      const { configs } = apps.find(a => a.kind === kind) as AppGroup;
-      window.manager.addApp(configs[index]);
+      const { configs, getAttributes } = apps.find(a => a.kind === kind) as AppGroup;
+      if (index >= 0) {
+        window.manager.addApp(configs[index]);
+      } else if (getAttributes) {
+        const attributes = getAttributes();
+        window.manager.addApp({
+          kind,
+          attributes,
+          options: { title: "Custom" },
+          src: configs[0].src,
+        });
+      }
     }
   }
 
@@ -132,25 +142,32 @@
 {:else}
   <div class="two-side">
     <div id="actions" class="app-list" on:click={openApp}>
-      {#each apps as { kind, configs, url }}
+      {#each apps as { kind, configs, url, getAttributes } (kind)}
         <h2 class="app-list-kind">
-          <a class="app-list-kind-link" href={url} target="_blank"
-            ><img class="app-list-kind-icon" src={catagorySVG} alt={kind} />{kind}</a
-          >
+          <a class="app-list-kind-link" href={url} target="_blank">
+            <img class="app-list-kind-icon" src={categorySVG} alt={kind} />
+            <span>{kind}</span>
+          </a>
         </h2>
         {#each configs as app, i}
           <button class="app-list-open" data-app-kind={kind} data-app-index={i}>
             <img class="app-list-open-icon" src={appSVG} alt={app.options?.title} />
-            {app.options?.title || `${app.kind} ${i + 1}`}
+            <span>{app.options?.title || `${app.kind} ${i + 1}`}</span>
           </button>
         {/each}
+        {#if getAttributes}
+          <button class="app-list-open" data-app-kind={kind} data-app-index={-1}>
+            <img class="app-list-open-icon" src={appSVG} alt="[custom]" />
+            <span>Custom</span>
+          </button>
+        {/if}
       {/each}
     </div>
     <div class="right-side">
       <div class="nav-bar" on:click={changeTool}>
         <div class="nav-bar-tools-cursor-hider">
           <div class="nav-bar-tools">
-            {#each tools as name}
+            {#each tools as name (name)}
               <button data-tool={name} class:active={name === tool}>{name}</button>
             {/each}
           </div>
