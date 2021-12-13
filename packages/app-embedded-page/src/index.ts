@@ -130,9 +130,7 @@ const EmbeddedPage: NetlessApp<Attributes, void, AppOptions> = {
       appOptions.addMessageListener ||
       ((listener, options) => {
         const handler = ({ data, source }: MessageEvent<FromSDKMessage>) => {
-          if (source !== iframe.contentWindow) return;
-          if (!isObj(data)) {
-            logger.error("window message data should be object, instead got", data);
+          if (source !== iframe.contentWindow || !isObj(data) || !data.NEAType) {
             return;
           }
           logger.log("Message from SDK", data);
@@ -225,7 +223,7 @@ const EmbeddedPage: NetlessApp<Attributes, void, AppOptions> = {
               () => attrs.store[storeId],
               actions => {
                 postMessage({
-                  type: "StateChanged",
+                  NEAType: "StateChanged",
                   payload: { storeId, actions: toJSON(actions) },
                 });
               }
@@ -239,7 +237,7 @@ const EmbeddedPage: NetlessApp<Attributes, void, AppOptions> = {
       const disposer = safeListenPropsUpdated(
         () => attrs.store,
         actions => {
-          postMessage({ type: "StoreChanged", payload: toJSON(actions) });
+          postMessage({ NEAType: "StoreChanged", payload: toJSON(actions) });
 
           if (attrs.store) {
             actions.forEach(({ key, kind }) => {
@@ -272,7 +270,7 @@ const EmbeddedPage: NetlessApp<Attributes, void, AppOptions> = {
       const onRoomStateChanged = (e: Partial<RoomState>) => {
         if (e?.roomMembers) {
           postMessage({
-            type: "RoomMembersChanged",
+            NEAType: "RoomMembersChanged",
             payload: transformRoomMembers(e.roomMembers),
           });
         }
@@ -303,7 +301,7 @@ const EmbeddedPage: NetlessApp<Attributes, void, AppOptions> = {
 
     sideEffectManager.add(() => {
       const updateListener = (newValue: string, oldValue: string) => {
-        postMessage({ type: "PageChanged", payload: { oldValue, newValue } });
+        postMessage({ NEAType: "PageChanged", payload: { oldValue, newValue } });
       };
       return context.mobxUtils.reaction(() => attrs.page, updateListener);
     });
@@ -316,7 +314,7 @@ const EmbeddedPage: NetlessApp<Attributes, void, AppOptions> = {
       const updateListener = () => {
         const isWritable = context.getIsWritable();
         postMessage({
-          type: "WritableChanged",
+          NEAType: "WritableChanged",
           payload: isWritable,
         });
         logger.log(`WritableChange changed to ${isWritable}`);
@@ -341,7 +339,7 @@ const EmbeddedPage: NetlessApp<Attributes, void, AppOptions> = {
       // pass through magix events
       const magixListener = (e: Event) => {
         if (e.event === magixEventChannel && e.authorId !== displayer.observerId) {
-          postMessage({ type: "ReceiveMagixMessage", payload: e.payload });
+          postMessage({ NEAType: "ReceiveMagixMessage", payload: e.payload });
         }
       };
       displayer.addMagixEventListener(magixEventChannel, magixListener);
@@ -359,7 +357,7 @@ const EmbeddedPage: NetlessApp<Attributes, void, AppOptions> = {
       )?.payload;
 
       postMessage({
-        type: "Init",
+        NEAType: "Init",
         payload: {
           page: attrs.page,
           writable: context.getIsWritable(),
@@ -383,7 +381,7 @@ const EmbeddedPage: NetlessApp<Attributes, void, AppOptions> = {
 
     sideEffectManager.add(() =>
       addMessageListener(message => {
-        switch (message.type) {
+        switch (message.NEAType) {
           case "Init": {
             sendInitData();
             break;

@@ -70,9 +70,7 @@ export function createEmbeddedApp<TState = DefaultState, TMessage = unknown>(
         data,
         source,
       }: MessageEvent<ToSDKMessage<ToSDKMessageKey, TState, TMessage>>) => {
-        if (!parent || source !== parent) return;
-        if (!isObj(data)) {
-          console.warn("window message data should be object, instead got", data);
+        if (!parent || source !== parent || !isObj(data) || !data.NEAType) {
           return;
         }
         logger.log("Message from parent", data);
@@ -86,7 +84,7 @@ export function createEmbeddedApp<TState = DefaultState, TMessage = unknown>(
       };
     });
 
-  postMessage({ type: "Init" });
+  postMessage({ NEAType: "Init" });
 
   return new Promise(resolve => {
     const disposer = addMessageListener(message => {
@@ -96,7 +94,7 @@ export function createEmbeddedApp<TState = DefaultState, TMessage = unknown>(
         return;
       }
 
-      if (message.type === "Init") {
+      if (message.NEAType === "Init") {
         disposer();
         const app = new EmbeddedApp<TState, TMessage>(
           message.payload,

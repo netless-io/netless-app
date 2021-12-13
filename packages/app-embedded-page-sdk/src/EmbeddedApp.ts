@@ -62,13 +62,13 @@ export class EmbeddedApp<TState = DefaultState, TMessage = unknown> {
 
     this._sideEffect.add(() =>
       addMessageListener(message => {
-        const { type, payload } = message as ToSDKMessage<
+        const { NEAType, payload } = message as ToSDKMessage<
           Exclude<ToSDKMessageKey, "Init">,
           TState,
           TMessage
         >;
-        if (type) {
-          const method = `_handleMsg${type}` as const;
+        if (NEAType) {
+          const method = `_handleMsg${NEAType}` as const;
           if (this[method]) {
             this[method](payload);
           }
@@ -115,7 +115,7 @@ export class EmbeddedApp<TState = DefaultState, TMessage = unknown> {
    * Move the camera
    */
   moveCamera(camera: Partial<CameraState>) {
-    this._postMessage({ type: "MoveCamera", payload: camera });
+    this._postMessage({ NEAType: "MoveCamera", payload: camera });
   }
 
   /*
@@ -123,7 +123,7 @@ export class EmbeddedApp<TState = DefaultState, TMessage = unknown> {
    */
 
   sendMessage(payload: TMessage) {
-    this._postMessage({ type: "SendMagixMessage", payload });
+    this._postMessage({ NEAType: "SendMagixMessage", payload });
   }
 
   readonly onMessage = new EmbeddedPageEvent<TMessage>();
@@ -162,7 +162,7 @@ export class EmbeddedApp<TState = DefaultState, TMessage = unknown> {
 
   setPage(page: string): void {
     this._page = page;
-    this._postMessage({ type: "SetPage", payload: page });
+    this._postMessage({ NEAType: "SetPage", payload: page });
   }
 
   readonly onPageChanged = new EmbeddedPageEvent<DiffOne<string>>();
@@ -188,7 +188,7 @@ export class EmbeddedApp<TState = DefaultState, TMessage = unknown> {
     if (!store) {
       if (!has(this._storeRawData, storeId)) {
         const storeState = {};
-        this._postMessage({ type: "SetStore", payload: { [storeId]: storeState } });
+        this._postMessage({ NEAType: "SetStore", payload: { [storeId]: storeState } });
         this._storeRawData[storeId] = storeState;
       }
 
@@ -198,7 +198,7 @@ export class EmbeddedApp<TState = DefaultState, TMessage = unknown> {
         logger: this._logger,
         getIsWritable: () => this._writable,
         onSetState: state =>
-          this._postMessage<"SetState", S>({ type: "SetState", payload: { storeId, state } }),
+          this._postMessage<"SetState", S>({ NEAType: "SetState", payload: { storeId, state } }),
       }) as Store<S>;
 
       this._stores.set(storeId, store);
@@ -226,7 +226,7 @@ export class EmbeddedApp<TState = DefaultState, TMessage = unknown> {
       store._destroy();
     }
     if (this._storeRawData[id]) {
-      this._postMessage({ type: "SetStore", payload: { [id]: void 0 } });
+      this._postMessage({ NEAType: "SetStore", payload: { [id]: void 0 } });
     }
   }
 

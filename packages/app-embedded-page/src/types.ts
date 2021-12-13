@@ -2,8 +2,8 @@ import type { AkkoObjectUpdatedProperty } from "white-web-sdk";
 
 type TransformMessage<TKey extends keyof Messages, Messages> = TKey extends keyof Messages
   ? Messages[TKey] extends void
-    ? { type: TKey; payload?: Messages[TKey] }
-    : { type: TKey; payload: Messages[TKey] }
+    ? { NEAType: TKey; payload?: Messages[TKey] }
+    : { NEAType: TKey; payload: Messages[TKey] }
   : never;
 
 export type DefaultState = Record<string, unknown>;
