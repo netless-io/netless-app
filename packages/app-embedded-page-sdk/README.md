@@ -10,6 +10,44 @@ SDK for storing shared replayable states and sending/receiving replayable events
 npm add @netless/app-embedded-page-sdk
 ```
 
+### Example
+
+[More examples here](https://github.com/netless-io/netless-app/blob/master/packages/app-embedded-page).
+
+```ts
+import { createEmbeddedApp } from "@netless/app-embedded-page-sdk";
+
+interface State {
+  count: number;
+}
+
+type Message = {
+  type: "click";
+  payload: { id: string };
+};
+
+const app = await createEmbeddedApp<State, Message>();
+
+app.ensureState({ count: 0 });
+
+app.state; // => { count: 0 }
+app.setState({ count: 2 });
+app.onStateChanged.addListener(diff => {
+  if (diff.count) {
+    // count: 0 -> 2
+    console.log("count:", diff.count.oldValue, "->", diff.count.newValue);
+    console.log(diff.count.newValue === app.state.count);
+  }
+});
+
+app.sendMessage({ type: "click", payload: { id: "item1" } });
+app.onMessage.addListener(({ type, payload }) => {
+  if (type === "click") {
+    click(payload.id);
+  }
+});
+```
+
 ### API
 
 - **createEmbeddedApp()**
@@ -212,42 +250,6 @@ npm add @netless/app-embedded-page-sdk
     console.log("received message", message);
   });
   ```
-
-### Example
-
-```ts
-import { createEmbeddedApp } from "@netless/app-embedded-page-sdk";
-
-interface State {
-  count: number;
-}
-
-type Message = {
-  type: "click";
-  payload: { id: string };
-};
-
-const app = await createEmbeddedApp<State, Message>();
-
-app.ensureState({ count: 0 });
-
-app.state; // => { count: 0 }
-app.setState({ count: 2 });
-app.onStateChanged.addListener(diff => {
-  if (diff.count) {
-    // count: 0 -> 2
-    console.log("count:", diff.count.oldValue, "->", diff.count.newValue);
-    console.log(diff.count.newValue === app.state.count);
-  }
-});
-
-app.sendMessage({ type: "click", payload: { id: "item1" } });
-app.onMessage.addListener(({ type, payload }) => {
-  if (type === "click") {
-    click(payload.id);
-  }
-});
-```
 
 ### Licence
 

@@ -20,5 +20,4 @@ jobs:
           version: latest
           run_install: true
       - run: pnpm lint
-      - run: pnpm build --filter app-shared --filter app-embedded-page-sdk
       - run: pnpm build-all:dev

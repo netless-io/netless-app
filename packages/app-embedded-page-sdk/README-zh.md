@@ -8,6 +8,44 @@
 npm add @netless/app-embedded-page-sdk
 ```
 
+### 示例代码
+
+[查看更多示例](https://github.com/netless-io/netless-app/blob/master/packages/app-embedded-page/README-zh.md)。
+
+```ts
+import { createEmbeddedApp } from "@netless/app-embedded-page-sdk";
+
+interface State {
+  count: number;
+}
+
+type Message = {
+  type: "click";
+  payload: { id: string };
+};
+
+const app = await createEmbeddedApp<State, Message>();
+
+app.ensureState({ count: 0 });
+
+app.state; // => { count: 0 }
+app.setState({ count: 2 });
+app.onStateChanged.addListener(diff => {
+  if (diff.count) {
+    // count: 0 -> 2
+    console.log("count:", diff.count.oldValue, "->", diff.count.newValue);
+    console.log(diff.count.newValue === app.state.count);
+  }
+});
+
+app.sendMessage({ type: "click", payload: { id: "item1" } });
+app.onMessage.addListener(({ type, payload }) => {
+  if (type === "click") {
+    click(payload.id);
+  }
+});
+```
+
 ### API
 
 - **createEmbeddedApp()**
@@ -209,42 +247,6 @@ npm add @netless/app-embedded-page-sdk
     console.log("收到消息", message);
   });
   ```
-
-### 示例代码
-
-```ts
-import { createEmbeddedApp } from "@netless/app-embedded-page-sdk";
-
-interface State {
-  count: number;
-}
-
-type Message = {
-  type: "click";
-  payload: { id: string };
-};
-
-const app = await createEmbeddedApp<State, Message>();
-
-app.ensureState({ count: 0 });
-
-app.state; // => { count: 0 }
-app.setState({ count: 2 });
-app.onStateChanged.addListener(diff => {
-  if (diff.count) {
-    // count: 0 -> 2
-    console.log("count:", diff.count.oldValue, "->", diff.count.newValue);
-    console.log(diff.count.newValue === app.state.count);
-  }
-});
-
-app.sendMessage({ type: "click", payload: { id: "item1" } });
-app.onMessage.addListener(({ type, payload }) => {
-  if (type === "click") {
-    click(payload.id);
-  }
-});
-```
 
 ### License
 
