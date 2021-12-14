@@ -1,6 +1,6 @@
 {
   "name": "@netless/app-embedded-page",
-  "version": "0.0.6",
+  "version": "0.1.0",
   "main": "dist/main.cjs.js",
   "module": "dist/main.es.js",
   "types": "src/index.ts",
