@@ -233,4 +233,7 @@
   .tip.error {
     background-color: #ff4136;
   }
+  .app-list-open * {
+    pointer-events: none;
+  }
 </style>
