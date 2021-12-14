@@ -359,6 +359,7 @@ const EmbeddedPage: NetlessApp<Attributes, void, AppOptions> = {
       postMessage({
         NEAType: "Init",
         payload: {
+          appId: context.appId,
           page: attrs.page,
           writable: context.getIsWritable(),
           roomMembers: transformRoomMembers(displayer.state.roomMembers),

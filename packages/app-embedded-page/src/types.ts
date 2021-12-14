@@ -73,6 +73,7 @@ export interface MetaData {
 }
 
 export interface InitData<TState = DefaultState> {
+  appId: string;
   page?: string;
   writable: boolean;
   meta: MetaData;
