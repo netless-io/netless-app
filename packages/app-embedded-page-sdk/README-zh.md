@@ -48,6 +48,12 @@ app.onMessage.addListener(({ type, payload }) => {
 
 ### API
 
+- **app.appId**
+
+  类型: `string`
+
+  App ID. 每个 App 在创建的时候会分配一个独立的 ID 并保持不变直到 App 被销毁。
+
 - **createEmbeddedApp()**
 
   创建一个 Embedded App 实例。

@@ -60,6 +60,12 @@ app.onMessage.addListener(({ type, payload }) => {
   const app = await createEmbeddedApp();
   ```
 
+- **app.appId**
+
+  Type: `string`
+
+  App ID. Each app is assigned with a unique ID on creation and will keep the same ID until destroyed.
+
 - **app.state**
 
   Type: `State`\
