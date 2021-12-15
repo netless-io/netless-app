@@ -213,3 +213,25 @@ $namespace: $docs-viewer-namespace;
     display: none;
   }
 }
+
+.telebox-color-scheme-dark {
+  .#{$namespace}-page-number-input {
+    color: #a6a6a8;
+  }
+  .#{$namespace}-page-number-input:active,
+  .#{$namespace}-page-number-input:focus,
+  .#{$namespace}-page-number-input:hover {
+    color: #222;
+  }
+  .#{$namespace}-footer {
+    color: #a6a6a8;
+    background: #2d2d33;
+    border-top: none;
+  }
+  .#{$namespace}-footer-btn:hover {
+    background: #212126;
+  }
+  .#{$namespace}-preview {
+    background: rgba(50, 50, 50, 0.9);
+  }
+}
