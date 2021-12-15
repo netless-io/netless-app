@@ -152,13 +152,13 @@
         {#each configs as app, i}
           <button class="app-list-open" data-app-kind={kind} data-app-index={i}>
             <img class="app-list-open-icon" src={appSVG} alt={app.options?.title} />
-            <span>{app.options?.title || `${app.kind} ${i + 1}`}</span>
+            {app.options?.title || `${app.kind} ${i + 1}`}
           </button>
         {/each}
         {#if getAttributes}
           <button class="app-list-open" data-app-kind={kind} data-app-index={-1}>
             <img class="app-list-open-icon" src={appSVG} alt="[custom]" />
-            <span>Custom</span>
+            Custom
           </button>
         {/if}
       {/each}
