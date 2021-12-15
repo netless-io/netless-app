@@ -94,4 +94,16 @@
       transform: scale(1.25, 1);
     }
   }
+  @media (prefers-color-scheme: dark) {
+    .page-loading {
+      color: #eee;
+      background-color: #111;
+    }
+    .la-square-jelly-box {
+      color: #333;
+    }
+    .la-square-jelly-box > div:nth-child(2) {
+      background: #222;
+    }
+  }
 </style>

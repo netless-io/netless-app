@@ -114,7 +114,7 @@ export function init(container: HTMLElement): void {
     chessboard: false,
     cursor: true,
     debug: true,
-    prefersColorScheme: "dark",
+    prefersColorScheme: "auto",
   });
   window.manager = room.getInvisiblePlugin(WindowManager.kind) as WindowManager;
   manager.switchMainViewToWriter();

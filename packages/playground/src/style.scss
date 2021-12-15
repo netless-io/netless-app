@@ -3,7 +3,6 @@ $sans-serif: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubun
 
 body {
   margin: 0;
-  background: rgb(246, 249, 252);
 }
 
 * {
@@ -278,6 +277,11 @@ body {
   align-items: center;
 }
 
+.theme-btn {
+  color-scheme: light dark;
+  min-width: 64px;
+}
+
 .page-loading-wrap {
   position: fixed;
   top: 0;
@@ -285,4 +289,108 @@ body {
   z-index: 100;
   width: 100vw;
   height: 100vh;
+}
+
+body:not([data-theme="dark"]) {
+  color: #111;
+  background-color: rgb(246, 249, 252);
+  .netless-window-manager-wrapper {
+    background-color: rgb(246, 249, 252);
+  }
+  .nav-bar {
+    border-bottom-color: rgba(0, 0, 0, 0.03);
+  }
+  .nav-bar-tools > * {
+    background: #fff;
+  }
+  .app-list {
+    border-right-color: rgba(0, 0, 0, 0.03);
+    color: rgb(51, 51, 51);
+  }
+  .app-list-kind:hover {
+    background: rgba(0, 0, 0, 0.05);
+  }
+  .app-list-open {
+    color: rgb(51, 51, 51);
+    &:hover {
+      background: rgba(0, 0, 0, 0.05);
+    }
+  }
+  #whiteboard {
+    .netless-window-manager-wrapper {
+      background-color: #fff;
+    }
+  }
+}
+
+body[data-theme="dark"] {
+  color: #eee;
+  background-color: #121212;
+  .netless-window-manager-wrapper {
+    background-color: #121212;
+  }
+  .nav-bar {
+    border-bottom-color: #333;
+  }
+  .nav-bar-tools > * {
+    background: #333;
+  }
+  .app-list {
+    border-right-color: #333;
+    color: #ccc;
+  }
+  .app-list-kind:hover {
+    background: rgba($color: #fff, $alpha: 0.15);
+  }
+  .app-list-open {
+    color: #ccc;
+    &:hover {
+      background: rgba($color: #fff, $alpha: 0.15);
+    }
+  }
+  #whiteboard {
+    .netless-window-manager-wrapper {
+      background-color: #222;
+    }
+  }
+  .nav-bar-tools.active {
+    color: #36d7ff;
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  body:not([data-theme="light"]) {
+    color: #eee;
+    background-color: #121212;
+    .netless-window-manager-wrapper {
+      background-color: #121212;
+    }
+    .nav-bar {
+      border-bottom-color: #333;
+    }
+    .nav-bar-tools > * {
+      background: #333;
+    }
+    .app-list {
+      border-right-color: #333;
+      color: #ccc;
+    }
+    .app-list-kind:hover {
+      background: rgba($color: #fff, $alpha: 0.15);
+    }
+    .app-list-open {
+      color: #ccc;
+      &:hover {
+        background: rgba($color: #fff, $alpha: 0.15);
+      }
+    }
+    #whiteboard {
+      .netless-window-manager-wrapper {
+        background-color: #222;
+      }
+    }
+    .nav-bar-tools.active {
+      color: #36d7ff;
+    }
+  }
 }

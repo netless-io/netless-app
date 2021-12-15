@@ -11,6 +11,7 @@
   import { copyToClipboard } from "./clipboard";
 
   let copyTimer = 0;
+  let matchDark = window.matchMedia("(prefers-color-scheme: dark)");
 </script>
 
 <script lang="ts">
@@ -24,6 +25,14 @@
   let tool: ApplianceNames;
   let shareMode: "share" | "new-room" = "share";
   let copyTip = "";
+  let theme: "light" | "dark" | "auto" = "auto";
+
+  $: {
+    document.body.dataset.theme = theme;
+    window.manager && window.manager.setPrefersColorScheme(theme);
+  }
+
+  $: ThemeText = theme === "auto" ? (matchDark.matches ? "DARK" : "LIGHT") : theme.toUpperCase();
 
   $: PhaseLoadingMsg =
     phase === "prepare"
@@ -35,6 +44,15 @@
       : "Loading...";
 
   onMount(async () => {
+    document.documentElement.style.colorScheme = "light dark";
+
+    matchDark.addEventListener("change", ev => {
+      const currentTheme = ev.matches ? "dark" : "light";
+      if (theme === "auto") {
+        document.documentElement.style.colorScheme = currentTheme;
+      }
+    });
+
     const roomInfo = await prepare();
     if (!roomInfo) {
       phase = "404";
@@ -131,6 +149,14 @@
       copyTip = "";
     }, 3000);
   }
+
+  function toggleTheme() {
+    if (theme === "auto") {
+      theme = matchDark.matches ? "light" : "dark";
+    } else {
+      theme = theme === "dark" ? "light" : "dark";
+    }
+  }
 </script>
 
 <svelte:window on:keydown={keydown} on:keyup={keyup} />
@@ -173,6 +199,9 @@
           </div>
         </div>
         <div class="nav-bar-btns">
+          <button class="theme-btn" on:click={toggleTheme}>
+            {ThemeText}
+          </button>
           <button
             class="new-page-btn"
             title="copy share url to clipboard
