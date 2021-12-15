@@ -110,7 +110,13 @@ const Paint: NetlessApp<Attributes> = {
       }
     };
 
+    box.mountStyles(`
+      .telebox-color-scheme-dark .netless-app-paint-clear-btn {
+        color-scheme: dark;
+      }
+    `);
     const clearBtn = document.createElement("button");
+    clearBtn.classList.add("netless-app-paint-clear-btn");
     clearBtn.textContent = "CLEAR ALL";
     clearBtn.addEventListener("click", () => {
       paper.clear();

@@ -108,7 +108,14 @@ export async function reset({
 }
 
 export function init(container: HTMLElement): void {
-  WindowManager.mount({ room, container, chessboard: false, cursor: true, debug: true });
+  WindowManager.mount({
+    room,
+    container,
+    chessboard: false,
+    cursor: true,
+    debug: true,
+    prefersColorScheme: "dark",
+  });
   window.manager = room.getInvisiblePlugin(WindowManager.kind) as WindowManager;
   manager.switchMainViewToWriter();
 }

@@ -12,6 +12,11 @@ const HelloWorld: NetlessApp<{ text: string }> = {
         background: #fafbfc;
         padding: .5em;
       }
+      .telebox-color-scheme-dark .netless-app-hello-world {
+        color-scheme: dark;
+        background: #121212;
+        color: #eee;
+      }
    `);
 
     const textarea = document.createElement("textarea");

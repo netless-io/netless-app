@@ -18,6 +18,11 @@ const TwoRange: NetlessApp<{ a: number; b: number }> = {
         overflow: hidden;
         background: #fafbfc;
       }
+      .telebox-color-scheme-dark .netless-app-two-range {
+        color-scheme: dark;
+        background: #121212;
+        color: #eee;
+      }
    `);
 
     const attrs = { a: 50, b: 50, ...context.getAttributes() };

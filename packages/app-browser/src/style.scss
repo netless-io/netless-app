@@ -4,6 +4,9 @@
   display: flex;
   flex-flow: column nowrap;
 }
+.telebox-color-scheme-dark .netless-app-browser {
+  color-scheme: dark;
+}
 .netless-app-browser-omnibox {
   padding: 2px 4px;
   display: flex;

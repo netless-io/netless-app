@@ -74,3 +74,30 @@
 .netless-app-vote-count {
   padding-right: 8px;
 }
+.telebox-color-scheme-dark {
+  .netless-app-vote {
+    color-scheme: dark;
+    background-color: #121212;
+    color: #eee;
+  }
+  [contenteditable="true"] {
+    border-bottom-color: #666;
+  }
+  button {
+    &:hover {
+      border-color: #666;
+    }
+    &:active {
+      background-color: #666;
+    }
+    img {
+      filter: invert(1);
+    }
+  }
+  .netless-app-vote-title h2 {
+    color: #ccc;
+  }
+  .netless-app-vote-item {
+    border-color: #666;
+  }
+}

@@ -1,3 +1,4 @@
+@use "sass:color";
 @import "plyr/dist/plyr.css";
 
 .plyr--video {
@@ -12,4 +13,11 @@
   align-items: stretch;
   justify-content: center;
   background-color: #fff;
+}
+
+.telebox-color-scheme-dark .plyr--audio {
+  color-scheme: dark;
+  background-color: #121212;
+  --plyr-audio-controls-background: #121212;
+  --plyr-audio-control-color: #eee;
 }
