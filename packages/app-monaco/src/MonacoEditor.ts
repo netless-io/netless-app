@@ -54,6 +54,15 @@ export class MonacoEditor {
       readOnly: readonly,
       language: this.attrs.lang,
       fixedOverflowWidgets: false,
+      theme: box.darkMode ? "vs-dark" : "vs",
+    });
+
+    this.sideEffect.add(() => {
+      const handler = (darkMode: boolean) => {
+        this.monaco.editor.setTheme(darkMode ? "vs-dark" : "vs");
+      };
+      box.events.on("dark_mode", handler);
+      return () => box.events.off("dark_mode", handler);
     });
 
     // set footer after editor creation
