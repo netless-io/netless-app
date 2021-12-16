@@ -122,9 +122,16 @@ $namespace: $docs-viewer-namespace;
   transition: background 0.4s;
   cursor: pointer;
   user-select: none;
+  -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
 
   &:hover {
     background: rgba(237, 237, 240, 0.9);
+  }
+
+  @media (hover: none) {
+    &:hover {
+      background: transparent !important;
+    }
   }
 
   & > svg {
@@ -176,6 +183,7 @@ $namespace: $docs-viewer-namespace;
   background: transparent;
   transition: background 0.4s;
   user-select: text;
+  -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
 
   &:hover,
   &:focus,
