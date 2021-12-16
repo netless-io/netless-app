@@ -200,30 +200,7 @@ $namespace: $slide-namespace;
 }
 
 .#{$namespace}-readonly {
-  .#{$namespace}-footer-btn {
-    cursor: not-allowed;
-
-    &:hover {
-      background: transparent;
-    }
-  }
-
-  .#{$namespace}-page-number-input {
-    cursor: not-allowed;
-
-    &:hover,
-    &:focus,
-    &:active {
-      background: transparent;
-      box-shadow: none;
-    }
-
-    &:disabled {
-      color: inherit;
-    }
-  }
-
-  &.#{$namespace}-float-footer {
+  &.#{$namespace}-footer {
     display: none;
   }
 }
