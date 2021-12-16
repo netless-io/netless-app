@@ -3,6 +3,7 @@ $sans-serif: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubun
 
 body {
   margin: 0;
+  background: rgb(246, 249, 252);
 }
 
 * {
@@ -277,9 +278,14 @@ body {
   align-items: center;
 }
 
-.theme-btn {
-  color-scheme: light dark;
-  min-width: 64px;
+.dark-mode-btn {
+  width: 2em;
+  margin: 0 2px;
+  padding: 0;
+  border: none;
+  outline: none;
+  box-shadow: none;
+  background: url("./icons/sun.svg") no-repeat center/contain;
 }
 
 .page-loading-wrap {
@@ -291,52 +297,39 @@ body {
   height: 100vh;
 }
 
-body:not([data-theme="dark"]) {
-  color: #111;
-  background-color: rgb(246, 249, 252);
-  .netless-window-manager-wrapper {
-    background-color: rgb(246, 249, 252);
-  }
-  .nav-bar {
-    border-bottom-color: rgba(0, 0, 0, 0.03);
-  }
-  .nav-bar-tools > * {
-    background: #fff;
-  }
-  .app-list {
-    border-right-color: rgba(0, 0, 0, 0.03);
-    color: rgb(51, 51, 51);
-  }
-  .app-list-kind:hover {
-    background: rgba(0, 0, 0, 0.05);
-  }
-  .app-list-open {
-    color: rgb(51, 51, 51);
-    &:hover {
-      background: rgba(0, 0, 0, 0.05);
+@mixin color-scheme-dark {
+  @media (prefers-color-scheme: dark) {
+    html:not(.netless-color-scheme-light) {
+      @content;
     }
   }
-  #whiteboard {
-    .netless-window-manager-wrapper {
-      background-color: #fff;
-    }
+  html.netless-color-scheme-dark {
+    @content;
   }
 }
 
-body[data-theme="dark"] {
-  color: #eee;
-  background-color: #121212;
+@include color-scheme-dark {
+  body {
+    color: #eee;
+    background-color: #302e30;
+  }
   .netless-window-manager-wrapper {
     background-color: #121212;
   }
   .nav-bar {
-    border-bottom-color: #333;
+    border-bottom-color: #535253;
   }
   .nav-bar-tools > * {
-    background: #333;
+    background: #43434d;
+  }
+  .github-btn {
+    background-color: #525252;
+  }
+  .dark-mode-btn {
+    background-image: url("./icons/moon.svg");
   }
   .app-list {
-    border-right-color: #333;
+    border-right-color: #535253;
     color: #ccc;
   }
   .app-list-kind:hover {
@@ -355,42 +348,5 @@ body[data-theme="dark"] {
   }
   .nav-bar-tools.active {
     color: #36d7ff;
-  }
-}
-
-@media (prefers-color-scheme: dark) {
-  body:not([data-theme="light"]) {
-    color: #eee;
-    background-color: #121212;
-    .netless-window-manager-wrapper {
-      background-color: #121212;
-    }
-    .nav-bar {
-      border-bottom-color: #333;
-    }
-    .nav-bar-tools > * {
-      background: #333;
-    }
-    .app-list {
-      border-right-color: #333;
-      color: #ccc;
-    }
-    .app-list-kind:hover {
-      background: rgba($color: #fff, $alpha: 0.15);
-    }
-    .app-list-open {
-      color: #ccc;
-      &:hover {
-        background: rgba($color: #fff, $alpha: 0.15);
-      }
-    }
-    #whiteboard {
-      .netless-window-manager-wrapper {
-        background-color: #222;
-      }
-    }
-    .nav-bar-tools.active {
-      color: #36d7ff;
-    }
   }
 }

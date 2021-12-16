@@ -25,14 +25,14 @@
   let tool: ApplianceNames;
   let shareMode: "share" | "new-room" = "share";
   let copyTip = "";
-  let theme: "light" | "dark" | "auto" = "auto";
+  let darkMode = matchDark.matches;
 
   $: {
-    document.body.dataset.theme = theme;
-    window.manager && window.manager.setPrefersColorScheme(theme);
+    window.manager && window.manager.setPrefersColorScheme(darkMode ? "dark" : "light");
+    document.documentElement.className = darkMode
+      ? "netless-color-scheme-dark"
+      : "netless-color-scheme-light";
   }
-
-  $: ThemeText = theme === "auto" ? (matchDark.matches ? "DARK" : "LIGHT") : theme.toUpperCase();
 
   $: PhaseLoadingMsg =
     phase === "prepare"
@@ -44,13 +44,8 @@
       : "Loading...";
 
   onMount(async () => {
-    document.documentElement.style.colorScheme = "light dark";
-
     matchDark.addEventListener("change", ev => {
-      const currentTheme = ev.matches ? "dark" : "light";
-      if (theme === "auto") {
-        document.documentElement.style.colorScheme = currentTheme;
-      }
+      darkMode = ev.matches;
     });
 
     const roomInfo = await prepare();
@@ -150,12 +145,8 @@
     }, 3000);
   }
 
-  function toggleTheme() {
-    if (theme === "auto") {
-      theme = matchDark.matches ? "light" : "dark";
-    } else {
-      theme = theme === "dark" ? "light" : "dark";
-    }
+  function toggleDarkMode() {
+    darkMode = !darkMode;
   }
 </script>
 
@@ -199,9 +190,6 @@
           </div>
         </div>
         <div class="nav-bar-btns">
-          <button class="theme-btn" on:click={toggleTheme}>
-            {ThemeText}
-          </button>
           <button
             class="new-page-btn"
             title="copy share url to clipboard
@@ -231,6 +219,7 @@
           >
             GITHUB
           </a>
+          <button class="dark-mode-btn" on:click={toggleDarkMode} />
         </div>
       </div>
       <div id="whiteboard" use:init />
