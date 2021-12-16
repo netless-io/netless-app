@@ -122,9 +122,16 @@ $namespace: $slide-namespace;
   transition: background 0.4s;
   cursor: pointer;
   user-select: none;
+  -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
 
   &:hover {
     background: rgba(237, 237, 240, 0.9);
+  }
+
+  @media (hover: none) {
+    &:hover {
+      background: transparent !important;
+    }
   }
 
   & > svg {
@@ -176,6 +183,7 @@ $namespace: $slide-namespace;
   background: transparent;
   transition: background 0.4s;
   user-select: text;
+  -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
 
   &:hover,
   &:focus,
@@ -235,4 +243,3 @@ $namespace: $slide-namespace;
     background: rgba(50, 50, 50, 0.9);
   }
 }
-
