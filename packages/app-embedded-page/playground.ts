@@ -18,7 +18,7 @@ const options: PlaygroundConfigs<Attributes> = [
       scenePath: "/demo",
     },
     attributes: {
-      src: "/embed.html",
+      src: "./embed.html",
     },
   },
   ...demo.map(({ title, src }) => ({
