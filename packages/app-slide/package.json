@@ -1,6 +1,6 @@
 {
   "name": "@netless/app-slide",
-  "version": "0.0.49",
+  "version": "0.0.50",
   "main": "dist/main.cjs.js",
   "module": "dist/main.es.js",
   "types": "dist/index.d.ts",
@@ -17,7 +17,7 @@
   ],
   "devDependencies": {
     "@netless/app-shared": "workspace:^0.1.1",
-    "@netless/slide": "^0.1.53",
+    "@netless/slide": "^0.1.54",
     "@types/color-string": "^1.5.2",
     "color-string": "^1.9.0",
     "side-effect-manager": "^0.1.5",
