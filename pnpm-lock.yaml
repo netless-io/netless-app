@@ -6,9 +6,9 @@ importers:
     specifiers:
       '@commitlint/cli': ^15.0.0
       '@commitlint/config-conventional': ^15.0.0
-      '@netless/window-manager': ^0.3.12-canary.1
+      '@netless/window-manager': ^0.3.12
       '@sveltejs/vite-plugin-svelte': ^1.0.0-next.32
-      '@tsconfig/svelte': ^2.0.1
+      '@tsconfig/svelte': ^3.0.0
       '@types/node': ^17.0.0
       '@types/rollup-plugin-peer-deps-external': ^2.2.1
       '@typescript-eslint/eslint-plugin': ^5.7.0
@@ -27,14 +27,14 @@ importers:
       sass: ^1.45.0
       svelte: ^3.44.3
       typescript: ^4.5.4
-      vite: ^2.7.2
+      vite: ^2.7.3
       white-web-sdk: 2.15.13
     devDependencies:
       '@commitlint/cli': 15.0.0
       '@commitlint/config-conventional': 15.0.0
-      '@netless/window-manager': 0.3.12-canary.1_white-web-sdk@2.15.13
-      '@sveltejs/vite-plugin-svelte': 1.0.0-next.32_svelte@3.44.3+vite@2.7.2
-      '@tsconfig/svelte': 2.0.1
+      '@netless/window-manager': 0.3.12_white-web-sdk@2.15.13
+      '@sveltejs/vite-plugin-svelte': 1.0.0-next.32_svelte@3.44.3+vite@2.7.3
+      '@tsconfig/svelte': 3.0.0
       '@types/node': 17.0.0
       '@types/rollup-plugin-peer-deps-external': 2.2.1
       '@typescript-eslint/eslint-plugin': 5.7.0_915acdfead96f701b1277a1a723fc8d4
@@ -53,7 +53,7 @@ importers:
       sass: 1.45.0
       svelte: 3.44.3
       typescript: 4.5.4
-      vite: 2.7.2_sass@1.45.0
+      vite: 2.7.3_sass@1.45.0
       white-web-sdk: 2.15.13
 
   packages/app-browser:
@@ -173,14 +173,14 @@ importers:
   packages/app-slide:
     specifiers:
       '@netless/app-shared': workspace:^0.1.1
-      '@netless/slide': ^0.1.51
+      '@netless/slide': ^0.1.53
       '@types/color-string': ^1.5.2
       color-string: ^1.9.0
       side-effect-manager: ^0.1.5
       vanilla-lazyload: ^17.5.0
     devDependencies:
       '@netless/app-shared': link:../app-shared
-      '@netless/slide': 0.1.51
+      '@netless/slide': 0.1.53
       '@types/color-string': 1.5.2
       color-string: 1.9.0
       side-effect-manager: 0.1.5
@@ -457,8 +457,8 @@ packages:
     resolution: {integrity: sha512-7NzsJrba0R/mq/l10SkIZQwbrNVJyPxZYrjK6xL3Ts732iWAVuS2UB0u3s6iGeUVcqV39A679yva8APWRl4M0A==}
     dev: true
 
-  /@netless/slide/0.1.51:
-    resolution: {integrity: sha512-xdYrloLAO/3lBBLTuHObM5Kjt1HIPvBz/QTlNXPET/HQdnxp8MUL4c/PLlt/3pc5gz4yzdreFxc5MYBg/Kutdw==}
+  /@netless/slide/0.1.53:
+    resolution: {integrity: sha512-jipnKklPhkzbSfPTMnwBR5zKVMuq/SNfb30Zns4jFIBQ8Tdw1udKDHJfTMjPuYRmbRcysfiut1T39LDBkfD9ZA==}
     dependencies:
       '@juggle/resize-observer': 3.3.1
       '@types/dat.gui': 0.7.7
@@ -478,8 +478,8 @@ packages:
       value-enhancer: 0.0.8
     dev: true
 
-  /@netless/window-manager/0.3.12-canary.1_white-web-sdk@2.15.13:
-    resolution: {integrity: sha512-pr9snZF8L98AqVVh5NyXfgU1YskZuhBCKddguzh1taOHVzqXUs9/1R+DHpE92h3qo6662EVb/UZ56C/MDQDMLg==}
+  /@netless/window-manager/0.3.12_white-web-sdk@2.15.13:
+    resolution: {integrity: sha512-2VBJE+8tqyPCoeU8O/cWCZ5X6nwiwYmexylgzBGnFUDUHdHGe8SvWaxE/cWnSaF7IdAgM9cfOE8c+BnpGDCqvA==}
     peerDependencies:
       white-web-sdk: ^2.13.16
     dependencies:
@@ -586,7 +586,7 @@ packages:
       picomatch: 2.3.0
     dev: true
 
-  /@sveltejs/vite-plugin-svelte/1.0.0-next.32_svelte@3.44.3+vite@2.7.2:
+  /@sveltejs/vite-plugin-svelte/1.0.0-next.32_svelte@3.44.3+vite@2.7.3:
     resolution: {integrity: sha512-Lhf5BxVylosHIW6U2s6WDQA39ycd+bXivC8gHsXCJeLzxoHj7Pv7XAOk25xRSXT4wHg9DWFMBQh2DFU0DxHZ2g==}
     engines: {node: ^14.13.1 || >= 16}
     peerDependencies:
@@ -604,13 +604,13 @@ packages:
       require-relative: 0.8.7
       svelte: 3.44.3
       svelte-hmr: 0.14.7_svelte@3.44.3
-      vite: 2.7.2_sass@1.45.0
+      vite: 2.7.3_sass@1.45.0
     transitivePeerDependencies:
       - supports-color
     dev: true
 
-  /@tsconfig/svelte/2.0.1:
-    resolution: {integrity: sha512-aqkICXbM1oX5FfgZd2qSSAGdyo/NRxjWCamxoyi3T8iVQnzGge19HhDYzZ6NrVOW7bhcWNSq9XexWFtMzbB24A==}
+  /@tsconfig/svelte/3.0.0:
+    resolution: {integrity: sha512-pYrtLtOwku/7r1i9AMONsJMVYAtk3hzOfiGNekhtq5tYBGA7unMve8RvUclKLMT3PrihvJqUmzsRGh0RP84hKg==}
     dev: true
 
   /@types/color-string/1.5.2:
@@ -3699,8 +3699,8 @@ packages:
       global: 4.4.0
     dev: true
 
-  /vite/2.7.2_sass@1.45.0:
-    resolution: {integrity: sha512-wMffVVdKZRZP/HwW3yttKL8X+IJePz7bUcnGm0vqljffpVwHpjWC3duZtJQHAGvy+wrTjmwU7vkULpZ1dVXY6w==}
+  /vite/2.7.3_sass@1.45.0:
+    resolution: {integrity: sha512-GAY1P+9fLJOju1SRm8+hykVnEXog+E+KXuqqyMBQDriKCUIKzWnPn142yNNhSdf/ixYGYdUa5ce3A8WaEajzGw==}
     engines: {node: '>=12.2.0'}
     hasBin: true
     peerDependencies:

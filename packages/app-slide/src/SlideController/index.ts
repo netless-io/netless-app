@@ -181,10 +181,7 @@ export class SlideController {
       if (type === SLIDE_EVENTS.syncDispatch) {
         this.syncStateOnce();
         log("[Slide] receive", payload);
-        // only emit the event if the slide state is sync-ed
-        if (!this.syncStateOnceFlag) {
-          this.slide.emit(SLIDE_EVENTS.syncReceive, payload);
-        }
+        this.slide.emit(SLIDE_EVENTS.syncReceive, payload);
       }
     }
   };
