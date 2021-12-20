@@ -7,7 +7,7 @@ import RenderedTarget from "scratch-vm/src/sprites/rendered-target";
 import Sprite from "scratch-vm/src/sprites/sprite";
 import MathUtil from "scratch-vm/src/util/math-util";
 import { loadCostume } from "scratch-vm/src/import/load-costume";
-import { loadSound } from "scratch-vm/src/import/load-sound";
+import { loadSound } from "./load-sound";
 
 const CORE_EXTENSIONS = [
   "argument",
