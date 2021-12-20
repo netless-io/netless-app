@@ -3,6 +3,7 @@ import type { RoomState } from "white-web-sdk";
 import type { MountSlideOptions } from "./SlideDocsViewer";
 import type { Attributes } from "./typings";
 import type { AddHooks, FreezableSlide } from "./utils/freezer";
+import { useFreezer } from "./utils/freezer";
 
 import { SideEffectManager } from "side-effect-manager";
 import { ensureAttributes } from "@netless/app-shared";
@@ -78,7 +79,7 @@ const SlideApp: NetlessApp<Attributes> = {
         ...options,
         onPageChanged,
       });
-      apps.set(context.appId, slideController);
+      if (useFreezer) apps.set(context.appId, slideController);
       (logger.apps[context.appId] ||= {}).controller = slideController;
       if (import.meta.env.DEV) {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -125,7 +126,7 @@ const SlideApp: NetlessApp<Attributes> = {
 
     context.emitter.on("destroy", () => {
       log("[Slide]: destroy");
-      apps.delete(context.appId);
+      if (useFreezer) apps.delete(context.appId);
       sideEffect.flushAll();
       if (docsViewer) {
         docsViewer.destroy();

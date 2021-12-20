@@ -6,6 +6,7 @@ export interface FreezableSlide {
   unfreeze: () => void;
 }
 
+export let useFreezer = false;
 export const FreezerLength = 2;
 
 export const apps = {
@@ -63,6 +64,7 @@ export type AddHooks = NonNullable<RegisterParams["addHooks"]>;
  * So that it will automatically freeze the app when it is not in focus.
  */
 export const addHooks: AddHooks = emitter => {
+  useFreezer = true;
   emitter.on("focus", ({ appId }) => {
     apps.focus(appId);
   });
