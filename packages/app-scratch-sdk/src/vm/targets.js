@@ -73,7 +73,7 @@ export class TargetsAdapter {
     }
     this.vm.stopAll();
 
-    const newTargetList = [];
+    const newTargetList = Array(targetListState.length);
 
     await Promise.all(
       targetListState.map(async (targetState, i) => {
@@ -87,7 +87,7 @@ export class TargetsAdapter {
           allTargets
         );
 
-        newTargetList.push(newTarget);
+        newTargetList[i] = newTarget;
       })
     );
 
@@ -102,11 +102,20 @@ export class TargetsAdapter {
     this.vm.runtime.targets.length = targetListState.length;
     this.vm.runtime.executableTargets.length = targetListState.length;
 
+    if (layerOrdering && layerOrdering.length === newTargetList.length) {
+      layerOrdering.forEach((afterIndex, beforeIndex) => {
+        this.vm.runtime.executableTargets[afterIndex] = newTargetList[beforeIndex];
+      });
+    } else {
+      newTargetList.forEach((target, i) => {
+        this.vm.runtime.executableTargets[i] = target;
+      });
+    }
+
     newTargetList.forEach((newTarget, i) => {
       const oldTarget = this.vm.runtime.targets[i];
 
       this.vm.runtime.targets[i] = newTarget;
-      this.vm.runtime.executableTargets[i] = newTarget;
 
       if (newTarget !== oldTarget) {
         targetChanged = true;
@@ -118,14 +127,6 @@ export class TargetsAdapter {
         newTarget.updateAllDrawableProperties();
       }
     });
-
-    if (layerOrdering) {
-      this.vm.runtime.executableTargets.sort((target1, target2) => {
-        const layerOrder1 = layerOrdering[target1.id] || 0;
-        const layerOrder2 = layerOrdering[target2.id] || 0;
-        return layerOrder1 - layerOrder2;
-      });
-    }
 
     if (targetChanged) {
       const edtTarget =
