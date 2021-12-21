@@ -92,8 +92,10 @@ export class StaticDocsViewer {
     // add event listener after scrollTop is set
     this.setupScrollTopEvent();
 
-    this.whiteboardView.callbacks.on("onSizeUpdated", () => {
-      this.renderRatioHeight();
+    this.sideEffect.add(() => {
+      const handler = this.renderRatioHeight.bind(this);
+      this.box.events.on("visual_resize", handler);
+      return () => this.box.events.off("visual_resize", handler);
     });
 
     return this;
