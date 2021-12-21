@@ -1,7 +1,7 @@
 import { createStore } from "redux";
 import { size } from "lodash-es";
 import { Gui } from "../gui";
-import { TargetsBinder } from "../vm/targets";
+import { VMAdapter } from "../vm";
 import { ScratchAdapter } from "./scratch-adapter";
 
 const UPDATE_STATE = "NETLESS/UPDATE_STATE";
@@ -44,11 +44,10 @@ export class ScratchVMAdapter extends ScratchAdapter {
       this.reduxAppStore = app.connectStore("ReduxStore");
 
       this.sideEffect.add(() => {
-        const binder = new TargetsBinder(
-          app,
-          this.reduxStore.getState().scratchGui.vm,
-          this.isAuthor$
-        );
+        const binder = new VMAdapter(app, this.reduxStore, this.isAuthor$);
+        if (app.debug) {
+          window.vmBinder = binder;
+        }
         return () => binder.destroy();
       });
 
