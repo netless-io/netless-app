@@ -6,7 +6,7 @@ const helper = primitiveProps({ [BLOCK_DRAG]: ["scratchGui", "blockDrag"] });
 
 helper.compareAppState = (diff, appState, reduxState) => {
   if (diff[BLOCK_DRAG] && appState[BLOCK_DRAG] !== reduxState.scratchGui.blockDrag) {
-    reduxState.vm.runtime.emitBlockDragUpdate(appState[BLOCK_DRAG]);
+    reduxState.scratchGui.vm.runtime.emitBlockDragUpdate(appState[BLOCK_DRAG]);
   }
 };
 
