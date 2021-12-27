@@ -260,6 +260,7 @@ export class StaticDocsViewer {
           const { clientY } = flattenEvent(ev);
           const { height: wbHeight } = this.whiteboardView.size;
           this.elScrollTo(startTop + (clientY - startY) * (elScrollHeight / wbHeight));
+          this.updateUserScroll();
         };
 
         const trackEnd = (): void => {
