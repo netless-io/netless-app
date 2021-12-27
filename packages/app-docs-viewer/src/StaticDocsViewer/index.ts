@@ -7,6 +7,7 @@ import { SideEffectManager } from "side-effect-manager";
 import type { DocsViewerPage } from "../DocsViewer";
 import { DocsViewer } from "../DocsViewer";
 import { clamp, flattenEvent, preventEvent } from "../utils/helpers";
+import { Stepper } from "./stepper";
 
 const SCROLLBAR_MIN_HEIGHT = 30;
 
@@ -44,6 +45,28 @@ export class StaticDocsViewer {
     this.mountWhiteboard = mountWhiteboard;
     this.onUserScroll = onUserScroll;
 
+    this.pageScrollStepper = new Stepper({
+      onStep: pageScrollTop => {
+        this.pageScrollTo(pageScrollTop);
+      },
+    });
+
+    const debouncedOnUserScroll = this.debounce(
+      () => {
+        this.userScrolling = false;
+        if (this.onUserScroll) {
+          this.onUserScroll(this.pageScrollTop);
+        }
+      },
+      { wait: 80 },
+      "debounce-updateUserScroll"
+    );
+
+    this.updateUserScroll = () => {
+      this.userScrolling = true;
+      debouncedOnUserScroll();
+    };
+
     this.viewer = new DocsViewer({
       readonly,
       box,
@@ -53,6 +76,13 @@ export class StaticDocsViewer {
 
     this.render();
   }
+
+  protected sideEffect = new SideEffectManager();
+
+  protected pageScrollStepper: Stepper;
+  protected userScrolling = false;
+
+  protected scrollbarHeight = SCROLLBAR_MIN_HEIGHT;
 
   protected readonly: boolean;
   protected pages: DocsViewerPage[];
@@ -115,6 +145,7 @@ export class StaticDocsViewer {
 
   public destroy(): void {
     this.sideEffect.flushAll();
+    this.pageScrollStepper.destroy();
     this.onUserScroll = void 0;
     this.unmount();
     this.viewer.destroy();
@@ -122,8 +153,12 @@ export class StaticDocsViewer {
 
   /** Sync scrollTop from writable user */
   public syncPageScrollTop(pageScrollTop: number): void {
-    if (pageScrollTop >= 0 && Math.abs(this.pageScrollTop - pageScrollTop) > 10) {
-      this.pageScrollTo(pageScrollTop);
+    if (
+      !this.userScrolling &&
+      pageScrollTop >= 0 &&
+      Math.abs(this.pageScrollTop - pageScrollTop) > 10
+    ) {
+      this.pageScrollStepper.stepTo(pageScrollTop);
     }
   }
 
@@ -403,23 +438,17 @@ export class StaticDocsViewer {
     }, "whiteboard-size-update");
   }
 
-  protected updateUserScroll(): void {
-    window.requestAnimationFrame(() => {
-      if (this.onUserScroll) {
-        this.onUserScroll(this.pageScrollTop);
-      }
-    });
-  }
-
   protected debounce<ArgumentsType extends unknown[], ReturnType>(
     fn: (...args: ArgumentsType) => ReturnType,
     options: Options,
     disposerID?: string
   ): DebouncedFunction<ArgumentsType, ReturnType | undefined> {
     const dFn = debounceFn(fn, options);
-    this.sideEffect.add(() => () => dFn.cancel(), disposerID);
+    this.sideEffect.addDisposer(() => dFn.cancel(), disposerID);
     return dFn;
   }
+
+  protected updateUserScroll: () => void;
 
   protected wrapClassName(className: string): string {
     return "netless-app-docs-viewer-static-" + className;
@@ -428,10 +457,6 @@ export class StaticDocsViewer {
   protected onNewPageIndex = (index: number): void => {
     this.scrollToPage(index);
   };
-
-  protected sideEffect = new SideEffectManager();
-
-  protected scrollbarHeight = SCROLLBAR_MIN_HEIGHT;
 
   protected setScrollbarHeight(elScrollbarHeight: number): void {
     elScrollbarHeight = clamp(
