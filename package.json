@@ -4,15 +4,15 @@
   "devDependencies": {
     "@commitlint/cli": "^15.0.0",
     "@commitlint/config-conventional": "^15.0.0",
-    "@netless/window-manager": "^0.3.15",
+    "@netless/window-manager": "^0.3.17",
     "@sveltejs/vite-plugin-svelte": "^1.0.0-next.32",
     "@tsconfig/svelte": "^3.0.0",
-    "@types/node": "^17.0.1",
+    "@types/node": "^17.0.5",
     "@types/rollup-plugin-peer-deps-external": "^2.2.1",
-    "@typescript-eslint/eslint-plugin": "^5.7.0",
-    "@typescript-eslint/parser": "^5.7.0",
+    "@typescript-eslint/eslint-plugin": "^5.8.1",
+    "@typescript-eslint/parser": "^5.8.1",
     "cross-env": "^7.0.3",
-    "esbuild": "^0.14.7",
+    "esbuild": "^0.14.9",
     "eslint": "^8.5.0",
     "eslint-config-prettier": "^8.3.0",
     "eslint-plugin-svelte3": "^3.2.1",
@@ -25,8 +25,8 @@
     "sass": "^1.45.0",
     "svelte": "^3.44.3",
     "typescript": "^4.5.4",
-    "vite": "^2.7.5",
-    "white-web-sdk": "2.15.13"
+    "vite": "^2.7.9",
+    "white-web-sdk": "2.15.14"
   },
   "scripts": {
     "prettier": "prettier --write .",
