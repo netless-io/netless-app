@@ -2,7 +2,16 @@ import { svelte } from "@sveltejs/vite-plugin-svelte";
 import peerDepsExternal from "rollup-plugin-peer-deps-external";
 import type { LibraryFormats, Plugin, UserConfigFn } from "vite";
 import { defineConfig } from "vite";
+import { existsSync } from "fs";
 import path from "path";
+
+function findPackageJSON(entry: string): { version: string } | undefined {
+  const dir = path.dirname(entry);
+  if (dir === entry) return;
+  const file = path.resolve(dir, "package.json");
+  if (existsSync(file)) return require(file);
+  return findPackageJSON(dir);
+}
 
 export function createViteConfig({
   entry = path.resolve(process.cwd(), "src/index.ts"),
@@ -26,7 +35,12 @@ export function createViteConfig({
       .map((e: string) => e[0].toUpperCase() + e.slice(1))
       .join("");
 
+    const pkg = findPackageJSON(entry);
+
     return {
+      define: {
+        __APP_VERSION__: pkg ? JSON.stringify(pkg.version) : "undefined",
+      },
       plugins: [
         svelte({
           emitCss: false,
