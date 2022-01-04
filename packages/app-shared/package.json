@@ -20,6 +20,7 @@
   ],
   "scripts": {
     "build": "rimraf ./dist && tsc --declaration --outDir dist",
+    "build:dev": "rimraf ./dist && tsc --declaration --outDir dist",
     "cleanup": "rimraf ./dist"
   },
   "peerDependencies": {
