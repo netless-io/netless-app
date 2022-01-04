@@ -79,10 +79,16 @@ export class SlidePreviewer {
    * Use this method to re-register hotkeys.
    *
    * @example
-   * previewer.registerHotKeys(myWindow)
+   * previewer.registerHotKeys(windowLike)
    */
-  public registerHotKeys(window: Window) {
-    this.sideEffect.addEventListener(window, "keydown", this.hotkeyListener, undefined, "hotkey");
+  public registerHotKeys(windowLike: Window) {
+    this.sideEffect.addEventListener(
+      windowLike,
+      "keydown",
+      this.hotkeyListener,
+      undefined,
+      "hotkey"
+    );
   }
 
   private hotkeyListener = (ev: KeyboardEvent) => {
