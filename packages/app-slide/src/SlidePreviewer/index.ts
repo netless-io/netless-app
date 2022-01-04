@@ -71,26 +71,39 @@ export class SlidePreviewer {
 
   public render() {
     this.viewer.$content.appendChild(this.renderSlideContainer());
-    this.sideEffect.addEventListener(window, "keydown", ev => {
-      if (this.slide) {
-        switch (ev.key) {
-          case "ArrowUp":
-          case "ArrowLeft": {
-            this.slide.prevStep();
-            break;
-          }
-          case "ArrowRight":
-          case "ArrowDown": {
-            this.slide.nextStep();
-            break;
-          }
-          default: {
-            break;
-          }
+    this.registerHotKeys(window);
+  }
+
+  /**
+   * In case you have a different window -- for example, in electron.
+   * Use this method to re-register hotkeys.
+   *
+   * @example
+   * previewer.registerHotKeys(myWindow)
+   */
+  public registerHotKeys(window: Window) {
+    this.sideEffect.addEventListener(window, "keydown", this.hotkeyListener, undefined, "hotkey");
+  }
+
+  private hotkeyListener = (ev: KeyboardEvent) => {
+    if (this.slide) {
+      switch (ev.key) {
+        case "ArrowUp":
+        case "ArrowLeft": {
+          this.slide.prevStep();
+          break;
+        }
+        case "ArrowRight":
+        case "ArrowDown": {
+          this.slide.nextStep();
+          break;
+        }
+        default: {
+          break;
         }
       }
-    });
-  }
+    }
+  };
 
   public mount(taskId: string, url: string) {
     this.target.appendChild(this.renderStyle());
