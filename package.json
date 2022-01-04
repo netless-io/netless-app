@@ -34,6 +34,7 @@
     "preinstall": "npx only-allow pnpm",
     "build-all": "pnpm build --filter={packages}...",
     "build-all:dev": "pnpm build:dev --filter={packages}...",
+    "build-all:ci": "pnpm build:dev --aggregate-output --filter={packages}...",
     "dev": "pnpm dev --filter playground"
   }
 }
