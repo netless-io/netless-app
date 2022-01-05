@@ -122,6 +122,7 @@ export class SlidePreviewer {
       mode: "local",
       resize: true,
       controller: this.debug,
+      enableGlobalClick: true,
       renderOptions: {
         minFPS: 25,
         maxFPS: 30,
