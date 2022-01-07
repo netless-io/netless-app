@@ -1,0 +1,68 @@
+@import "../DocsViewer/variables.scss";
+
+$namespace: "netless-app-docs-viewer-static";
+
+$static-scrollbar-size: 8px;
+$static-scrollbar-min-length: 30px;
+$static-scrollbar-color: rgba(68, 78, 96, 0.4);
+$static-scrollbar-color-hover: rgba(68, 78, 96, 0.5);
+$static-scrollbar-color-active: rgba(68, 78, 96, 0.6);
+
+.#{$namespace}-scrollbar {
+  position: absolute;
+  top: 0;
+  right: 0;
+  z-index: 2147483647;
+  width: $static-scrollbar-size;
+  min-height: $static-scrollbar-min-length;
+  margin: 0;
+  padding: 0;
+  border: none;
+  outline: none;
+  border-radius: $static-scrollbar-size * 0.5;
+  background: $static-scrollbar-color;
+  box-shadow: 1px 1px 8px rgba(255, 255, 255, 0.7);
+  opacity: 0;
+  transition: background 0.4s, opacity 0.4s 3s, transform 0.2s;
+  will-change: transform, height;
+  user-select: none;
+
+  &.#{$namespace}-scrollbar-dragging {
+    background: $static-scrollbar-color-active;
+    opacity: 1;
+    transition: background 0.4s, opacity 0.4s 3s !important;
+  }
+
+  &:hover,
+  &:focus {
+    background: $static-scrollbar-color-hover;
+  }
+
+  &:active {
+    background: $static-scrollbar-color-active;
+  }
+}
+
+.#{$docs-viewer-namespace}-content {
+  &:hover {
+    .#{$namespace}-scrollbar {
+      opacity: 1;
+      transition: background 0.4s, opacity 0.4s, transform 0.2s;
+    }
+  }
+}
+
+.#{$docs-viewer-namespace}-readonly {
+  .#{$namespace}-scrollbar {
+    display: none;
+  }
+}
+
+.#{$namespace}-pages {
+  &:hover {
+    .#{$namespace}-scrollbar {
+      opacity: 1;
+      transition: background 0.4s, opacity 0.4s, transform 0.2s;
+    }
+  }
+}
