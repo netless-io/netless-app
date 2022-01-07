@@ -1,5 +1,5 @@
 import type { AnimationMode, ReadonlyTeleBox } from "@netless/window-manager";
-import type { View, Size } from "white-web-sdk";
+import type { View, Size, Camera } from "white-web-sdk";
 import type { DebouncedFunction, Options } from "debounce-fn";
 import debounceFn from "debounce-fn";
 import { SideEffectManager } from "side-effect-manager";
@@ -38,13 +38,13 @@ export class StaticDocsViewer {
     this.box = box;
     this.pages = pages;
     this.mountWhiteboard = mountWhiteboard;
-    this.onUserScroll = onUserScroll;
+    this._onUserScroll = onUserScroll;
 
     const debouncedOnUserScroll = this.debounce(
       () => {
         this.userScrolling = false;
-        if (this.onUserScroll) {
-          this.onUserScroll(this.pageRenderer.pagesScrollTop);
+        if (this._onUserScroll) {
+          this._onUserScroll(this.pageRenderer.pagesScrollTop);
         }
       },
       { wait: 80 },
@@ -111,7 +111,7 @@ export class StaticDocsViewer {
   protected whiteboardView: View;
   protected mountWhiteboard: (dom: HTMLDivElement) => void;
 
-  public onUserScroll?: (pageScrollTop: number) => void;
+  public _onUserScroll?: (pageScrollTop: number) => void;
 
   public viewer: DocsViewer;
 
@@ -120,7 +120,7 @@ export class StaticDocsViewer {
   public mount(): this {
     this.viewer.mount();
 
-    this.setupWhiteboardCamera();
+    this.setupScrollListener();
 
     this.sideEffect.add(() => {
       const handler = this.renderRatioHeight.bind(this);
@@ -154,7 +154,7 @@ export class StaticDocsViewer {
   public destroy(): void {
     this.sideEffect.flushAll();
     this.pageScrollStepper.destroy();
-    this.onUserScroll = void 0;
+    this._onUserScroll = void 0;
     this.unmount();
     this.viewer.destroy();
     this.pageRenderer.destroy();
@@ -277,8 +277,6 @@ export class StaticDocsViewer {
       ),
       animationMode: "immediately" as AnimationMode,
     });
-    this.pageRenderer.pagesScrollTo(pageScrollTop);
-    this.scrollbar.pagesScrollTo(pageScrollTop);
   }
 
   protected scrollToPage(index: number): void {
@@ -291,7 +289,24 @@ export class StaticDocsViewer {
     }
   }
 
-  protected setupWhiteboardCamera(): void {
+  protected setupScrollListener(): void {
+    this.sideEffect.add(() => {
+      const handleCameraUpdate = (camera: Camera) => {
+        const { width: wbWidth, height: wbHeight } = this.whiteboardView.size;
+        if (wbWidth <= 0 || wbHeight <= 0) {
+          return;
+        }
+
+        const pagesScrollTop =
+          camera.centerY - this.pageRenderer.containerHeight / this.pageRenderer.scale / 2;
+
+        this.pageRenderer.pagesScrollTo(pagesScrollTop);
+        this.scrollbar.pagesScrollTo(pagesScrollTop);
+      };
+      this.whiteboardView.callbacks.on("onCameraUpdated", handleCameraUpdate);
+      return () => this.whiteboardView.callbacks.off("onCameraUpdated", handleCameraUpdate);
+    });
+
     this.sideEffect.add(() => {
       const handleSizeUpdate = ({ width: wbWidth, height: wbHeight }: Size): void => {
         if (wbWidth <= 0 || wbHeight <= 0) {
@@ -326,6 +341,55 @@ export class StaticDocsViewer {
         this.whiteboardView.callbacks.off("onSizeUpdated", handleSizeUpdate);
       };
     }, "whiteboard-size-update");
+
+    this.sideEffect.addEventListener(
+      window,
+      "keyup",
+      ev => {
+        if (this.readonly || !this.box.focus || this.box.minimized) {
+          return;
+        }
+        let newPageScrollTop: number | null = null;
+        switch (ev.key) {
+          case "PageDown": {
+            newPageScrollTop =
+              this.pageRenderer.pagesScrollTop +
+              this.pageRenderer.containerHeight / this.pageRenderer.scale;
+            break;
+          }
+          case "PageUp": {
+            newPageScrollTop =
+              this.pageRenderer.pagesScrollTop -
+              this.pageRenderer.containerHeight / this.pageRenderer.scale;
+            break;
+          }
+          case "ArrowDown": {
+            newPageScrollTop =
+              this.pageRenderer.pagesScrollTop +
+              this.pageRenderer.containerHeight / 4 / this.pageRenderer.scale;
+            break;
+          }
+          case "ArrowUp": {
+            newPageScrollTop =
+              this.pageRenderer.pagesScrollTop -
+              this.pageRenderer.containerHeight / 4 / this.pageRenderer.scale;
+            break;
+          }
+          default:
+            break;
+        }
+        if (newPageScrollTop !== null) {
+          if (this._onUserScroll) {
+            // this will trigger stepper for smooth scrolling effect
+            this._onUserScroll(newPageScrollTop);
+          } else {
+            this.pageScrollTo(newPageScrollTop);
+            this.updateUserScroll();
+          }
+        }
+      },
+      { capture: true }
+    );
   }
 
   protected debounce<ArgumentsType extends unknown[], ReturnType>(
