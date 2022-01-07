@@ -26,7 +26,10 @@ export class Stepper {
     this.onStep = config.onStep;
   }
 
-  public stepTo(target: number) {
+  public stepTo(target: number, start?: number) {
+    if (this.paused && start != null) {
+      this.current = start;
+    }
     this.paused = false;
     this.target = target;
     this.onStep(this.current, this);
