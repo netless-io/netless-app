@@ -78,17 +78,11 @@ function setupStaticDocsViewer(
   box: ReadonlyTeleBox,
   pages: DocsViewerPage[]
 ): void {
-  const pagesSize = {
-    width: pages[0].width,
-    height: pages.reduce((height, page) => height + page.height * (pages[0].width / page.width), 0),
-  };
-
   const docsViewer = new StaticDocsViewer({
     whiteboardView,
     readonly: box.readonly,
     box,
     pages: pages,
-    pagesSize,
     pageScrollTop: context.getAttributes()?.pageScrollTop,
     mountWhiteboard: context.mountView.bind(context),
     onUserScroll: pageScrollTop => {

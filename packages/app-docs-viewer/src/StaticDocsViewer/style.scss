@@ -7,12 +7,6 @@ $namespace: "netless-app-docs-viewer-static";
   position: relative;
   height: 100%;
   user-select: none;
-
-  &:hover {
-    .#{$namespace}-scrollbar {
-      opacity: 1;
-    }
-  }
 }
 
 .#{$namespace}-page {
@@ -30,58 +24,4 @@ $namespace: "netless-app-docs-viewer-static";
   height: 100%;
   z-index: 100;
   overflow: hidden;
-}
-
-$static-scrollbar-size: 8px;
-$static-scrollbar-min-length: 30px;
-$static-scrollbar-color: rgba(68, 78, 96, 0.1);
-$static-scrollbar-color-hover: rgba(68, 78, 96, 0.2);
-$static-scrollbar-color-active: rgba(68, 78, 96, 0.2);
-
-.#{$namespace}-scrollbar {
-  position: absolute;
-  top: 0;
-  right: 0;
-  z-index: 2147483647;
-  width: $static-scrollbar-size;
-  min-height: $static-scrollbar-min-length;
-  margin: 0;
-  padding: 0;
-  border: none;
-  outline: none;
-  border-radius: $static-scrollbar-size * 0.5;
-  background: $static-scrollbar-color;
-  opacity: 0;
-  transition: background 0.4s, opacity 0.4s, transform 0.2s;
-  will-change: transform, height;
-  user-select: none;
-
-  &.#{$namespace}-scrollbar-dragging {
-    background: $static-scrollbar-color-active;
-    opacity: 1;
-    transition: background 0.4s, opacity 0.4s;
-  }
-
-  &:hover,
-  &:focus {
-    background: $static-scrollbar-color-hover;
-  }
-
-  &:active {
-    background: $static-scrollbar-color-active;
-  }
-}
-
-.#{$docs-viewer-namespace}-content {
-  &:hover {
-    .#{$namespace}-scrollbar {
-      opacity: 1;
-    }
-  }
-}
-
-.#{$docs-viewer-namespace}-readonly {
-  .#{$namespace}-scrollbar {
-    display: none;
-  }
 }
