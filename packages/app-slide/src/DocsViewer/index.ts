@@ -298,6 +298,9 @@ export class DocsViewer {
         $pageNumberInput.disabled = true;
       }
       this.$pageNumberInput = $pageNumberInput;
+      this.sideEffect.addEventListener($pageNumberInput, "focus", () => {
+        $pageNumberInput.select();
+      });
       this.sideEffect.addEventListener($pageNumberInput, "change", () => {
         if (this.readonly) {
           return;
