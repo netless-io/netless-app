@@ -2,13 +2,7 @@
 
 Official Apps for the Agora Interactive Whiteboard.
 
-## Develop
-
-### Env:
-
-Add `packages/playground/.env`. See `packages/playground/.env.example` for reference.
-
-### Setup:
+## Installation:
 
 > If you don't have pnpm installed:
 >
@@ -21,40 +15,19 @@ Clone or fork this project, at project root run:
 ```bash
 pnpm i
 pnpm build-all
+```
+
+## Development
+
+```bash
 pnpm dev
 ```
 
-### Useful commands:
+## Env:
 
-```bash
-# install dev dependencies in top-level package.json
-pnpm add -DW vite
+By default the `playground` demo uses a shared [Agora Whiteboard](https://www.agora.io/en/products/interactive-whiteboard/) account.
 
-# install dependencies to some package
-pnpm add lodash --filter playground
-
-# install packages/app-hello-world to packages/playground
-pnpm add @netless/app-hello-world --workspace --filter playground
-# it updates packages/app/package.json
-# dependencies -> @netless/app-hello-world -> "workspace:^0.1.0"
-
-'learn more about workspace at https://pnpm.io/workspaces'
-
-# update dependencies (-L = latest, -i = interactive)
-pnpm up -Li --recursive
-
-# start playground
-pnpm dev --filter playground
-
-# build all packages
-pnpm build -r --filter ./packages
-
-# build one package
-pnpm build --filter @netless/app-hello-world
-
-# publish one package (note: it updates "workspace:..." in package.json)
-pnpm publish --filter @netless/app-hello-world
-```
+If you wish to use your own please create a new env file `packages/playground/.env.local`. See `packages/playground/.env.example` for reference.
 
 ## License
 
