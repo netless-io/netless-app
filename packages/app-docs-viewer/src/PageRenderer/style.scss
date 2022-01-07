@@ -1,0 +1,21 @@
+.page-renderer-pages-container {
+  position: relative;
+  overflow: hidden;
+}
+
+.page-renderer-page {
+  position: absolute;
+  top: 0;
+  left: 0;
+  will-change: transform;
+  background-position: center;
+  background-size: cover;
+  background-repeat: no-repeat;
+}
+
+.page-renderer-page-img {
+  display: block;
+  width: 100%;
+  height: auto;
+  user-select: none;
+}
