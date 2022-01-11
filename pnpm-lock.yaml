@@ -6,7 +6,7 @@ importers:
     specifiers:
       '@commitlint/cli': ^15.0.0
       '@commitlint/config-conventional': ^15.0.0
-      '@netless/window-manager': ^0.3.18
+      '@netless/window-manager': 0.4.0-canary.8
       '@sveltejs/vite-plugin-svelte': ^1.0.0-next.32
       '@tsconfig/svelte': ^3.0.0
       '@types/node': ^17.0.5
@@ -32,7 +32,7 @@ importers:
     devDependencies:
       '@commitlint/cli': 15.0.0
       '@commitlint/config-conventional': 15.0.0
-      '@netless/window-manager': 0.3.18_white-web-sdk@2.15.14
+      '@netless/window-manager': 0.4.0-canary.8_white-web-sdk@2.15.14
       '@sveltejs/vite-plugin-svelte': 1.0.0-next.32_svelte@3.44.3+vite@2.7.9
       '@tsconfig/svelte': 3.0.0
       '@types/node': 17.0.5
@@ -61,8 +61,10 @@ importers:
 
   packages/app-countdown:
     specifiers:
+      classnames: ^2.3.1
       preact: ^10.6.4
     devDependencies:
+      classnames: 2.3.1
       preact: 10.6.4
 
   packages/app-docs-viewer:
@@ -445,8 +447,8 @@ packages:
       state-local: 1.0.7
     dev: true
 
-  /@netless/app-docs-viewer/0.1.26:
-    resolution: {integrity: sha512-pXyxT8km6yWzjOLgUaRId/14oOcHago5btG6WPFeaSNX4IYopAUe8wd87oG4bUK6zo+jBO1E17+AYzPWaEgBTw==}
+  /@netless/app-docs-viewer/0.2.0:
+    resolution: {integrity: sha512-FjoPETCbznPtwm1ESAhAwtjm2bUyC9ccAdbpw6ZmNjbivLumLoQy+kRbzEUzOyOfZwwuu3qcwjw1NlrNyMYfug==}
     dependencies:
       debounce-fn: 5.1.0
       vanilla-lazyload: 17.5.0
@@ -470,8 +472,8 @@ packages:
       localforage: 1.10.0
     dev: true
 
-  /@netless/telebox-insider/0.2.17:
-    resolution: {integrity: sha512-+nTLm/LM4NNso4epdLhtTfuYDx+J8iMwX41vSUlN6pEjMOCl4HFv8paEjeYT8WYywT4gd+vHG1n7vsx6KMRJZw==}
+  /@netless/telebox-insider/0.2.18:
+    resolution: {integrity: sha512-H0xOW3brHEUcPn4/m2ws/3n/5xL9z3J/Q6BEpud1t8FiAKxVoXU6bU/1fCpzFRh9dM+5XQnMH1YY7HXRYfJLtw==}
     dependencies:
       '@types/shallowequal': 1.1.1
       eventemitter3: 4.0.7
@@ -481,18 +483,19 @@ packages:
       value-enhancer: 0.0.8
     dev: true
 
-  /@netless/window-manager/0.3.18_white-web-sdk@2.15.14:
-    resolution: {integrity: sha512-kAi31RJk4fNSxEiXyLXEUJiJkexGIDZm0Yjcmar2Rr5LlPb5DlE0c9r1JfiWNnpFy8xJjM4Y68HV/GR61f6wkw==}
+  /@netless/window-manager/0.4.0-canary.8_white-web-sdk@2.15.14:
+    resolution: {integrity: sha512-ugjBG/zj/NrSh61K7SnHgYKRI/iqBCRw65vbT+UUwxAikHtSPt51caAJ8zR5fVTygvKJl94Mgo4mzVtXb9FOUQ==}
     peerDependencies:
       white-web-sdk: ^2.13.16
     dependencies:
       '@juggle/resize-observer': 3.3.1
-      '@netless/app-docs-viewer': 0.1.26
+      '@netless/app-docs-viewer': 0.2.0
       '@netless/app-media-player': 0.1.0-beta.5
-      '@netless/telebox-insider': 0.2.17
+      '@netless/telebox-insider': 0.2.18
       emittery: 0.9.2
       lodash: 4.17.21
       p-retry: 4.6.1
+      side-effect-manager: 0.1.5
       uuid: 7.0.3
       video.js: 7.17.0
       white-web-sdk: 2.15.14
@@ -997,6 +1000,10 @@ packages:
       readdirp: 3.6.0
     optionalDependencies:
       fsevents: 2.3.2
+    dev: true
+
+  /classnames/2.3.1:
+    resolution: {integrity: sha512-OlQdbZ7gLfGarSqxesMesDa5uz7KFbID8Kpq/SxIoNGDqY8lSYs0D+hhtBXhcdB3rcbXArFr7vlHheLk1voeNA==}
     dev: true
 
   /cliui/7.0.4:
