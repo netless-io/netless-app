@@ -107,8 +107,10 @@ const EmbeddedPage: NetlessApp<Attributes, void, AppOptions> = {
             disposeListenUpdated = null;
           }
           const props = getProps();
-          disposeListenUpdated = () => context.objectUtils.unlistenUpdated(props, callback);
-          context.objectUtils.listenUpdated(props, callback);
+          if (isObj(props)) {
+            disposeListenUpdated = () => context.objectUtils.unlistenUpdated(props, callback);
+            context.objectUtils.listenUpdated(props, callback);
+          }
         },
         { fireImmediately: true }
       );
