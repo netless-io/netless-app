@@ -1,0 +1,29 @@
+@import "../TimeCell/style.scss";
+
+.countdown-clock {
+  display: flex;
+  padding: 5px;
+
+  > * {
+    padding: 0 5px;
+  }
+}
+
+.countdown-clock-divider {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 0 1px;
+
+  &::before,
+  &::after {
+    content: "";
+    display: block;
+    width: 8px;
+    height: 8px;
+    margin: 6px 0;
+    background-color: black;
+    border-radius: 50%;
+  }
+}
