@@ -12,8 +12,8 @@ const cwd = process.cwd();
 
 const TEMPLATES = [
   {
-    name: "svelte",
-    color: lightRed,
+    name: "vanilla",
+    color: yellow,
   },
 ];
 
