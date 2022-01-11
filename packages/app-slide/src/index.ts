@@ -85,7 +85,15 @@ const SlideApp: NetlessApp<Attributes> = {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (window as any).slideController = slideController;
       }
-      slideController.readyPromise.then(options.onReady);
+      slideController.readyPromise.then(options.onReady).then(() => {
+        const room = context.getRoom();
+        let synced = false;
+        if (room && context.getIsWritable()) {
+          syncSceneWithSlide(room, context, slideController.slide, baseScenePath);
+          synced = true;
+        }
+        log("[Slide] page to", slideController.slide.slideState.currentSlideIndex, synced);
+      });
       return slideController;
     };
 
