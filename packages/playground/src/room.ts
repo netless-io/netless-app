@@ -4,8 +4,8 @@ import { WindowManager } from "@netless/window-manager";
 import type { Room } from "white-web-sdk";
 import { ApplianceNames, DeviceType, WhiteWebSdk } from "white-web-sdk";
 
-import type { RoomInfo } from "./common";
-import { store, clearQueryString, createRoom, env, persistStore } from "./common";
+import { store, type RoomInfo } from "./common";
+import { clearQueryString, createRoom, env, persistStore } from "./common";
 
 export const sdk = new WhiteWebSdk({
   appIdentifier: env.VITE_APPID,
@@ -105,8 +105,8 @@ export async function reset({
   }
 }
 
-export function init(container: HTMLElement): void {
-  WindowManager.mount({
+export async function init(container: HTMLElement): Promise<void> {
+  const manager = await WindowManager.mount({
     room,
     container,
     chessboard: false,
@@ -114,8 +114,8 @@ export function init(container: HTMLElement): void {
     debug: true,
     prefersColorScheme: "auto",
   });
-  window.manager = room.getInvisiblePlugin(WindowManager.kind) as WindowManager;
-  manager.switchMainViewToWriter();
+  window.manager = manager;
+  await manager.switchMainViewToWriter();
   const tool = store.getItem("currentApplianceName") as ApplianceNames;
   if (tool) {
     manager.mainView.setMemberState({ currentApplianceName: tool });
