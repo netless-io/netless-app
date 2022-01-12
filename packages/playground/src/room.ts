@@ -72,8 +72,6 @@ export async function joinRoom(info: RoomInfo): Promise<Room> {
     },
   });
   window.room = room;
-  const tool = store.getItem("currentApplianceName") as ApplianceNames;
-  if (tool) room.setMemberState({ currentApplianceName: tool });
   clearQueryString();
   return room;
 }
@@ -118,6 +116,10 @@ export function init(container: HTMLElement): void {
   });
   window.manager = room.getInvisiblePlugin(WindowManager.kind) as WindowManager;
   manager.switchMainViewToWriter();
+  const tool = store.getItem("currentApplianceName") as ApplianceNames;
+  if (tool) {
+    manager.mainView.setMemberState({ currentApplianceName: tool });
+  }
 }
 
 export const tools = Object.values(ApplianceNames);
