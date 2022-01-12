@@ -106,6 +106,20 @@ export class ScratchWorkspaceAdapter extends ScratchAdapter {
   }
 
   syncMetrics(workspace, workspaceStore) {
+    // disable workspace auto resize
+    this.sideEffect.add(() => {
+      const oldFn = this.workspace.resizeContents;
+      const isAuthor$ = this.isAuthor$;
+      this.workspace.resizeContents = function (...args) {
+        if (isAuthor$.value) {
+          oldFn.apply(this, args);
+        }
+      };
+      return () => {
+        this.workspace.resizeContents = oldFn;
+      };
+    });
+
     if (has(workspaceStore.state, "scrollX") || has(workspaceStore.state, "scrollY")) {
       applyWorkspaceScroll();
     } else if (this.isAuthor$.value) {
@@ -154,10 +168,8 @@ export class ScratchWorkspaceAdapter extends ScratchAdapter {
 
     function applyWorkspaceScroll() {
       const metrics = workspace.getMetrics();
-      if (!workspace.startDragMetrics) {
-        // make workspace.scroll work
-        workspace.startDragMetrics = metrics;
-      }
+      // make workspace.scroll work
+      workspace.startDragMetrics = metrics;
       const state = workspaceStore.state;
       if (has(state, "scrollX") || has(state, "scrollY")) {
         workspace.scroll(

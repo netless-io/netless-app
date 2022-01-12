@@ -4,7 +4,7 @@ import type { Attributes } from "./src";
 const demo: { title: string; src: string }[] = [
   {
     title: "Scratch",
-    src: "http://192.168.31.195:8601/",
+    src: "http://localhost:8601/",
     // scenePath: `/embedded-page/${title}`,
   },
 ];
