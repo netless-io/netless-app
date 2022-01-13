@@ -17,11 +17,11 @@ pnpm i
 pnpm build-all
 ```
 
-## Env:
+## Environment
 
 By default the `playground` demo uses a shared [Agora Whiteboard](https://www.agora.io/en/products/interactive-whiteboard/) account.
 
-If you wish to use your own please create a new env file `packages/playground/.env.local`. See `packages/playground/.env.example` for reference.
+We recommend you use your own. Please register a new account and create a new env file `packages/playground/.env.local`. See `packages/playground/.env.example` for reference.
 
 ## Development
 
