@@ -34,6 +34,42 @@ const <%- camelName %> = {
     /* ------------------------------------------------- *\
      * Replayable Synced Storage
     \* ------------------------------------------------- */
+    // Create a storage under "counter" namespace with default value.
+    // You can create multiple storages under the same namespace.
+    // They will share the same synced storage.
+    const storage1 = context.createStorage("counter", { count: 1 });
+
+    // Access states
+    log("Storage 'counter' state", storage1.state.count); // 1
+
+    // Listen to state changes
+    const storage1StateListenerDisposer = storage1.addStateChangedListener(diff => {
+      if (diff.count) {
+        log(diff.count.newValue, diff.count.oldValue);
+      }
+    });
+
+    const sea = {
+      a: 1,
+      b: false
+    };
+
+    // Only writable user can setState
+    if (context.getIsWritable()) {
+      // Similar to React setState, unchanged values will be filtered by a root-level shallow-compare.
+      storage1.setState({
+        count: 2,
+        disabled: true,
+        // Note that `setState` only performs root-level shallow-compare.
+        // Object `sea` will be compared with `===`.
+        // Keys of `sea` will not be compared!
+        sea
+      });
+    }
+
+    // There is also a default `context.storage` which handles the `attributes`
+    // option from `WindowManager.addApp` config.
+    // This is useful if you want initial values from the client who creates the app.
     context.storage.ensureState({ count: 0 });
 
     log("Storage state", context.storage.state);
@@ -59,7 +95,9 @@ const <%- camelName %> = {
       context.dispatchMagixEvent("ping", 22);
     }
 
+    // Remember to remove unused listener
     context.emitter.on("destroy", () => {
+      storage1StateListenerDisposer();
       stateListenerDisposer();
       magixListenerDisposer();
     });
