@@ -153,9 +153,6 @@ importers:
       side-effect-manager: 0.1.5
       yjs: 13.5.13
 
-  packages/app-my-demo:
-    specifiers: {}
-
   packages/app-paint:
     specifiers:
       '@netless/app-shared': workspace:*
