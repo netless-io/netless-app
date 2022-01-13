@@ -1,6 +1,6 @@
 import styles from "./style.scss?inline";
 
-import type { NetlessApp, AppContext, ReadonlyTeleBox, Room } from "@netless/window-manager";
+import type { NetlessApp, AppContext, ReadonlyTeleBox } from "@netless/window-manager";
 import type { View, Size } from "white-web-sdk";
 import { StaticDocsViewer } from "./StaticDocsViewer";
 import type { DocsViewerPage } from "./DocsViewer";
@@ -118,16 +118,11 @@ function setupDynamicDocsViewer(
 ): void {
   whiteboardView.disableCameraTransform = true;
 
-  const displayer = context.getDisplayer();
-
   const docsViewer = new DynamicDocsViewer({
-    displayer,
+    context,
     whiteboardView,
-    getRoom: () => (context.getIsWritable() ? (context.getDisplayer() as Room) : undefined),
-    readonly: box.readonly,
     box,
     pages,
-    mountWhiteboard: context.mountView.bind(context),
   }).mount();
 
   context.mountView(docsViewer.$whiteboardView);
@@ -155,12 +150,4 @@ function setupDynamicDocsViewer(
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (window as any).docsViewer = docsViewer;
   }
-
-  context.emitter.on("sceneStateChange", sceneState => {
-    docsViewer.jumpToPage(sceneState.index);
-  });
-
-  box.events.on("readonly", readonly => {
-    docsViewer.setReadonly(readonly);
-  });
 }

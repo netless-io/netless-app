@@ -2,8 +2,9 @@ import type {
   ReadonlyTeleBox,
   View,
   Displayer,
-  Room,
   AnimationMode,
+  AppContext,
+  SceneState,
 } from "@netless/window-manager";
 import { SideEffectManager } from "side-effect-manager";
 import type { DocsViewerPage } from "../DocsViewer";
@@ -11,35 +12,22 @@ import { DocsViewer } from "../DocsViewer";
 import { clamp } from "../utils/helpers";
 
 export interface DynamicDocsViewerConfig {
-  displayer: Displayer;
+  context: AppContext;
   whiteboardView: View;
-  getRoom(): Room | undefined;
-  readonly: boolean;
   box: ReadonlyTeleBox;
   pages: DocsViewerPage[];
-  mountWhiteboard: (dom: HTMLDivElement) => void;
 }
 
 export class DynamicDocsViewer {
-  public constructor({
-    displayer,
-    whiteboardView,
-    getRoom,
-    readonly,
-    box,
-    pages,
-    mountWhiteboard,
-  }: DynamicDocsViewerConfig) {
+  public constructor({ context, whiteboardView, box, pages }: DynamicDocsViewerConfig) {
+    this.context = context;
     this.whiteboardView = whiteboardView;
-    this.readonly = readonly;
     this.box = box;
     this.pages = pages;
-    this.displayer = displayer;
-    this.getWhiteboardRoom = getRoom;
-    this.mountWhiteboard = mountWhiteboard;
+    this.displayer = context.getDisplayer();
 
     this.viewer = new DocsViewer({
-      readonly,
+      readonly: !context.getIsWritable(),
       box,
       pages,
       onNewPageIndex: this.onNewPageIndex,
@@ -47,17 +35,31 @@ export class DynamicDocsViewer {
     });
 
     this.render();
+
+    this.sideEffect.add(() => {
+      const handler = (isWritable: boolean): void => {
+        this.viewer.setReadonly(!isWritable);
+      };
+      this.context.emitter.on("writableChange", handler);
+      return () => this.context.emitter.off("writableChange", handler);
+    });
+
+    this.sideEffect.add(() => {
+      const handler = (sceneState: SceneState) => {
+        this.jumpToPage(sceneState.index);
+      };
+      this.context.emitter.on("sceneStateChange", handler);
+      return () => this.context.emitter.off("sceneStateChange", handler);
+    });
   }
 
   protected sideEffect = new SideEffectManager();
 
-  protected readonly: boolean;
+  protected context: AppContext;
   protected pages: DocsViewerPage[];
   protected box: ReadonlyTeleBox;
   protected whiteboardView: View;
   protected displayer: Displayer;
-  protected getWhiteboardRoom: () => Room | undefined;
-  protected mountWhiteboard: (dom: HTMLDivElement) => void;
 
   public viewer: DocsViewer;
 
@@ -88,14 +90,6 @@ export class DynamicDocsViewer {
     return this;
   }
 
-  public setReadonly(readonly: boolean): void {
-    if (this.readonly !== readonly) {
-      this.readonly = readonly;
-
-      this.viewer.setReadonly(readonly);
-    }
-  }
-
   public destroy(): void {
     this.sideEffect.flushAll();
     this.unmount();
@@ -109,9 +103,12 @@ export class DynamicDocsViewer {
   public jumpToPage(index: number, reset?: boolean): void {
     index = clamp(index, 0, this.pages.length - 1);
     if (index !== this.getPageIndex()) {
-      const room = this.getWhiteboardRoom();
-      if (room) {
-        room.setSceneIndex(index);
+      if (this.context.getIsWritable()) {
+        const initScenePath = this.context.getInitScenePath();
+        const scene = this.context.getScenes()?.[index]?.name;
+        if (initScenePath && scene) {
+          this.context.setScenePath(`${initScenePath}/${scene}`);
+        }
         this.scaleDocsToFit();
       }
     }
@@ -119,15 +116,23 @@ export class DynamicDocsViewer {
       this.viewer.setPageIndex(index);
     }
     if (reset) {
-      const room = this.getWhiteboardRoom();
+      const room = this.context.getRoom();
       if (room) {
-        room.setGlobalState({ __pptState: undefined });
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const pptState = (room.state.globalState as any).__pptState;
+        room.setGlobalState({
+          __pptState: pptState && {
+            uuid: pptState.uuid,
+            pageIndex: index,
+            disableAutoPlay: pptState.disableAutoPlay,
+          },
+        });
       }
     }
   }
 
   public onPlayPPT = (): void => {
-    const room = this.getWhiteboardRoom();
+    const room = this.context.getRoom();
     if (room) {
       room.pptNextStep();
     }
@@ -146,7 +151,7 @@ export class DynamicDocsViewer {
           }
           case "ArrowRight":
           case "ArrowDown": {
-            this.getWhiteboardRoom()?.pptNextStep();
+            this.context.getRoom()?.pptNextStep();
             break;
           }
           default: {
@@ -180,7 +185,7 @@ export class DynamicDocsViewer {
       this.$whiteboardView = document.createElement("div");
       this.$whiteboardView.className = this.wrapClassName("wb-view");
       this.sideEffect.addEventListener(this.$whiteboardView, "click", ev => {
-        const room = this.getWhiteboardRoom();
+        const room = this.context.getRoom();
         if (room && room.state.memberState.currentApplianceName === "clicker") {
           for (let el = ev.target as HTMLElement | null; el; el = el.parentElement) {
             if (el.classList?.contains("ppt-event-source")) {
@@ -190,7 +195,7 @@ export class DynamicDocsViewer {
           room.pptNextStep();
         }
       });
-      this.mountWhiteboard(this.$whiteboardView);
+      this.context.mountView(this.$whiteboardView);
     }
     return this.$whiteboardView;
   }
