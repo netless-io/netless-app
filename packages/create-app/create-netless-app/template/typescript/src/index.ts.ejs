@@ -1,0 +1,73 @@
+import styles from "./style.css?inline";
+
+import type { NetlessApp } from "@netless/window-manager";
+
+export interface <%- camelName %>Attributes {
+  count: number;
+}
+
+export interface MagixEventPayloads {
+  ping: number; // ping as message event key, `number` is the payload format.
+  pong: {
+    c: number;
+  };
+}
+
+const <%- camelName %>: NetlessApp<<%- camelName %>Attributes, MagixEventPayloads> = {
+  kind: "<%- camelName %>",
+  setup(context) {
+    /* ------------------------------------------------- *\
+     * Mount App Styles
+    \* ------------------------------------------------- */
+    const box = context.getBox();
+    box.mountStyles(styles);
+
+    /* ------------------------------------------------- *\
+     * Mount App DOM
+    \* ------------------------------------------------- */
+    const $content = document.createElement("div");
+    $content.className = "<%- fullName %>-container";
+    $content.textContent = "Hello World";
+    box.mountContent($content);
+
+    /* ------------------------------------------------- *\
+     * Replayable Synced Storage
+    \* ------------------------------------------------- */
+    context.storage.ensureState({ count: 0 });
+
+    log("Storage state", context.storage.state);
+
+    const stateListenerDisposer = context.storage.addStateChangedListener(diff => {
+      if (diff.count) {
+        log("Storage state changed", diff.count.newValue, diff.count.oldValue);
+      }
+    });
+
+    if (context.getIsWritable()) {
+      context.storage.setState({ count: 12 });
+    }
+
+    /* ------------------------------------------------- *\
+     * Replayable Messaging between client (and self).
+    \* ------------------------------------------------- */
+    const magixListenerDisposer = context.addMagixEventListener("ping", message => {
+      log("Received Message", message);
+    });
+
+    if (context.getIsWritable()) {
+      context.dispatchMagixEvent("ping", 22);
+    }
+
+    context.emitter.on("destroy", () => {
+      stateListenerDisposer();
+      magixListenerDisposer();
+    });
+
+    // little log helper for visual appealing
+    function log(...args: unknown[]) {
+      return console.log("%c [<%- camelName %>] ", "background:#FF8C00;color:#fff;", ...args);
+    }
+  },
+};
+
+export default <%- camelName %>;

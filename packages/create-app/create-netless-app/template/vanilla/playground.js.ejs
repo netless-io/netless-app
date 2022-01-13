@@ -1,0 +1,15 @@
+/*
+ * Each option represents a sidebar button on the demo page
+ * that creates a window on clicking.
+ */
+const options = [
+  {
+    kind: "<%- camelName %>",
+    src: () => import("./src"),
+    options: {
+      title: "<%- title %>",
+    },
+  }
+];
+
+export default options;

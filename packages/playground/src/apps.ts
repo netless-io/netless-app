@@ -4,7 +4,7 @@ import { WindowManager } from "@netless/window-manager";
 import type { PlaygroundConfigs } from "../typings";
 import { log } from "./log";
 
-const CONFIGS = import.meta.globEager("../../*/playground.ts");
+const CONFIGS = import.meta.globEager("../../*/playground.(ts|js)");
 
 export interface AppGroup {
   url: string;

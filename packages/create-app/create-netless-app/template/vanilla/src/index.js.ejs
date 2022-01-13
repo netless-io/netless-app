@@ -1,0 +1,74 @@
+import styles from "./style.css?inline";
+
+/**
+ * @typedef {Object} <%- camelName %>Attributes - Client who call `addApp` to create an App can pass in attributes as initial state.
+ * @property {number} count
+ */
+
+/**
+ * @typedef {Object} MagixEventPayloads - You may specify message payload format for better IDE intellisense.
+ * @property {number} ping - ping as message event key, `number` is the payload format.
+ * @property {{ count: number }} pong
+ */
+
+/**
+ * @type {import("@netless/window-manager").NetlessApp<<%- camelName %>Attributes, MagixEventPayloads>}
+ */
+const <%- camelName %> = {
+  kind: "<%- camelName %>",
+  setup(context) {
+    /* ------------------------------------------------- *\
+     * Mount App Styles
+    \* ------------------------------------------------- */
+    const box = context.getBox();
+    box.mountStyles(styles);
+
+    /* ------------------------------------------------- *\
+     * Mount App DOM
+    \* ------------------------------------------------- */
+    const $content = document.createElement("div");
+    $content.className = "<%- fullName %>-container";
+    $content.textContent = "Hello World";
+    box.mountContent($content);
+
+    /* ------------------------------------------------- *\
+     * Replayable Synced Storage
+    \* ------------------------------------------------- */
+    context.storage.ensureState({ count: 0 });
+
+    log("Storage state", context.storage.state);
+
+    const stateListenerDisposer = context.storage.addStateChangedListener(diff => {
+      if (diff.count) {
+        log("Storage state changed", diff.count.newValue, diff.count.oldValue);
+      }
+    });
+
+    if (context.getIsWritable()) {
+      context.storage.setState({ count: 12 });
+    }
+
+    /* ------------------------------------------------- *\
+     * Replayable Messaging between client (and self).
+    \* ------------------------------------------------- */
+    const magixListenerDisposer = context.addMagixEventListener("ping", message => {
+      log("Received Message", message);
+    });
+
+    if (context.getIsWritable()) {
+      context.dispatchMagixEvent("ping", 22);
+    }
+
+    context.emitter.on("destroy", () => {
+      stateListenerDisposer();
+      magixListenerDisposer();
+    });
+
+    // little log helper for visual appealing
+    function log(...args) {
+      return console.log("%c [<%- camelName %>] ", "background:#FF8C00;color:#fff;", ...args);
+    }
+  },
+};
+
+export default <%- camelName %>;

@@ -1,0 +1,14 @@
+import type { PlaygroundConfigs } from "../playground/typings";
+import type { <%- camelName %>Attributes } from "./src";
+
+const options: PlaygroundConfigs<<%- camelName %>Attributes> = [
+  {
+    kind: "<%- camelName %>",
+    src: () => import("./src"),
+    options: {
+      title: "<%- title %>",
+    },
+  },
+];
+
+export default options;

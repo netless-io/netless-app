@@ -10,7 +10,11 @@
   ],
   "repository": "netless-io/netless-app",
   "dependencies": {
+    "ejs": "^3.1.6",
+    "fast-glob": "^3.2.10",
+    "fs-extra": "^10.0.0",
     "kolorist": "^1.5.1",
+    "lodash": "^4.17.21",
     "minimist": "^1.2.5",
     "prompts": "^2.4.2"
   },
