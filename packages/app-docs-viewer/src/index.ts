@@ -78,9 +78,11 @@ function setupStaticDocsViewer(
   box: ReadonlyTeleBox,
   pages: DocsViewerPage[]
 ): void {
+  whiteboardView.disableCameraTransform = !context.getIsWritable();
+
   const docsViewer = new StaticDocsViewer({
     whiteboardView,
-    readonly: box.readonly,
+    readonly: !context.getIsWritable(),
     box,
     pages: pages,
     pageScrollTop: context.getAttributes()?.pageScrollTop,
@@ -105,8 +107,9 @@ function setupStaticDocsViewer(
     }
   });
 
-  box.events.on("readonly", readonly => {
-    docsViewer.setReadonly(readonly);
+  context.emitter.on("writableChange", isWritable => {
+    docsViewer.setReadonly(!isWritable);
+    whiteboardView.disableCameraTransform = !isWritable;
   });
 }
 
