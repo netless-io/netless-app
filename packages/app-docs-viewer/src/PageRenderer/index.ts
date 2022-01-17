@@ -1,5 +1,3 @@
-import "./style.scss";
-
 import type { DocsViewerPage } from "../DocsViewer";
 import { PageElManager } from "./PageElManager";
 import { clamp } from "../utils/helpers";

@@ -1,5 +1,3 @@
-import "./style.scss";
-
 import { SideEffectManager } from "side-effect-manager";
 import { preventEvent, flattenEvent, clamp } from "../utils/helpers";
 
