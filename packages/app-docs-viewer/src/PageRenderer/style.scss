@@ -7,10 +7,15 @@
   position: absolute;
   top: 0;
   left: 0;
-  will-change: transform;
   background-position: center;
   background-size: cover;
   background-repeat: no-repeat;
+}
+
+.page-renderer-pages-container.is-hwa {
+  .page-renderer-page {
+    will-change: transform;
+  }
 }
 
 .page-renderer-page-img {

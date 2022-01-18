@@ -122,6 +122,8 @@ export class PageRenderer {
     );
 
     if (force || Math.abs(pagesScrollTop - this.pagesScrollTop) >= 0.001) {
+      this._turnOnHWA();
+
       this.pagesScrollTop = pagesScrollTop;
 
       const pageScrollIndex = this.findScrollPageIndex();
@@ -176,6 +178,10 @@ export class PageRenderer {
     this.unmount();
     this.onPageIndexChanged = void 0;
     this.pageElManager.destroy();
+    if (this._hwaTimeout) {
+      window.clearTimeout(this._hwaTimeout);
+      this._hwaTimeout = NaN;
+    }
   }
 
   private _calcScale(): number {
@@ -189,4 +195,20 @@ export class PageRenderer {
       this.pages.length
     );
   }
+
+  private _hwaTimeout = NaN;
+  /** Hardware Acceleration */
+  private _turnOnHWA(): void {
+    if (this._hwaTimeout) {
+      window.clearTimeout(this._hwaTimeout);
+    } else {
+      this.$pages.classList.toggle("is-hwa", true);
+    }
+    this._hwaTimeout = window.setTimeout(this._turnOffHWA, 1000);
+  }
+  private _turnOffHWA = (): void => {
+    window.clearTimeout(this._hwaTimeout);
+    this._hwaTimeout = NaN;
+    this.$pages.classList.toggle("is-hwa", false);
+  };
 }

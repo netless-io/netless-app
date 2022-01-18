@@ -24,7 +24,6 @@ $static-scrollbar-color-active: rgba(68, 78, 96, 0.6);
   box-shadow: 1px 1px 8px rgba(255, 255, 255, 0.7);
   opacity: 0;
   transition: background 0.4s, opacity 0.4s 3s, transform 0.2s;
-  will-change: transform, height;
   user-select: none;
 
   &.#{$namespace}-scrollbar-dragging {
