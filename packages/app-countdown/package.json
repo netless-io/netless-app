@@ -1,9 +1,15 @@
 {
   "name": "@netless/app-countdown",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "main": "dist/main.cjs.js",
   "module": "dist/main.es.js",
-  "types": "./dist/index.d.ts",
+  "unpkg": "dist/main.iife.js",
+  "jsdelivr": "dist/main.iife.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "src",
+    "dist"
+  ],
   "scripts": {
     "types": "cross-env NODE_ENV=production tsc --declaration --emitDeclarationOnly --outDir dist",
     "build": "vite build && npm run types",

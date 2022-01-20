@@ -1,7 +1,6 @@
 import type { PlaygroundConfig } from "../playground/typings";
-import type { Attributes } from "./src";
 
-const options: PlaygroundConfig<Attributes> = {
+const options: PlaygroundConfig = {
   kind: "Countdown",
   src: () => import("./src"),
   options: {
