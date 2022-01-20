@@ -1,8 +1,10 @@
 {
   "name": "@netless/app-geogebra",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "main": "dist/main.cjs.js",
   "module": "dist/main.es.js",
+  "unpkg": "dist/main.iife.js",
+  "jsdelivr": "dist/main.iife.js",
   "types": "dist/index.d.ts",
   "files": [
     "src",
