@@ -38,14 +38,7 @@ export class PageEl {
   translateY(pageOffsetY: number): void {
     if (Math.abs(pageOffsetY - this.pageOffsetY) >= 0.001) {
       this.pageOffsetY = pageOffsetY;
-
-      if (window.requestAnimationFrame) {
-        window.requestAnimationFrame(() => {
-          this.$page.style.transform = `translateY(${pageOffsetY * this.scale}px)`;
-        });
-      } else {
-        this.$page.style.transform = `translateY(${pageOffsetY * this.scale}px)`;
-      }
+      this.$page.style.transform = `translateY(${this.pageOffsetY * this.scale}px)`;
     }
   }
 
