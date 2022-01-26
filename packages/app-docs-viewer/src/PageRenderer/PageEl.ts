@@ -8,12 +8,14 @@ export class PageEl {
   lastVisit = Date.now();
   $page: HTMLDivElement;
   pageOffsetY = 0;
+  pageOffsetX = 0;
   visible = true;
 
-  constructor(index: number, page: DocsViewerPage, scale: number) {
+  constructor(index: number, page: DocsViewerPage, scale: number, pagesIntrinsicWidth: number) {
     this.index = index;
     this.page = page;
     this.scale = scale;
+    this.pageOffsetX = (pagesIntrinsicWidth - page.width) / 2;
 
     const $page = document.createElement("div");
     $page.className = "page-renderer-page";
@@ -38,7 +40,9 @@ export class PageEl {
   translateY(pageOffsetY: number): void {
     if (Math.abs(pageOffsetY - this.pageOffsetY) >= 0.001) {
       this.pageOffsetY = pageOffsetY;
-      this.$page.style.transform = `translateY(${this.pageOffsetY * this.scale}px)`;
+      this.$page.style.transform = `translate(${this.pageOffsetX * this.scale}px, ${
+        this.pageOffsetY * this.scale
+      }px)`;
     }
   }
 
@@ -47,7 +51,9 @@ export class PageEl {
       this.scale = scale;
       this.$page.style.width = `${this.page.width * this.scale}px`;
       this.$page.style.height = `${this.page.height * this.scale}px`;
-      this.$page.style.transform = `translateY(${this.pageOffsetY * this.scale}px)`;
+      this.$page.style.transform = `translate(${this.pageOffsetX * this.scale}px, ${
+        this.pageOffsetY * this.scale
+      }px)`;
     }
   }
 

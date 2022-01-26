@@ -12,12 +12,16 @@ export class PageElManager {
   private maxElCount = 200;
   private gcTimer: number | null = null;
 
-  constructor(private pages: ReadonlyArray<DocsViewerPage>, private scale: number) {}
+  constructor(
+    private pages: ReadonlyArray<DocsViewerPage>,
+    private pagesIntrinsicWidth: number,
+    private scale: number
+  ) {}
 
   getEl(index: number): PageEl {
     let el = this.els.get(index);
     if (!el) {
-      el = new PageEl(index, this.pages[index], this.scale);
+      el = new PageEl(index, this.pages[index], this.scale, this.pagesIntrinsicWidth);
       this.els.set(index, el);
     }
     el.lastVisit = Date.now();

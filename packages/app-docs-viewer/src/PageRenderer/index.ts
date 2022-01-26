@@ -80,7 +80,7 @@ export class PageRenderer {
       }
     }
 
-    this.pageElManager = new PageElManager(this.pages, this.scale);
+    this.pageElManager = new PageElManager(this.pages, pagesIntrinsicWidth, this.scale);
 
     this.$pages = this.renderPages();
   }
