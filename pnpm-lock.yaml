@@ -191,6 +191,14 @@ importers:
   packages/app-vote:
     specifiers: {}
 
+  packages/app-youtube:
+    specifiers:
+      '@types/youtube': ^0.0.46
+      side-effect-manager: ^0.1.5
+    devDependencies:
+      '@types/youtube': 0.0.46
+      side-effect-manager: 0.1.5
+
   packages/create-app:
     specifiers:
       ejs: ^3.1.6
@@ -657,6 +665,10 @@ packages:
     dependencies:
       '@types/node': 17.0.10
       rollup: 0.63.5
+    dev: true
+
+  /@types/youtube/0.0.46:
+    resolution: {integrity: sha512-Yf1Y4bDj/QIn8v+zdy0l7+OW6s1uoUvzVn5cGqPNCsL4iUW4gYUlIdQIRtH9NOHVgwZNLbVeeRDEn6N4RMq6Nw==}
     dev: true
 
   /@typescript-eslint/eslint-plugin/5.10.0_3b6b276e93ead7cf6063f183a5e18d1f:
