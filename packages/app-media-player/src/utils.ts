@@ -3,6 +3,12 @@
 /* eslint-disable @typescript-eslint/no-empty-function */
 import type Plyr from "plyr";
 
+export function youtube_parseId(url: string) {
+  const regex = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
+  const match = url.match(regex);
+  return match ? match[2] : url;
+}
+
 /**
  * Return `true` means ok, `false` means some error occurs.
  */
@@ -53,4 +59,10 @@ export async function loadHLS(): Promise<Hls> {
   } else {
     return fakeHls;
   }
+}
+
+export function cannotPlayHLSNatively(
+  playerEl: HTMLElement | HTMLVideoElement | HTMLAudioElement
+): playerEl is HTMLVideoElement {
+  return "canPlayType" in playerEl && !playerEl.canPlayType("application/vnd.apple.mpegurl");
 }

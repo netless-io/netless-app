@@ -22,7 +22,7 @@
     "cleanup": "rimraf ./dist"
   },
   "dependencies": {
-    "debounce-fn": "^5.0.0",
+    "debounce-fn": "^5.1.0",
     "vanilla-lazyload": "^17.5.0"
   },
   "devDependencies": {

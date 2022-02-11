@@ -2,16 +2,18 @@
   import Plyr from "plyr";
   import { createEventDispatcher, onDestroy, onMount } from "svelte";
   import { guessTypeFromSrc, hlsTypes } from "./mime";
-  import { loadHLS, safePlay } from "./utils";
+  import { cannotPlayHLSNatively, loadHLS, safePlay, youtube_parseId } from "./utils";
   const dispatch = createEventDispatcher();
 
   export let src: string;
   export let type: string | undefined = undefined;
   export let poster: string | undefined = undefined;
-  const computedType = type || guessTypeFromSrc(src);
+  export let provider: "youtube" | "vimeo" | undefined = undefined;
+  const videoId = youtube_parseId(src);
+  const computedType = provider ? undefined : type || guessTypeFromSrc(src);
   const useHLS = hlsTypes.includes(String(computedType).toLowerCase());
 
-  let playerEl: HTMLAudioElement | HTMLVideoElement | undefined;
+  let playerEl: HTMLAudioElement | HTMLVideoElement | HTMLDivElement | undefined;
   let player: Plyr | undefined;
 
   export let volume = 100;
@@ -100,18 +102,19 @@
     });
   }
 
-  function setupPlayer(playerEl: HTMLAudioElement | HTMLVideoElement) {
-    player = new Plyr(playerEl, {
+  function setupPlayer(playerEl: HTMLElement) {
+    const options: Plyr.Options = {
       fullscreen: { enabled: false },
       controls: ["play", "progress", "current-time", "mute", "volume"],
       clickToPlay: false,
-    });
+    };
+    player = new Plyr(playerEl, options);
     setup(player);
   }
 
   onMount(async () => {
     if (playerEl) {
-      if (useHLS && !playerEl.canPlayType("application/vnd.apple.mpegurl")) {
+      if (useHLS && cannotPlayHLSNatively(playerEl)) {
         const hls = await loadHLS();
         hls.loadSource(src);
         hls.attachMedia(playerEl);
@@ -129,7 +132,19 @@
   });
 </script>
 
-{#if !computedType}
+{#if provider === "youtube"}
+  {#if videoId}
+    <div data-app-kind="MediaPlayer" class="plyr__video-embed" bind:this={playerEl}>
+      <iframe
+        title="MediaPlayer (YouTube)"
+        src={`https://www.youtube.com/embed/${videoId}?playsinline=1&enablejsapi=1&origin=${window.location.origin}`}
+        allowfullscreen
+        allowtransparency
+        allow="autoplay"
+      />
+    </div>
+  {/if}
+{:else if !computedType}
   <div class="plyr--audio">
     Invalid "src" or "type".
     {JSON.stringify({ src, type })}

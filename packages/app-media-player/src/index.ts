@@ -15,13 +15,15 @@ export interface Attributes {
   muted: boolean;
   currentTime: number;
   hostTime: number;
+
+  provider?: "youtube" | "vimeo";
 }
 
 const defaultAttributes: Pick<Attributes, "volume" | "paused" | "muted" | "currentTime"> = {
   volume: 1,
   paused: true,
   muted: false,
-  currentTime: 0,
+  currentTime: 87,
 };
 
 const MediaPlayer: NetlessApp<Attributes> = {
@@ -31,16 +33,17 @@ const MediaPlayer: NetlessApp<Attributes> = {
     minheight: 80,
   },
   setup(context) {
-    const initialAttributes = { ...defaultAttributes, ...context.getAttributes() };
+    const storage = context.storage;
+    storage.ensureState(defaultAttributes);
 
-    if (!initialAttributes?.src) {
+    if (!storage.state.src) {
       context.emitter.emit("destroy", {
         error: new Error(`[MediaPlayer]: missing "src"`),
       });
       return;
     }
 
-    if (!initialAttributes.type) {
+    if (!storage.state.type) {
       console.warn(`[MediaPlayer]: missing "type", will guess from file extension`);
     }
 
@@ -64,9 +67,7 @@ const MediaPlayer: NetlessApp<Attributes> = {
     };
 
     const getCurrentTime = () => {
-      const attrs = context.getAttributes();
-      if (!attrs) return 0;
-      const { paused, currentTime, hostTime } = attrs;
+      const { paused, currentTime, hostTime } = storage.state;
       if (paused) return currentTime;
       const now = getTimestamp();
       if (now && hostTime) {
@@ -76,7 +77,7 @@ const MediaPlayer: NetlessApp<Attributes> = {
       }
     };
 
-    const initialProps: Partial<Attributes> = { ...initialAttributes };
+    const initialProps: Partial<Attributes> = { ...storage.state };
     delete initialProps.hostTime;
     initialProps.currentTime = getCurrentTime();
 
@@ -85,34 +86,37 @@ const MediaPlayer: NetlessApp<Attributes> = {
       props: initialProps as Omit<Attributes, "hostTime">,
     });
 
-    let saved = { ...initialAttributes };
-    app.$on("update:attrs", ({ detail }) => {
+    let saved = { ...storage.state };
+    app.$on("update:attrs", ({ detail }: CustomEvent<Attributes>) => {
       if (!context.getIsWritable()) {
         return app.$set(saved);
       }
-      const attrs = context.getAttributes();
+      const attrs = storage.state;
       console.log("→", detail);
-      if ("volume" in detail && attrs?.volume !== detail.volume) {
-        context.updateAttributes(["volume"], detail.volume);
+      if ("volume" in detail && attrs.volume !== detail.volume) {
+        storage.setState({ volume: detail.volume });
       }
-      if ("muted" in detail && attrs?.muted !== detail.muted) {
-        context.updateAttributes(["muted"], detail.muted);
+      if ("muted" in detail && attrs.muted !== detail.muted) {
+        storage.setState({ muted: detail.muted });
       }
-      if ("paused" in detail && attrs?.paused !== detail.paused) {
-        context.updateAttributes(["paused"], detail.paused);
+      if ("paused" in detail && attrs.paused !== detail.paused) {
+        storage.setState({ paused: detail.paused });
       }
-      if ("currentTime" in detail && attrs?.currentTime !== detail.currentTime) {
-        context.updateAttributes(["hostTime"], getTimestamp());
-        context.updateAttributes(["currentTime"], detail.currentTime);
+      if ("currentTime" in detail && attrs.currentTime !== detail.currentTime) {
+        storage.setState({
+          hostTime: getTimestamp(),
+          currentTime: detail.currentTime,
+        });
       }
       saved = { ...saved, ...detail };
     });
 
-    context.emitter.on("attributesUpdate", other => {
-      app.$set(other);
+    const dispose = storage.addStateChangedListener(() => {
+      app.$set(storage.state);
     });
 
     context.emitter.on("destroy", () => {
+      dispose();
       app.$destroy();
     });
   },

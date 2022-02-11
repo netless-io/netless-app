@@ -25,7 +25,7 @@
     "@monaco-editor/loader": "^1.2.0",
     "@netless/app-shared": "workspace:*",
     "@types/randomcolor": "^0.5.6",
-    "debounce-fn": "^5.0.0",
+    "debounce-fn": "^5.1.0",
     "js-base64": "^3.7.2",
     "lib0": "^0.2.42",
     "monaco-editor": "^0.29.1",

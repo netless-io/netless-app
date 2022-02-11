@@ -35,6 +35,17 @@ const options: PlaygroundConfigs<Attributes> = [
       src: "https://flat-storage.oss-cn-hangzhou.aliyuncs.com/agoraCloudRecording/0e36cd1e110a45ee82f21fd4c5f5b3d3/534a5e19ff4e7a1807a540b386ad4162_0e36cd1e-110a-45ee-82f2-1fd4c5f5b3d3.m3u8",
     },
   },
+  {
+    kind: "MediaPlayer",
+    src: () => import("./src"),
+    options: {
+      title: "YouTube",
+    },
+    attributes: {
+      src: "https://www.youtube.com/embed/bTqVqk7FSmY",
+      provider: "youtube",
+    },
+  },
 ];
 
 export default options;

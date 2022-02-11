@@ -8,9 +8,8 @@
     "cleanup": "rimraf dist"
   },
   "devDependencies": {
+    "@faker-js/faker": "^6.0.0-alpha.6",
     "@netless/app-embedded-page-sdk": "workspace:*",
-    "@netless/app-shared": "workspace:*",
-    "@types/faker": "^5.5.9",
-    "faker": "^5.5.3"
+    "@netless/app-shared": "workspace:*"
   }
 }

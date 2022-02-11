@@ -1,4 +1,4 @@
-import faker from "faker";
+import { faker } from "@faker-js/faker";
 
 import { WindowManager } from "@netless/window-manager";
 import type { Room } from "white-web-sdk";
