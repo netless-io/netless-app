@@ -87,7 +87,7 @@ const MediaPlayer: NetlessApp<Attributes> = {
     });
 
     let saved = { ...storage.state };
-    app.$on("update:attrs", ({ detail }: CustomEvent<Attributes>) => {
+    app.$on("update:attrs", ({ detail }) => {
       if (!context.getIsWritable()) {
         return app.$set(saved);
       }

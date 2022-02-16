@@ -35,24 +35,7 @@
     }
   }
 
-  function setup(player: Plyr) {
-    if (import.meta.env.DEV) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (window as any).player = player;
-    }
-
-    player.once("canplay", () => {
-      player.currentTime = currentTime;
-    });
-
-    player.on("ended", () => {
-      player.stop();
-      dispatch("update:attrs", {
-        paused: true,
-        currentTime: 0,
-      });
-    });
-
+  function setupDispatchers(player: Plyr) {
     let playBtn: HTMLButtonElement | undefined;
     let seekBar: HTMLInputElement | undefined;
     let muteBtn: HTMLButtonElement | undefined;
@@ -98,6 +81,29 @@
     volumeBar?.addEventListener("change", () => {
       dispatch("update:attrs", {
         volume: player.volume,
+      });
+    });
+  }
+
+  function setup(player: Plyr) {
+    if (import.meta.env.DEV) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (window as any).player = player;
+    }
+
+    player.once("ready", () => {
+      setupDispatchers(player);
+    });
+
+    player.once("canplay", () => {
+      player.currentTime = currentTime;
+    });
+
+    player.on("ended", () => {
+      player.stop();
+      dispatch("update:attrs", {
+        paused: true,
+        currentTime: 0,
       });
     });
   }
