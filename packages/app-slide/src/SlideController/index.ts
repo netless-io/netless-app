@@ -8,10 +8,9 @@
 // 4. automatically re-create scenes to sync strokes, a view must be existing
 // 5. pages information are loaded dynamically by the slide package
 
-import type { Event as MagixEvent } from "white-web-sdk";
 import type { AppContext, Player, Room } from "@netless/window-manager";
 import type { SyncEvent } from "@netless/slide";
-import type { Attributes, MagixPayload, SlideState } from "../typings";
+import type { Attributes, MagixEvents, MagixPayload, SlideState } from "../typings";
 
 import { SideEffectManager } from "side-effect-manager";
 import { Slide, SLIDE_EVENTS } from "@netless/slide";
@@ -29,7 +28,7 @@ export const EmptyAttributes: Attributes = {
 };
 
 export interface SlideControllerOptions {
-  context: AppContext<Attributes>;
+  context: AppContext<Attributes, MagixEvents>;
   anchor: HTMLDivElement;
   onPageChanged: (page: number) => void;
   onTransitionStart: () => void;
@@ -37,11 +36,14 @@ export interface SlideControllerOptions {
   onError: (args: { error: Error }) => void;
 }
 
+type MagixEventListener = Parameters<
+  AppContext<Attributes, MagixEvents>["addMagixEventListener"]
+>[1];
+
 export class SlideController {
   public readonly context: SlideControllerOptions["context"];
   public readonly slide: Slide;
 
-  private readonly channel: string;
   private readonly room?: Room;
   private readonly player?: Player;
   private readonly sideEffect = new SideEffectManager();
@@ -66,7 +68,6 @@ export class SlideController {
     this.onTransitionEnd = onTransitionEnd;
     this.onError = onError;
     this.context = context;
-    this.channel = `channel-${context.appId}`;
     this.room = context.getRoom();
     this.player = this.room ? undefined : (context.getDisplayer() as Player);
     this.slide = this.createSlide(anchor);
@@ -142,15 +143,11 @@ export class SlideController {
       return () => context.emitter.off("seek", this.onSeeked);
     });
 
-    this.sideEffect.add(() => {
-      const displayer = context.getDisplayer();
-      displayer.addMagixEventListener(this.channel, this.magixEventListener, {
+    this.sideEffect.add(() =>
+      context.addMagixEventListener(SLIDE_EVENTS.syncDispatch, this.magixEventListener, {
         fireSelfEventAfterCommit: true,
-      });
-      // here we do not pass second param -- the listener
-      // because channel name is already unique, just make it simpler
-      return () => displayer.removeMagixEventListener(this.channel);
-    });
+      })
+    );
 
     slide.on(SLIDE_EVENTS.slideChange, this.onPageChanged);
     slide.on(SLIDE_EVENTS.renderStart, this.onTransitionStart);
@@ -171,12 +168,12 @@ export class SlideController {
         payload: event,
       };
       log("[Slide] dispatch", event);
-      this.room.dispatchMagixEvent(this.channel, payload);
+      this.context.dispatchMagixEvent(SLIDE_EVENTS.syncDispatch, payload);
     }
   };
 
-  private magixEventListener = (ev: MagixEvent) => {
-    if (ev.event === this.channel && isObj(ev.payload)) {
+  private magixEventListener: MagixEventListener = ev => {
+    if (ev.event === SLIDE_EVENTS.syncDispatch && isObj(ev.payload)) {
       const { type, payload } = ev.payload as MagixPayload;
       if (type === SLIDE_EVENTS.syncDispatch) {
         this.syncStateOnce();
@@ -189,7 +186,7 @@ export class SlideController {
   private syncStateOnce() {
     // sync state before the first event, so that they can be in the correct order
     if (this.syncStateOnceFlag) {
-      const { state } = { ...EmptyAttributes, ...this.context.getAttributes() };
+      const { state } = { ...EmptyAttributes, ...this.context.storage.state };
       if (state) {
         log("[Slide] sync with state (once)", deepClone(state));
         this.slide.setSlideState(deepClone(state));
@@ -201,13 +198,13 @@ export class SlideController {
   private onStateChange = (state: SlideState) => {
     if (this.context.getIsWritable()) {
       verbose("[Slide] state change", JSON.stringify(state, null, 2));
-      this.context.updateAttributes(["state"], state);
+      this.context.storage.setState({ state });
     }
   };
 
   private onSeeked = () => {
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    const state = this.context.getAttributes()!.state;
+    const state = this.context.storage.state;
     if (state) {
       this.slide.setSlideState(deepClone(state));
     }

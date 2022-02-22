@@ -15,3 +15,9 @@ export type MagixPayload = {
   type: typeof SLIDE_EVENTS.syncDispatch;
   payload: SyncEvent;
 };
+
+export type MagixEvents = {
+  [SLIDE_EVENTS.syncDispatch]: MagixPayload;
+};
+
+export interface A {}

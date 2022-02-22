@@ -1,12 +1,11 @@
 import type { NetlessApp } from "@netless/window-manager";
 import type { RoomState } from "white-web-sdk";
+import type { Slide } from "@netless/slide";
 import type { MountSlideOptions } from "./SlideDocsViewer";
-import type { Attributes } from "./typings";
+import type { Attributes, MagixEvents } from "./typings";
 import type { AddHooks, FreezableSlide } from "./utils/freezer";
-import { useFreezer } from "./utils/freezer";
 
 import { SideEffectManager } from "side-effect-manager";
-import { ensureAttributes } from "@netless/app-shared";
 import {
   DefaultUrl,
   EmptyAttributes,
@@ -14,7 +13,7 @@ import {
   SlideController,
 } from "./SlideController";
 import { SlideDocsViewer } from "./SlideDocsViewer";
-import { apps, FreezerLength, addHooks } from "./utils/freezer";
+import { apps, FreezerLength, addHooks, useFreezer } from "./utils/freezer";
 import { log, logger } from "./utils/logger";
 import styles from "./style.scss?inline";
 
@@ -27,17 +26,31 @@ export const version = __APP_VERSION__;
 
 export { DefaultUrl, apps, FreezerLength, addHooks };
 
-const SlideApp: NetlessApp<Attributes> = {
+export interface AppOptions {
+  debug?: boolean;
+  resolution?: number;
+  bgColor?: string;
+}
+
+export interface Controller {
+  slide: () => Slide | undefined;
+  position: () => [page: number, pageCount: number] | undefined;
+  nextStep: () => boolean;
+  prevStep: () => boolean;
+  nextPage: () => boolean;
+  prevPage: () => boolean;
+}
+
+const SlideApp: NetlessApp<Attributes, MagixEvents, AppOptions, Controller> = {
   kind: "Slide",
   setup(context) {
     console.log("[Slide] setup @ " + version);
 
     if (context.getIsWritable()) {
-      ensureAttributes(context, EmptyAttributes);
+      context.storage.ensureState(EmptyAttributes);
     }
 
-    const attributes = context.getAttributes();
-    if (!attributes?.taskId) {
+    if (!context.storage.state.taskId) {
       throw new Error("[Slide] no taskId");
     }
 
@@ -143,6 +156,54 @@ const SlideApp: NetlessApp<Attributes> = {
     });
 
     docsViewer.mount();
+
+    return {
+      slide: () => {
+        return docsViewer?.slideController?.slide;
+      },
+      nextStep: () => {
+        if (docsViewer && docsViewer.slideController) {
+          docsViewer?.slideController?.slide.nextStep();
+          return true;
+        }
+        return false;
+      },
+      prevStep: () => {
+        if (docsViewer && docsViewer.slideController) {
+          docsViewer?.slideController?.slide.prevStep();
+          return true;
+        }
+        return false;
+      },
+      position: () => {
+        const controller = docsViewer?.slideController;
+        if (controller) {
+          return [controller.page, controller.pageCount] as [page: number, pageCount: number];
+        }
+      },
+      nextPage: () => {
+        const controller = docsViewer?.slideController;
+        if (controller) {
+          const { page, pageCount } = controller;
+          if (pageCount > 0 && page < pageCount) {
+            controller.jumpToPage(page + 1);
+            return true;
+          }
+        }
+        return false;
+      },
+      prevPage: () => {
+        const controller = docsViewer?.slideController;
+        if (controller) {
+          const { page, pageCount } = controller;
+          if (pageCount > 0 && page > 1) {
+            controller.jumpToPage(page - 1);
+            return true;
+          }
+        }
+        return false;
+      },
+    };
   },
 };
 
