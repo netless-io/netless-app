@@ -140,15 +140,13 @@
 
 {#if provider === "youtube"}
   {#if videoId}
-    <div data-app-kind="MediaPlayer" class="plyr__video-embed" bind:this={playerEl}>
-      <iframe
-        title="MediaPlayer (YouTube)"
-        src={`https://www.youtube.com/embed/${videoId}?playsinline=1&enablejsapi=1&origin=${window.location.origin}`}
-        allowfullscreen
-        allowtransparency
-        allow="autoplay"
-      />
-    </div>
+    <div
+      data-app-kind="MediaPlayer"
+      class="plyr__video-embed"
+      data-plyr-provider="youtube"
+      data-plyr-embed-id={videoId}
+      bind:this={playerEl}
+    />
   {/if}
 {:else if !computedType}
   <div class="plyr--audio">

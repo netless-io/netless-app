@@ -117,7 +117,11 @@ const MediaPlayer: NetlessApp<Attributes> = {
 
     context.emitter.on("destroy", () => {
       dispose();
-      app.$destroy();
+      try {
+        app.$destroy();
+      } catch (err) {
+        console.warn("[MediaPlayer] destroy failed", err);
+      }
     });
   },
 };
