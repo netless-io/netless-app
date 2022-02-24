@@ -15,10 +15,6 @@ const demo: { title: string; src: string }[] = [
     title: "Google Sheets",
     src: "https://docs.google.com/spreadsheets/d/1MgIHeLiVjchdh_5EtwRtnbqYlZZ8fDN-FXuGhfBumiA/edit?usp=sharing",
   },
-  {
-    title: "Google Slides",
-    src: "https://docs.google.com/presentation/d/1EU9deAnLTRne_DqEfoYrCv4UzYZJJ4U_/edit?usp=sharing&ouid=111757699939633650298&rtpof=true&sd=true",
-  },
 ];
 
 const options: PlaygroundConfigs<Attributes> = [
