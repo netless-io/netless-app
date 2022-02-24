@@ -11,6 +11,14 @@ const demo: { title: string; src: string }[] = [
     title: "Google Docs",
     src: "https://docs.google.com/document/d/1bd4SRb5BmTUjPGrFxU2V7KI2g_mQ-HQUBxKTxsEn5e4/edit?usp=sharing",
   },
+  {
+    title: "Google Sheets",
+    src: "https://docs.google.com/spreadsheets/d/1MgIHeLiVjchdh_5EtwRtnbqYlZZ8fDN-FXuGhfBumiA/edit?usp=sharing",
+  },
+  {
+    title: "Google Slides",
+    src: "https://docs.google.com/presentation/d/1EU9deAnLTRne_DqEfoYrCv4UzYZJJ4U_/edit?usp=sharing&ouid=111757699939633650298&rtpof=true&sd=true",
+  },
 ];
 
 const options: PlaygroundConfigs<Attributes> = [
