@@ -120,7 +120,8 @@ const MediaPlayer: NetlessApp<Attributes> = {
       try {
         app.$destroy();
       } catch (err) {
-        console.warn("[MediaPlayer] destroy failed", err);
+        // ignore
+        // console.warn("[MediaPlayer] destroy failed", err);
       }
     });
   },
