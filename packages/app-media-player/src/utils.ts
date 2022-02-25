@@ -45,7 +45,7 @@ export async function loadHLS(): Promise<Hls> {
   if (hlsClass === null || hlsClass === false) {
     return fakeHls;
   } else if (hlsClass === undefined) {
-    await importScript("https://cdn.jsdelivr.net/npm/hls.js@latest");
+    await importScript("https://cdn.jsdelivr.net/npm/hls.js");
     hlsClass = (window as any).Hls;
   }
 
@@ -65,4 +65,12 @@ export function cannotPlayHLSNatively(
   playerEl: HTMLElement | HTMLVideoElement | HTMLAudioElement
 ): playerEl is HTMLVideoElement {
   return "canPlayType" in playerEl && !playerEl.canPlayType("application/vnd.apple.mpegurl");
+}
+
+export function clamp(value: number, min: number, max: number): number {
+  return value < min ? min : value > max ? max : value;
+}
+
+export function first<T>(maybeArray: T | T[] | undefined) {
+  return Array.isArray(maybeArray) ? maybeArray[0] : maybeArray;
 }

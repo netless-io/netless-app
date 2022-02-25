@@ -1,161 +1,73 @@
 <script lang="ts">
-  import Plyr from "plyr";
-  import { createEventDispatcher, onDestroy, onMount } from "svelte";
+  import type { Storage } from "@netless/window-manager";
+  import type { Attributes } from ".";
+  import type { Sync } from "./sync";
+
+  import { onDestroy, onMount } from "svelte";
   import { guessTypeFromSrc, hlsTypes } from "./mime";
-  import { cannotPlayHLSNatively, loadHLS, safePlay, youtube_parseId } from "./utils";
-  const dispatch = createEventDispatcher();
+  import { cannotPlayHLSNatively, loadHLS } from "./utils";
+  import Plyr from "plyr";
 
-  export let src: string;
-  export let type: string | undefined = undefined;
-  export let poster: string | undefined = undefined;
-  export let provider: "youtube" | "vimeo" | undefined = undefined;
-  const videoId = youtube_parseId(src);
-  const computedType = provider ? undefined : type || guessTypeFromSrc(src);
-  const useHLS = hlsTypes.includes(String(computedType).toLowerCase());
+  export let storage: Storage<Attributes>;
+  export let sync: Sync;
 
-  let playerEl: HTMLAudioElement | HTMLVideoElement | HTMLDivElement | undefined;
+  const type = storage.state.provider
+    ? undefined
+    : storage.state.type || guessTypeFromSrc(storage.state.src);
+  const { src, poster } = storage.state;
+  const useHLS = hlsTypes.includes(String(type).toLowerCase());
+
+  let player_element: HTMLAudioElement | HTMLVideoElement | HTMLDivElement | undefined;
   let player: Plyr | undefined;
 
-  export let volume = 100;
-  export let muted = false;
-  export let paused = true;
-  export let currentTime = 0;
-
-  $: {
-    if (player) {
-      if (player.volume !== volume) player.volume = volume;
-      if (player.muted !== muted) player.muted = muted;
-      if (player.paused !== paused) {
-        paused ? player.pause() : safePlay(player);
-      }
-      let diff = currentTime - player.currentTime;
-      if (paused ? diff !== 0 : Math.abs(diff) > 1) {
-        player.currentTime = currentTime;
-      }
-    }
-  }
-
-  function setupDispatchers(player: Plyr) {
-    let playBtn: HTMLButtonElement | undefined;
-    let seekBar: HTMLInputElement | undefined;
-    let muteBtn: HTMLButtonElement | undefined;
-    let volumeBar: HTMLInputElement | undefined;
-
-    const playBtns = player.elements.buttons.play;
-    if (playBtns) {
-      playBtn = Array.isArray(playBtns) ? playBtns[0] : playBtns;
-    }
-    if (player.elements.controls) {
-      seekBar = player.elements.controls.querySelector(
-        'input[data-plyr="seek"]'
-      ) as HTMLInputElement;
-
-      muteBtn = player.elements.controls.querySelector(
-        'button[data-plyr="mute"]'
-      ) as HTMLButtonElement;
-
-      volumeBar = player.elements.controls.querySelector(
-        'input[data-plyr="volume"]'
-      ) as HTMLInputElement;
-    }
-
-    playBtn?.addEventListener("click", () => {
-      dispatch("update:attrs", {
-        paused: player.paused,
-        currentTime: player.currentTime,
-      });
-    });
-
-    seekBar?.addEventListener("change", () => {
-      dispatch("update:attrs", {
-        currentTime: player.currentTime,
-      });
-    });
-
-    muteBtn?.addEventListener("click", () => {
-      dispatch("update:attrs", {
-        muted: player.muted,
-      });
-    });
-
-    volumeBar?.addEventListener("change", () => {
-      dispatch("update:attrs", {
-        volume: player.volume,
-      });
-    });
-  }
-
-  function setup(player: Plyr) {
-    if (import.meta.env.DEV) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (window as any).player = player;
-    }
-
-    player.once("ready", () => {
-      setupDispatchers(player);
-    });
-
-    player.once("canplay", () => {
-      player.currentTime = currentTime;
-    });
-
-    player.on("ended", () => {
-      player.stop();
-      dispatch("update:attrs", {
-        paused: true,
-        currentTime: 0,
-      });
-    });
-  }
-
-  function setupPlayer(playerEl: HTMLElement) {
-    const options: Plyr.Options = {
-      fullscreen: { enabled: false },
-      controls: ["play", "progress", "current-time", "mute", "volume"],
-      clickToPlay: false,
-    };
-    player = new Plyr(playerEl, options);
-    setup(player);
-  }
-
   onMount(async () => {
-    if (playerEl) {
-      if (useHLS && cannotPlayHLSNatively(playerEl)) {
+    if (player_element) {
+      if (useHLS && cannotPlayHLSNatively(player_element)) {
         const hls = await loadHLS();
         hls.loadSource(src);
-        hls.attachMedia(playerEl);
+        hls.attachMedia(player_element);
       }
-      setupPlayer(playerEl);
+      player = new Plyr(player_element, {
+        fullscreen: { enabled: false },
+        controls: ["play", "progress", "current-time", "mute", "volume"],
+        clickToPlay: false,
+      });
+      sync.player = player;
     }
   });
 
   onDestroy(() => {
     try {
+      sync.dispose();
       player?.destroy();
     } catch (e) {
-      console.debug(e);
+      console.warn("[MediaPlayer] destroy plyr error", e);
     }
   });
 </script>
 
-{#if provider === "youtube"}
-  {#if videoId}
-    <div
-      data-app-kind="MediaPlayer"
-      class="plyr__video-embed"
-      data-plyr-provider="youtube"
-      data-plyr-embed-id={videoId}
-      bind:this={playerEl}
-    />
-  {/if}
-{:else if !computedType}
+{#if storage.state.provider === "youtube"}
+  <div
+    data-app-kind="MediaPlayer"
+    class="plyr__video-embed"
+    data-plyr-provider="youtube"
+    data-plyr-embed-id={src}
+    data-poster={poster}
+    bind:this={player_element}
+  />
+{:else if !type}
   <div class="plyr--audio">
     Invalid "src" or "type".
-    {JSON.stringify({ src, type })}
+    {JSON.stringify({ src: src, type: storage.state.type })}
   </div>
-{:else if computedType.startsWith("audio/")}
-  <audio data-app-kind="MediaPlayer" data-poster={poster} bind:this={playerEl}>
-    <source {src} type={computedType} />
+{:else if type.startsWith("audio/")}
+  <audio
+    data-app-kind="MediaPlayer"
+    crossorigin="anonymous"
+    data-poster={poster}
+    bind:this={player_element}
+  >
+    <source {src} {type} />
   </audio>
 {:else}
   <!-- svelte-ignore a11y-media-has-caption -->
@@ -164,8 +76,8 @@
     crossorigin="anonymous"
     playsinline
     data-poster={poster}
-    bind:this={playerEl}
+    bind:this={player_element}
   >
-    <source {src} type={computedType} />
+    <source {src} {type} />
   </video>
 {/if}

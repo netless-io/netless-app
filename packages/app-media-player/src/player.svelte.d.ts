@@ -1,24 +1,13 @@
+import type { AppContext } from "@netless/window-manager";
+import type { Attributes } from ".";
+import type { Sync } from "./sync";
+
 import { SvelteComponentTyped } from "svelte";
 
 export declare interface PlayerProps {
-  src: string;
-  type?: string;
-  poster?: string;
-  provider?: "youtube" | "vimeo";
-  volume?: number;
-  muted?: boolean;
-  paused?: boolean;
-  currentTime?: number;
+  storage?: AppContext<Attributes>["storage"];
+  sync?: Sync;
 }
 
-export declare interface PlayerEvents {
-  "update:attrs": CustomEvent<{
-    paused?: boolean;
-    currentTime?: number;
-    muted?: boolean;
-    volume?: number;
-  }>;
-}
-
-declare class Player extends SvelteComponentTyped<PlayerProps, PlayerEvents> {}
+declare class Player extends SvelteComponentTyped<PlayerProps> {}
 export default Player;
