@@ -6,6 +6,10 @@
   "unpkg": "dist/main.iife.js",
   "jsdelivr": "dist/main.iife.js",
   "types": "src/index.ts",
+  "files": [
+    "src",
+    "dist"
+  ],
   "scripts": {
     "types": "cross-env NODE_ENV=production tsc --declaration --emitDeclarationOnly --outDir dist",
     "build": "vite build && npm run types",
