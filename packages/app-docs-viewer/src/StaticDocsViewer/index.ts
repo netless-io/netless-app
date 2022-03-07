@@ -3,12 +3,15 @@ import type { View, Size, Camera } from "white-web-sdk";
 import type { DebouncedFunction, Options } from "debounce-fn";
 import debounceFn from "debounce-fn";
 import { SideEffectManager } from "side-effect-manager";
+import { ResizeObserver as Polyfill } from "@juggle/resize-observer";
 import type { DocsViewerPage } from "../DocsViewer";
 import { DocsViewer } from "../DocsViewer";
 import { clamp, preventEvent } from "../utils/helpers";
 import { Stepper } from "./stepper";
 import { PageRenderer } from "../PageRenderer";
 import { ScrollBar } from "../ScrollBar";
+
+const ResizeObserver = window.ResizeObserver || Polyfill;
 
 const RATIO_BASE_CONTAINER_HEIGHT = 640;
 
@@ -122,10 +125,14 @@ export class StaticDocsViewer {
 
     this.setupScrollListener();
 
+    const debouncedRenderRatioHeight = this.debounce(this.renderRatioHeight.bind(this), {
+      wait: 80,
+    });
+
     this.sideEffect.add(() => {
-      const handler = this.renderRatioHeight.bind(this);
-      this.box.events.on("visual_resize", handler);
-      return () => this.box.events.off("visual_resize", handler);
+      const observer = new ResizeObserver(debouncedRenderRatioHeight);
+      observer.observe(this.viewer.$content);
+      return () => observer.disconnect();
     });
 
     // guard scroll position
@@ -394,7 +401,7 @@ export class StaticDocsViewer {
 
   protected debounce<ArgumentsType extends unknown[], ReturnType>(
     fn: (...args: ArgumentsType) => ReturnType,
-    options: Options,
+    options?: Options,
     disposerID?: string
   ): DebouncedFunction<ArgumentsType, ReturnType | undefined> {
     const dFn = debounceFn(fn, options);

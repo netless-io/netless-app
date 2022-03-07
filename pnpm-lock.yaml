@@ -69,11 +69,13 @@ importers:
 
   packages/app-docs-viewer:
     specifiers:
+      '@juggle/resize-observer': ^3.3.1
       '@netless/app-shared': workspace:*
       debounce-fn: ^5.1.0
       side-effect-manager: ^0.1.5
       vanilla-lazyload: ^17.5.0
     dependencies:
+      '@juggle/resize-observer': 3.3.1
       debounce-fn: 5.1.0
       vanilla-lazyload: 17.5.0
     devDependencies:
@@ -475,7 +477,6 @@ packages:
 
   /@juggle/resize-observer/3.3.1:
     resolution: {integrity: sha512-zMM9Ds+SawiUkakS7y94Ymqx+S0ORzpG3frZirN3l+UlXUmSUR7hF4wxCVqW+ei94JzV5kt0uXBcoOEAuiydrw==}
-    dev: true
 
   /@monaco-editor/loader/1.2.0_monaco-editor@0.29.1:
     resolution: {integrity: sha512-cJVCG/T/KxXgzYnjKqyAgsKDbH9mGLjcXxN6AmwumBwa2rVFkwvGcUj1RJtD0ko4XqLqJxwqsN/Z/KURB5f1OQ==}
