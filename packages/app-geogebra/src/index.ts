@@ -67,6 +67,7 @@ const GeoGebra: NetlessApp<Attributes> = {
     const sideEffectManager = new SideEffectManager();
 
     const params: GGBAppletParameters = { ...defaultParameters };
+    params.language = navigator.language.startsWith("zh") ? "zh" : "en";
     if (attrs.ggbBase64) {
       params.ggbBase64 = attrs.ggbBase64;
     }
