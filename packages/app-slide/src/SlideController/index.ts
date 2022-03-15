@@ -138,11 +138,6 @@ export class SlideController {
       return disposer;
     });
 
-    this.sideEffect.add(() => {
-      context.emitter.on("seek", this.onSeeked);
-      return () => context.emitter.off("seek", this.onSeeked);
-    });
-
     this.sideEffect.add(() =>
       context.addMagixEventListener(SLIDE_EVENTS.syncDispatch, this.magixEventListener, {
         fireSelfEventAfterCommit: true,
@@ -199,14 +194,6 @@ export class SlideController {
     if (this.context.getIsWritable()) {
       verbose("[Slide] state change", JSON.stringify(state, null, 2));
       this.context.storage.setState({ state });
-    }
-  };
-
-  private onSeeked = () => {
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    const state = this.context.storage.state;
-    if (state) {
-      this.slide.setSlideState(deepClone(state));
     }
   };
 
