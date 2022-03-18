@@ -87,10 +87,13 @@
         window.manager.addApp(configs[index]);
       } else if (getAttributes) {
         const attributes = getAttributes();
+        if (kind === "EmbeddedPage" && !attributes.src) {
+          // ignore empty inputs
+          return;
+        }
         window.manager.addApp({
           kind,
           attributes,
-          options: { title: "Custom" },
           src: configs[0].src,
         });
       }
