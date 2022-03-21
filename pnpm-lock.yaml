@@ -190,6 +190,16 @@ importers:
       side-effect-manager: 0.1.5
       vanilla-lazyload: 17.5.0
 
+  packages/app-talkative:
+    specifiers:
+      '@juggle/resize-observer': ^3.3.1
+      '@netless/app-shared': workspace:*
+      side-effect-manager: ^0.1.5
+    devDependencies:
+      '@juggle/resize-observer': 3.3.1
+      '@netless/app-shared': link:../app-shared
+      side-effect-manager: 0.1.5
+
   packages/app-vote:
     specifiers: {}
 

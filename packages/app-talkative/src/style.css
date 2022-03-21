@@ -1,0 +1,19 @@
+.app-talkative-container {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.app-talkative-container iframe {
+  width: 100%;
+  height: 100%;
+  border: none;
+  display: block;
+}
+
+.telebox-color-scheme-dark .app-talkative-container {
+  color: #eee;
+}

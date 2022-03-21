@@ -5,6 +5,7 @@ export type PlaygroundConfig<T = unknown> = Omit<AddAppParams, "src" | "attribut
   attributes?: Partial<T>;
   appOptions?: Record<string, unknown>;
   addHooks?: RegisterParams["addHooks"];
+  getAttributes?: () => Partial<T> | undefined | null;
 };
 
 export type PlaygroundConfigs<T = unknown> = PlaygroundConfig<T>[];

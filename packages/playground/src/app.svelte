@@ -82,20 +82,22 @@
     if (target?.dataset?.appKind && target?.dataset?.appIndex) {
       const kind = target.dataset.appKind;
       const index = +target.dataset.appIndex;
-      const { configs, getAttributes } = apps.find(a => a.kind === kind) as AppGroup;
+      const { configs } = apps.find(a => a.kind === kind) as AppGroup;
       if (index >= 0) {
-        window.manager.addApp(configs[index]);
-      } else if (getAttributes) {
-        const attributes = getAttributes();
-        if (kind === "EmbeddedPage" && !attributes.src) {
-          // ignore empty inputs
-          return;
+        const config = configs[index];
+        if (config.getAttributes) {
+          const attributes = config.getAttributes();
+          if (attributes == null) {
+            return;
+          }
+          window.manager.addApp({
+            kind,
+            attributes,
+            src: configs[0].src,
+          });
+        } else {
+          window.manager.addApp(config);
         }
-        window.manager.addApp({
-          kind,
-          attributes,
-          src: configs[0].src,
-        });
       }
     }
   }
@@ -162,7 +164,7 @@
 {:else}
   <div class="two-side">
     <div id="actions" class="app-list" on:click={openApp}>
-      {#each apps as { kind, configs, url, getAttributes } (kind)}
+      {#each apps as { kind, configs, url } (kind)}
         <h2 class="app-list-kind">
           <a class="app-list-kind-link" href={url} target="_blank">
             <img class="app-list-kind-icon" src={categorySVG} alt={kind} />
@@ -175,12 +177,6 @@
             {app.options?.title || `${app.kind} ${i + 1}`}
           </button>
         {/each}
-        {#if getAttributes}
-          <button class="app-list-open" data-app-kind={kind} data-app-index={-1}>
-            <img class="app-list-open-icon" src={appSVG} alt="[custom]" />
-            Custom
-          </button>
-        {/if}
       {/each}
     </div>
     <div class="right-side">
