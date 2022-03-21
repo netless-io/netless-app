@@ -1,7 +1,7 @@
 import type { AddAppParams, RegisterParams } from "@netless/window-manager";
 import { WindowManager } from "@netless/window-manager";
 
-import type { PlaygroundConfigs } from "../typings";
+import type { PlaygroundConfig, PlaygroundConfigs } from "../typings";
 import { log } from "./log";
 
 const CONFIGS = import.meta.globEager("../../*/playground.(ts|js)");
@@ -9,7 +9,7 @@ const CONFIGS = import.meta.globEager("../../*/playground.(ts|js)");
 export interface AppGroup {
   url: string;
   kind: string;
-  configs: (AddAppParams & { getAttributes?: () => Record<string, unknown> | null | undefined })[];
+  configs: (AddAppParams & { getAttributes?: PlaygroundConfig["getAttributes"] })[];
 }
 
 export function registerApps(): AppGroup[] {
