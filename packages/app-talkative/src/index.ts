@@ -183,7 +183,9 @@ const Talkative: NetlessApp<TalkativeAttributes, MagixEventPayloads, TalkativeOp
     });
 
     context.emitter.on("destroy", () => {
+      logger.log("destroy");
       sideEffect.flushAll();
+      $iframe.remove();
     });
 
     $iframe.src = appendQuery(context.storage.state.src, query);
