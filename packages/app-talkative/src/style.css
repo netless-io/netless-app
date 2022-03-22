@@ -5,6 +5,7 @@
   display: flex;
   justify-content: center;
   align-items: center;
+  flex-direction: column;
 }
 
 .app-talkative-container iframe {
@@ -12,6 +13,66 @@
   height: 100%;
   border: none;
   display: block;
+}
+
+.app-talkative-footer {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  box-sizing: border-box;
+  background-color: rgba(255, 255, 255, 0.6);
+  height: 26px;
+  padding: 0 16px;
+  border-top: 1px solid #eeeef7;
+  color: #191919;
+}
+
+.telebox-color-scheme-dark .app-talkative-footer {
+  color: #a6a6a8;
+  background: #2d2d33;
+  border-top: none;
+}
+
+.app-talkative-page {
+  font-variant-numeric: tabular-nums;
+}
+
+.app-talkative-btn-prev,
+.app-talkative-btn-next {
+  box-sizing: border-box;
+  width: 26px;
+  height: 26px;
+  font-size: 14px;
+  font-family: monospace;
+  margin: 0;
+  padding: 3px;
+  border: none;
+  border-radius: 1px;
+  outline: none;
+  color: currentColor;
+  background: transparent;
+  transition: background 0.4s;
+  cursor: pointer;
+  user-select: none;
+  -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
+  cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.app-talkative-btn-prev:hover,
+.app-talkative-btn-next:hover {
+  background: rgba(237, 237, 240, 0.9);
+}
+
+.telebox-color-scheme-dark .app-talkative-btn-prev:hover,
+.telebox-color-scheme-dark .app-talkative-btn-next:hover {
+  background: #212126;
 }
 
 .telebox-color-scheme-dark .app-talkative-container {
