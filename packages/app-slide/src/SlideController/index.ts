@@ -14,7 +14,7 @@ import type { Attributes, MagixEvents, MagixPayload, SlideState } from "../typin
 
 import { SideEffectManager } from "side-effect-manager";
 import { Slide, SLIDE_EVENTS } from "@netless/slide";
-import { clamp, deepClone, isObj } from "../utils/helpers";
+import { clamp, deepClone } from "../utils/helpers";
 import { cachedGetBgColor } from "../utils/bgcolor";
 import { logger, log, verbose } from "../utils/logger";
 export { syncSceneWithSlide, createDocsViewerPages } from "./helpers";
@@ -168,13 +168,11 @@ export class SlideController {
   };
 
   private magixEventListener: MagixEventListener = ev => {
-    if (ev.event === SLIDE_EVENTS.syncDispatch && isObj(ev.payload)) {
-      const { type, payload } = ev.payload as MagixPayload;
-      if (type === SLIDE_EVENTS.syncDispatch) {
-        this.syncStateOnce();
-        log("[Slide] receive", payload);
-        this.slide.emit(SLIDE_EVENTS.syncReceive, payload);
-      }
+    const { type, payload } = ev.payload;
+    if (type === SLIDE_EVENTS.syncDispatch) {
+      this.syncStateOnce();
+      log("[Slide] receive", payload);
+      this.slide.emit(SLIDE_EVENTS.syncReceive, payload);
     }
   };
 
