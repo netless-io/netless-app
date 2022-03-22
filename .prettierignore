@@ -1,2 +1,2 @@
 pnpm-lock.yaml
-packages/*/dist/
+packages/**/dist/
