@@ -1,10 +1,9 @@
-import styles from "./style.css?inline";
-
 import type { NetlessApp } from "@netless/window-manager";
 import { Logger } from "@netless/app-shared";
 import { SideEffectManager } from "side-effect-manager";
-import { ResizeObserver as Polyfill } from "@juggle/resize-observer";
-import { appendQuery, getUserPayload, h } from "./utils";
+import { appendQuery, getUserPayload, nextTick } from "./utils";
+import { Renderer } from "./renderer";
+import { Footer } from "./footer";
 
 export interface TalkativeAttributes {
   /** (required) courseware url */
@@ -26,16 +25,9 @@ export interface TalkativeOptions {
   debug?: boolean;
 }
 
-const ResizeObserver = window.ResizeObserver || Polyfill;
-
 const Talkative: NetlessApp<TalkativeAttributes, MagixEventPayloads, TalkativeOptions> = {
   kind: "Talkative",
   setup(context) {
-    const debug = (context.getAppOptions() || {}).debug;
-    const logger = new Logger("Talkative", debug);
-    const { uid, memberId, nickName } = getUserPayload(context);
-    const sideEffect = new SideEffectManager();
-
     context.storage.ensureState({
       src: "https://example.org",
       uid: "",
@@ -44,79 +36,68 @@ const Talkative: NetlessApp<TalkativeAttributes, MagixEventPayloads, TalkativeOp
       lastMsg: "",
     });
 
+    const debug = (context.getAppOptions() || {}).debug;
+    const logger = new Logger("Talkative", debug);
+    const { uid, memberId, nickName } = getUserPayload(context);
+    const sideEffect = new SideEffectManager();
+
+    logger.log("my uid", uid);
+
+    const onPrevPage = () => {
+      if (context.getIsWritable() && context.storage.state.page > 1) {
+        context.storage.setState({ page: context.storage.state.page - 1 });
+      }
+    };
+
+    const onNextPage = () => {
+      if (context.getIsWritable() && context.storage.state.page < context.storage.state.pageNum) {
+        context.storage.setState({ page: context.storage.state.page + 1 });
+      }
+    };
+
+    const renderer = new Renderer(context);
+    const footer = new Footer(context, onPrevPage, onNextPage);
+
+    sideEffect.addDisposer(
+      context.storage.addStateChangedListener(() => {
+        const role = context.storage.state.uid === uid ? 0 : 2;
+        renderer.role.set(role);
+        footer.role.set(role);
+      })
+    );
+
+    const on_ready = () => {
+      sideEffect.addDisposer(renderer.mount());
+      sideEffect.addDisposer(footer.mount());
+
+      const role = context.storage.state.uid === uid ? 0 : 2;
+      const query = `userid=${memberId}&role=${role}&name=${nickName}`;
+      renderer.$iframe.src = appendQuery(context.storage.state.src, query);
+    };
+
     if (!context.storage.state.uid) {
-      if (!context.isAddApp) {
-        logger.log("no teacher's uid, fallback to a random guy");
+      const disposerID = sideEffect.addDisposer(
+        context.storage.addStateChangedListener(() => {
+          if (context.storage.state.uid) {
+            sideEffect.flush(disposerID);
+            on_ready();
+          }
+        })
+      );
+
+      if (context.isAddApp) {
+        logger.log("no teacher's uid, setting myself...");
+        context.storage.setState({ uid });
       }
-      context.storage.setState({ uid });
+    } else {
+      nextTick.then(on_ready);
     }
-
-    const role = context.storage.state.uid === uid ? 0 : 2;
-    const query = `userid=${memberId}&role=${role}&name=${nickName}`;
-
-    const box = context.getBox();
-    box.mountStyles(styles);
-
-    const $content = document.createElement("div");
-    $content.className = "app-talkative-container";
-    box.mountContent($content);
-
-    const $iframe = document.createElement("iframe");
-    $content.appendChild($iframe);
-
-    const $pageText = h("span", { class: "app-talkative-page" });
-    if (role === 0) {
-      const $footer = h("div", { class: "app-talkative-footer" });
-      $content.appendChild($footer);
-
-      const $leftBtn = h("button", { class: "app-talkative-btn-prev" }, "<");
-      $footer.appendChild($leftBtn);
-      $leftBtn.addEventListener("click", () => {
-        if (context.storage.state.page > 1) {
-          context.storage.setState({ page: context.storage.state.page - 1 });
-        }
-      });
-
-      $footer.appendChild($pageText);
-
-      const $rightBtn = h("button", { class: "app-talkative-btn-next" }, ">");
-      $footer.appendChild($rightBtn);
-      $rightBtn.addEventListener("click", () => {
-        if (context.storage.state.page < context.storage.state.pageNum) {
-          context.storage.setState({ page: context.storage.state.page + 1 });
-        }
-      });
-    }
-
-    let ratio = 16 / 9;
-    const aspectRatio = (entries: ResizeObserverEntry[]) => {
-      const { width, height } = entries[0]?.contentRect || $content.getBoundingClientRect();
-      if (width / ratio > height) {
-        const targetWidth = height * ratio;
-        $iframe.style.width = `${targetWidth}px`;
-        $iframe.style.height = "";
-      } else if (width / ratio < height) {
-        const targetHeight = width / ratio;
-        $iframe.style.width = "";
-        $iframe.style.height = `${targetHeight}px`;
-      }
-    };
-
-    sideEffect.add(() => {
-      const observer = new ResizeObserver(aspectRatio);
-      observer.observe($content);
-      return observer.disconnect.bind(observer);
-    });
-
-    const postMessage = (message: unknown) => {
-      $iframe.contentWindow?.postMessage(message, "*");
-    };
 
     sideEffect.addDisposer(
       context.storage.addStateChangedListener(() => {
         const { page, pageNum } = context.storage.state;
-        $pageText.textContent = `${page}/${pageNum}`;
-        postMessage(JSON.stringify({ method: "onJumpPage", toPage: page }));
+        footer.text.set(`${page}/${pageNum}`);
+        renderer.postMessage(JSON.stringify({ method: "onJumpPage", toPage: page }));
       })
     );
 
@@ -128,8 +109,7 @@ const Talkative: NetlessApp<TalkativeAttributes, MagixEventPayloads, TalkativeOp
       },
 
       onLoadComplete(data: { totalPages?: number; coursewareRatio: number }) {
-        ratio = data.coursewareRatio;
-        aspectRatio([]);
+        renderer.ratio.set(data.coursewareRatio);
 
         if (context.getIsWritable() && data.totalPages) {
           context.storage.setState({ pageNum: data.totalPages });
@@ -137,10 +117,10 @@ const Talkative: NetlessApp<TalkativeAttributes, MagixEventPayloads, TalkativeOp
 
         // send last message to sync state
         const { page, lastMsg } = context.storage.state;
-        lastMsg && postMessage(lastMsg);
+        lastMsg && renderer.postMessage(lastMsg);
 
         // send first page jump message
-        postMessage(JSON.stringify({ method: "onJumpPage", toPage: page }));
+        renderer.postMessage(JSON.stringify({ method: "onJumpPage", toPage: page }));
       },
 
       onFileMessage(event: Record<string, unknown>) {
@@ -156,12 +136,12 @@ const Talkative: NetlessApp<TalkativeAttributes, MagixEventPayloads, TalkativeOp
 
     sideEffect.addDisposer(
       context.addMagixEventListener("broadcast", ({ payload }) => {
-        postMessage(payload);
+        renderer.postMessage(payload);
       })
     );
 
     sideEffect.addEventListener(window, "message", ev => {
-      if (ev.source !== $iframe.contentWindow) return;
+      if (ev.source !== renderer.$iframe.contentWindow) return;
       if (typeof ev.data === "string") {
         try {
           const event = JSON.parse(ev.data);
@@ -185,10 +165,7 @@ const Talkative: NetlessApp<TalkativeAttributes, MagixEventPayloads, TalkativeOp
     context.emitter.on("destroy", () => {
       logger.log("destroy");
       sideEffect.flushAll();
-      $iframe.remove();
     });
-
-    $iframe.src = appendQuery(context.storage.state.src, query);
   },
 };
 
