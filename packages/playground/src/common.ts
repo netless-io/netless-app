@@ -1,4 +1,7 @@
+import { QueryVersion } from "./constants";
 import { log } from "./log";
+
+export { QueryVersion };
 
 export const $ = document.querySelector.bind(document);
 export const store = sessionStorage;
@@ -34,11 +37,17 @@ export async function createRoom(): Promise<RoomInfo> {
   return room;
 }
 
-export function share(query: URLSearchParams | string | RoomInfo): string {
+export function share(query: RoomInfo): string {
+  let str = "";
   if (typeof query === "object" && query !== null && "uuid" in query) {
-    query = `uuid=${query.uuid}&roomToken=${query.roomToken}`;
+    if (QueryVersion !== 2) {
+      str = `uuid=${query.uuid}&roomToken=${query.roomToken}`;
+    } else {
+      const [, token] = query.roomToken.split("_", 2);
+      str = `shareable=${token}+${query.uuid}`;
+    }
   }
-  return location.origin + location.pathname + "?" + query.toString();
+  return location.origin + location.pathname + "?" + str;
 }
 
 export function clearQueryString(): void {

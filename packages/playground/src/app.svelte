@@ -4,7 +4,7 @@
 
   import type { Room, RoomState, ApplianceNames } from "white-web-sdk";
 
-  import { createRoom, env, replaceURL, share, store } from "./common";
+  import { createRoom, env, QueryVersion, replaceURL, share, store, type RoomInfo } from "./common";
   import { init, joinRoom, prepare, tools, reset } from "./room";
   import type { AppGroup } from "./apps";
   import { registerApps } from "./apps";
@@ -121,11 +121,11 @@
   async function shareOrCreateRoom(e: MouseEvent) {
     if (shareMode === "share") {
       const { uuid, roomToken } = room;
-      const query = new URLSearchParams();
-      query.set("uuid", uuid);
-      query.set("roomToken", roomToken);
+      const query: RoomInfo = { uuid, roomToken };
       const url = share(query);
-      replaceURL(e.ctrlKey || e.metaKey ? "" : url);
+      if (QueryVersion !== 2) {
+        replaceURL(e.ctrlKey || e.metaKey ? "" : url);
+      }
       try {
         await copyToClipboard(url);
         showTip("Copied share url.");

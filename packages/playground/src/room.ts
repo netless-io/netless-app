@@ -4,7 +4,7 @@ import { WindowManager } from "@netless/window-manager";
 import type { Room } from "white-web-sdk";
 import { ApplianceNames, DeviceType, WhiteWebSdk } from "white-web-sdk";
 
-import { store, type RoomInfo } from "./common";
+import { QueryVersion, store, type RoomInfo } from "./common";
 import { clearQueryString, createRoom, env, persistStore } from "./common";
 
 export const sdk = new WhiteWebSdk({
@@ -21,6 +21,13 @@ export async function prepare(): Promise<RoomInfo | undefined> {
   if (query.has("uuid") && query.has("roomToken")) {
     uuid = query.get("uuid") as string;
     roomToken = query.get("roomToken") as string;
+  }
+
+  if (query.has("shareable")) {
+    [roomToken, uuid] = (query.get("shareable") as string).split(/[ +]/);
+    if (roomToken && uuid) {
+      roomToken = "NETLESSROOM_" + roomToken;
+    }
   }
 
   if (!uuid || !roomToken) {
@@ -72,7 +79,9 @@ export async function joinRoom(info: RoomInfo): Promise<Room> {
     },
   });
   window.room = room;
-  clearQueryString();
+  if (QueryVersion !== 2) {
+    clearQueryString();
+  }
   return room;
 }
 
