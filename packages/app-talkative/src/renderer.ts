@@ -1,8 +1,8 @@
 import type { AppContext } from "@netless/window-manager";
 import { SideEffectManager } from "side-effect-manager";
 import { ResizeObserver as Polyfill } from "@juggle/resize-observer";
-import styles from "./style.css?inline";
 import { append, attr, detach, element, writable } from "./utils";
+import styles from "./style.css?inline";
 
 const ResizeObserver = window.ResizeObserver || Polyfill;
 
@@ -17,6 +17,7 @@ export class Renderer {
   constructor(public readonly context: AppContext) {
     attr(this.$content, "class", "app-talkative-container");
     append(this.$content, this.$iframe);
+    this.$content.dataset.appKind = "Talkative";
   }
 
   private _on_update_role(role: 0 | 2) {

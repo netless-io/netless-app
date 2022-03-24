@@ -42,8 +42,7 @@
   font-variant-numeric: tabular-nums;
 }
 
-.app-talkative-btn-prev,
-.app-talkative-btn-next {
+.app-talkative-btn {
   box-sizing: border-box;
   width: 26px;
   height: 26px;
@@ -65,16 +64,19 @@
   -webkit-user-select: none;
 }
 
-.app-talkative-btn-prev:hover,
-.app-talkative-btn-next:hover {
+.app-talkative-btn:hover {
   background: rgba(237, 237, 240, 0.9);
 }
 
-.telebox-color-scheme-dark .app-talkative-btn-prev:hover,
-.telebox-color-scheme-dark .app-talkative-btn-next:hover {
+.telebox-color-scheme-dark .app-talkative-btn:hover {
   background: #212126;
 }
 
 .telebox-color-scheme-dark .app-talkative-container {
   color: #eee;
+}
+
+.app-talkative-btn:disabled {
+  opacity: 0;
+  cursor: default;
 }
