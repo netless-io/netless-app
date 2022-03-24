@@ -38,17 +38,49 @@ export function appendQuery(url: string, query: string) {
   return pathname + (search ? `${search}&` : "?") + query;
 }
 
-const hasOwn = Object.prototype.hasOwnProperty;
+export function element<T extends keyof HTMLElementTagNameMap>(tag: T) {
+  return document.createElement(tag);
+}
 
-export function h(tag: string, attrs: Record<string, string> = {}, children?: string) {
-  const el = document.createElement(tag);
-  for (const key in attrs) {
-    if (hasOwn.call(attrs, key)) {
-      el.setAttribute(key, attrs[key]);
-    }
+export function attr(el: HTMLElement, key: string, value: string | null) {
+  if (value == null) {
+    el.removeAttribute(key);
+  } else {
+    el.setAttribute(key, value);
   }
-  if (children) {
-    el.textContent = children;
-  }
-  return el;
+}
+
+export function append(el: HTMLElement, node: HTMLElement) {
+  return el.appendChild(node);
+}
+
+export function detach(el: HTMLElement) {
+  return el.parentNode?.removeChild(el);
+}
+
+export function noop() {
+  // noop
+}
+
+export const nextTick = /* @__PURE__ */ Promise.resolve();
+
+export function writable<T>(value: T) {
+  const listeners: Array<(value: T) => void> = [];
+
+  return {
+    get value() {
+      return value;
+    },
+    set(newValue: T) {
+      value = newValue;
+      listeners.forEach(listener => listener(value));
+    },
+    subscribe(listener: (value: T) => void) {
+      listeners.push(listener);
+      nextTick.then(() => listener(value));
+      return () => {
+        listeners.splice(listeners.indexOf(listener), 1);
+      };
+    },
+  };
 }
