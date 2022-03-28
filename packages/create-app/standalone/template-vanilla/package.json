@@ -14,9 +14,9 @@
     "white-web-sdk": "*"
   },
   "devDependencies": {
-    "@netless/window-manager": "^0.4.5",
+    "@netless/window-manager": "^0.4.15",
     "@types/node": "^17.0.17",
-    "vite": "^2.8.3",
-    "white-web-sdk": "2.16.9"
+    "vite": "^2.8.6",
+    "white-web-sdk": "2.16.10"
   }
 }
