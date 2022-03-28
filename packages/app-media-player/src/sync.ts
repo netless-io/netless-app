@@ -57,10 +57,10 @@ export class Sync {
   setupPlayer(player: Plyr) {
     this.registerListeners(player);
     this.watchUserInputs(player);
-    this._sync_timer = setInterval(this.syncAll, this._interval);
+    this._sync_timer = setInterval(this.syncAll.bind(this), this._interval);
   }
 
-  syncAll = () => {
+  syncAll() {
     const { behavior, player, context } = this;
     // wait before player set
     if (!player) return;
@@ -95,7 +95,7 @@ export class Sync {
     } else {
       this.syncCurrentTime(hostTime, currentTime, player);
     }
-  };
+  }
 
   private watchUserInputs(player: Plyr) {
     const $controls = player.elements.controls;
@@ -181,7 +181,7 @@ export class Sync {
       paused: player.paused,
     });
     clearTimeout(this._skip_next_play_pause);
-    this._skip_next_play_pause = setTimeout(this.skipNextPlayPause, 500);
+    this._skip_next_play_pause = setTimeout(this.skipNextPlayPause.bind(this), 500);
   }
 
   private skipNextPlayPause() {
@@ -248,6 +248,6 @@ export class Sync {
     this._blink = 0;
     this._interval = clamp(this._interval + (inc ? 2000 : -2000), 1000, 15000);
     clearTimeout(this._sync_timer);
-    this._sync_timer = setInterval(this.syncAll, this._interval);
+    this._sync_timer = setInterval(this.syncAll.bind(this), this._interval);
   }
 }

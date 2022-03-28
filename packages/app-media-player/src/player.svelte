@@ -31,6 +31,7 @@
         fullscreen: { enabled: false },
         controls: ["play", "progress", "current-time", "mute", "volume"],
         clickToPlay: false,
+        youtube: { autoplay: true },
       });
       sync.player = player;
     }
