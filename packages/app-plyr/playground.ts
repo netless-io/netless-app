@@ -4,29 +4,29 @@ import type { Attributes } from "./src";
 
 const options: PlaygroundConfigs<Attributes> = [
   {
-    kind: "MediaPlayer",
+    kind: "Plyr",
     src: () => import("./src"),
     options: {
       title: "MP4",
     },
     attributes: {
-      src: "https://beings.oss-cn-hangzhou.aliyuncs.com/test/aaa59a55-81ff-45e8-8185-fd72c695def4/1606277539701637%E7%9A%84%E5%89%AF%E6%9C%AC.mp4",
+      src: "https://flat-storage.oss-accelerate.aliyuncs.com/cloud-storage/2022-03/28/e35a6676-aa5d-4a61-8f17-87e626b7d1b7/e35a6676-aa5d-4a61-8f17-87e626b7d1b7.mp4",
       type: "video/mp4",
     },
   },
   {
-    kind: "MediaPlayer",
+    kind: "Plyr",
     src: () => import("./src"),
     options: {
       title: "MP3",
     },
     attributes: {
-      src: "https://beings.oss-cn-hangzhou.aliyuncs.com/test/2a90e310-1904-4a9a-8a86-9d6f3f4f8a78/%E9%99%88%E7%BB%AE%E8%B4%9E%20-%20%E5%A4%A9%E5%A4%A9%E6%83%B3%E4%BD%A0.mp3",
+      src: "https://flat-storage.oss-accelerate.aliyuncs.com/cloud-storage/2022-03/28/f663cdcc-3367-4a15-8d2d-65fa4302c782/f663cdcc-3367-4a15-8d2d-65fa4302c782.mp3",
       type: "audio/mp3",
     },
   },
   {
-    kind: "MediaPlayer",
+    kind: "Plyr",
     src: () => import("./src"),
     options: {
       title: "M3U8",
@@ -36,7 +36,7 @@ const options: PlaygroundConfigs<Attributes> = [
     },
   },
   {
-    kind: "MediaPlayer",
+    kind: "Plyr",
     src: () => import("./src"),
     options: {
       title: "YouTube",

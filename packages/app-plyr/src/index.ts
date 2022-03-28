@@ -28,8 +28,8 @@ const DefaultAttributes: Pick<Attributes, "volume" | "paused" | "muted" | "curre
   currentTime: 0,
 };
 
-const MediaPlayer: NetlessApp<Attributes> = {
-  kind: "MediaPlayer",
+const Plyr: NetlessApp<Attributes> = {
+  kind: "Plyr",
   config: {
     minwidth: 300,
     minheight: 80,
@@ -40,23 +40,16 @@ const MediaPlayer: NetlessApp<Attributes> = {
 
     if (!storage.state.src) {
       context.emitter.emit("destroy", {
-        error: new Error(`[MediaPlayer]: missing "src"`),
+        error: new Error(`[Plyr]: missing "src"`),
       });
       return;
     }
 
     if (!storage.state.type && !storage.state.provider) {
-      console.warn(`[MediaPlayer]: missing "type", will guess from file extension`);
+      console.warn(`[Plyr]: missing "type", will guess from file extension`);
     }
 
     const box = context.getBox();
-
-    if (!box.$content) {
-      context.emitter.emit("destroy", {
-        error: new Error(`[MediaPlayer]: missing container (box.$content not exist)`),
-      });
-      return;
-    }
 
     box.mountStyles(styles);
 
@@ -80,10 +73,10 @@ const MediaPlayer: NetlessApp<Attributes> = {
         app.$destroy();
       } catch (err) {
         // ignore
-        // console.warn("[MediaPlayer] destroy failed", err);
+        // console.warn("[Plyr] destroy failed", err);
       }
     });
   },
 };
 
-export default MediaPlayer;
+export default Plyr;

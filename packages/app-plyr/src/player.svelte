@@ -42,14 +42,14 @@
       sync.dispose();
       player?.destroy();
     } catch (e) {
-      console.warn("[MediaPlayer] destroy plyr error", e);
+      console.warn("[Plyr] destroy plyr error", e);
     }
   });
 </script>
 
 {#if storage.state.provider === "youtube"}
   <div
-    data-app-kind="MediaPlayer"
+    data-app-kind="Plyr"
     class="plyr__video-embed"
     data-plyr-provider="youtube"
     data-plyr-embed-id={src}
@@ -57,13 +57,13 @@
     bind:this={player_element}
   />
 {:else if !type}
-  <div class="plyr--audio">
+  <div data-app-kind="Plyr" class="plyr--audio">
     Invalid "src" or "type".
     {JSON.stringify({ src: src, type: storage.state.type })}
   </div>
 {:else if type.startsWith("audio/")}
   <audio
-    data-app-kind="MediaPlayer"
+    data-app-kind="Plyr"
     crossorigin="anonymous"
     data-poster={poster}
     bind:this={player_element}
@@ -73,7 +73,7 @@
 {:else}
   <!-- svelte-ignore a11y-media-has-caption -->
   <video
-    data-app-kind="MediaPlayer"
+    data-app-kind="Plyr"
     crossorigin="anonymous"
     playsinline
     data-poster={poster}

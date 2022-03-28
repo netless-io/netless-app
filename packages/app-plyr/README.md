@@ -1,10 +1,21 @@
-## @netless/app-media-player
+## @netless/app-plyr
 
-Netless App for playing video and audio files.
+Netless App for playing video and audio.
 
 ### Usage
 
-See [playground](https://github.com/netless-io/netless-app/tree/master/packages/playground).
+```ts
+manager.addApp({
+  kind: "Plyr",
+  options: {
+    title: "YouTube",
+  },
+  attributes: {
+    src: "https://www.youtube.com/embed/bTqVqk7FSmY",
+    provider: "youtube",
+  },
+});
+```
 
 ### `m3u8` support
 
@@ -24,6 +35,6 @@ Autoplay is generally not recommended as it is seen as a negative user experienc
 - https://developers.google.com/web/updates/2017/09/autoplay-policy-changes
 - https://hacks.mozilla.org/2019/02/firefox-66-to-block-automatically-playing-audible-video-and-audio
 
-### Licence
+### License
 
 MIT @ [netless](https://github.com/netless-io)
