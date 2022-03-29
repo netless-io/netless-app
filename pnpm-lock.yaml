@@ -121,16 +121,6 @@ importers:
       emittery: 0.10.1
       side-effect-manager: 0.1.5
 
-  packages/app-media-player:
-    specifiers:
-      hls.js: ^1.1.4
-      plyr: ^3.6.12
-      prepend-http: ^4.0.0
-    devDependencies:
-      hls.js: 1.1.4
-      plyr: 3.6.12
-      prepend-http: 4.0.0
-
   packages/app-monaco:
     specifiers:
       '@monaco-editor/loader': ^1.2.0
@@ -164,6 +154,16 @@ importers:
       '@netless/app-shared': link:../app-shared
       nanoid: 3.2.0
       side-effect-manager: 0.1.5
+
+  packages/app-plyr:
+    specifiers:
+      hls.js: ^1.1.4
+      plyr: ^3.6.12
+      prepend-http: ^4.0.0
+    devDependencies:
+      hls.js: 1.1.4
+      plyr: 3.6.12
+      prepend-http: 4.0.0
 
   packages/app-shared:
     specifiers:
@@ -1162,11 +1162,6 @@ packages:
       meow: 8.1.2
       split2: 3.2.2
       through2: 4.0.2
-    dev: true
-
-  /core-js/3.20.0:
-    resolution: {integrity: sha512-KjbKU7UEfg4YPpskMtMXPhUKn7m/1OdTHTVjy09ScR2LVaoUXe8Jh0UdvN2EKUR6iKTJph52SJP95mAB0MnVLQ==}
-    requiresBuild: true
     dev: true
 
   /core-js/3.21.1:
@@ -2633,7 +2628,7 @@ packages:
   /plyr/3.6.12:
     resolution: {integrity: sha512-42WhYpMS/FEyX2unSEvhYtj1RvJgWvOsjZQFDongOQHA4eVzsyr7b06bzVpinMAOVC9e5H7RCbK+6CCAFIl2VQ==}
     dependencies:
-      core-js: 3.20.0
+      core-js: 3.21.1
       custom-event-polyfill: 1.0.7
       loadjs: 4.2.0
       rangetouch: 2.0.1
