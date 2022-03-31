@@ -169,6 +169,15 @@ export class SlideDocsViewer {
           height,
           animationMode: "immediately" as AnimationMode.Immediately,
         });
+        this.whiteboardView.setCameraBound({
+          damping: 1,
+          maxContentMode: () => this.whiteboardView.camera.scale,
+          minContentMode: () => this.whiteboardView.camera.scale,
+          centerX: 0,
+          centerY: 0,
+          width,
+          height,
+        });
         if (!this.isViewMounted) {
           this.isViewMounted = true;
           console.log("[Slide] mount whiteboard view");

@@ -14,7 +14,7 @@ import type { Attributes, MagixEvents, MagixPayload, SlideState } from "../typin
 
 import { SideEffectManager } from "side-effect-manager";
 import { Slide, SLIDE_EVENTS } from "@netless/slide";
-import { clamp, deepClone } from "../utils/helpers";
+import { clamp } from "../utils/helpers";
 import { cachedGetBgColor } from "../utils/bgcolor";
 import { logger, log, verbose } from "../utils/logger";
 export { syncSceneWithSlide, createDocsViewerPages } from "./helpers";
@@ -100,13 +100,16 @@ export class SlideController {
 
   private kickStart() {
     const { context, slide } = this;
-    const { taskId, url, state } = { ...EmptyAttributes, ...this.context.getAttributes() };
+    if (context.getIsWritable()) {
+      context.storage.ensureState(EmptyAttributes);
+    }
+    const { taskId, url, state } = context.storage.state;
     slide.setResource(taskId, url || DefaultUrl);
     if (state) {
       // if we already have state, try restore from it
-      log("[Slide] init with state", deepClone(state));
+      log("[Slide] init with state", state);
       this.syncStateOnceFlag = false;
-      slide.setSlideState(deepClone(state));
+      slide.setSlideState(state);
     } else if (context.isAddApp) {
       // otherwise, maybe this slide is just added, let the adder kick start first render
       log("[Slide] init by renderSlide", 1);
@@ -124,19 +127,14 @@ export class SlideController {
     // it is possible that we miss the first `renderSlide(1)` event
     // and the attributes has no value yet, so we need to sync state
     // when there's state change. we only have to do it once
-    this.sideEffect.add(() => {
-      const disposer = context.mobxUtils.reaction(
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        () => context.getAttributes()!.state,
-        () => {
+    const disposerId = this.sideEffect.addDisposer(
+      context.storage.addStateChangedListener(() => {
+        if (context.storage.state.state) {
           this.syncStateOnce();
-          disposer();
+          this.sideEffect.flush(disposerId);
         }
-      );
-      // mobx already has a "disposed" flag in reaction,
-      // so we don't need to check it here
-      return disposer;
-    });
+      })
+    );
 
     this.sideEffect.add(() =>
       context.addMagixEventListener(SLIDE_EVENTS.syncDispatch, this.magixEventListener, {
@@ -179,10 +177,13 @@ export class SlideController {
   private syncStateOnce() {
     // sync state before the first event, so that they can be in the correct order
     if (this.syncStateOnceFlag) {
-      const { state } = { ...EmptyAttributes, ...this.context.storage.state };
+      if (this.context.getIsWritable()) {
+        this.context.storage.ensureState(EmptyAttributes);
+      }
+      const { state } = this.context.storage.state;
       if (state) {
-        log("[Slide] sync with state (once)", deepClone(state));
-        this.slide.setSlideState(deepClone(state));
+        log("[Slide] sync with state (once)", state);
+        this.slide.setSlideState(state);
         this.syncStateOnceFlag = false;
       }
     }
