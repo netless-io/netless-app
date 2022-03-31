@@ -210,6 +210,15 @@ export class DynamicDocsViewer {
         height: page.height,
         animationMode: "immediately" as AnimationMode,
       });
+      this.whiteboardView.setCameraBound({
+        damping: 1,
+        maxContentMode: () => this.whiteboardView.camera.scale,
+        minContentMode: () => this.whiteboardView.camera.scale,
+        centerX: 0,
+        centerY: 0,
+        width: page.width,
+        height: page.height,
+      });
     }
   };
 
