@@ -1,10 +1,16 @@
 ## @netless/app-talkative
 
-Netless App for playing and syncing talkative apps.
+Netless App for playing and syncing Talk Cloud compatible HTML5 courseware.
+
+### Install
+
+```
+npm add @netless/app-talkative
+```
 
 ### Usage
 
-Register this app at the beginning:
+Register this app to `WindowManager` before use:
 
 ```ts
 import Talkative from "@netless/app-talkative";
@@ -15,7 +21,7 @@ WindowManager.register({
 });
 ```
 
-Insert it into the room:
+Insert HTML5 courseware into the room:
 
 ```js
 manager.addApp({
