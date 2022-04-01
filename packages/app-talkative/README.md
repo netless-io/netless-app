@@ -4,15 +4,20 @@ Netless App for playing and syncing talkative apps.
 
 ### Usage
 
+Register this app at the beginning:
+
 ```ts
-// register this app
 import Talkative from "@netless/app-talkative";
+
 WindowManager.register({
   kind: "Talkative",
   src: Talkative,
 });
+```
 
-// insert into room
+Insert it into the room:
+
+```js
 manager.addApp({
   kind: "Talkative",
   options: {
@@ -29,7 +34,7 @@ manager.addApp({
 
 Only one user could control the app (navigate pages, click stuff in it).
 
-If not provided `uid`, this app will automatically make the one who
+If `uid` is not provided, this app will automatically make the one who
 called the `addApp()` as operator.
 
 ### License
