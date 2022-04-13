@@ -55,6 +55,9 @@ export class SlideController {
 
   private syncStateOnceFlag: boolean;
 
+  private visible: boolean;
+  private savedIsFrozen: boolean;
+
   public constructor({
     context,
     anchor,
@@ -73,6 +76,8 @@ export class SlideController {
     this.slide = this.createSlide(anchor);
     // the adder does not need to sync state
     this.syncStateOnceFlag = !this.context.isAddApp;
+    this.visible = document.visibilityState === "visible";
+    this.savedIsFrozen = false;
     this.initialize();
   }
 
@@ -152,6 +157,11 @@ export class SlideController {
     slide.on(SLIDE_EVENTS.syncDispatch, this.onSyncDispatch);
 
     slide.on(SLIDE_EVENTS.renderEnd, this.resolveReady);
+
+    this.sideEffect.add(() => {
+      document.addEventListener("visibilitychange", this.onVisibilityChange);
+      return () => document.removeEventListener("visibilitychange", this.onVisibilityChange);
+    });
   }
 
   private onSyncDispatch = (event: SyncEvent) => {
@@ -308,6 +318,7 @@ export class SlideController {
   };
 
   public unfreeze = async () => {
+    if (!this.visible) return;
     if (this.ready) {
       log("[Slide] unfreeze", this.context.appId);
       if (this.freezePromise) {
@@ -318,6 +329,19 @@ export class SlideController {
       }
     } else {
       this._toFreeze = -1;
+    }
+  };
+
+  private onVisibilityChange = async () => {
+    if (!(this.visible = document.visibilityState === "visible")) {
+      this.savedIsFrozen = this.freezePromise ? this._toFreeze === 1 : this.isFrozen;
+      log("[Slide] freeze because tab becomes invisible");
+      this.freeze();
+    } else {
+      log("[Slide] unfreeze because tab becomes visible", { savedIsFrozen: this.savedIsFrozen });
+      if (!this.savedIsFrozen) {
+        this.unfreeze();
+      }
     }
   };
 }
