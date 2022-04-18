@@ -1,6 +1,8 @@
 import type { SlideController } from "../SlideController";
 import { isObj } from "./helpers";
 
+type DebugMessage = { slide: boolean | "__instance" | "__debug" };
+
 class Logger {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   public apps: Record<string, { context?: any; controller?: SlideController }> = {};
@@ -23,12 +25,28 @@ class Logger {
     delete this.apps[appId];
     window.removeEventListener("message", this._onMessage);
   }
-  _onMessage = (ev: MessageEvent<{ slide: boolean | "__instance" }>) => {
-    if (isObj(ev.data)) {
-      if (typeof ev.data.slide === "boolean") {
-        this.enable = ev.data.slide;
-      } else if (ev.data.slide === "__instance") {
+  /**
+   * @example
+   * window.postMessage({ slide: '__debug' })
+   * window.dispatchEvent(new MessageEvent('message', { data: { slide: '__debug' } }))
+   */
+  _onMessage = (ev: MessageEvent<DebugMessage> | CustomEvent<DebugMessage>) => {
+    let data: DebugMessage | undefined;
+    if (ev instanceof CustomEvent) {
+      data = ev.detail;
+    } else if (isObj(ev.data)) {
+      data = ev.data;
+    }
+    if (data) {
+      if (typeof data.slide === "boolean") {
+        this.enable = data.slide;
+      } else if (data.slide === "__instance") {
         console.log(this);
+      } else if (data.slide === "__debug") {
+        Object.values(this.apps).forEach(app => {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          (app.controller?.slide as any)?.createController();
+        });
       }
     }
   };
