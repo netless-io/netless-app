@@ -11,6 +11,7 @@
 import type { AppContext, Player, Room } from "@netless/window-manager";
 import type { SyncEvent } from "@netless/slide";
 import type { Attributes, MagixEvents, MagixPayload, SlideState } from "../typings";
+import type { AppOptions } from "..";
 
 import { SideEffectManager } from "side-effect-manager";
 import { Slide, SLIDE_EVENTS } from "@netless/slide";
@@ -28,7 +29,7 @@ export const EmptyAttributes: Attributes = {
 };
 
 export interface SlideControllerOptions {
-  context: AppContext<Attributes, MagixEvents>;
+  context: AppContext<Attributes, MagixEvents, AppOptions>;
   anchor: HTMLDivElement;
   onPageChanged: (page: number) => void;
   onTransitionStart: () => void;
@@ -246,10 +247,10 @@ export class SlideController {
       controller: logger.enable,
       enableGlobalClick: true,
       renderOptions: {
-        minFPS: 25,
-        maxFPS: 30,
+        minFPS: this.context.getAppOptions()?.minFPS || 25,
+        maxFPS: this.context.getAppOptions()?.maxFPS || 30,
         autoFPS: true,
-        autoResolution: true,
+        autoResolution: this.context.getAppOptions()?.autoResolution ?? true,
         resolution: this.context.getAppOptions()?.resolution,
         transactionBgColor: this.context.getAppOptions()?.bgColor || cachedGetBgColor(anchor),
       },

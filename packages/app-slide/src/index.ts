@@ -27,9 +27,18 @@ export const version = __APP_VERSION__;
 export { DefaultUrl, apps, FreezerLength, addHooks };
 
 export interface AppOptions {
+  /** show debug controller */
   debug?: boolean;
+  /** scale */
   resolution?: number;
+  /** background color for slide animations */
   bgColor?: string;
+  /** minimal fps @default 25 */
+  minFPS?: number;
+  /** maximal fps @default 30 */
+  maxFPS?: number;
+  /** whether to re-scale automatically @default true */
+  autoResolution?: boolean;
 }
 
 export interface Controller {
