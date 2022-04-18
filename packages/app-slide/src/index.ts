@@ -37,6 +37,8 @@ export interface AppOptions {
   minFPS?: number;
   /** maximal fps @default 30 */
   maxFPS?: number;
+  /** automatically decrease fps @default true */
+  autoFPS?: boolean;
   /** whether to re-scale automatically @default true */
   autoResolution?: boolean;
 }

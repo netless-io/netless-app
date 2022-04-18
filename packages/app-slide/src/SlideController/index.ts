@@ -249,7 +249,7 @@ export class SlideController {
       renderOptions: {
         minFPS: this.context.getAppOptions()?.minFPS || 25,
         maxFPS: this.context.getAppOptions()?.maxFPS || 30,
-        autoFPS: true,
+        autoFPS: this.context.getAppOptions()?.autoFPS ?? true,
         autoResolution: this.context.getAppOptions()?.autoResolution ?? true,
         resolution: this.context.getAppOptions()?.resolution,
         transactionBgColor: this.context.getAppOptions()?.bgColor || cachedGetBgColor(anchor),
