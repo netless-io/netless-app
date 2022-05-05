@@ -5,10 +5,10 @@ import type { Room } from "white-web-sdk";
 import { ApplianceNames, DeviceType, WhiteWebSdk } from "white-web-sdk";
 
 import { QueryVersion, store, type RoomInfo } from "./common";
-import { clearQueryString, createRoom, env, persistStore } from "./common";
+import { clearQueryString, createRoom, persistStore } from "./common";
 
 export const sdk = new WhiteWebSdk({
-  appIdentifier: env.VITE_APPID,
+  appIdentifier: import.meta.env.VITE_APPID,
   useMobXState: true,
   deviceType: DeviceType.Surface,
 });
@@ -38,11 +38,11 @@ export async function prepare(): Promise<RoomInfo | undefined> {
   }
 
   if (!uuid || !roomToken) {
-    uuid = env.VITE_ROOM_UUID;
-    roomToken = env.VITE_ROOM_TOKEN;
+    uuid = import.meta.env.VITE_ROOM_UUID;
+    roomToken = import.meta.env.VITE_ROOM_TOKEN;
   }
 
-  if ((!uuid || !roomToken) && env.VITE_TOKEN) {
+  if ((!uuid || !roomToken) && import.meta.env.VITE_TOKEN) {
     const shouldCreateRoom = window.confirm(
       "Not found uuid/roomToken both in query and localStorage, create a new one?"
     );

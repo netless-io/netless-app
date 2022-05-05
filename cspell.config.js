@@ -46,6 +46,8 @@ module.exports = {
     "Zcoord",
     "zscale",
     "courseware",
+    "vite",
+    "NETLESSROOM",
   ],
   flagWords: ["fuck", "bitch", "asshole", "bullshit", "crap", "suck", "wtf"],
   dictionaries: [

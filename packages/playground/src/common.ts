@@ -12,13 +12,11 @@ export interface RoomInfo {
   roomToken: string;
 }
 
-export const env = import.meta.env;
-
 export const post = <T>(path: string, body: unknown): Promise<T> =>
   fetch(`https://api.netless.link/v5/${path}`, {
     method: "POST",
     headers: {
-      token: env.VITE_TOKEN,
+      token: import.meta.env.VITE_TOKEN,
       region: "cn-hz",
       "Content-Type": "application/json",
     },

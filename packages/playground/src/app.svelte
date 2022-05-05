@@ -4,7 +4,7 @@
 
   import type { Room, RoomState, ApplianceNames } from "white-web-sdk";
 
-  import { createRoom, env, QueryVersion, replaceURL, share, store, type RoomInfo } from "./common";
+  import { createRoom, QueryVersion, replaceURL, share, store, type RoomInfo } from "./common";
   import { init, joinRoom, prepare, tools, reset } from "./room";
   import type { AppGroup } from "./apps";
   import { registerApps } from "./apps";
@@ -107,7 +107,7 @@
   }
 
   function keydown(e: KeyboardEvent) {
-    if (e.key === "Shift" && e.shiftKey && env.VITE_TOKEN) {
+    if (e.key === "Shift" && e.shiftKey && import.meta.env.VITE_TOKEN) {
       shareMode = "new-room";
     }
   }
