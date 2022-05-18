@@ -8,7 +8,7 @@
 // 4. automatically re-create scenes to sync strokes, a view must be existing
 // 5. pages information are loaded dynamically by the slide package
 
-import type { AppContext, Player, Room } from "@netless/window-manager";
+import type { AppContext, Player, Room, Displayer } from "@netless/window-manager";
 import type { SyncEvent } from "@netless/slide";
 import type { Attributes, MagixEvents, MagixPayload, SlideState } from "../typings";
 import type { AppOptions } from "..";
@@ -17,7 +17,7 @@ import { SideEffectManager } from "side-effect-manager";
 import { Slide, SLIDE_EVENTS } from "@netless/slide";
 import { clamp } from "../utils/helpers";
 import { cachedGetBgColor } from "../utils/bgcolor";
-import { logger, log, verbose } from "../utils/logger";
+import { logger, log, verbose, setRoomLogger } from "../utils/logger";
 export { syncSceneWithSlide, createDocsViewerPages } from "./helpers";
 
 export const DefaultUrl = "https://convertcdn.netless.link/dynamicConvert";
@@ -71,10 +71,13 @@ export class SlideController {
     this.onTransitionStart = onTransitionStart;
     this.onTransitionEnd = onTransitionEnd;
     this.onError = onError;
+
     this.context = context;
     this.room = context.getRoom();
     this.player = this.room ? undefined : (context.getDisplayer() as Player);
+    setRoomLogger((this.room || this.player) as Displayer);
     this.slide = this.createSlide(anchor);
+
     // the adder does not need to sync state
     this.syncStateOnceFlag = !this.context.isAddApp;
     this.visible = document.visibilityState === "visible";
@@ -85,11 +88,16 @@ export class SlideController {
   public ready = false;
   private resolveReady!: () => void;
   public readonly readyPromise = new Promise<void>(resolve => {
-    this.resolveReady = () =>
-      setTimeout(() => {
-        this.ready = true;
-        resolve();
-      }, 1000);
+    this.resolveReady = () => {
+      if (this.ready) {
+        log("[Slide] render end");
+      } else {
+        setTimeout(() => {
+          this.ready = true;
+          resolve();
+        }, 1000);
+      }
+    };
   });
 
   public jumpToPage(page: number) {
@@ -113,7 +121,7 @@ export class SlideController {
     slide.setResource(taskId, url || DefaultUrl);
     if (state) {
       // if we already have state, try restore from it
-      log("[Slide] init with state", state);
+      log("[Slide] init with state", JSON.stringify(state));
       this.syncStateOnceFlag = false;
       slide.setSlideState(state);
     } else if (context.isAddApp) {
@@ -171,7 +179,7 @@ export class SlideController {
         type: SLIDE_EVENTS.syncDispatch,
         payload: event,
       };
-      log("[Slide] dispatch", event);
+      verbose("[Slide] dispatch", JSON.stringify(event));
       this.context.dispatchMagixEvent(SLIDE_EVENTS.syncDispatch, payload);
     }
   };
@@ -180,7 +188,7 @@ export class SlideController {
     const { type, payload } = ev.payload;
     if (type === SLIDE_EVENTS.syncDispatch) {
       this.syncStateOnce();
-      log("[Slide] receive", payload);
+      verbose("[Slide] receive", JSON.stringify(payload));
       this.slide.emit(SLIDE_EVENTS.syncReceive, payload);
     }
   };
@@ -193,7 +201,7 @@ export class SlideController {
       }
       const { state } = this.context.storage.state;
       if (state) {
-        log("[Slide] sync with state (once)", state);
+        log("[Slide] sync with state (once)", JSON.stringify(state));
         this.slide.setSlideState(state);
         this.syncStateOnceFlag = false;
       }
@@ -220,7 +228,7 @@ export class SlideController {
       setTimeout(this.pollReadyState, 500);
     } else {
       this.pollCount = 0;
-      log("[Slide] renderSlide (retry after timeout)", 1);
+      log("[Slide] renderSlide 1 (retry after timeout)");
       this.slide.renderSlide(1);
     }
   };

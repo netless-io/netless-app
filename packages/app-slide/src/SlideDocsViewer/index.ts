@@ -4,6 +4,7 @@ import type { SlideController, SlideControllerOptions } from "../SlideController
 import { SideEffectManager } from "side-effect-manager";
 import { createDocsViewerPages } from "../SlideController";
 import { DocsViewer } from "../DocsViewer";
+import { logger } from "../utils/logger";
 
 export const ClickThroughAppliances = new Set(["clicker"]);
 
@@ -119,7 +120,7 @@ export class SlideDocsViewer {
 
   protected onError = ({ error }: { error: Error }) => {
     this.viewer.setPaused();
-    console.warn("[Slide] render error", error);
+    logger.warn("[Slide] render error", error);
   };
 
   protected refreshPages = () => {

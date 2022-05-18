@@ -4,7 +4,6 @@ import { DocsViewer } from "../DocsViewer";
 import { createDocsViewerPages, DefaultUrl } from "../SlideController";
 import { cachedGetBgColor } from "../utils/bgcolor";
 import { clamp } from "../utils/helpers";
-import { log } from "../utils/logger";
 import style from "../style.scss?inline";
 
 export interface PreviewParams {
@@ -180,7 +179,6 @@ export class SlidePreviewer {
   public destroy() {
     this.sideEffect.flushAll();
     if (this.slide && !this.destroyed) {
-      log("[Slide] destroy slide (once)");
       this.slide.destroy();
       this.destroyed = true;
     }

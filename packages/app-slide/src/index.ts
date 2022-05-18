@@ -50,6 +50,7 @@ export interface Controller {
   prevStep: () => boolean;
   nextPage: () => boolean;
   prevPage: () => boolean;
+  jumpToPage: (page: number) => boolean;
 }
 
 const SlideApp: NetlessApp<Attributes, MagixEvents, AppOptions, Controller> = {
@@ -92,7 +93,7 @@ const SlideApp: NetlessApp<Attributes, MagixEvents, AppOptions, Controller> = {
           syncSceneWithSlide(room, context, docsViewer.slideController.slide, baseScenePath);
           synced = true;
         }
-        log("[Slide] page to", page, synced);
+        log("[Slide] page to", page, synced ? "(synced)" : "");
         docsViewer.viewer.setPageIndex(page - 1);
       }
     };
@@ -104,7 +105,7 @@ const SlideApp: NetlessApp<Attributes, MagixEvents, AppOptions, Controller> = {
         onPageChanged,
       });
       if (useFreezer) apps.set(context.appId, slideController);
-      (logger.apps[context.appId] ||= {}).controller = slideController;
+      logger.setAppController(context.appId, slideController);
       if (import.meta.env.DEV) {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (window as any).slideController = slideController;
@@ -116,7 +117,8 @@ const SlideApp: NetlessApp<Attributes, MagixEvents, AppOptions, Controller> = {
           syncSceneWithSlide(room, context, slideController.slide, baseScenePath);
           synced = true;
         }
-        log("[Slide] page to", slideController.slide.slideState.currentSlideIndex, synced);
+        const page = slideController.slide.slideState.currentSlideIndex;
+        log("[Slide] page to", page, synced ? "(synced)" : "", "(on ready)");
       });
       return slideController;
     };
@@ -137,10 +139,10 @@ const SlideApp: NetlessApp<Attributes, MagixEvents, AppOptions, Controller> = {
     const sideEffect = new SideEffectManager();
 
     sideEffect.add(() => {
-      (logger.apps[context.appId] ||= {}).context = context;
+      logger.setAppContext(context.appId, context);
       logger.enable = context.getAppOptions()?.debug || import.meta.env.DEV;
       logger.level = import.meta.env.DEV ? "verbose" : "debug";
-      return () => logger.dispose(context.appId);
+      return () => logger.deleteApp(context.appId);
     });
 
     if (room) {
@@ -157,7 +159,7 @@ const SlideApp: NetlessApp<Attributes, MagixEvents, AppOptions, Controller> = {
     }
 
     context.emitter.on("destroy", () => {
-      log("[Slide]: destroy");
+      log("[Slide] destroy", context.appId);
       if (useFreezer) apps.delete(context.appId);
       sideEffect.flushAll();
       if (docsViewer) {
@@ -209,6 +211,17 @@ const SlideApp: NetlessApp<Attributes, MagixEvents, AppOptions, Controller> = {
           const { page, pageCount } = controller;
           if (pageCount > 0 && page > 1) {
             controller.jumpToPage(page - 1);
+            return true;
+          }
+        }
+        return false;
+      },
+      jumpToPage: (newPage: number) => {
+        const controller = docsViewer?.slideController;
+        if (controller) {
+          const { page, pageCount } = controller;
+          if (pageCount > 0 && page > 0 && page <= pageCount) {
+            controller.jumpToPage(newPage);
             return true;
           }
         }

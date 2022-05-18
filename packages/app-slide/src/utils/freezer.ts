@@ -9,22 +9,26 @@ export interface FreezableSlide {
 export let useFreezer = false;
 export const FreezerLength = 2;
 
+const inspect = (arr: string[]) => {
+  return "[" + arr + "]";
+};
+
 export const apps = {
   map: new Map<string, FreezableSlide>(),
   queue: [] as string[],
   validateQueue() {
-    log("[Slide] freezer: validate", this.queue);
+    log("[Slide] freezer: validate", inspect(this.queue));
     while (this.queue.length > FreezerLength) {
       const appId = this.queue.pop() as string;
       const slide = this.map.get(appId);
       if (slide) {
-        log("[Slide] freezer: validate-freeze", appId, this.queue);
+        log("[Slide] freezer: validate-freeze", appId, inspect(this.queue));
         slide.freeze();
       }
     }
   },
   set(appId: string, slide: FreezableSlide) {
-    log("[Slide] freezer: add", appId, this.queue);
+    log("[Slide] freezer: add", appId, inspect(this.queue));
     this.map.set(appId, slide);
     if (!this.queue.includes(appId)) {
       this.queue.unshift(appId);
@@ -32,9 +36,9 @@ export const apps = {
     this.validateQueue();
   },
   delete(appId: string) {
-    log("[Slide] freezer: delete", appId, this.queue);
     this.map.delete(appId);
     this.queue = this.queue.filter(id => id !== appId);
+    log("[Slide] freezer: delete", appId, inspect(this.queue));
   },
   focus(appId: string) {
     const slide = this.map.get(appId);
@@ -44,7 +48,7 @@ export const apps = {
     }
     this.queue.unshift(appId);
     this.validateQueue();
-    log("[Slide] freezer: focus", appId, this.queue);
+    log("[Slide] freezer: focus", appId, inspect(this.queue));
     if (slide) {
       slide.unfreeze();
     }
