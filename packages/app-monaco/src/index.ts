@@ -39,7 +39,14 @@ const NetlessAppMonaco: NetlessApp<NetlessAppMonacoAttributes> = {
       }
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const nodeRequire = (window as any).require;
+
     const monaco = await monacoLoader.init();
+
+    // Restore global require if exist.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    if ((window as any).require && nodeRequire) (window as any).require = nodeRequire;
 
     const monacoEditor = new MonacoEditor(context, attrs, box, monaco, !context.getIsWritable());
 
