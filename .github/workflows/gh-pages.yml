@@ -26,7 +26,7 @@ jobs:
           run_install: true
       - run: pnpm lint
       - run: pnpm build-all
-      - run: pnpm build:ci --filter playground
+      - run: pnpm -F playground build:ci
       - uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
