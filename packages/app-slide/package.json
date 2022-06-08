@@ -16,7 +16,7 @@
     "README-zh.md"
   ],
   "devDependencies": {
-    "@netless/app-shared": "workspace:^0.1.1",
+    "@netless/app-shared": "workspace:*",
     "@netless/slide": "^0.4.2",
     "@types/color-string": "^1.5.2",
     "color-string": "^1.9.1",
