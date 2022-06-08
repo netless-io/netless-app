@@ -17,10 +17,10 @@
   ],
   "devDependencies": {
     "@netless/app-shared": "workspace:^0.1.1",
-    "@netless/slide": "^0.3.6",
+    "@netless/slide": "^0.4.2",
     "@types/color-string": "^1.5.2",
-    "color-string": "^1.9.0",
-    "side-effect-manager": "^0.1.5",
+    "color-string": "^1.9.1",
+    "side-effect-manager": "^1.1.0",
     "vanilla-lazyload": "^17.8.2"
   }
 }

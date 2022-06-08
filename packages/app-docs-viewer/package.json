@@ -28,6 +28,6 @@
   },
   "devDependencies": {
     "@netless/app-shared": "workspace:*",
-    "side-effect-manager": "^0.1.5"
+    "side-effect-manager": "^1.1.0"
   }
 }

@@ -30,7 +30,7 @@
     "lib0": "^0.2.42",
     "monaco-editor": "^0.29.1",
     "randomcolor": "^0.6.2",
-    "side-effect-manager": "^0.1.5",
+    "side-effect-manager": "^1.1.0",
     "yjs": "13.5.13"
   }
 }
