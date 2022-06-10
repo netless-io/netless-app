@@ -117,7 +117,7 @@ export class SlidePreviewer {
 
     this.slide = new Slide({
       anchor: this.$slide,
-      interactive: false,
+      interactive: true,
       mode: "local",
       resize: true,
       controller: this.debug,
