@@ -17,7 +17,7 @@
   ],
   "devDependencies": {
     "@netless/app-shared": "workspace:*",
-    "@netless/slide": "^0.4.2",
+    "@netless/slide": "^0.4.7",
     "@types/color-string": "^1.5.2",
     "color-string": "^1.9.1",
     "side-effect-manager": "^1.1.0",
