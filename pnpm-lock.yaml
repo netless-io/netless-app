@@ -6,7 +6,7 @@ importers:
     specifiers:
       '@commitlint/cli': ^16.2.3
       '@commitlint/config-conventional': ^16.2.1
-      '@netless/window-manager': 0.4.27
+      '@netless/window-manager': 1.0.0-canary.1
       '@sveltejs/vite-plugin-svelte': 1.0.0-next.48
       '@tsconfig/svelte': ^3.0.0
       '@types/node': ^17.0.41
@@ -33,7 +33,7 @@ importers:
     devDependencies:
       '@commitlint/cli': 16.2.3
       '@commitlint/config-conventional': 16.2.1
-      '@netless/window-manager': 0.4.27_white-web-sdk@2.16.24
+      '@netless/window-manager': 1.0.0-canary.1_white-web-sdk@2.16.24
       '@sveltejs/vite-plugin-svelte': 1.0.0-next.48_svelte@3.48.0+vite@2.9.10
       '@tsconfig/svelte': 3.0.0
       '@types/node': 17.0.41
@@ -225,12 +225,12 @@ importers:
 
   packages/create-app/standalone/template-vanilla:
     specifiers:
-      '@netless/window-manager': ^0.4.27
+      '@netless/window-manager': ^1.0.0-canary.1
       '@types/node': ^17.0.41
       vite: ^2.9.10
       white-web-sdk: 2.16.24
     devDependencies:
-      '@netless/window-manager': 0.4.27_white-web-sdk@2.16.24
+      '@netless/window-manager': 1.0.0-canary.1_white-web-sdk@2.16.24
       '@types/node': 17.0.41
       vite: 2.9.10
       white-web-sdk: 2.16.24
@@ -512,28 +512,29 @@ packages:
       localforage: 1.10.0
     dev: true
 
-  /@netless/telebox-insider/0.2.26:
-    resolution: {integrity: sha512-HOBi9HWK0Zf0nvzfjM0V/0QmZ69ec7L/lCKMwRcfiQHxAAJ/zo9fEm468WocYFsliixWW5L7HwMN0eHb0mw7hA==}
+  /@netless/telebox-insider/1.0.0-alpha.8:
+    resolution: {integrity: sha512-GFQpS8fVwc2kSjFFg88QQObQ5P25a2eVblC/wWn6J/IF8PihO8kDs/kI9lN+KtbRJltI2Ca9g9QlQAHi7SArHw==}
     dependencies:
+      '@juggle/resize-observer': 3.3.1
       '@types/shallowequal': 1.1.1
-      eventemitter3: 4.0.7
+      emittery: 0.11.0
       shallowequal: 1.1.0
-      side-effect-manager: 0.1.6
+      side-effect-manager: 1.1.0
       stylefire: 7.0.3
-      value-enhancer: 0.0.8
+      value-enhancer: 1.2.1
     dev: true
 
-  /@netless/window-manager/0.4.27_white-web-sdk@2.16.24:
-    resolution: {integrity: sha512-Rlc9mI4iCiB0dLFMmS0rDIgsXtaW/Xz+plAduGe1riSvYZyT7O82u6HRUwmb0gSk4jl3hv2qNK49SM/yvdTz/Q==}
+  /@netless/window-manager/1.0.0-canary.1_white-web-sdk@2.16.24:
+    resolution: {integrity: sha512-qUfuK5aSEvYHFJjjR8tokHuytW4IM6y1p80RzjgIZoLGhVi9YKecUlwpjinJOQh9VbWW2P0kuMoKtU8kAxCCXQ==}
     peerDependencies:
       white-web-sdk: ^2.16.0
     dependencies:
       '@juggle/resize-observer': 3.3.1
-      '@netless/telebox-insider': 0.2.26
+      '@netless/telebox-insider': 1.0.0-alpha.8
       emittery: 0.9.2
       lodash: 4.17.21
       p-retry: 4.6.2
-      side-effect-manager: 0.1.6
+      side-effect-manager: 1.1.0
       uuid: 7.0.3
       video.js: 7.19.2
       white-web-sdk: 2.16.24
@@ -1345,6 +1346,11 @@ packages:
 
   /emittery/0.10.1:
     resolution: {integrity: sha512-OBSS9uVXbpgqEGq2V5VnpfCu9vSnfiR9eYVJmxFYToNIcWRHkM4BAFbJe/PWjf/pQdEL7OPxd2jOW/bJiyX7gg==}
+    engines: {node: '>=12'}
+    dev: true
+
+  /emittery/0.11.0:
+    resolution: {integrity: sha512-S/7tzL6v5i+4iJd627Nhv9cLFIo5weAIlGccqJFpnBoDB8U1TF2k5tez4J/QNuxyyhWuFqHg1L84Kd3m7iXg6g==}
     engines: {node: '>=12'}
     dev: true
 
@@ -2974,10 +2980,6 @@ packages:
     engines: {node: '>=8'}
     dev: true
 
-  /side-effect-manager/0.1.6:
-    resolution: {integrity: sha512-2AniIPP3EgNjlVSHzukf1v5v8Y3F+j6AWZPKLh+p/AM3FthtQYhBkkGeOYd1yH5USSCvSQ1qRsRVeYDuAjvZ+A==}
-    dev: true
-
   /side-effect-manager/1.1.0:
     resolution: {integrity: sha512-Gqy1tsBBYcKclLPIGDxMQiZJLM8CGdGg/DM3a5/8ic2x2A19rVUhVk/+Mt5RwNbpaNKmBPO/wxxzAnY2myQVTg==}
     dev: true
@@ -3309,10 +3311,8 @@ packages:
       spdx-expression-parse: 3.0.1
     dev: true
 
-  /value-enhancer/0.0.8:
-    resolution: {integrity: sha512-ba8Rcyp9ItqlLWoyZVqHGaEdY1tqP1mcbRhlOrCnIrDxdl8rKNH1Rq45syo4IMYNSkwC2oV9xBWcV9dmL14aQg==}
-    dependencies:
-      side-effect-manager: 0.1.6
+  /value-enhancer/1.2.1:
+    resolution: {integrity: sha512-11IrGi9xmVbr3twzuaMRrdUGzhdaE4eXvT6qYZlB5VrhK5uQzSPlYOEBlsIGH+dMvkakNkWGNIbxdZi87/MWuQ==}
     dev: true
 
   /vanilla-lazyload/17.8.2:
