@@ -14,10 +14,7 @@ WindowManager.register({
     // 打开这个选项显示 debug 工具栏
     debug: false,
   },
-  src: async () => {
-    const app = await import("@netless/app-slide");
-    return app.default ?? app;
-  },
+  src: () => import("@netless/app-slide"),
 });
 
 // 2. 加入房间后，这样插入 PPT

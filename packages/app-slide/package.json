@@ -1,6 +1,6 @@
 {
   "name": "@netless/app-slide",
-  "version": "0.2.2",
+  "version": "0.3.0-canary.2",
   "main": "dist/main.cjs.js",
   "module": "dist/main.es.js",
   "types": "dist/index.d.ts",
@@ -16,11 +16,11 @@
     "README-zh.md"
   ],
   "devDependencies": {
-    "@netless/app-shared": "workspace:*",
     "@netless/slide": "^0.4.7",
     "@types/color-string": "^1.5.2",
     "color-string": "^1.9.1",
     "side-effect-manager": "^1.1.0",
+    "value-enhancer": "^1.3.0",
     "vanilla-lazyload": "^17.8.2"
   }
 }

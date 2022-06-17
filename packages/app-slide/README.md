@@ -16,10 +16,7 @@ WindowManager.register({
     // turn on to show debug controller
     debug: false,
   },
-  src: async () => {
-    const app = await import("@netless/app-slide");
-    return app.default ?? app;
-  },
+  src: () => import("@netless/app-slide"),
 });
 
 // 2. when joined room, add ppt to whiteboard
