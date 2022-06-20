@@ -63,8 +63,8 @@ const SlideApp: NetlessApp<Attributes, MagixEvents, AppOptions, void> = {
       // ignore
     }
 
-    // must exist because of view
-    const baseScenePath = context.getInitScenePath() as string;
+    const view = context.createWhiteBoardView();
+    (view.view as any).disableCameraTransform = true;
 
     let docsViewer: SlideDocsViewer | null = null;
 
@@ -73,7 +73,7 @@ const SlideApp: NetlessApp<Attributes, MagixEvents, AppOptions, void> = {
       if (docsViewer && docsViewer.slideController) {
         let synced = false;
         if (room && context.isWritable) {
-          syncSceneWithSlide(room, context, docsViewer.slideController.slide, baseScenePath);
+          syncSceneWithSlide(view, docsViewer.slideController.slide);
           synced = true;
         }
         log("[Slide] page to", page, synced ? "(synced)" : "");
@@ -97,7 +97,7 @@ const SlideApp: NetlessApp<Attributes, MagixEvents, AppOptions, void> = {
         const room = context.room;
         let synced = false;
         if (room && context.isWritable) {
-          syncSceneWithSlide(room, context, slideController.slide, baseScenePath);
+          syncSceneWithSlide(view, slideController.slide);
           synced = true;
         }
         const page = slideController.slide.slideState.currentSlideIndex;
@@ -106,7 +106,6 @@ const SlideApp: NetlessApp<Attributes, MagixEvents, AppOptions, void> = {
       return slideController;
     };
 
-    const view = context.createWhiteBoardView();
     docsViewer = new SlideDocsViewer({ box, view, mountSlideController });
 
     if (import.meta.env.DEV) {
