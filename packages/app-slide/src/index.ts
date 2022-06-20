@@ -1,6 +1,5 @@
 import type { NetlessApp } from "@netless/window-manager";
 import type { RoomState } from "white-web-sdk";
-import type { Slide } from "@netless/slide";
 import type { MountSlideOptions } from "./SlideDocsViewer";
 import type { Attributes, MagixEvents } from "./typings";
 import type { AddHooks, FreezableSlide } from "./utils/freezer";
@@ -43,22 +42,12 @@ export interface AppOptions {
   autoResolution?: boolean;
 }
 
-export interface Controller {
-  slide: () => Slide | undefined;
-  position: () => [page: number, pageCount: number] | undefined;
-  nextStep: () => boolean;
-  prevStep: () => boolean;
-  nextPage: () => boolean;
-  prevPage: () => boolean;
-  jumpToPage: (page: number) => boolean;
-}
-
-const SlideApp: NetlessApp<Attributes, MagixEvents, AppOptions, Controller> = {
+const SlideApp: NetlessApp<Attributes, MagixEvents, AppOptions, void> = {
   kind: "Slide",
   setup(context) {
     console.log("[Slide] setup @ " + version);
 
-    if (context.getIsWritable()) {
+    if (context.isWritable) {
       context.storage.ensureState(EmptyAttributes);
     }
 
@@ -66,13 +55,7 @@ const SlideApp: NetlessApp<Attributes, MagixEvents, AppOptions, Controller> = {
       throw new Error("[Slide] no taskId");
     }
 
-    const view = context.getView();
-    if (!view) {
-      throw new Error("[Slide] no view, please set scenePath on addApp()");
-    }
-    view.disableCameraTransform = true;
-
-    const box = context.getBox();
+    const box = context.box;
     box.mountStyles(styles);
     try {
       box.$content.dataset.appSlideVersion = version;
@@ -86,10 +69,10 @@ const SlideApp: NetlessApp<Attributes, MagixEvents, AppOptions, Controller> = {
     let docsViewer: SlideDocsViewer | null = null;
 
     const onPageChanged = (page: number) => {
-      const room = context.getRoom();
+      const room = context.room;
       if (docsViewer && docsViewer.slideController) {
         let synced = false;
-        if (room && context.getIsWritable()) {
+        if (room && context.isWritable) {
           syncSceneWithSlide(room, context, docsViewer.slideController.slide, baseScenePath);
           synced = true;
         }
@@ -111,9 +94,9 @@ const SlideApp: NetlessApp<Attributes, MagixEvents, AppOptions, Controller> = {
         (window as any).slideController = slideController;
       }
       slideController.readyPromise.then(options.onReady).then(() => {
-        const room = context.getRoom();
+        const room = context.room;
         let synced = false;
-        if (room && context.getIsWritable()) {
+        if (room && context.isWritable) {
           syncSceneWithSlide(room, context, slideController.slide, baseScenePath);
           synced = true;
         }
@@ -123,19 +106,15 @@ const SlideApp: NetlessApp<Attributes, MagixEvents, AppOptions, Controller> = {
       return slideController;
     };
 
-    docsViewer = new SlideDocsViewer({
-      box,
-      view,
-      mountSlideController,
-      mountWhiteboard: context.mountView.bind(context),
-    });
+    const view = context.createWhiteBoardView();
+    docsViewer = new SlideDocsViewer({ box, view, mountSlideController });
 
     if (import.meta.env.DEV) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (window as any).slideDoc = docsViewer;
     }
 
-    const room = context.getRoom();
+    const room = context.room;
     const sideEffect = new SideEffectManager();
 
     sideEffect.add(() => {
@@ -169,65 +148,6 @@ const SlideApp: NetlessApp<Attributes, MagixEvents, AppOptions, Controller> = {
     });
 
     docsViewer.mount();
-
-    return {
-      slide: () => {
-        return docsViewer?.slideController?.slide;
-      },
-      nextStep: () => {
-        if (docsViewer && docsViewer.slideController) {
-          docsViewer?.slideController?.slide.nextStep();
-          return true;
-        }
-        return false;
-      },
-      prevStep: () => {
-        if (docsViewer && docsViewer.slideController) {
-          docsViewer?.slideController?.slide.prevStep();
-          return true;
-        }
-        return false;
-      },
-      position: () => {
-        const controller = docsViewer?.slideController;
-        if (controller) {
-          return [controller.page, controller.pageCount] as [page: number, pageCount: number];
-        }
-      },
-      nextPage: () => {
-        const controller = docsViewer?.slideController;
-        if (controller) {
-          const { page, pageCount } = controller;
-          if (pageCount > 0 && page < pageCount) {
-            controller.jumpToPage(page + 1);
-            return true;
-          }
-        }
-        return false;
-      },
-      prevPage: () => {
-        const controller = docsViewer?.slideController;
-        if (controller) {
-          const { page, pageCount } = controller;
-          if (pageCount > 0 && page > 1) {
-            controller.jumpToPage(page - 1);
-            return true;
-          }
-        }
-        return false;
-      },
-      jumpToPage: (newPage: number) => {
-        const controller = docsViewer?.slideController;
-        if (controller) {
-          const { page, pageCount } = controller;
-          if (pageCount > 0 && page > 0 && page <= pageCount) {
-            controller.jumpToPage(newPage);
-            return true;
-          }
-        }
-        return false;
-      },
-    };
   },
 };
 

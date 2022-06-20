@@ -73,8 +73,8 @@ export class SlideController {
     this.onError = onError;
 
     this.context = context;
-    this.room = context.getRoom();
-    this.player = this.room ? undefined : (context.getDisplayer() as Player);
+    this.room = context.room;
+    this.player = this.room ? undefined : (context.displayer as Player);
     setRoomLogger((this.room || this.player) as Displayer);
     this.slide = this.createSlide(anchor);
 
@@ -114,7 +114,7 @@ export class SlideController {
 
   private kickStart() {
     const { context, slide } = this;
-    if (context.getIsWritable()) {
+    if (context.isWritable) {
       context.storage.ensureState(EmptyAttributes);
     }
     const { taskId, url, state } = context.storage.state;
@@ -174,7 +174,7 @@ export class SlideController {
   }
 
   private onSyncDispatch = (event: SyncEvent) => {
-    if (this.context.getIsWritable() && this.room) {
+    if (this.context.isWritable && this.room) {
       const payload: MagixPayload = {
         type: SLIDE_EVENTS.syncDispatch,
         payload: event,
@@ -196,7 +196,7 @@ export class SlideController {
   private syncStateOnce() {
     // sync state before the first event, so that they can be in the correct order
     if (this.syncStateOnceFlag) {
-      if (this.context.getIsWritable()) {
+      if (this.context.isWritable) {
         this.context.storage.ensureState(EmptyAttributes);
       }
       const { state } = this.context.storage.state;
@@ -209,7 +209,7 @@ export class SlideController {
   }
 
   private onStateChange = (state: SlideState) => {
-    if (this.context.getIsWritable()) {
+    if (this.context.isWritable) {
       verbose("[Slide] state change", JSON.stringify(state, null, 2));
       this.context.storage.setState({ state });
     }
@@ -254,6 +254,8 @@ export class SlideController {
       resize: true,
       controller: logger.enable,
       enableGlobalClick: true,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      logger: (this.context.displayer as unknown as { logger: any }).logger,
       renderOptions: {
         minFPS: this.context.getAppOptions()?.minFPS || 25,
         maxFPS: this.context.getAppOptions()?.maxFPS || 30,

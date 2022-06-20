@@ -113,8 +113,10 @@ export class DocsViewer {
         $content.classList.add(this.wrapClassName("readonly"));
       }
 
-      $content.appendChild(this.renderPreviewMask());
-      $content.appendChild(this.renderPreview());
+      this.renderPreviewMask();
+      this.renderPreview();
+      // $content.appendChild(this.renderPreviewMask());
+      // $content.appendChild(this.renderPreview());
     }
     return this.$content;
   }
@@ -341,7 +343,10 @@ export class DocsViewer {
 
   protected togglePreview(isShowPreview?: boolean): void {
     this.isShowPreview = isShowPreview ?? !this.isShowPreview;
-    this.$content.classList.toggle(this.wrapClassName("preview-active"), this.isShowPreview);
+    (this.$preview.parentElement || this.$content).classList.toggle(
+      this.wrapClassName("preview-active"),
+      this.isShowPreview
+    );
     if (this.isShowPreview) {
       const $previewPage = this.$preview.querySelector<HTMLElement>(
         "." + this.wrapClassName(`preview-page-${this.pageIndex}`)

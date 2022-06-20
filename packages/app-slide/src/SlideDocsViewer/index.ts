@@ -1,4 +1,4 @@
-import type { ReadonlyTeleBox, AnimationMode, View } from "@netless/window-manager";
+import type { ReadonlyTeleBox, WhiteBoardView } from "@netless/window-manager";
 import type { SlideController, SlideControllerOptions } from "../SlideController";
 
 import { SideEffectManager } from "side-effect-manager";
@@ -14,9 +14,8 @@ export type MountSlideOptions = Omit<SlideControllerOptions, "context" | "onPage
 
 export interface SlideDocsViewerConfig {
   box: ReadonlyTeleBox;
-  view: View;
+  view: WhiteBoardView;
   mountSlideController: (options: MountSlideOptions) => SlideController;
-  mountWhiteboard: (dom: HTMLDivElement) => void;
 }
 
 export class SlideDocsViewer {
@@ -26,14 +25,11 @@ export class SlideDocsViewer {
   protected readonly box: ReadonlyTeleBox;
   protected readonly whiteboardView: SlideDocsViewerConfig["view"];
   protected readonly mountSlideController: SlideDocsViewerConfig["mountSlideController"];
-  protected readonly mountWhiteboard: SlideDocsViewerConfig["mountWhiteboard"];
-  private isViewMounted = false;
 
-  public constructor({ box, view, mountSlideController, mountWhiteboard }: SlideDocsViewerConfig) {
+  public constructor({ box, view, mountSlideController }: SlideDocsViewerConfig) {
     this.box = box;
     this.whiteboardView = view;
     this.mountSlideController = mountSlideController;
-    this.mountWhiteboard = mountWhiteboard;
 
     this.viewer = new DocsViewer({
       readonly: box.readonly,
@@ -98,7 +94,9 @@ export class SlideDocsViewer {
   }
 
   public mount() {
-    this.box.mountContent(this.viewer.$content);
+    this.box.mountContent(this.viewer.$previewMask);
+    this.box.mountContent(this.viewer.$preview);
+    this.box.mountStage(this.viewer.$content);
     this.box.mountFooter(this.viewer.$footer);
 
     this.slideController = this.mountSlideController({
@@ -110,10 +108,6 @@ export class SlideDocsViewer {
     });
 
     this.scaleDocsToFit();
-    this.sideEffect.add(() => {
-      this.whiteboardView.callbacks.on("onSizeUpdated", this.scaleDocsToFit);
-      return () => this.whiteboardView.callbacks.off("onSizeUpdated", this.scaleDocsToFit);
-    });
 
     return this;
   }
@@ -163,27 +157,8 @@ export class SlideDocsViewer {
     if (this.slideController) {
       const { width, height } = this.slideController.slide;
       if (width && height) {
-        this.whiteboardView.moveCameraToContain({
-          originX: -width / 2,
-          originY: -height / 2,
-          width,
-          height,
-          animationMode: "immediately" as AnimationMode.Immediately,
-        });
-        this.whiteboardView.setCameraBound({
-          damping: 1,
-          maxContentMode: () => this.whiteboardView.camera.scale,
-          minContentMode: () => this.whiteboardView.camera.scale,
-          centerX: 0,
-          centerY: 0,
-          width,
-          height,
-        });
-        if (!this.isViewMounted) {
-          this.isViewMounted = true;
-          console.log("[Slide] mount whiteboard view");
-          this.mountWhiteboard(this.$whiteboardView);
-        }
+        this.box.setHighlightStage(false);
+        this.box.setStageRatio(height / width);
       }
     }
   };

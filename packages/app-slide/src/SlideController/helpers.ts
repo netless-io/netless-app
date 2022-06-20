@@ -23,7 +23,7 @@ export function syncSceneWithSlide(
   baseScenePath: string
 ) {
   const page = slide.slideState.currentSlideIndex;
-  if (!(page > 0) || !context.getIsWritable()) return;
+  if (!(page > 0) || !context.isWritable) return;
 
   const scenePath = [baseScenePath, page].join("/");
 
@@ -36,10 +36,10 @@ export function syncSceneWithSlide(
   }
 
   let currentScenePath: string;
-  if (context.getBox().focus) {
+  if (context.box.focus) {
     currentScenePath = room.state.sceneState.scenePath;
   } else {
-    currentScenePath = context.getView()?.focusScenePath || "";
+    currentScenePath = context.view?.focusScenePath || "";
   }
 
   if (currentScenePath !== scenePath) {
