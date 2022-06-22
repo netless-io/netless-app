@@ -10,33 +10,27 @@ export interface Attributes {
 const Browser: NetlessApp<Attributes> = {
   kind: "Browser",
   setup(context) {
-    let attrs = context.getAttributes() as Attributes;
-    if (!attrs?.url) {
-      context.setAttributes({ url: "about:blank" });
-      attrs = context.getAttributes() as Attributes;
-    }
-    if (!attrs) {
-      throw new Error("[Browser]: Missing attributes");
-    }
-
-    const box = context.getBox();
+    const box = context.box;
     box.mountStyles(styles);
+    box.setHighlightStage(false);
 
     const app = new App({
       target: box.$content as HTMLElement,
-      props: { url: attrs.url },
+      props: { url: context.storage.state.url || "about:blank" },
     });
 
     app.$on("update", ({ detail: url }) => {
-      context.updateAttributes(["url"], url);
+      context.storage.setState({ url });
     });
 
-    context.mobxUtils.autorun(() => {
-      app.$set({ url: attrs.url, dummyURL: attrs.url });
+    const disposeListener = context.storage.addStateChangedListener(() => {
+      const { url } = context.storage.state;
+      app.$set({ url: url, dummyURL: url });
     });
 
     context.emitter.on("destroy", () => {
       console.log("[Browser]: destroy");
+      disposeListener();
       app.$destroy();
     });
   },
