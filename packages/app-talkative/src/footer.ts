@@ -4,7 +4,7 @@ import { append, attr, detach, element, writable } from "./utils";
 
 export class Footer {
   readonly sideEffect = new SideEffectManager();
-  readonly box = this.context.getBox();
+  readonly box = this.context.box;
   readonly role = writable<0 | 2>(2);
   readonly text = writable("...");
   readonly $footer = element("div");

@@ -7,8 +7,8 @@ export interface UserPayload {
 }
 
 export function getUserPayload(context: AppContext): UserPayload {
-  const room = context.getRoom();
-  const displayer = context.getDisplayer();
+  const room = context.room;
+  const displayer = context.displayer;
   const memberId = displayer.observerId;
   const userPayload = displayer.state.roomMembers.find(
     member => member.memberId === memberId

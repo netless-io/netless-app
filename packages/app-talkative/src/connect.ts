@@ -16,7 +16,7 @@ export function connect({ context, logger, ...callbacks }: ConnectParams): () =>
 
   const handlers = {
     onPagenum({ totalPages }: { totalPages: number }) {
-      if (context.getIsWritable() && totalPages) {
+      if (context.isWritable && totalPages) {
         context.storage.setState({ pageNum: totalPages });
       }
     },
@@ -24,7 +24,7 @@ export function connect({ context, logger, ...callbacks }: ConnectParams): () =>
     onLoadComplete(data: { totalPages?: number; coursewareRatio: number }) {
       callbacks.onRatioChanged(data.coursewareRatio);
 
-      if (context.getIsWritable() && data.totalPages) {
+      if (context.isWritable && data.totalPages) {
         context.storage.setState({ pageNum: data.totalPages });
       }
 
@@ -37,7 +37,7 @@ export function connect({ context, logger, ...callbacks }: ConnectParams): () =>
     },
 
     onFileMessage(event: Record<string, unknown>) {
-      if (context.getIsWritable()) {
+      if (context.isWritable) {
         context.dispatchMagixEvent("broadcast", JSON.stringify(event));
 
         // save last message

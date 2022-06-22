@@ -46,14 +46,14 @@ const Talkative: NetlessApp<TalkativeAttributes, MagixEventPayloads, TalkativeOp
 
     const onPrevPage = () => {
       const { page } = context.storage.state;
-      if (context.getIsWritable() && page > 1) {
+      if (context.isWritable && page > 1) {
         context.storage.setState({ page: page - 1 });
       }
     };
 
     const onNextPage = () => {
       const { page, pageNum } = context.storage.state;
-      if (context.getIsWritable() && page < pageNum) {
+      if (context.isWritable && page < pageNum) {
         context.storage.setState({ page: page + 1 });
       }
     };

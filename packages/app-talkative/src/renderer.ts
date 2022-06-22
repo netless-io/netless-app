@@ -8,7 +8,7 @@ const ResizeObserver = window.ResizeObserver || Polyfill;
 
 export class Renderer {
   readonly sideEffect = new SideEffectManager();
-  readonly box = this.context.getBox();
+  readonly box = this.context.box;
   readonly role = writable<0 | 2>(2);
   readonly ratio = writable(16 / 9);
   readonly $content = element("div");
@@ -47,6 +47,7 @@ export class Renderer {
   }
 
   mount() {
+    this.box.setHighlightStage(false);
     this.box.mountStyles(styles);
     this.box.mountContent(this.$content);
 
