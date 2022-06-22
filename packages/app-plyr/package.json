@@ -1,6 +1,6 @@
 {
   "name": "@netless/app-plyr",
-  "version": "0.1.3",
+  "version": "0.2.0",
   "description": "Netless App Media Player, based on plyr.io.",
   "repository": "netless-io/netless-app",
   "license": "MIT",

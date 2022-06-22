@@ -49,8 +49,9 @@ const Plyr: NetlessApp<Attributes> = {
       console.warn(`[Plyr]: missing "type", will guess from file extension`);
     }
 
-    const box = context.getBox();
+    const box = context.box;
 
+    box.setHighlightStage(false);
     box.mountStyles(styles);
 
     const sync = new Sync(context);

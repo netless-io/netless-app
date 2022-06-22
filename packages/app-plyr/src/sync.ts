@@ -27,8 +27,8 @@ export class Sync {
   private _disposer: (() => void) | null = null;
 
   constructor(readonly context: AppContext<Attributes>) {
-    const room = context.getRoom();
-    const player = context.getDisplayer() as Player;
+    const room = context.room;
+    const player = context.displayer as Player;
 
     this.uid = room ? room.uid : "";
     this.getTimestamp = room
