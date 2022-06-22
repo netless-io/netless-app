@@ -1,11 +1,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { ensureAttributes } from "@netless/app-shared";
 import type { NetlessApp } from "@netless/window-manager";
+import type { Event } from "white-web-sdk";
+import { ensureAttributes } from "@netless/app-shared";
 import Emittery from "emittery";
 import { SideEffectManager } from "side-effect-manager";
-import type { AnimationMode, ApplianceNames, Event, RoomState } from "white-web-sdk";
+import { height, width } from "./hardcode";
 import { fakeRoomStateChanged, nextPage, pageToScenes, prevPage } from "./page";
-import { height } from "./hardcode";
 import { DomEvents, IframeEvents } from "./typings";
 
 export interface Attributes {
@@ -17,15 +17,15 @@ export interface Attributes {
   maxPage: number;
 }
 
-const ClickThroughAppliances = new Set(["clicker", "selector"]);
-
 const IframeBridge: NetlessApp<Attributes> = {
   kind: "IframeBridge",
   setup(context) {
-    const box = context.getBox();
-    const view = context.getView();
-    const displayer = context.getDisplayer();
-    const room = context.getRoom();
+    const box = context.box;
+    box.setHighlightStage(false);
+    box.setStageRatio(height / width);
+    context.getInitScenePath() && context.createWhiteBoardView();
+    const displayer = context.displayer;
+    const room = context.room;
 
     const attrs = ensureAttributes(context, {
       src: "about:blank",
@@ -51,44 +51,6 @@ const IframeBridge: NetlessApp<Attributes> = {
     container.appendChild(iframe);
 
     box.mountContent(container);
-
-    // eslint-disable-next-line @typescript-eslint/no-empty-function
-    let toggleClickThrough: (enable?: boolean) => void = () => {};
-    const shouldClickThrough = (tool?: ApplianceNames) => {
-      return ClickThroughAppliances.has(tool as ApplianceNames);
-    };
-
-    if (view) {
-      const viewBox = document.createElement("div");
-      Object.assign(viewBox.style, {
-        width: "100%",
-        height: "100%",
-        position: "absolute",
-        top: 0,
-        left: 0,
-        overflow: "hidden",
-      });
-      container.appendChild(viewBox);
-      context.mountView(viewBox);
-
-      view.disableCameraTransform = true;
-      sideEffectManager.add(() => {
-        const onResize = () => {
-          const clientRect = container.getBoundingClientRect();
-          const scale = clientRect.height / height;
-          view.moveCamera({ scale, animationMode: "immediately" as AnimationMode });
-        };
-        const observer = new ResizeObserver(onResize);
-        observer.observe(container);
-        return () => observer.disconnect();
-      });
-
-      toggleClickThrough = (enable?: boolean) => {
-        viewBox.style.pointerEvents = enable ? "none" : "auto";
-      };
-
-      toggleClickThrough(shouldClickThrough(room?.state.memberState.currentApplianceName));
-    }
 
     const withReadonlyAttributes = (state: Record<string, unknown>) => ({
       ...state,
@@ -119,7 +81,7 @@ const IframeBridge: NetlessApp<Attributes> = {
     };
 
     const dispatchMagixEvent = (event: string, payload: any) => {
-      if (context.getIsWritable()) {
+      if (context.isWritable) {
         context.updateAttributes(["lastEvent"], { name: event, payload });
         log("[IframeBridge] dispatchMagixEvent %s %O", event, payload);
         room?.dispatchMagixEvent(event, payload);
@@ -204,18 +166,6 @@ const IframeBridge: NetlessApp<Attributes> = {
     emitter.emit(IframeEvents.StartCreate);
     emitter.emit(IframeEvents.OnCreate, bridge);
 
-    if (room) {
-      sideEffectManager.add(() => {
-        const onRoomStateChanged = (e: Partial<RoomState>) => {
-          if (e.memberState) {
-            toggleClickThrough(shouldClickThrough(e.memberState.currentApplianceName));
-          }
-        };
-        room.callbacks.on("onRoomStateChanged", onRoomStateChanged);
-        return () => room.callbacks.off("onRoomStateChanged", onRoomStateChanged);
-      });
-    }
-
     sideEffectManager.addEventListener(window, "message", (ev: MessageEvent) => {
       if (ev.source !== iframe.contentWindow) {
         return;
@@ -255,7 +205,7 @@ const IframeBridge: NetlessApp<Attributes> = {
           break;
         }
         case IframeEvents.NextPage: {
-          if (context.getIsWritable() && room) {
+          if (context.isWritable && room) {
             const page = nextPage(attrs.page, attrs.maxPage);
             if (page === attrs.page) break;
             context.setScenePath([attrs.displaySceneDir, page].join("/"));
@@ -265,7 +215,7 @@ const IframeBridge: NetlessApp<Attributes> = {
           break;
         }
         case IframeEvents.PrevPage: {
-          if (context.getIsWritable() && room) {
+          if (context.isWritable && room) {
             const page = prevPage(attrs.page);
             if (page === attrs.page) break;
             context.setScenePath([attrs.displaySceneDir, page].join("/"));
@@ -276,7 +226,7 @@ const IframeBridge: NetlessApp<Attributes> = {
         }
         case IframeEvents.SetPage: {
           const maxPage = Number(data.payload) || 0;
-          if (context.getIsWritable() && room) {
+          if (context.isWritable && room) {
             if (!maxPage) {
               room.removeScenes(attrs.displaySceneDir);
             } else {
@@ -294,7 +244,7 @@ const IframeBridge: NetlessApp<Attributes> = {
         }
         case IframeEvents.PageTo: {
           const page = data.payload as number;
-          if (context.getIsWritable() && room) {
+          if (context.isWritable && room) {
             if (!Number.isSafeInteger(page) || page <= 0) break;
             context.setScenePath(`${attrs.displaySceneDir}/${page}`);
             context.updateAttributes(["page"], page);
