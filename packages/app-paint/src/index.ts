@@ -16,16 +16,17 @@ const Paint: NetlessApp<Attributes> = {
   kind: "Paint",
   setup(context) {
     const { appId } = context;
-    const box = context.getBox();
-    const room = context.getRoom();
-    const displayer = context.getDisplayer();
+    const box = context.box;
+    const room = context.room;
+    const displayer = context.displayer;
     const attrs = ensureAttributes(context, {
       curves: {},
     });
+    box.setHighlightStage(false);
 
     const svg = Paper.createSVGElement();
     svg.setAttribute("fill", "transparent");
-    svg.setAttribute("stroke", "#000");
+    svg.setAttribute("stroke", box.darkMode ? "#fff" : "#000");
     svg.setAttribute("stroke-width", "2");
     Object.assign(svg.style, {
       display: "block",
@@ -36,13 +37,20 @@ const Paint: NetlessApp<Attributes> = {
     box.$content?.addEventListener("touchstart", e => e.preventDefault());
     box.$content?.addEventListener("touchmove", e => e.preventDefault());
 
-    const sideEffectManager = new SideEffectManager();
+    const sideEffect = new SideEffectManager();
+
+    sideEffect.addDisposer(
+      box.onValChanged("darkMode", darkMode => {
+        svg.setAttribute("stroke", darkMode ? "#fff" : "#000");
+      })
+    );
+
     const fitCurve = new FitCurve();
 
     const channel = `channel-${appId}`;
 
     const broadcast = (payload: BroadcastEvent) => {
-      if (context.getIsWritable()) {
+      if (context.isWritable) {
         room?.dispatchMagixEvent(channel, payload);
       }
     };
@@ -70,7 +78,7 @@ const Paint: NetlessApp<Attributes> = {
       }
     };
 
-    sideEffectManager.add(() => {
+    sideEffect.add(() => {
       displayer.addMagixEventListener(channel, magixEventListener);
       return () => displayer?.removeMagixEventListener(channel);
     });
@@ -104,7 +112,7 @@ const Paint: NetlessApp<Attributes> = {
 
     fitCurve.onmessage = (ev: MessageEvent<{ id: string; curves: ReadonlyArray<Curve> }>) => {
       const { id: pid, curves } = ev.data;
-      if (context.getIsWritable()) {
+      if (context.isWritable) {
         context.updateAttributes(["curves", pid], curves);
         broadcast({ pid, done: true });
       }
@@ -133,7 +141,7 @@ const Paint: NetlessApp<Attributes> = {
 
     context.emitter.on("destroy", () => {
       console.log("[Paint]: destroy");
-      sideEffectManager.flushAll();
+      sideEffect.flushAll();
       paper.destroy();
     });
   },
