@@ -17,7 +17,7 @@ interface AppProps {
 }
 
 export const App: FunctionalComponent<AppProps> = memo(({ context, storage }) => {
-  const [isWritable, setWritable] = useState(() => context.getIsWritable());
+  const [isWritable, setWritable] = useState(() => context.isWritable);
   const [countdownSecs, setCountdownSecs] = useState(0);
   const [startTime, setStartTime] = useState(0);
   const [paused, setPaused] = useState(false);
@@ -25,26 +25,26 @@ export const App: FunctionalComponent<AppProps> = memo(({ context, storage }) =>
   const started = startTime > 0;
 
   const onStart = useCallback(() => {
-    if (context.getIsWritable()) {
+    if (context.isWritable) {
       setPaused(false);
       setStartTime(Math.floor(Date.now() / 1000));
     }
   }, [context]);
 
   const onPause = useCallback(() => {
-    if (context.getIsWritable()) {
+    if (context.isWritable) {
       setPaused(true);
     }
   }, [context]);
 
   const onResume = useCallback(() => {
-    if (context.getIsWritable()) {
+    if (context.isWritable) {
       setPaused(false);
     }
   }, [context]);
 
   const onReset = useCallback(() => {
-    if (context.getIsWritable()) {
+    if (context.isWritable) {
       setPaused(false);
       setCountdownSecs(0);
       setStartTime(0);
@@ -55,7 +55,7 @@ export const App: FunctionalComponent<AppProps> = memo(({ context, storage }) =>
     (adjustment: number) => {
       if (!started) {
         setCountdownSecs(countdownSecs => {
-          if (!context.getIsWritable()) {
+          if (!context.isWritable) {
             return countdownSecs;
           }
           const minutes = Math.floor(countdownSecs / 60);
@@ -103,7 +103,7 @@ export const App: FunctionalComponent<AppProps> = memo(({ context, storage }) =>
   );
 
   useEffect(() => {
-    setWritable(context.getIsWritable());
+    setWritable(context.isWritable);
     context.emitter.on("writableChange", setWritable);
     return () => context.emitter.off("writableChange", setWritable);
   }, [context]);
@@ -125,7 +125,7 @@ export const App: FunctionalComponent<AppProps> = memo(({ context, storage }) =>
   }, [storage]);
 
   useEffect(() => {
-    if (context.getIsWritable()) {
+    if (context.isWritable) {
       // unchanged values will be skipped automatically
       storage.setState({ countdownSecs, paused, startTime });
     }

@@ -13,7 +13,7 @@ const Countdown: NetlessApp = {
     minheight: MIN_HEIGHT,
   },
   setup(context) {
-    const box = context.getBox();
+    const box = context.box;
 
     box.mountStyles(styles);
 
