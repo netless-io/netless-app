@@ -20,8 +20,8 @@ export function createSyncService(
   service: ISyncService;
   disposer: Disposer;
 } {
-  const displayer = context.getDisplayer();
-  const room = context.getRoom();
+  const displayer = context.displayer;
+  const room = context.room;
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let listeners: Array<(payload: any) => void> = [];

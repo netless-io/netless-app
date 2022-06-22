@@ -39,7 +39,7 @@ interface UserPayload {
 const GeoGebra: NetlessApp<Attributes> = {
   kind: "GeoGebra",
   async setup(context) {
-    const displayer = context.getDisplayer();
+    const displayer = context.displayer;
     const memberId = displayer.observerId;
     const userPayload: UserPayload | undefined = displayer.state.roomMembers.find(
       member => member.memberId === memberId
@@ -54,8 +54,9 @@ const GeoGebra: NetlessApp<Attributes> = {
       ggbBase64: "",
     });
 
-    const box = context.getBox();
+    const box = context.box;
     box.mountStyles(styles);
+    box.setHighlightStage(false);
 
     const content = document.createElement("div");
     content.classList.add("netless-app-geogebra", "loading");
@@ -90,7 +91,7 @@ const GeoGebra: NetlessApp<Attributes> = {
       resize();
       content.classList.remove("loading");
 
-      const displayer = context.getDisplayer();
+      const displayer = context.displayer;
       const liveApp = new LiveApp({
         clientId: displayer.observerId,
         nickName,
