@@ -1,10 +1,8 @@
 import styles from "./style.scss?inline";
 
-import type { NetlessApp } from "@netless/window-manager";
+import type { NetlessApp, WhiteBoardView } from "@netless/window-manager";
 import type {
   AkkoObjectUpdatedListener,
-  AnimationMode,
-  ApplianceNames,
   Event,
   RoomState,
   ScenePathType,
@@ -19,7 +17,6 @@ import type {
   FromSDKMessage,
   RoomMember,
   DefaultState,
-  CameraState,
   PostToSDKMessage,
   AddFromSDKMessageListener,
 } from "./types";
@@ -38,8 +35,6 @@ export interface AppOptions<TState = DefaultState, TMessage = unknown> {
   addMessageListener?: AddFromSDKMessageListener<TState, TMessage>;
 }
 
-const ClickThroughAppliances = new Set(["clicker", "selector"]);
-
 const EmbeddedPage: NetlessApp<Attributes, void, AppOptions> = {
   kind: "EmbeddedPage",
   setup(context) {
@@ -50,10 +45,8 @@ const EmbeddedPage: NetlessApp<Attributes, void, AppOptions> = {
 
     const appOptions = context.getAppOptions() || {};
 
-    const displayer = context.getDisplayer();
-    const room = context.getRoom();
-    const box = context.getBox();
-    const view = context.getView();
+    let whiteboard: WhiteBoardView | undefined;
+    const { displayer, room, box } = context;
     const debug = appOptions.debug;
     const mainStoreId = "state";
 
@@ -84,6 +77,7 @@ const EmbeddedPage: NetlessApp<Attributes, void, AppOptions> = {
 
     box.mountStyles(styles);
     box.mountContent(container);
+    box.setHighlightStage(false);
 
     const transformRoomMembers = (
       array: ReadonlyArray<PlainRoomMember>
@@ -150,39 +144,15 @@ const EmbeddedPage: NetlessApp<Attributes, void, AppOptions> = {
      # Whiteboard panel
     \* --------------------------------------------- */
 
-    if (view) {
-      // cover a whiteboard panel on top of the iframe
-      const viewBox = document.createElement("div");
-      viewBox.classList.add("netless-app-embedded-page-wb-view");
-      container.appendChild(viewBox);
-      context.mountView(viewBox);
-
-      if (room) {
-        const toggleClickThrough = (tool?: ApplianceNames) => {
-          viewBox.style.pointerEvents = !tool || ClickThroughAppliances.has(tool) ? "none" : "auto";
-        };
-
-        toggleClickThrough(room.state.memberState.currentApplianceName);
-
-        sideEffectManager.add(() => {
-          const onRoomStateChanged = (e: Partial<RoomState>) => {
-            if (e.memberState) {
-              toggleClickThrough(e.memberState.currentApplianceName);
-            }
-          };
-          displayer.callbacks.on("onRoomStateChanged", onRoomStateChanged);
-          return () => displayer.callbacks.off("onRoomStateChanged", onRoomStateChanged);
-        });
-      }
+    if (context.getInitScenePath()) {
+      whiteboard = context.createWhiteBoardView();
     }
 
-    const moveCamera = (config?: Partial<CameraState>): void => {
-      if (view && isObj(config)) {
-        view.moveCamera({
+    const moveCamera = (config?: { x?: number; y?: number }): void => {
+      if (whiteboard && isObj(config)) {
+        whiteboard.moveCamera({
           centerX: config.x,
           centerY: config.y,
-          scale: config.scale,
-          animationMode: "immediately" as AnimationMode.Immediately,
         });
       }
     };
@@ -205,7 +175,7 @@ const EmbeddedPage: NetlessApp<Attributes, void, AppOptions> = {
     const setState = (payload: unknown): void => {
       if (isObj(payload) && payload.storeId && isObj(payload.state)) {
         const { storeId, state } = payload as FromSDKMessage<"SetState", DefaultState>["payload"];
-        if (!context.getIsWritable()) {
+        if (!context.isWritable) {
           logger.error(`Cannot setState on store ${storeId} without writable access`, state);
           return;
         }
@@ -286,11 +256,11 @@ const EmbeddedPage: NetlessApp<Attributes, void, AppOptions> = {
     \* --------------------------------------------- */
 
     const setPage = (page: unknown): void => {
-      if (!view) {
+      if (!whiteboard) {
         logger.warn("SetPage: page api is only available with 'scenePath' options enabled.");
       } else {
         const scenePath = context.getInitScenePath();
-        if (typeof page === "string" && context.getIsWritable() && scenePath && room) {
+        if (typeof page === "string" && context.isWritable && scenePath && room) {
           const fullScenePath = [scenePath, page].join("/");
           if (room.scenePathType(fullScenePath) === ("none" as ScenePathType.None)) {
             room.putScenes(scenePath, [{ name: page }]);
@@ -314,7 +284,7 @@ const EmbeddedPage: NetlessApp<Attributes, void, AppOptions> = {
 
     sideEffectManager.add(() => {
       const updateListener = () => {
-        const isWritable = context.getIsWritable();
+        const isWritable = context.isWritable;
         postMessage({
           NEAType: "WritableChanged",
           payload: isWritable,
@@ -332,7 +302,7 @@ const EmbeddedPage: NetlessApp<Attributes, void, AppOptions> = {
     const magixEventChannel = `channel-${context.appId}`;
 
     const sendMagixMessage = (message: unknown): void => {
-      if (context.getIsWritable() && room) {
+      if (context.isWritable && room) {
         room.dispatchMagixEvent(magixEventChannel, message);
       }
     };
@@ -363,7 +333,7 @@ const EmbeddedPage: NetlessApp<Attributes, void, AppOptions> = {
         payload: {
           appId: context.appId,
           page: attrs.page,
-          writable: context.getIsWritable(),
+          writable: context.isWritable,
           roomMembers: transformRoomMembers(displayer.state.roomMembers),
           debug,
           store: toJSON(attrs.store),
