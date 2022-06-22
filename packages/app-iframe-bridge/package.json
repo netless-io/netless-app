@@ -1,6 +1,6 @@
 {
   "name": "@netless/app-iframe-bridge",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "main": "dist/main.cjs.js",
   "module": "dist/main.es.js",
   "types": "dist/index.d.ts",
