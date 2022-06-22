@@ -24,7 +24,7 @@ export class YMonaco {
     public readonly: boolean
   ) {
     const monacoModel = monacoEditor.getModel();
-    this.authorId = String(this.context.getDisplayer().observerId);
+    this.authorId = String(this.context.displayer.observerId);
     this.MagixMonacoDocChannel = this.context.appId + "AppMonacoDoc";
 
     if (!monacoModel) {
@@ -35,7 +35,7 @@ export class YMonaco {
 
     this.sideEffect = new SideEffectManager();
 
-    this.observerId = String(context.getDisplayer().observerId);
+    this.observerId = String(context.displayer.observerId);
 
     this.setupDecorations();
 
@@ -131,7 +131,7 @@ export class YMonaco {
   }
 
   private setupDocUpdate(): void {
-    const displayer = this.context.getDisplayer();
+    const displayer = this.context.displayer;
 
     this.sideEffect.add(() => {
       const handleUpdate = (event: WhiteEvent) => {
@@ -150,8 +150,8 @@ export class YMonaco {
 
     this.sideEffect.add(() => {
       const handleUpdate = (update: Uint8Array, origin: unknown) => {
-        if (origin !== "_remote_edit_" && this.context.getIsWritable()) {
-          const room = this.context.getRoom();
+        if (origin !== "_remote_edit_" && this.context.isWritable) {
+          const room = this.context.room;
           if (room) {
             this.authorId = String(displayer.observerId);
             room.dispatchMagixEvent(this.MagixMonacoDocChannel, fromUint8Array(update));
@@ -225,7 +225,7 @@ export class YMonaco {
   private setupAttrsUpdate(): void {
     this.sideEffect.add(() => {
       const handleAttrsUpdate = () => {
-        this.context.getDisplayer().state.roomMembers.forEach(member => {
+        this.context.displayer.state.roomMembers.forEach(member => {
           const id = String(member.memberId);
           if (id !== this.observerId) {
             let decoration = this.decorations.get(id);

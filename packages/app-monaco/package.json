@@ -1,6 +1,6 @@
 {
   "name": "@netless/app-monaco",
-  "version": "0.1.14-beta.1",
+  "version": "0.2.0",
   "description": "Netless App Code Editor",
   "repository": "netless-io/netless-app",
   "license": "MIT",

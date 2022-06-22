@@ -18,7 +18,7 @@ export type NetlessAppMonacoAppOptions = {
 const NetlessAppMonaco: NetlessApp<NetlessAppMonacoAttributes> = {
   kind,
   async setup(context) {
-    const box = context.getBox();
+    const box = context.box;
 
     const attrs = ensureAttributes(context, {
       text: "",
@@ -29,6 +29,7 @@ const NetlessAppMonaco: NetlessApp<NetlessAppMonacoAttributes> = {
       codeRunning: false,
     });
 
+    box.setHighlightStage(false);
     box.mountStyles(styles + editorStyles);
 
     const appOptions = context.getAppOptions();
@@ -48,7 +49,7 @@ const NetlessAppMonaco: NetlessApp<NetlessAppMonacoAttributes> = {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     if ((window as any).require && nodeRequire) (window as any).require = nodeRequire;
 
-    const monacoEditor = new MonacoEditor(context, attrs, box, monaco, !context.getIsWritable());
+    const monacoEditor = new MonacoEditor(context, attrs, box, monaco, !context.isWritable);
 
     const persistence = new NetlessAppMonacoPersistence(
       context,
