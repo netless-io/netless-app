@@ -11,66 +11,55 @@ export interface Attributes {
 const Vote: NetlessApp<Attributes> = {
   kind: "Vote",
   setup(context) {
-    const box = context.getBox();
+    const box = context.box;
 
-    let attrs = context.getAttributes() as Attributes;
-    if (!attrs) {
-      context.setAttributes({ title: "", items: [] });
-      attrs = context.getAttributes() as Attributes;
-    }
-    if (!attrs) {
-      context.emitter.emit("destroy", {
-        error: new Error(`[NetlessAppVote] No attributes`),
-      });
-      return;
-    }
-    if (attrs.title == null) {
-      context.updateAttributes(["title"], "");
-    }
-    if (!attrs.items) {
-      context.updateAttributes(["items"], []);
-    }
+    const storage = context.createStorage<Attributes>("vote", { title: "", items: [] });
 
+    box.setHighlightStage(false);
     box.mountStyles(styles);
 
     const app = new App({
       target: box.$content as HTMLDivElement,
-      props: { writable: context.getIsWritable() },
+      props: {
+        writable: context.isWritable,
+        title: storage.state.title,
+        items: storage.state.items,
+        votes: storage.state.items.map((_, i) => storage.state[`item-${i}`] || 0),
+      },
     });
 
-    context.emitter.on("writableChange", () => {
-      app.$set({ writable: context.getIsWritable() });
+    const dispose_writable_listener = context.emitter.on("writableChange", () => {
+      app.$set({ writable: context.isWritable });
     });
 
     type Detail = Partial<Pick<Attributes, "items" | "title"> & { votes: [i: number, n: number] }>;
 
     app.$on("update", ({ detail }: { detail: Detail }) => {
       if ("title" in detail) {
-        context.updateAttributes(["title"], detail.title);
+        storage.setState({ title: detail.title });
       }
       if ("items" in detail) {
-        context.updateAttributes(["items"], detail.items);
+        storage.setState({ items: detail.items });
       }
       if (Array.isArray(detail.votes)) {
         const [i, n] = detail.votes;
-        context.updateAttributes([`item-${i}`], n);
+        storage.setState({ [`item-${i}`]: n });
       }
     });
 
-    const disposers = [
-      context.mobxUtils.autorun(() => {
-        app.$set({ title: attrs.title });
-      }),
-      context.mobxUtils.autorun(() => {
-        attrs.items && app.$set({ items: [...attrs.items] });
-      }),
-      context.mobxUtils.autorun(() => {
-        attrs.items && app.$set({ votes: attrs.items.map((_, i) => attrs[`item-${i}`] || 0) });
-      }),
-    ];
+    const dispose = storage.addStateChangedListener(diff => {
+      console.log(storage.state);
+      if (diff.title) {
+        app.$set({ title: diff.title.newValue });
+      } else {
+        const votes = storage.state.items.map((_, i) => storage.state[`item-${i}`] || 0);
+        app.$set({ items: storage.state.items, votes });
+      }
+    });
 
     context.emitter.on("destroy", () => {
-      disposers.forEach(f => f());
+      dispose_writable_listener();
+      dispose();
       app.$destroy();
     });
   },
