@@ -118,13 +118,11 @@ export function init(container: HTMLElement) {
   WindowManager.mount({
     room,
     container,
-    chessboard: false,
     cursor: true,
     debug: true,
     prefersColorScheme: "auto",
   }).then(async manager => {
     window.manager = manager;
-    await manager.switchMainViewToWriter();
     const tool = store.getItem("currentApplianceName") as ApplianceNames;
     if (tool) {
       manager.mainView.setMemberState({ currentApplianceName: tool });
