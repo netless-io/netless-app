@@ -20,23 +20,6 @@ body {
 
 #whiteboard {
   flex-grow: 1;
-  padding: 10px;
-
-  .netless-window-manager-playground,
-  .netless-window-manager-sizer {
-    overflow: unset;
-  }
-
-  .netless-window-manager-wrapper {
-    border-radius: 8px;
-    background-color: #fff;
-    box-shadow: rgb(0 0 0 / 10%) 0px 1px 5px 0px;
-  }
-
-  .netless-window-manager-sizer::before,
-  .netless-window-manager-sizer::after {
-    background: transparent;
-  }
 }
 
 .nav-bar {
@@ -339,11 +322,6 @@ body {
     color: #ccc;
     &:hover {
       background: rgba($color: #fff, $alpha: 0.15);
-    }
-  }
-  #whiteboard {
-    .netless-window-manager-wrapper {
-      background-color: #222;
     }
   }
   .nav-bar-tools.active {
