@@ -21,15 +21,15 @@ const NetlessAppDocsViewer: NetlessApp<
 > = {
   kind,
   setup(context) {
-    const box = context.getBox();
+    const box = context.box;
 
     const scenes = context.getScenes();
     if (!scenes) {
       throw new Error("[Docs Viewer]: scenes not found.");
     }
 
-    const whiteboardView = context.getView();
-    if (!whiteboardView) {
+    const whiteboard = context.createWhiteBoardView();
+    if (!whiteboard) {
       throw new Error("[Docs Viewer]: no whiteboard view.");
     }
 
@@ -55,14 +55,14 @@ const NetlessAppDocsViewer: NetlessApp<
     if (pages[0].src.startsWith("ppt")) {
       setupDynamicDocsViewer(
         context as AppContext<NetlessAppDynamicDocsViewerAttributes>,
-        whiteboardView,
+        whiteboard,
         box,
         pages
       );
     } else {
       setupStaticDocsViewer(
         context as AppContext<NetlessAppStaticDocsViewerAttributes>,
-        whiteboardView,
+        whiteboard,
         box,
         pages
       );
@@ -78,15 +78,14 @@ function setupStaticDocsViewer(
   box: ReadonlyTeleBox,
   pages: DocsViewerPage[]
 ): void {
-  whiteboardView.disableCameraTransform = !context.getIsWritable();
+  whiteboardView.disableCameraTransform = !context.isWritable;
 
   const docsViewer = new StaticDocsViewer({
     whiteboardView,
-    readonly: !context.getIsWritable(),
+    readonly: !context.isWritable,
     box,
     pages: pages,
     pageScrollTop: context.getAttributes()?.pageScrollTop,
-    mountWhiteboard: context.mountView.bind(context),
     onUserScroll: pageScrollTop => {
       if (context.getAttributes()?.pageScrollTop !== pageScrollTop && !box.readonly) {
         context.updateAttributes(["pageScrollTop"], pageScrollTop);
