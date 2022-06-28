@@ -45,7 +45,6 @@ const EmbeddedPage: NetlessApp<Attributes, void, AppOptions> = {
 
     const appOptions = context.getAppOptions() || {};
 
-    let whiteboard: WhiteBoardView | undefined;
     const { displayer, room, box } = context;
     const debug = appOptions.debug;
     const mainStoreId = "state";
@@ -144,9 +143,7 @@ const EmbeddedPage: NetlessApp<Attributes, void, AppOptions> = {
      # Whiteboard panel
     \* --------------------------------------------- */
 
-    if (context.getInitScenePath()) {
-      whiteboard = context.createWhiteBoardView();
-    }
+    let whiteboard: WhiteBoardView | undefined;
 
     const moveCamera = (config?: { x?: number; y?: number }): void => {
       if (whiteboard && isObj(config)) {
@@ -256,18 +253,15 @@ const EmbeddedPage: NetlessApp<Attributes, void, AppOptions> = {
     \* --------------------------------------------- */
 
     const setPage = (page: unknown): void => {
-      if (!whiteboard) {
-        logger.warn("SetPage: page api is only available with 'scenePath' options enabled.");
-      } else {
-        const scenePath = context.getInitScenePath();
-        if (typeof page === "string" && context.isWritable && scenePath && room) {
-          const fullScenePath = [scenePath, page].join("/");
-          if (room.scenePathType(fullScenePath) === ("none" as ScenePathType.None)) {
-            room.putScenes(scenePath, [{ name: page }]);
-          }
-          context.setScenePath(fullScenePath);
-          context.updateAttributes(["page"], page);
+      whiteboard ||= context.createWhiteBoardView();
+      const scenePath = context.getInitScenePath();
+      if (typeof page === "string" && context.isWritable && scenePath && room) {
+        const fullScenePath = [scenePath, page].join("/");
+        if (room.scenePathType(fullScenePath) === ("none" as ScenePathType.None)) {
+          room.putScenes(scenePath, [{ name: page }]);
         }
+        context.setScenePath(fullScenePath);
+        context.updateAttributes(["page"], page);
       }
     };
 
