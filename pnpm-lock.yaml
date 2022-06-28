@@ -6,7 +6,7 @@ importers:
     specifiers:
       '@commitlint/cli': ^16.3.0
       '@commitlint/config-conventional': ^16.2.4
-      '@netless/window-manager': 1.0.0-canary.22
+      '@netless/window-manager': 1.0.0-canary.24
       '@sveltejs/vite-plugin-svelte': 1.0.0-next.48
       '@tsconfig/svelte': ^3.0.0
       '@types/node': ^18.0.0
@@ -33,7 +33,7 @@ importers:
     devDependencies:
       '@commitlint/cli': 16.3.0
       '@commitlint/config-conventional': 16.2.4
-      '@netless/window-manager': 1.0.0-canary.22_white-web-sdk@2.16.24
+      '@netless/window-manager': 1.0.0-canary.24_white-web-sdk@2.16.24
       '@sveltejs/vite-plugin-svelte': 1.0.0-next.48_svelte@3.48.0+vite@2.9.12
       '@tsconfig/svelte': 3.0.0
       '@types/node': 18.0.0
@@ -545,8 +545,8 @@ packages:
       value-enhancer: 1.3.0
     dev: true
 
-  /@netless/window-manager/1.0.0-canary.22_white-web-sdk@2.16.24:
-    resolution: {integrity: sha512-SmXHN/zRO6Z9UPsL/4UPvP7WBwK68P5UkXkfWwDVjaIqTKTOGR8+ZFbjwOKWNp9Q85qPjg+8iJaERg96Oh4i0w==}
+  /@netless/window-manager/1.0.0-canary.24_white-web-sdk@2.16.24:
+    resolution: {integrity: sha512-Otn6n5QCg2C8bSIBjEg1/EEpe+EnG5tGw1MeUAAQwAbBCcoVtxsQRZlNeymXp04Xo9qAHRG34/UQ1p7l0Nl4rg==}
     peerDependencies:
       white-web-sdk: ^2.16.0
     dependencies:
