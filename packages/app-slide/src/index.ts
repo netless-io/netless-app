@@ -166,7 +166,7 @@ function connect({ context, viewer, sideEffect, logger }: ConnectParams) {
   viewer.prepare(({ width, height, slideCount }) => {
     if (context.destroyed) return;
     width && context.box.setStageRatio(height / width);
-    whiteboard = context.createWhiteBoardView(slideCount);
+    whiteboard = context.createWhiteBoardView({ size: slideCount });
     kick_start();
   });
 
