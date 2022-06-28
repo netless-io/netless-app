@@ -7,6 +7,7 @@ import { pauseSVG } from "./icons/pause";
 import type { ReadonlyTeleBox } from "@netless/window-manager";
 import LazyLoad from "vanilla-lazyload";
 import { SideEffectManager } from "side-effect-manager";
+import { Val, withValueEnhancer, type ValEnhancedResult } from "value-enhancer";
 
 export interface DocsViewerPage {
   src: string;
@@ -19,42 +20,54 @@ export interface DocsViewerConfig {
   readonly: boolean;
   box: ReadonlyTeleBox;
   pages: DocsViewerPage[];
-  onNewPageIndex: (index: number) => void;
   onPlay?: () => void;
 }
 
+type ValConfig = {
+  readonly: Val<boolean>;
+  pageIndex: Val<number, boolean>;
+  isShowPreview: Val<boolean>;
+  isSmallBox: Val<boolean>;
+};
+
+export interface DocsViewer extends ValEnhancedResult<ValConfig> {}
+
 export class DocsViewer {
-  public constructor({ readonly, box, pages, onNewPageIndex, onPlay }: DocsViewerConfig) {
+  public constructor({ readonly, box, pages, onPlay }: DocsViewerConfig) {
     if (pages.length <= 0) {
       throw new Error("[DocsViewer] Empty pages.");
     }
 
-    this.readonly = readonly;
+    const readonly$ = new Val(readonly);
+    const isShowPreview$ = new Val(false);
+    const isSmallBox$ = new Val(false);
+    const pageIndex$ = new Val<number, boolean>(0);
+
+    withValueEnhancer(this, {
+      readonly: readonly$,
+      isShowPreview: isShowPreview$,
+      isSmallBox: isSmallBox$,
+      pageIndex: pageIndex$,
+    });
+
     this.box = box;
     this.pages = pages;
-    this.onNewPageIndex = onNewPageIndex;
     this.onPlay = onPlay;
-
-    this.render();
   }
 
-  protected readonly: boolean;
   protected pages: DocsViewerPage[];
   protected box: ReadonlyTeleBox;
-  protected onNewPageIndex: (index: number) => void;
   protected onPlay?: () => void;
 
-  public $content!: HTMLElement;
-  public $preview!: HTMLElement;
-  public $previewMask!: HTMLElement;
-  public $footer!: HTMLElement;
-  public $pageNumberInput!: HTMLInputElement;
-
-  public pageIndex = 0;
+  public $preview?: HTMLElement;
+  public $previewMask?: HTMLElement;
+  public $footer?: HTMLElement;
+  // public $pageNumberInput!: HTMLInputElement;
 
   public mount(): void {
-    this.box.mountContent(this.$content);
-    this.box.mountFooter(this.$footer);
+    this.box.$content.parentElement?.appendChild(this.renderPreviewMask());
+    this.box.$content.parentElement?.appendChild(this.renderPreview());
+    this.box.mountFooter(this.renderFooter());
 
     this.sideEffect.add(() => {
       const previewLazyLoad = new LazyLoad({
@@ -66,61 +79,14 @@ export class DocsViewer {
   }
 
   public unmount(): void {
-    this.$content.remove();
-    this.$footer.remove();
-  }
-
-  public setReadonly(readonly: boolean): void {
-    if (this.readonly !== readonly) {
-      this.readonly = readonly;
-
-      this.$content.classList.toggle(this.wrapClassName("readonly"), readonly);
-
-      this.$footer.classList.toggle(this.wrapClassName("readonly"), readonly);
-
-      this.$pageNumberInput.disabled = readonly;
-    }
+    this.$preview?.remove();
+    this.$previewMask?.remove();
+    this.$footer?.remove();
   }
 
   public destroy(): void {
     this.sideEffect.flushAll();
     this.unmount();
-  }
-
-  public setPageIndex(pageIndex: number): void {
-    if (!Number.isNaN(pageIndex)) {
-      this.pageIndex = pageIndex;
-      this.$pageNumberInput.value = String(pageIndex + 1);
-    }
-  }
-
-  public setSmallBox(isSmallBox: boolean): void {
-    if (this.isSmallBox !== isSmallBox) {
-      this.isSmallBox = isSmallBox;
-      this.$footer.classList.toggle(this.wrapClassName("float-footer"), isSmallBox);
-    }
-  }
-
-  public render(): HTMLElement {
-    this.renderContent();
-    this.renderFooter();
-    return this.$content;
-  }
-
-  protected renderContent(): HTMLElement {
-    if (!this.$content) {
-      const $content = document.createElement("div");
-      $content.className = this.wrapClassName("content");
-      this.$content = $content;
-
-      if (this.readonly) {
-        $content.classList.add(this.wrapClassName("readonly"));
-      }
-
-      $content.appendChild(this.renderPreviewMask());
-      $content.appendChild(this.renderPreview());
-    }
-    return this.$content;
   }
 
   protected renderPreview(): HTMLElement {
@@ -169,7 +135,7 @@ export class DocsViewer {
           ev.preventDefault();
           ev.stopPropagation();
           ev.stopImmediatePropagation();
-          this.onNewPageIndex(Number(pageIndex));
+          this.setPageIndex(Number(pageIndex), true);
           this.togglePreview(false);
         }
       });
@@ -200,13 +166,17 @@ export class DocsViewer {
       $footer.className = this.wrapClassName("footer");
       this.$footer = $footer;
 
-      if (this.readonly) {
-        $footer.classList.add(this.wrapClassName("readonly"));
-      }
+      this.sideEffect.addDisposer(
+        this._readonly$.subscribe(readonly => {
+          $footer.classList.toggle(this.wrapClassName("readonly"), readonly);
+        })
+      );
 
-      if (this.isSmallBox) {
-        $footer.classList.add(this.wrapClassName("float-footer"));
-      }
+      this.sideEffect.addDisposer(
+        this._isSmallBox$.subscribe(isSmallBox => {
+          $footer.classList.toggle(this.wrapClassName("float-footer"), isSmallBox);
+        })
+      );
 
       if (this.pages.some(page => page.thumbnail || !page.src.startsWith("ppt"))) {
         const $btnSidebar = this.renderFooterBtn("btn-sidebar", sidebarSVG(this.namespace));
@@ -227,7 +197,7 @@ export class DocsViewer {
         if (this.readonly) {
           return;
         }
-        this.onNewPageIndex(this.pageIndex - 1);
+        this.setPageIndex(this.pageIndex - 1, true);
       });
       $pageJumps.appendChild($btnPageBack);
 
@@ -265,7 +235,7 @@ export class DocsViewer {
         if (this.readonly) {
           return;
         }
-        this.onNewPageIndex(this.pageIndex + 1);
+        this.setPageIndex(this.pageIndex + 1, true);
       });
       $pageJumps.appendChild($btnPageNext);
 
@@ -275,10 +245,16 @@ export class DocsViewer {
       const $pageNumberInput = document.createElement("input");
       $pageNumberInput.className = this.wrapClassName("page-number-input");
       $pageNumberInput.value = String(this.pageIndex + 1);
-      if (this.readonly) {
-        $pageNumberInput.disabled = true;
-      }
-      this.$pageNumberInput = $pageNumberInput;
+      this.sideEffect.addDisposer(
+        this._readonly$.subscribe(readonly => {
+          $pageNumberInput.disabled = readonly;
+        })
+      );
+      this.sideEffect.addDisposer(
+        this._pageIndex$.subscribe(pageIndex => {
+          $pageNumberInput.value = String(pageIndex + 1);
+        })
+      );
       this.sideEffect.addEventListener($pageNumberInput, "focus", () => {
         $pageNumberInput.select();
       });
@@ -287,7 +263,7 @@ export class DocsViewer {
           return;
         }
         if ($pageNumberInput.value) {
-          this.onNewPageIndex(Number($pageNumberInput.value) - 1);
+          this.setPageIndex(Number($pageNumberInput.value) - 1, true);
         }
       });
 
@@ -322,8 +298,11 @@ export class DocsViewer {
 
   protected togglePreview(isShowPreview?: boolean): void {
     this.isShowPreview = isShowPreview ?? !this.isShowPreview;
-    this.$content.classList.toggle(this.wrapClassName("preview-active"), this.isShowPreview);
-    if (this.isShowPreview) {
+    this.box.$content.parentElement?.classList.toggle(
+      this.wrapClassName("preview-active"),
+      this.isShowPreview
+    );
+    if (this.isShowPreview && this.$preview) {
       const $previewPage = this.$preview.querySelector<HTMLElement>(
         "." + this.wrapClassName(`preview-page-${this.pageIndex}`)
       );
@@ -340,10 +319,6 @@ export class DocsViewer {
   }
 
   protected namespace = "netless-app-docs-viewer";
-
-  protected isShowPreview = false;
-
-  protected isSmallBox = false;
 
   protected sideEffect = new SideEffectManager();
 }

@@ -6,7 +6,7 @@ importers:
     specifiers:
       '@commitlint/cli': ^16.3.0
       '@commitlint/config-conventional': ^16.2.4
-      '@netless/window-manager': 1.0.0-canary.20
+      '@netless/window-manager': 1.0.0-canary.22
       '@sveltejs/vite-plugin-svelte': 1.0.0-next.48
       '@tsconfig/svelte': ^3.0.0
       '@types/node': ^18.0.0
@@ -33,7 +33,7 @@ importers:
     devDependencies:
       '@commitlint/cli': 16.3.0
       '@commitlint/config-conventional': 16.2.4
-      '@netless/window-manager': 1.0.0-canary.20_white-web-sdk@2.16.24
+      '@netless/window-manager': 1.0.0-canary.22_white-web-sdk@2.16.24
       '@sveltejs/vite-plugin-svelte': 1.0.0-next.48_svelte@3.48.0+vite@2.9.12
       '@tsconfig/svelte': 3.0.0
       '@types/node': 18.0.0
@@ -71,14 +71,14 @@ importers:
 
   packages/app-docs-viewer:
     specifiers:
-      '@juggle/resize-observer': ^3.3.1
       '@netless/app-shared': workspace:*
       debounce-fn: ^5.1.0
       side-effect-manager: ^1.1.0
+      value-enhancer: ^1.3.0
       vanilla-lazyload: ^17.8.2
     dependencies:
-      '@juggle/resize-observer': 3.3.1
       debounce-fn: 5.1.0
+      value-enhancer: 1.3.0
       vanilla-lazyload: 17.8.2
     devDependencies:
       '@netless/app-shared': link:../app-shared
@@ -496,6 +496,7 @@ packages:
 
   /@juggle/resize-observer/3.3.1:
     resolution: {integrity: sha512-zMM9Ds+SawiUkakS7y94Ymqx+S0ORzpG3frZirN3l+UlXUmSUR7hF4wxCVqW+ei94JzV5kt0uXBcoOEAuiydrw==}
+    dev: true
 
   /@monaco-editor/loader/1.2.0_monaco-editor@0.29.1:
     resolution: {integrity: sha512-cJVCG/T/KxXgzYnjKqyAgsKDbH9mGLjcXxN6AmwumBwa2rVFkwvGcUj1RJtD0ko4XqLqJxwqsN/Z/KURB5f1OQ==}
@@ -544,8 +545,8 @@ packages:
       value-enhancer: 1.3.0
     dev: true
 
-  /@netless/window-manager/1.0.0-canary.20_white-web-sdk@2.16.24:
-    resolution: {integrity: sha512-7aMWRAOnyrjgdkMFo0HVc/WpfNToylUQi21SRQYnotslPgvmTOvTuhSMRbdnZR51pLg3x6JJe2Nv95bCf5L8RA==}
+  /@netless/window-manager/1.0.0-canary.22_white-web-sdk@2.16.24:
+    resolution: {integrity: sha512-SmXHN/zRO6Z9UPsL/4UPvP7WBwK68P5UkXkfWwDVjaIqTKTOGR8+ZFbjwOKWNp9Q85qPjg+8iJaERg96Oh4i0w==}
     peerDependencies:
       white-web-sdk: ^2.16.0
     dependencies:
@@ -3539,7 +3540,6 @@ packages:
 
   /value-enhancer/1.3.0:
     resolution: {integrity: sha512-shI9N5ML4MGwD6bMu/My1l1+REFqhZGOuIjDN5Gf+k7gACfY2k8WtJEcqgdZMfepwivfhQxIfZp0riobUDZpDQ==}
-    dev: true
 
   /vanilla-lazyload/17.8.2:
     resolution: {integrity: sha512-sz/dFM5tXi5LbDhx9l31bAdXXtYvKCZ2cCva4SgsKxFIHf0r/4j1HsnaDn60ga2DhbxLRtHh65J8JmHZHW0F8w==}

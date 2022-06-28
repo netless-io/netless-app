@@ -1,9 +1,8 @@
-import type { AnimationMode, ReadonlyTeleBox } from "@netless/window-manager";
-import type { View, Size, Camera } from "white-web-sdk";
+import type { AnimationMode, ReadonlyTeleBox, WhiteBoardView } from "@netless/window-manager";
+import type { Camera } from "white-web-sdk";
 import type { DebouncedFunction, Options } from "debounce-fn";
 import debounceFn from "debounce-fn";
 import { SideEffectManager } from "side-effect-manager";
-import { ResizeObserver as Polyfill } from "@juggle/resize-observer";
 import type { DocsViewerPage } from "../DocsViewer";
 import { DocsViewer } from "../DocsViewer";
 import { clamp, preventEvent } from "../utils/helpers";
@@ -11,16 +10,11 @@ import { Stepper } from "./stepper";
 import { PageRenderer } from "../PageRenderer";
 import { ScrollBar } from "../ScrollBar";
 
-const ResizeObserver = window.ResizeObserver || Polyfill;
-
-const RATIO_BASE_CONTAINER_HEIGHT = 640;
-
 export interface StaticDocsViewerConfig {
-  whiteboardView: View;
+  whiteboard: WhiteBoardView;
   readonly: boolean;
   box: ReadonlyTeleBox;
   pages: DocsViewerPage[];
-  mountWhiteboard: (dom: HTMLDivElement) => void;
   /** Scroll Top of the original page */
   pageScrollTop?: number;
   onUserScroll?: (pageScrollTop: number) => void;
@@ -28,19 +22,17 @@ export interface StaticDocsViewerConfig {
 
 export class StaticDocsViewer {
   public constructor({
-    whiteboardView,
+    whiteboard,
     readonly,
     box,
     pages,
     pageScrollTop = 0,
-    mountWhiteboard,
     onUserScroll,
   }: StaticDocsViewerConfig) {
-    this.whiteboardView = whiteboardView;
+    this.whiteboard = whiteboard;
     this.readonly = readonly;
     this.box = box;
     this.pages = pages;
-    this.mountWhiteboard = mountWhiteboard;
     this._onUserScroll = onUserScroll;
 
     const debouncedOnUserScroll = this.debounce(
@@ -63,10 +55,9 @@ export class StaticDocsViewer {
       readonly,
       box,
       pages,
-      onNewPageIndex: this.onNewPageIndex,
     });
 
-    const { width: containerWidth, height: containerHeight } = this.whiteboardView.size;
+    const { width: containerWidth, height: containerHeight } = box.contentStageRect;
 
     this.pageRenderer = new PageRenderer({
       pagesScrollTop: pageScrollTop,
@@ -97,6 +88,13 @@ export class StaticDocsViewer {
       },
     });
 
+    this.sideEffect.addDisposer(
+      this.viewer.onValChanged(
+        "pageIndex",
+        (pageIndex, isUserAction) => isUserAction && this.scrollToPage(pageIndex)
+      )
+    );
+
     this.render();
   }
 
@@ -111,29 +109,16 @@ export class StaticDocsViewer {
   protected readonly: boolean;
   protected pages: DocsViewerPage[];
   protected box: ReadonlyTeleBox;
-  protected whiteboardView: View;
-  protected mountWhiteboard: (dom: HTMLDivElement) => void;
+  protected whiteboard: WhiteBoardView;
 
   public _onUserScroll?: (pageScrollTop: number) => void;
 
   public viewer: DocsViewer;
 
-  public $whiteboardView!: HTMLDivElement;
-
   public mount(): this {
     this.viewer.mount();
 
     this.setupScrollListener();
-
-    const debouncedRenderRatioHeight = this.debounce(this.renderRatioHeight.bind(this), {
-      wait: 80,
-    });
-
-    this.sideEffect.add(() => {
-      const observer = new ResizeObserver(debouncedRenderRatioHeight);
-      observer.observe(this.viewer.$content);
-      return () => observer.disconnect();
-    });
 
     // guard scroll position
     this.sideEffect.setTimeout(() => {
@@ -180,84 +165,9 @@ export class StaticDocsViewer {
   }
 
   public render(): void {
-    this.pageRenderer.mount(this.viewer.$content);
-    this.viewer.$content.appendChild(this.renderWhiteboardView());
-    this.scrollbar.mount(this.viewer.$content);
-    this.renderRatioHeight();
-  }
-
-  protected renderRatioHeight(): void {
-    const boxHeight = this.box.absoluteHeight;
-    const isSmallBox = boxHeight <= RATIO_BASE_CONTAINER_HEIGHT;
-
-    this.viewer.setSmallBox(isSmallBox);
-
-    if (isSmallBox) {
-      const titleBarSupposedHeight = 26 / RATIO_BASE_CONTAINER_HEIGHT;
-      const titleBarActualHeight = 26 / boxHeight;
-      const footerSupposedHeight = 26 / RATIO_BASE_CONTAINER_HEIGHT;
-      const footerActualHeight = 0;
-
-      const emptySpace = Math.max(
-        (titleBarSupposedHeight +
-          footerSupposedHeight -
-          (titleBarActualHeight + footerActualHeight)) /
-          2,
-        0
-      );
-
-      if (this.box.$titleBar) {
-        const titleBarHeight = titleBarActualHeight + emptySpace;
-        this.box.$titleBar.style.height = `${titleBarHeight * 100}%`;
-      }
-
-      if (this.box.$footer) {
-        const footerHeight = footerActualHeight + emptySpace;
-        this.box.$footer.style.height = `${footerHeight * 100}%`;
-      }
-    } else {
-      if (this.box.$titleBar) {
-        const titleBarHeight = Math.max(26 / RATIO_BASE_CONTAINER_HEIGHT, 26 / boxHeight);
-        this.box.$titleBar.style.height = `${titleBarHeight * 100}%`;
-      }
-
-      if (this.box.$footer) {
-        const footerHeight = Math.max(26 / RATIO_BASE_CONTAINER_HEIGHT, 26 / boxHeight);
-        this.box.$footer.style.height = `${footerHeight * 100}%`;
-      }
-    }
-  }
-
-  protected renderWhiteboardView(): HTMLDivElement {
-    if (!this.$whiteboardView) {
-      this.$whiteboardView = document.createElement("div");
-      this.$whiteboardView.className = this.wrapClassName("wb-view");
-      this.mountWhiteboard(this.$whiteboardView);
-      this.sideEffect.addEventListener(
-        this.$whiteboardView,
-        "wheel",
-        ev => {
-          preventEvent(ev);
-          if (!this.readonly) {
-            this.pageScrollTo(this.pageRenderer.pagesScrollTop + ev.deltaY);
-            this.updateUserScroll();
-          }
-        },
-        { passive: false, capture: true }
-      );
-      this.sideEffect.addEventListener(
-        this.$whiteboardView,
-        "touchmove",
-        ev => {
-          if (this.readonly || ev.touches.length <= 1) {
-            return;
-          }
-          this.updateUserScroll();
-        },
-        { passive: true, capture: true }
-      );
-    }
-    return this.$whiteboardView;
+    this.box.$content.style.overflow = "hidden";
+    this.box.mountStage(this.pageRenderer.$pages);
+    this.scrollbar.mount(this.box.$content);
   }
 
   protected scrollTopPageToEl(pageScrollTop: number): number {
@@ -275,8 +185,8 @@ export class StaticDocsViewer {
 
   /** Scroll base on docs size */
   protected pageScrollTo(pageScrollTop: number): void {
-    const halfWbHeight = this.scrollTopElToPage(this.whiteboardView.size.height / 2);
-    this.whiteboardView.moveCamera({
+    const halfWbHeight = this.scrollTopElToPage(this.whiteboard.view.size.height / 2);
+    this.whiteboard.view.moveCamera({
       centerY: clamp(
         pageScrollTop + halfWbHeight,
         halfWbHeight,
@@ -297,9 +207,36 @@ export class StaticDocsViewer {
   }
 
   protected setupScrollListener(): void {
+    if (this.box.$content.parentElement) {
+      this.sideEffect.addEventListener(
+        this.box.$content.parentElement,
+        "wheel",
+        ev => {
+          preventEvent(ev);
+          if (!this.readonly) {
+            this.pageScrollTo(this.pageRenderer.pagesScrollTop + ev.deltaY);
+            this.updateUserScroll();
+          }
+        },
+        { passive: false, capture: true }
+      );
+
+      this.sideEffect.addEventListener(
+        this.box.$content.parentElement,
+        "touchmove",
+        ev => {
+          if (this.readonly || ev.touches.length <= 1) {
+            return;
+          }
+          this.updateUserScroll();
+        },
+        { passive: true, capture: true }
+      );
+    }
+
     this.sideEffect.add(() => {
       const handleCameraUpdate = (camera: Camera) => {
-        const { width: wbWidth, height: wbHeight } = this.whiteboardView.size;
+        const { width: wbWidth, height: wbHeight } = this.whiteboard.view.size;
         if (wbWidth <= 0 || wbHeight <= 0) {
           return;
         }
@@ -310,30 +247,32 @@ export class StaticDocsViewer {
         this.pageRenderer.pagesScrollTo(pagesScrollTop);
         this.scrollbar.pagesScrollTo(pagesScrollTop);
       };
-      this.whiteboardView.callbacks.on("onCameraUpdated", handleCameraUpdate);
-      return () => this.whiteboardView.callbacks.off("onCameraUpdated", handleCameraUpdate);
+      this.whiteboard.view.callbacks.on("onCameraUpdated", handleCameraUpdate);
+      return () => this.whiteboard.view.callbacks.off("onCameraUpdated", handleCameraUpdate);
     });
 
-    this.sideEffect.add(() => {
-      const handleSizeUpdate = ({ width: wbWidth, height: wbHeight }: Size): void => {
-        if (wbWidth <= 0 || wbHeight <= 0) {
-          return;
-        }
-
-        this.pageRenderer.setContainerSize(wbWidth, wbHeight);
-        this.scrollbar.setContainerSize(wbWidth, wbHeight);
+    this.sideEffect.addDisposer(
+      this.box._contentRect$.subscribe(contentRect => {
+        this.pageRenderer.setContainerSize(
+          this.box.contentStageRect.width,
+          this.box.contentStageRect.height
+        );
+        this.scrollbar.setContainerSize(
+          this.box.contentStageRect.width,
+          this.box.contentStageRect.height
+        );
 
         const { pagesIntrinsicWidth, pagesIntrinsicHeight } = this.pageRenderer;
 
-        this.whiteboardView.moveCameraToContain({
+        this.whiteboard.view.moveCameraToContain({
           originX: 0,
           originY: this.pageRenderer.pagesScrollTop,
           width: pagesIntrinsicWidth,
-          height: wbHeight / this.pageRenderer.scale,
+          height: contentRect.height / this.pageRenderer.scale,
           animationMode: "immediately" as AnimationMode,
         });
 
-        this.whiteboardView.setCameraBound({
+        this.whiteboard.view.setCameraBound({
           damping: 1,
           maxContentMode: () => this.pageRenderer.scale,
           minContentMode: () => this.pageRenderer.scale,
@@ -342,12 +281,9 @@ export class StaticDocsViewer {
           width: pagesIntrinsicWidth,
           height: pagesIntrinsicHeight,
         });
-      };
-      this.whiteboardView.callbacks.on("onSizeUpdated", handleSizeUpdate);
-      return () => {
-        this.whiteboardView.callbacks.off("onSizeUpdated", handleSizeUpdate);
-      };
-    }, "whiteboard-size-update");
+      }),
+      "whiteboard-size-update"
+    );
 
     this.sideEffect.addEventListener(
       window,

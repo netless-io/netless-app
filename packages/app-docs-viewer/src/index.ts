@@ -1,11 +1,12 @@
 import styles from "./style.scss?inline";
 
 import type { NetlessApp, AppContext, ReadonlyTeleBox } from "@netless/window-manager";
-import type { View, Size } from "white-web-sdk";
+import type { Size } from "white-web-sdk";
 import { StaticDocsViewer } from "./StaticDocsViewer";
 import type { DocsViewerPage } from "./DocsViewer";
 import { DynamicDocsViewer } from "./DynamicDocsViewer";
 import { kind } from "./constants";
+import { SideEffectManager } from "side-effect-manager";
 
 export type { DocsViewerPage } from "./DocsViewer";
 
@@ -28,10 +29,7 @@ const NetlessAppDocsViewer: NetlessApp<
       throw new Error("[Docs Viewer]: scenes not found.");
     }
 
-    const whiteboard = context.createWhiteBoardView();
-    if (!whiteboard) {
-      throw new Error("[Docs Viewer]: no whiteboard view.");
-    }
+    const sideEffect = new SideEffectManager();
 
     const pages = scenes
       .map(({ ppt }): DocsViewerPage | null =>
@@ -54,98 +52,134 @@ const NetlessAppDocsViewer: NetlessApp<
 
     if (pages[0].src.startsWith("ppt")) {
       setupDynamicDocsViewer(
+        sideEffect,
         context as AppContext<NetlessAppDynamicDocsViewerAttributes>,
-        whiteboard,
         box,
         pages
       );
     } else {
       setupStaticDocsViewer(
+        sideEffect,
         context as AppContext<NetlessAppStaticDocsViewerAttributes>,
-        whiteboard,
         box,
         pages
       );
     }
+
+    sideEffect.addDisposer(
+      context.emitter.on("destroy", () => {
+        sideEffect.flushAll();
+      })
+    );
   },
 };
 
 export default NetlessAppDocsViewer;
 
 function setupStaticDocsViewer(
+  sideEffect: SideEffectManager,
   context: AppContext<NetlessAppStaticDocsViewerAttributes>,
-  whiteboardView: View,
   box: ReadonlyTeleBox,
   pages: DocsViewerPage[]
 ): void {
-  whiteboardView.disableCameraTransform = !context.isWritable;
+  const whiteboard = context.createWhiteBoardView({ syncCamera: false });
+
+  whiteboard.view.disableCameraTransform = !context.isWritable;
+
+  const storage = context.createStorage("static-docs-viewer", { pageScrollTop: 0 });
 
   const docsViewer = new StaticDocsViewer({
-    whiteboardView,
+    whiteboard,
     readonly: !context.isWritable,
     box,
     pages: pages,
-    pageScrollTop: context.getAttributes()?.pageScrollTop,
+    pageScrollTop: storage.state.pageScrollTop,
     onUserScroll: pageScrollTop => {
-      if (context.getAttributes()?.pageScrollTop !== pageScrollTop && !box.readonly) {
-        context.updateAttributes(["pageScrollTop"], pageScrollTop);
+      if (context.isWritable) {
+        storage.setState({ pageScrollTop });
       }
     },
   }).mount();
+  sideEffect.addDisposer(() => docsViewer.destroy());
 
   if (import.meta.env.DEV) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (window as any).docsViewer = docsViewer;
   }
 
-  context.emitter.on("attributesUpdate", attributes => {
-    if (attributes) {
-      if (attributes.pageScrollTop != null) {
-        docsViewer.syncPageScrollTop(attributes.pageScrollTop);
-      }
+  let ratio = 1;
+  if (pages.length > 0) {
+    const { width, height } = pages[0];
+    if (height <= width) {
+      ratio = height / width;
+    } else {
+      ratio = ((2 / 3) * height) / width;
     }
-  });
+  }
+  box.setRatio(ratio);
+  box.setStageRatio(ratio);
 
-  context.emitter.on("writableChange", isWritable => {
-    docsViewer.setReadonly(!isWritable);
-    whiteboardView.disableCameraTransform = !isWritable;
-  });
+  sideEffect.addDisposer(
+    storage.addStateChangedListener(diff => {
+      if (diff.pageScrollTop) {
+        docsViewer.syncPageScrollTop(diff.pageScrollTop.newValue || 0);
+      }
+    })
+  );
+
+  sideEffect.addDisposer(
+    context.emitter.on("writableChange", isWritable => {
+      docsViewer.setReadonly(!isWritable);
+      whiteboard.view.disableCameraTransform = !isWritable;
+    })
+  );
 }
 
 function setupDynamicDocsViewer(
+  sideEffect: SideEffectManager,
   context: AppContext<NetlessAppDynamicDocsViewerAttributes>,
-  whiteboardView: View,
   box: ReadonlyTeleBox,
   pages: DocsViewerPage[]
 ): void {
-  whiteboardView.disableCameraTransform = true;
+  box.setHighlightStage(false);
+
+  const whiteboard = context.createWhiteBoardView();
+
+  whiteboard.view.disableCameraTransform = true;
 
   const docsViewer = new DynamicDocsViewer({
     context,
-    whiteboardView,
+    whiteboard,
     box,
     pages,
   }).mount();
+  sideEffect.addDisposer(() => docsViewer.destroy());
 
-  context.mountView(docsViewer.$whiteboardView);
+  if (context.isWritable) {
+    if (pages[0]) {
+      whiteboard.setRect({ width: pages[0].width, height: pages[0].height });
+    }
+  }
 
   if (context.isAddApp) {
-    whiteboardView.callbacks.once(
-      "onSizeUpdated",
-      ({ width: contentWidth, height: contentHeight }: Size) => {
+    const disposerID = sideEffect.add(() => {
+      const handler = ({ width: contentWidth, height: contentHeight }: Size) => {
         if (pages.length > 0 && box.state !== "maximized") {
           const { width: pageWidth, height: pageHeight } = pages[0];
           const preferHeight = (pageHeight / pageWidth) * contentWidth;
           const diff = preferHeight - contentHeight;
-          if (diff !== 0 && context.getIsWritable()) {
+          if (diff !== 0 && context.isWritable) {
             context.emitter.emit("setBoxSize", {
-              width: box.width,
-              height: box.height + diff / box.containerRect.height,
+              width: box.intrinsicWidth,
+              height: box.intrinsicHeight + diff / box.rootRect.height,
             });
           }
         }
-      }
-    );
+        sideEffect.remove(disposerID);
+      };
+      whiteboard.view.callbacks.once("onSizeUpdated", handler);
+      return () => whiteboard.view.callbacks.off("onSizeUpdated", handler);
+    });
   }
 
   if (import.meta.env.DEV) {

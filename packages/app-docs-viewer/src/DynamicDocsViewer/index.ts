@@ -1,10 +1,9 @@
 import type {
   ReadonlyTeleBox,
-  View,
   Displayer,
-  AnimationMode,
   AppContext,
   SceneState,
+  WhiteBoardView,
 } from "@netless/window-manager";
 import { SideEffectManager } from "side-effect-manager";
 import type { DocsViewerPage } from "../DocsViewer";
@@ -13,26 +12,32 @@ import { clamp } from "../utils/helpers";
 
 export interface DynamicDocsViewerConfig {
   context: AppContext;
-  whiteboardView: View;
+  whiteboard: WhiteBoardView;
   box: ReadonlyTeleBox;
   pages: DocsViewerPage[];
 }
 
 export class DynamicDocsViewer {
-  public constructor({ context, whiteboardView, box, pages }: DynamicDocsViewerConfig) {
+  public constructor({ context, whiteboard, box, pages }: DynamicDocsViewerConfig) {
     this.context = context;
-    this.whiteboardView = whiteboardView;
+    this.whiteboard = whiteboard;
     this.box = box;
     this.pages = pages;
-    this.displayer = context.getDisplayer();
+    this.displayer = context.displayer;
 
     this.viewer = new DocsViewer({
-      readonly: !context.getIsWritable(),
+      readonly: !context.isWritable,
       box,
       pages,
-      onNewPageIndex: this.onNewPageIndex,
-      onPlay: this.onPlayPPT,
+      onPlay: () => this.context.room?.pptNextStep(),
     });
+
+    this.sideEffect.addDisposer(
+      this.viewer.onValChanged(
+        "pageIndex",
+        (index, isUserAction) => isUserAction && this.jumpToPage(index, true)
+      )
+    );
 
     this.render();
 
@@ -58,13 +63,12 @@ export class DynamicDocsViewer {
   protected context: AppContext;
   protected pages: DocsViewerPage[];
   protected box: ReadonlyTeleBox;
-  protected whiteboardView: View;
+  protected whiteboard: WhiteBoardView;
   protected displayer: Displayer;
 
   public viewer: DocsViewer;
 
   public $mask!: HTMLElement;
-  public $whiteboardView!: HTMLDivElement;
 
   public mount(): this {
     this.viewer.mount();
@@ -73,14 +77,6 @@ export class DynamicDocsViewer {
     if (pageIndex !== 0) {
       this.jumpToPage(pageIndex);
     }
-
-    this.scaleDocsToFit();
-    this.sideEffect.add(() => {
-      this.whiteboardView.callbacks.on("onSizeUpdated", this.scaleDocsToFit);
-      return () => {
-        this.whiteboardView.callbacks.off("onSizeUpdated", this.scaleDocsToFit);
-      };
-    });
 
     return this;
   }
@@ -103,20 +99,19 @@ export class DynamicDocsViewer {
   public jumpToPage(index: number, reset?: boolean): void {
     index = clamp(index, 0, this.pages.length - 1);
     if (index !== this.getPageIndex()) {
-      if (this.context.getIsWritable()) {
+      if (this.context.isWritable) {
         const initScenePath = this.context.getInitScenePath();
         const scene = this.context.getScenes()?.[index]?.name;
         if (initScenePath && scene) {
           this.context.setScenePath(`${initScenePath}/${scene}`);
         }
-        this.scaleDocsToFit();
       }
     }
     if (index !== this.viewer.pageIndex) {
       this.viewer.setPageIndex(index);
     }
     if (reset) {
-      const room = this.context.getRoom();
+      const room = this.context.room;
       if (room) {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const pptState = (room.state.globalState as any).__pptState;
@@ -131,16 +126,7 @@ export class DynamicDocsViewer {
     }
   }
 
-  public onPlayPPT = (): void => {
-    const room = this.context.getRoom();
-    if (room) {
-      room.pptNextStep();
-    }
-  };
-
   public render(): void {
-    this.viewer.$content.appendChild(this.renderMask());
-    this.viewer.$content.appendChild(this.renderWhiteboardView());
     this.sideEffect.addEventListener(window, "keydown", ev => {
       if (this.box.focus) {
         switch (ev.key) {
@@ -151,7 +137,7 @@ export class DynamicDocsViewer {
           }
           case "ArrowRight":
           case "ArrowDown": {
-            this.context.getRoom()?.pptNextStep();
+            this.context.room?.pptNextStep();
             break;
           }
           default: {
@@ -160,32 +146,10 @@ export class DynamicDocsViewer {
         }
       }
     });
-  }
-
-  protected renderMask(): HTMLElement {
-    if (!this.$mask) {
-      const $mask = document.createElement("div");
-      $mask.className = this.wrapClassName("mask");
-      this.$mask = $mask;
-
-      const $back = document.createElement("button");
-      $back.className = this.wrapClassName("back");
-
-      const $next = document.createElement("button");
-      $next.className = this.wrapClassName("next");
-
-      // this.$mask.appendChild($back)
-      // this.$mask.appendChild($next)
-    }
-    return this.$mask;
-  }
-
-  protected renderWhiteboardView(): HTMLDivElement {
-    if (!this.$whiteboardView) {
-      this.$whiteboardView = document.createElement("div");
-      this.$whiteboardView.className = this.wrapClassName("wb-view");
-      this.sideEffect.addEventListener(this.$whiteboardView, "click", ev => {
-        const room = this.context.getRoom();
+    const whiteboardWrapper = this.whiteboard.view.divElement?.parentElement;
+    if (whiteboardWrapper) {
+      this.sideEffect.addEventListener(whiteboardWrapper, "click", ev => {
+        const room = this.context.room;
         if (room && room.state.memberState.currentApplianceName === "clicker") {
           for (let el = ev.target as HTMLElement | null; el; el = el.parentElement) {
             if (el.classList?.contains("ppt-event-source")) {
@@ -195,45 +159,8 @@ export class DynamicDocsViewer {
           room.pptNextStep();
         }
       });
-      this.context.mountView(this.$whiteboardView);
     }
-    return this.$whiteboardView;
   }
-
-  protected _scaleDocsToFitImpl = (): void => {
-    const page = this.pages[this.getPageIndex()];
-    if (page) {
-      this.whiteboardView.moveCameraToContain({
-        originX: -page.width / 2,
-        originY: -page.height / 2,
-        width: page.width,
-        height: page.height,
-        animationMode: "immediately" as AnimationMode,
-      });
-      this.whiteboardView.setCameraBound({
-        damping: 1,
-        maxContentMode: () => this.whiteboardView.camera.scale,
-        minContentMode: () => this.whiteboardView.camera.scale,
-        centerX: 0,
-        centerY: 0,
-        width: page.width,
-        height: page.height,
-      });
-    }
-  };
-
-  protected _scaleDocsToFitDebounced = (): void => {
-    this.sideEffect.setTimeout(this._scaleDocsToFitImpl, 1000, "_scaleDocsToFitDebounced");
-  };
-
-  protected scaleDocsToFit = (): void => {
-    this._scaleDocsToFitImpl();
-    this._scaleDocsToFitDebounced();
-  };
-
-  protected onNewPageIndex = (index: number): void => {
-    this.jumpToPage(index, true);
-  };
 
   protected wrapClassName(className: string): string {
     return "netless-app-docs-viewer-dynamic-" + className;
