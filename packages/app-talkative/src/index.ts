@@ -93,6 +93,11 @@ const Talkative: NetlessApp<TalkativeAttributes, MagixEventPayloads, TalkativeOp
       const role = context.storage.state.uid === uid ? 0 : 2;
       const query = `userid=${memberId}&role=${role}&name=${nickName}`;
       renderer.$iframe.src = appendQuery(context.storage.state.src, query);
+
+      renderer.role.set(role);
+      footer.role.set(role);
+      const { page, pageNum } = context.storage.state;
+      footer.text.set(`${page}/${pageNum}`);
     };
 
     // if there's no uid, wait for it to exist
