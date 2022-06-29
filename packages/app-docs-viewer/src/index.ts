@@ -113,10 +113,11 @@ function setupStaticDocsViewer(
     if (height <= width) {
       ratio = height / width;
     } else {
-      ratio = ((2 / 3) * height) / width;
+      ratio = ((2 / 5) * height) / width;
     }
   }
   box.setRatio(ratio);
+  // this ensures stage top-bottom will always touch box content area
   box.setStageRatio(ratio);
 
   sideEffect.addDisposer(
