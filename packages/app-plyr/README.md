@@ -24,8 +24,18 @@ HLS support is provided by [video-dev/hls.js](https://github.com/video-dev/hls.j
 NOTES:
 
 - To reduce the package size, hls.js is loaded [dynamically](https://cdn.jsdelivr.net/npm/hls.js/) using script tag.
-- If you do not believe in this cdn, you can prepare `window.Hls` before this app downloads.
-- If you do not need HLS, you can set `window.Hls` to `false` or `null` to disable this loading, in which case you will not able to play hls streaming unless the browser support it natively.
+
+- If you do not want to use cdn, you should load hls.js yourself **before** adding this app.
+
+  1. Install hls.js via `npm add hls.js`.
+  2. Import and assign `Hls` to `window.Hls`:
+
+     ```ts
+     import { Hls } from "hls.js";
+     window.Hls = Hls;
+     ```
+
+- If you do not need HLS, you can set `window.Hls` to `false` or `null` to disable this loading, in which case you will not be able to play HLS streaming unless the browser support it natively.
 
 ### `autoplay` not working
 
