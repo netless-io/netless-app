@@ -1,4 +1,5 @@
 import { SideEffectManager } from "side-effect-manager";
+import { Val } from "value-enhancer";
 import { preventEvent, flattenEvent, clamp } from "../utils/helpers";
 
 const SCROLLBAR_DEFAULT_MIN_HEIGHT = 30;
@@ -32,6 +33,8 @@ export class ScrollBar {
   scrollbarHeight: number;
 
   readonly $scrollbar: HTMLButtonElement;
+
+  readonly scrolling$ = new Val(false);
 
   constructor(config: ScrollBarConfig) {
     this.pagesScrollTop = config.pagesScrollTop || 0;
@@ -90,6 +93,7 @@ export class ScrollBar {
         (elScrollTop / (elPagesHeight - this.containerHeight)) *
         (this.containerHeight - this.scrollbarHeight);
 
+      this._toScrollingState();
       if (window.requestAnimationFrame) {
         window.requestAnimationFrame(() => {
           this.$scrollbar.style.transform = `translateY(${translateY}px)`;
@@ -112,12 +116,19 @@ export class ScrollBar {
     $scrollbar.style.minHeight = `${this.scrollbarMinHeight}px`;
     $scrollbar.style.height = `${this.scrollbarHeight}px`;
 
-    const trackStart = (ev: MouseEvent | TouchEvent): void => {
-      if (this.readonly) {
+    const scrollingClassName = this.wrapClassName("scrolling");
+    this.sideEffect.addDisposer(
+      this.scrolling$.subscribe(scrolling => {
+        $scrollbar.classList.toggle(scrollingClassName, scrolling);
+      })
+    );
+
+    const trackStart = (ev: PointerEvent): void => {
+      if (!ev.isPrimary || this.readonly) {
         return;
       }
 
-      if ((ev as MouseEvent).button != null && (ev as MouseEvent).button !== 0) {
+      if (ev.button != null && ev.button !== 0) {
         // Not left mouse
         return;
       }
@@ -132,8 +143,8 @@ export class ScrollBar {
 
       const { clientY: startY } = flattenEvent(ev);
 
-      const tracking = (ev: MouseEvent | TouchEvent): void => {
-        if (this.readonly) {
+      const tracking = (ev: PointerEvent): void => {
+        if (!ev.isPrimary || this.readonly) {
           return;
         }
 
@@ -146,26 +157,35 @@ export class ScrollBar {
         }
       };
 
-      const trackEnd = (): void => {
+      const trackEnd = (ev: PointerEvent): void => {
+        if (!ev.isPrimary) {
+          return;
+        }
         $scrollbar.classList.toggle(draggingClassName, false);
-        window.removeEventListener("mousemove", tracking, true);
-        window.removeEventListener("touchmove", tracking, true);
-        window.removeEventListener("mouseup", trackEnd, true);
-        window.removeEventListener("touchend", trackEnd, true);
-        window.removeEventListener("touchcancel", trackEnd, true);
+        window.removeEventListener("pointermove", tracking, true);
+        window.removeEventListener("pointerup", trackEnd, true);
+        window.removeEventListener("pointercancel", trackEnd, true);
       };
 
-      window.addEventListener("mousemove", tracking, true);
-      window.addEventListener("touchmove", tracking, true);
-      window.addEventListener("mouseup", trackEnd, true);
-      window.addEventListener("touchend", trackEnd, true);
-      window.addEventListener("touchcancel", trackEnd, true);
+      window.addEventListener("pointermove", tracking, true);
+      window.addEventListener("pointerup", trackEnd, true);
+      window.addEventListener("pointercancel", trackEnd, true);
     };
 
-    this.sideEffect.addEventListener($scrollbar, "mousedown", trackStart);
-    this.sideEffect.addEventListener($scrollbar, "touchstart", trackStart);
+    this.sideEffect.addEventListener($scrollbar, "pointerdown", trackStart);
 
     return $scrollbar;
+  }
+
+  private _toScrollingState(): void {
+    this.scrolling$.setValue(true);
+    this.sideEffect.setTimeout(
+      () => {
+        this.scrolling$.setValue(false);
+      },
+      100,
+      "reset-scrolling"
+    );
   }
 
   private _calcScale(): number {

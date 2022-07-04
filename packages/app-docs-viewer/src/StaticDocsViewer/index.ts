@@ -57,20 +57,18 @@ export class StaticDocsViewer {
       pages,
     });
 
-    const { width: containerWidth, height: containerHeight } = box.stageRect;
-
     this.pageRenderer = new PageRenderer({
       pagesScrollTop: pageScrollTop,
       pages: this.pages,
-      containerWidth,
-      containerHeight,
+      containerWidth: box.stageRect.width,
+      containerHeight: box.stageRect.height,
       onPageIndexChanged: this.viewer.setPageIndex.bind(this.viewer),
     });
 
     this.scrollbar = new ScrollBar({
       pagesScrollTop: this.pageRenderer.pagesScrollTop,
-      containerWidth,
-      containerHeight,
+      containerWidth: box.bodyRect.width,
+      containerHeight: box.bodyRect.height,
       pagesWidth: this.pageRenderer.pagesIntrinsicWidth,
       pagesHeight: this.pageRenderer.pagesIntrinsicHeight,
       readonly: this.readonly,
@@ -167,7 +165,7 @@ export class StaticDocsViewer {
   public render(): void {
     this.box.$content.style.overflow = "hidden";
     this.box.mountStage(this.pageRenderer.$pages);
-    this.scrollbar.mount(this.box.$content);
+    this.scrollbar.mount(this.box.$body);
   }
 
   protected scrollTopPageToEl(pageScrollTop: number): number {
@@ -252,7 +250,7 @@ export class StaticDocsViewer {
     this.sideEffect.addDisposer(
       this.box._stageRect$.subscribe(stageRect => {
         this.pageRenderer.setContainerSize(this.box.stageRect.width, this.box.stageRect.height);
-        this.scrollbar.setContainerSize(this.box.stageRect.width, this.box.stageRect.height);
+        this.scrollbar.setContainerSize(this.box.bodyRect.width, this.box.bodyRect.height);
 
         const { pagesIntrinsicWidth, pagesIntrinsicHeight } = this.pageRenderer;
 
