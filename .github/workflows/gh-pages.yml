@@ -1,6 +1,9 @@
 name: GitHub Pages
 
 on:
+  push:
+    branches:
+      - tio.run
   workflow_dispatch:
 
 jobs:
