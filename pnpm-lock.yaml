@@ -6,7 +6,7 @@ importers:
     specifiers:
       '@commitlint/cli': ^16.3.0
       '@commitlint/config-conventional': ^16.2.4
-      '@netless/window-manager': 1.0.0-canary.27
+      '@netless/window-manager': 1.0.0-canary.28
       '@sveltejs/vite-plugin-svelte': 1.0.0-next.48
       '@tsconfig/svelte': ^3.0.0
       '@types/node': ^18.0.0
@@ -33,7 +33,7 @@ importers:
     devDependencies:
       '@commitlint/cli': 16.3.0
       '@commitlint/config-conventional': 16.2.4
-      '@netless/window-manager': 1.0.0-canary.27_white-web-sdk@2.16.24
+      '@netless/window-manager': 1.0.0-canary.28_white-web-sdk@2.16.24
       '@sveltejs/vite-plugin-svelte': 1.0.0-next.48_svelte@3.48.0+vite@2.9.12
       '@tsconfig/svelte': 3.0.0
       '@types/node': 18.0.0
@@ -533,6 +533,18 @@ packages:
       value-enhancer: 1.3.0
     dev: true
 
+  /@netless/telebox-insider/1.0.0-alpha.26:
+    resolution: {integrity: sha512-hZa0KnvWO7LIJJMvtOZMmL1GHJGdbkIgHrmI2pVUBq1quwy3uWp9h9SCtwmiivr7/5tEc/34po9FLg3edxw6IA==}
+    dependencies:
+      '@juggle/resize-observer': 3.3.1
+      '@types/shallowequal': 1.1.1
+      emittery: 0.11.0
+      shallowequal: 1.1.0
+      side-effect-manager: 1.1.0
+      stylefire: 7.0.3
+      value-enhancer: 1.3.0
+    dev: true
+
   /@netless/window-manager/1.0.0-canary.27_white-web-sdk@2.16.24:
     resolution: {integrity: sha512-QHz0HNH7My3y/1aJIBBFHIhX8v7/8ENFig1w4bisHF+caV3t5PGwl4F7LODV+V34rtk7Hsqy8mqJVasqgvOhrw==}
     peerDependencies:
@@ -540,6 +552,23 @@ packages:
     dependencies:
       '@juggle/resize-observer': 3.3.1
       '@netless/telebox-insider': 1.0.0-alpha.25
+      emittery: 0.11.0
+      lodash: 4.17.21
+      p-retry: 4.6.2
+      side-effect-manager: 1.1.0
+      uuid: 7.0.3
+      value-enhancer: 1.3.0
+      video.js: 7.19.2
+      white-web-sdk: 2.16.24
+    dev: true
+
+  /@netless/window-manager/1.0.0-canary.28_white-web-sdk@2.16.24:
+    resolution: {integrity: sha512-Cpwxm9irA25NpyykY68WjGWkmF4EYXIbMBORktWHXm1gdcQF0+PmMvGRtWHnZp1LjNY5tykk8t2rCJNo8kUC0A==}
+    peerDependencies:
+      white-web-sdk: ^2.16.0
+    dependencies:
+      '@juggle/resize-observer': 3.3.1
+      '@netless/telebox-insider': 1.0.0-alpha.26
       emittery: 0.11.0
       lodash: 4.17.21
       p-retry: 4.6.2

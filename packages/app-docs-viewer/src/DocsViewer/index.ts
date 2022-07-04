@@ -65,8 +65,8 @@ export class DocsViewer {
   // public $pageNumberInput!: HTMLInputElement;
 
   public mount(): void {
-    this.box.$content.parentElement?.appendChild(this.renderPreviewMask());
-    this.box.$content.parentElement?.appendChild(this.renderPreview());
+    this.box.$body.appendChild(this.renderPreviewMask());
+    this.box.$body.appendChild(this.renderPreview());
     this.box.mountFooter(this.renderFooter());
 
     this.sideEffect.add(() => {
@@ -298,10 +298,7 @@ export class DocsViewer {
 
   protected togglePreview(isShowPreview?: boolean): void {
     this.isShowPreview = isShowPreview ?? !this.isShowPreview;
-    this.box.$content.parentElement?.classList.toggle(
-      this.wrapClassName("preview-active"),
-      this.isShowPreview
-    );
+    this.box.$body.classList.toggle(this.wrapClassName("preview-active"), this.isShowPreview);
     if (this.isShowPreview && this.$preview) {
       const $previewPage = this.$preview.querySelector<HTMLElement>(
         "." + this.wrapClassName(`preview-page-${this.pageIndex}`)

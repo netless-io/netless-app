@@ -82,7 +82,7 @@ $namespace: $docs-viewer-namespace;
   transform: translate(-100%);
   text-align: right;
   font-size: 12px;
-  color: #5f5f5f;
+  // color: #5f5f5f;
   user-select: none;
 }
 
@@ -93,7 +93,8 @@ $namespace: $docs-viewer-namespace;
   align-items: center;
   padding: 0 16px;
   border-top: 1px solid #eeeef7;
-  color: #191919;
+  font-family: "PingFang SC", "Source Han Sans SC", "Microsoft YaHei", "Helvetica Neue",
+    "Noto Sans CJK SC", "WenQuanYi Micro Hei", sans-serif;
 }
 
 .#{$namespace}-float-footer {
@@ -166,6 +167,9 @@ $namespace: $docs-viewer-namespace;
 }
 
 .#{$namespace}-page-number {
+  display: flex;
+  align-items: center;
+  height: 26px;
   margin-left: auto;
   font-size: 13px;
   user-select: none;
@@ -178,7 +182,7 @@ $namespace: $docs-viewer-namespace;
   outline: none;
   width: 3em;
   margin: 0;
-  padding: 0 2px;
+  padding: 0 0.5em 0 2px;
   text-align: right;
   font-size: 13px;
   line-height: 1;
@@ -186,6 +190,8 @@ $namespace: $docs-viewer-namespace;
   font-family: inherit;
   border-radius: 2px;
   color: currentColor;
+  font-family: "PingFang SC", "Source Han Sans SC", "Microsoft YaHei", "Helvetica Neue",
+    "Noto Sans CJK SC", "WenQuanYi Micro Hei", sans-serif;
   background: transparent;
   transition: background 0.4s;
   user-select: text;
@@ -229,17 +235,13 @@ $namespace: $docs-viewer-namespace;
 }
 
 .telebox-color-scheme-dark {
-  .#{$namespace}-page-number-input {
-    color: #a6a6a8;
-  }
   .#{$namespace}-page-number-input:active,
   .#{$namespace}-page-number-input:focus,
   .#{$namespace}-page-number-input:hover {
-    color: #222;
+    color: currentColor;
+    background: #25282e;
   }
   .#{$namespace}-footer {
-    color: #a6a6a8;
-    background: #2d2d33;
     border-top: none;
   }
   .#{$namespace}-footer-btn:hover {

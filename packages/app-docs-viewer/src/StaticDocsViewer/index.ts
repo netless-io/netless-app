@@ -207,32 +207,30 @@ export class StaticDocsViewer {
   }
 
   protected setupScrollListener(): void {
-    if (this.box.$content.parentElement) {
-      this.sideEffect.addEventListener(
-        this.box.$content.parentElement,
-        "wheel",
-        ev => {
-          preventEvent(ev);
-          if (!this.readonly) {
-            this.pageScrollTo(this.pageRenderer.pagesScrollTop + ev.deltaY);
-            this.updateUserScroll();
-          }
-        },
-        { passive: false, capture: true }
-      );
-
-      this.sideEffect.addEventListener(
-        this.box.$content.parentElement,
-        "touchmove",
-        ev => {
-          if (this.readonly || ev.touches.length <= 1) {
-            return;
-          }
+    this.sideEffect.addEventListener(
+      this.box.$main,
+      "wheel",
+      ev => {
+        preventEvent(ev);
+        if (!this.readonly) {
+          this.pageScrollTo(this.pageRenderer.pagesScrollTop + ev.deltaY);
           this.updateUserScroll();
-        },
-        { passive: true, capture: true }
-      );
-    }
+        }
+      },
+      { passive: false, capture: true }
+    );
+
+    this.sideEffect.addEventListener(
+      this.box.$main,
+      "touchmove",
+      ev => {
+        if (this.readonly || ev.touches.length <= 1) {
+          return;
+        }
+        this.updateUserScroll();
+      },
+      { passive: true, capture: true }
+    );
 
     this.sideEffect.add(() => {
       const handleCameraUpdate = (camera: Camera) => {
@@ -252,7 +250,7 @@ export class StaticDocsViewer {
     });
 
     this.sideEffect.addDisposer(
-      this.box._bodyRect$.subscribe(bodyRect => {
+      this.box._stageRect$.subscribe(stageRect => {
         this.pageRenderer.setContainerSize(this.box.stageRect.width, this.box.stageRect.height);
         this.scrollbar.setContainerSize(this.box.stageRect.width, this.box.stageRect.height);
 
@@ -262,7 +260,7 @@ export class StaticDocsViewer {
           originX: 0,
           originY: this.pageRenderer.pagesScrollTop,
           width: pagesIntrinsicWidth,
-          height: bodyRect.height / this.pageRenderer.scale,
+          height: stageRect.height / this.pageRenderer.scale,
           animationMode: "immediately" as AnimationMode,
         });
 

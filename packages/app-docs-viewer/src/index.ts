@@ -107,18 +107,31 @@ function setupStaticDocsViewer(
     (window as any).docsViewer = docsViewer;
   }
 
-  let ratio = 1;
+  let baseRatio = 1;
+  let maxRatio = 1;
   if (pages.length > 0) {
     const { width, height } = pages[0];
     if (height <= width) {
-      ratio = height / width;
+      baseRatio = height / width;
+      maxRatio = baseRatio;
     } else {
-      ratio = ((2 / 5) * height) / width;
+      baseRatio = ((2 / 5) * height) / width;
+      maxRatio = ((1 / 2) * height) / width;
     }
   }
-  // box.setBoxRatio(ratio);
-  // this ensures stage top-bottom will always touch box content area
-  box.setStageRatio(ratio);
+
+  sideEffect.addDisposer(
+    box._maximized$.subscribe(maximized => {
+      //  ensure stage top-bottom will always touch box content area
+      if (maximized) {
+        box.setBoxRatio(maxRatio);
+        box.setStageRatio(maxRatio);
+      } else {
+        box.setBoxRatio(baseRatio);
+        box.setStageRatio(baseRatio);
+      }
+    })
+  );
 
   sideEffect.addDisposer(
     storage.addStateChangedListener(diff => {
