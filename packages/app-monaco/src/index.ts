@@ -29,7 +29,6 @@ const NetlessAppMonaco: NetlessApp<NetlessAppMonacoAttributes> = {
       codeRunning: false,
     });
 
-    box.setHighlightStage(false);
     box.mountStyles(styles + editorStyles);
 
     const appOptions = context.getAppOptions();

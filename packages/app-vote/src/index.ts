@@ -15,7 +15,6 @@ const Vote: NetlessApp<Attributes> = {
 
     const storage = context.createStorage<Attributes>("vote", { title: "", items: [] });
 
-    box.setHighlightStage(false);
     box.mountStyles(styles);
 
     const app = new App({

@@ -38,6 +38,9 @@ interface UserPayload {
  */
 const GeoGebra: NetlessApp<Attributes> = {
   kind: "GeoGebra",
+  config: {
+    enableShadowDOM: false,
+  },
   async setup(context) {
     const displayer = context.displayer;
     const memberId = displayer.observerId;
@@ -56,7 +59,6 @@ const GeoGebra: NetlessApp<Attributes> = {
 
     const box = context.box;
     box.mountStyles(styles);
-    box.setHighlightStage(false);
 
     const content = document.createElement("div");
     content.classList.add("netless-app-geogebra", "loading");

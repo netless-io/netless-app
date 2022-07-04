@@ -37,6 +37,9 @@ export interface AppOptions<TState = DefaultState, TMessage = unknown> {
 
 const EmbeddedPage: NetlessApp<Attributes, void, AppOptions> = {
   kind: "EmbeddedPage",
+  config: {
+    enableShadowDOM: false,
+  },
   setup(context) {
     if (import.meta.env.DEV) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -76,7 +79,6 @@ const EmbeddedPage: NetlessApp<Attributes, void, AppOptions> = {
 
     box.mountStyles(styles);
     box.mountContent(container);
-    box.setHighlightStage(false);
 
     const transformRoomMembers = (
       array: ReadonlyArray<PlainRoomMember>

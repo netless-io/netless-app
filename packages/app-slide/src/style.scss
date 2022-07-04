@@ -176,6 +176,7 @@ $namespace: "netless-app-slide";
   user-select: none;
   white-space: nowrap;
   word-break: keep-all;
+  font-variant-numeric: tabular-nums;
 }
 
 .#{$namespace}-page-number-input {
@@ -194,6 +195,7 @@ $namespace: "netless-app-slide";
   background: transparent;
   transition: background 0.4s;
   user-select: text;
+  font-variant-numeric: tabular-nums;
   -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
 
   &:hover,

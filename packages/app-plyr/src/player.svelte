@@ -6,6 +6,7 @@
   import { onDestroy, onMount } from "svelte";
   import { guessTypeFromSrc, hlsTypes } from "./mime";
   import { cannotPlayHLSNatively, loadHLS } from "./utils";
+  import Sprites from "./sprites.svelte";
   import Plyr from "plyr";
 
   export let storage: Storage<Attributes>;
@@ -32,6 +33,7 @@
         controls: ["play", "progress", "current-time", "mute", "volume"],
         clickToPlay: false,
         youtube: { autoplay: true },
+        loadSprite: false,
       });
       sync.player = player;
     }
@@ -82,3 +84,5 @@
     <source {src} {type} />
   </video>
 {/if}
+
+<Sprites />

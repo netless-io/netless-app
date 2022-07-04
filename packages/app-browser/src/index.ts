@@ -12,7 +12,6 @@ const Browser: NetlessApp<Attributes> = {
   setup(context) {
     const box = context.box;
     box.mountStyles(styles);
-    box.setHighlightStage(false);
 
     const app = new App({
       target: box.$content as HTMLElement,

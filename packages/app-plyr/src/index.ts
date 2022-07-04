@@ -51,7 +51,6 @@ const Plyr: NetlessApp<Attributes> = {
 
     const box = context.box;
 
-    box.setHighlightStage(false);
     box.mountStyles(styles);
 
     const sync = new Sync(context);

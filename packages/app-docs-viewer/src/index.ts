@@ -116,7 +116,7 @@ function setupStaticDocsViewer(
       ratio = ((2 / 5) * height) / width;
     }
   }
-  box.setRatio(ratio);
+  // box.setBoxRatio(ratio);
   // this ensures stage top-bottom will always touch box content area
   box.setStageRatio(ratio);
 
@@ -142,8 +142,6 @@ function setupDynamicDocsViewer(
   box: ReadonlyTeleBox,
   pages: DocsViewerPage[]
 ): void {
-  box.setHighlightStage(false);
-
   const whiteboard = context.createWhiteBoardView();
 
   whiteboard.view.disableCameraTransform = true;
@@ -158,7 +156,7 @@ function setupDynamicDocsViewer(
 
   if (context.isWritable) {
     if (pages[0]) {
-      whiteboard.setRect({ width: pages[0].width, height: pages[0].height });
+      whiteboard.setBaseRect({ width: pages[0].width, height: pages[0].height });
     }
   }
 

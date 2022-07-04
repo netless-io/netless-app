@@ -57,7 +57,7 @@ export class StaticDocsViewer {
       pages,
     });
 
-    const { width: containerWidth, height: containerHeight } = box.contentStageRect;
+    const { width: containerWidth, height: containerHeight } = box.stageRect;
 
     this.pageRenderer = new PageRenderer({
       pagesScrollTop: pageScrollTop,
@@ -252,15 +252,9 @@ export class StaticDocsViewer {
     });
 
     this.sideEffect.addDisposer(
-      this.box._contentRect$.subscribe(contentRect => {
-        this.pageRenderer.setContainerSize(
-          this.box.contentStageRect.width,
-          this.box.contentStageRect.height
-        );
-        this.scrollbar.setContainerSize(
-          this.box.contentStageRect.width,
-          this.box.contentStageRect.height
-        );
+      this.box._bodyRect$.subscribe(bodyRect => {
+        this.pageRenderer.setContainerSize(this.box.stageRect.width, this.box.stageRect.height);
+        this.scrollbar.setContainerSize(this.box.stageRect.width, this.box.stageRect.height);
 
         const { pagesIntrinsicWidth, pagesIntrinsicHeight } = this.pageRenderer;
 
@@ -268,7 +262,7 @@ export class StaticDocsViewer {
           originX: 0,
           originY: this.pageRenderer.pagesScrollTop,
           width: pagesIntrinsicWidth,
-          height: contentRect.height / this.pageRenderer.scale,
+          height: bodyRect.height / this.pageRenderer.scale,
           animationMode: "immediately" as AnimationMode,
         });
 

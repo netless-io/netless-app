@@ -47,7 +47,6 @@ export class Renderer {
   }
 
   mount() {
-    this.box.setHighlightStage(false);
     this.box.mountStyles(styles);
     this.box.mountContent(this.$content);
 

@@ -21,7 +21,6 @@ const IframeBridge: NetlessApp<Attributes> = {
   kind: "IframeBridge",
   setup(context) {
     const box = context.box;
-    box.setHighlightStage(false);
     box.setStageRatio(height / width);
     context.getInitScenePath() && context.createWhiteBoardView();
     const displayer = context.displayer;

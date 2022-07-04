@@ -23,7 +23,6 @@ const SlideApp: NetlessApp<Attributes, MagixEvents, AppOptions, void> = {
     }
 
     const options = context.getAppOptions() || {};
-    const debug = Boolean(options.debug);
     const logger = make_logger(context);
     logger.info("[Slide] setup @ " + __APP_VERSION__);
 
@@ -35,7 +34,6 @@ const SlideApp: NetlessApp<Attributes, MagixEvents, AppOptions, void> = {
       mode: "interactive",
       resize: true,
       enableGlobalClick: true,
-      controller: debug,
       timestamp: make_timestamp(context),
       logger,
       renderOptions: {

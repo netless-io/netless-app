@@ -22,7 +22,6 @@ const Paint: NetlessApp<Attributes> = {
     const attrs = ensureAttributes(context, {
       curves: {},
     });
-    box.setHighlightStage(false);
 
     const svg = Paper.createSVGElement();
     svg.setAttribute("fill", "transparent");
