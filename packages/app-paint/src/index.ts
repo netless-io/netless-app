@@ -33,6 +33,8 @@ const Paint: NetlessApp<Attributes> = {
       height: "100%",
     });
     box.mountContent(svg as unknown as HTMLElement);
+    // NOTE: instead of hack touchstart, we can also add "touch-action: none"
+    //       to the element to let pointer events work properly.
     box.$content?.addEventListener("touchstart", e => e.preventDefault());
     box.$content?.addEventListener("touchmove", e => e.preventDefault());
 
