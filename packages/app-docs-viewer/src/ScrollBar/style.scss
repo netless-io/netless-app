@@ -7,49 +7,66 @@ $static-scrollbar-color-hover: rgba(68, 78, 96, 0.5);
 $static-scrollbar-color-active: rgba(68, 78, 96, 0.6);
 
 .#{$namespace}-scrollbar {
+  box-sizing: border-box;
   position: absolute;
   top: 0;
   right: 0;
   z-index: 2147483647;
-  width: $static-scrollbar-size;
+  width: $static-scrollbar-size * 2;
   min-height: $static-scrollbar-min-length;
   margin: 0;
-  padding: 0;
+  padding: 0 0 0 $static-scrollbar-size;
   border: none;
   outline: none;
-  border-radius: $static-scrollbar-size * 0.5;
-  background: $static-scrollbar-color;
-  box-shadow: 1px 1px 8px rgba(255, 255, 255, 0.7);
   opacity: 0;
-  transition: background 0.4s, opacity 0.4s 3s, transform 0.2s;
+  background: transparent;
+  transition: opacity 0.4s 3s, transform 0.2s;
   user-select: none;
   touch-action: none;
 
+  &::after {
+    content: "";
+    display: block;
+    width: $static-scrollbar-size;
+    height: 100%;
+    border-radius: $static-scrollbar-size * 0.5;
+    background: $static-scrollbar-color;
+    box-shadow: 1px 1px 8px rgba(255, 255, 255, 0.7);
+    transition: background 0.4s;
+  }
+
   &.#{$namespace}-scrolling {
     opacity: 1;
-    transition: background 0.4s, opacity 0.4s, transform 0.2s;
+    transition: opacity 0.4s, transform 0.2s;
   }
 
   &.#{$namespace}-scrollbar-dragging {
-    background: $static-scrollbar-color-active;
     opacity: 1;
-    transition: background 0.4s, opacity 0.4s 3s !important;
+    transition: opacity 0.4s 3s !important;
+
+    &::after {
+      background: $static-scrollbar-color-active;
+    }
   }
 
   &:hover,
   &:focus {
-    background: $static-scrollbar-color-hover;
+    &::after {
+      background: $static-scrollbar-color-hover;
+    }
   }
 
   &:active {
-    background: $static-scrollbar-color-active;
+    &::after {
+      background: $static-scrollbar-color-active;
+    }
   }
 }
 
 .telebox-body-wrap:hover {
   .#{$namespace}-scrollbar {
     opacity: 1;
-    transition: background 0.4s, opacity 0.4s, transform 0.2s;
+    transition: opacity 0.4s, transform 0.2s;
   }
 }
 
