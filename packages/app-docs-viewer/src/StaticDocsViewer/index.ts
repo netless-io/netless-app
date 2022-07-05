@@ -215,7 +215,7 @@ export class StaticDocsViewer {
           this.updateUserScroll();
         }
       },
-      { passive: false, capture: true }
+      { passive: false }
     );
 
     this.sideEffect.addEventListener(

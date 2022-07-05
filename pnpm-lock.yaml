@@ -6,7 +6,7 @@ importers:
     specifiers:
       '@commitlint/cli': ^16.3.0
       '@commitlint/config-conventional': ^16.2.4
-      '@netless/window-manager': 1.0.0-canary.28
+      '@netless/window-manager': 1.0.0-canary.29
       '@sveltejs/vite-plugin-svelte': 1.0.0-next.48
       '@tsconfig/svelte': ^3.0.0
       '@types/node': ^18.0.0
@@ -33,7 +33,7 @@ importers:
     devDependencies:
       '@commitlint/cli': 16.3.0
       '@commitlint/config-conventional': 16.2.4
-      '@netless/window-manager': 1.0.0-canary.28_white-web-sdk@2.16.24
+      '@netless/window-manager': 1.0.0-canary.29_white-web-sdk@2.16.24
       '@sveltejs/vite-plugin-svelte': 1.0.0-next.48_svelte@3.48.0+vite@2.9.12
       '@tsconfig/svelte': 3.0.0
       '@types/node': 18.0.0
@@ -533,8 +533,8 @@ packages:
       value-enhancer: 1.3.0
     dev: true
 
-  /@netless/telebox-insider/1.0.0-alpha.26:
-    resolution: {integrity: sha512-hZa0KnvWO7LIJJMvtOZMmL1GHJGdbkIgHrmI2pVUBq1quwy3uWp9h9SCtwmiivr7/5tEc/34po9FLg3edxw6IA==}
+  /@netless/telebox-insider/1.0.0-alpha.27:
+    resolution: {integrity: sha512-dEmUvE7v0aGM9537ApWp8S40EagL5VIAXgW7yeeHsm/YOYKk1MxJPq8rILdaTBq3zf15A0xLIMukTOog2J6zAg==}
     dependencies:
       '@juggle/resize-observer': 3.3.1
       '@types/shallowequal': 1.1.1
@@ -562,13 +562,13 @@ packages:
       white-web-sdk: 2.16.24
     dev: true
 
-  /@netless/window-manager/1.0.0-canary.28_white-web-sdk@2.16.24:
-    resolution: {integrity: sha512-Cpwxm9irA25NpyykY68WjGWkmF4EYXIbMBORktWHXm1gdcQF0+PmMvGRtWHnZp1LjNY5tykk8t2rCJNo8kUC0A==}
+  /@netless/window-manager/1.0.0-canary.29_white-web-sdk@2.16.24:
+    resolution: {integrity: sha512-pu2z7YjhEcAHmhZZhD1nC3zT1indgv7s/rf1G7h23axftBtvfLNdsC1V72jOAmGNXGWx63dMhtZQERGa6Yu7Cw==}
     peerDependencies:
       white-web-sdk: ^2.16.0
     dependencies:
       '@juggle/resize-observer': 3.3.1
-      '@netless/telebox-insider': 1.0.0-alpha.26
+      '@netless/telebox-insider': 1.0.0-alpha.27
       emittery: 0.11.0
       lodash: 4.17.21
       p-retry: 4.6.2

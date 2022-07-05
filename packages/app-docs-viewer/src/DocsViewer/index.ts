@@ -95,6 +95,10 @@ export class DocsViewer {
       $preview.className = this.wrapClassName("preview") + " tele-fancy-scrollbar";
       this.$preview = $preview;
 
+      this.sideEffect.addEventListener($preview, "wheel", ev => ev.stopPropagation(), {
+        passive: false,
+      });
+
       const pageClassName = this.wrapClassName("preview-page");
       const pageNameClassName = this.wrapClassName("preview-page-name");
       this.pages.forEach((page, i) => {
