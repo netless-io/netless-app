@@ -8,6 +8,7 @@ import type { ReadonlyTeleBox } from "@netless/window-manager";
 import LazyLoad from "vanilla-lazyload";
 import { SideEffectManager } from "side-effect-manager";
 import { Val, withValueEnhancer, type ValEnhancedResult } from "value-enhancer";
+import { clamp } from "../utils/helpers";
 
 export interface DocsViewerPage {
   src: string;
@@ -21,6 +22,8 @@ export interface DocsViewerConfig {
   box: ReadonlyTeleBox;
   pages: DocsViewerPage[];
   onPlay?: () => void;
+  onBackClicked?: () => void;
+  onNextClicked?: () => void;
 }
 
 type ValConfig = {
@@ -33,10 +36,23 @@ type ValConfig = {
 export interface DocsViewer extends ValEnhancedResult<ValConfig> {}
 
 export class DocsViewer {
-  public constructor({ readonly, box, pages, onPlay }: DocsViewerConfig) {
+  onBackClicked?: () => void;
+  onNextClicked?: () => void;
+
+  public constructor({
+    readonly,
+    box,
+    pages,
+    onPlay,
+    onBackClicked,
+    onNextClicked,
+  }: DocsViewerConfig) {
     if (pages.length <= 0) {
       throw new Error("[DocsViewer] Empty pages.");
     }
+
+    this.onBackClicked = onBackClicked;
+    this.onNextClicked = onNextClicked;
 
     const readonly$ = new Val(readonly);
     const isShowPreview$ = new Val(false);
@@ -82,6 +98,18 @@ export class DocsViewer {
     this.$preview?.remove();
     this.$previewMask?.remove();
     this.$footer?.remove();
+  }
+
+  public prevPage(isUserAction = false): void {
+    this.jumpToPage(this.pageIndex - 1, isUserAction);
+  }
+
+  public nextPage(isUserAction = false): void {
+    this.jumpToPage(this.pageIndex + 1, isUserAction);
+  }
+
+  public jumpToPage(pageIndex: number, isUserAction = false): void {
+    this.setPageIndex(clamp(pageIndex, 0, this.pages.length - 1), isUserAction);
   }
 
   public destroy(): void {
@@ -139,7 +167,7 @@ export class DocsViewer {
           ev.preventDefault();
           ev.stopPropagation();
           ev.stopImmediatePropagation();
-          this.setPageIndex(Number(pageIndex), true);
+          this.jumpToPage(Number(pageIndex), true);
           this.togglePreview(false);
         }
       });
@@ -201,7 +229,7 @@ export class DocsViewer {
         if (this.readonly) {
           return;
         }
-        this.setPageIndex(this.pageIndex - 1, true);
+        this.onBackClicked ? this.onBackClicked() : this.prevPage(true);
       });
       $pageJumps.appendChild($btnPageBack);
 
@@ -239,7 +267,7 @@ export class DocsViewer {
         if (this.readonly) {
           return;
         }
-        this.setPageIndex(this.pageIndex + 1, true);
+        this.onNextClicked ? this.onNextClicked() : this.nextPage(true);
       });
       $pageJumps.appendChild($btnPageNext);
 
@@ -267,7 +295,7 @@ export class DocsViewer {
           return;
         }
         if ($pageNumberInput.value) {
-          this.setPageIndex(Number($pageNumberInput.value) - 1, true);
+          this.jumpToPage(Number($pageNumberInput.value) - 1, true);
         }
       });
 

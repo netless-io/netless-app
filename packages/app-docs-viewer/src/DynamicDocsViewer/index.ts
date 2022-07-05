@@ -108,7 +108,7 @@ export class DynamicDocsViewer {
       }
     }
     if (index !== this.viewer.pageIndex) {
-      this.viewer.setPageIndex(index);
+      this.viewer.jumpToPage(index);
     }
     if (reset) {
       const room = this.context.room;

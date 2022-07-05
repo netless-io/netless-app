@@ -55,6 +55,28 @@ export class StaticDocsViewer {
       readonly,
       box,
       pages,
+      onNextClicked: () => {
+        this._onUserScroll?.(
+          clamp(
+            this.pageRenderer.pagesScrollTop +
+              (this.pageRenderer.containerHeight / this.pageRenderer.scale) * 0.8,
+            0,
+            this.pageRenderer.pagesIntrinsicHeight -
+              this.pageRenderer.containerHeight / this.pageRenderer.scale
+          )
+        );
+      },
+      onBackClicked: () => {
+        this._onUserScroll?.(
+          clamp(
+            this.pageRenderer.pagesScrollTop -
+              (this.pageRenderer.containerHeight / this.pageRenderer.scale) * 0.8,
+            0,
+            this.pageRenderer.pagesIntrinsicHeight -
+              this.pageRenderer.containerHeight / this.pageRenderer.scale
+          )
+        );
+      },
     });
 
     this.pageRenderer = new PageRenderer({
@@ -62,7 +84,7 @@ export class StaticDocsViewer {
       pages: this.pages,
       containerWidth: box.stageRect.width,
       containerHeight: box.stageRect.height,
-      onPageIndexChanged: this.viewer.setPageIndex.bind(this.viewer),
+      onPageIndexChanged: this.viewer.jumpToPage.bind(this.viewer),
     });
 
     this.scrollbar = new ScrollBar({
