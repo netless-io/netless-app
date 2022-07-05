@@ -1,13 +1,15 @@
+import type { TeleBoxRect } from "@netless/window-manager";
 import { SideEffectManager } from "side-effect-manager";
-import { Val } from "value-enhancer";
+import type { ReadonlyVal } from "value-enhancer";
+import { combine, Val } from "value-enhancer";
 import { preventEvent, flattenEvent, clamp } from "../utils/helpers";
 
 const SCROLLBAR_DEFAULT_MIN_HEIGHT = 30;
 
 export interface ScrollBarConfig {
   pagesScrollTop?: number;
-  containerWidth: number;
-  containerHeight: number;
+  containerRect$: ReadonlyVal<TeleBoxRect>;
+  stageRect$: ReadonlyVal<TeleBoxRect>;
   pagesWidth: number;
   pagesHeight: number;
   readonly: boolean;
@@ -19,8 +21,6 @@ export interface ScrollBarConfig {
 export class ScrollBar {
   private sideEffect = new SideEffectManager();
 
-  containerWidth: number;
-  containerHeight: number;
   readonly pagesWidth: number;
   readonly pagesHeight: number;
   readonly scrollbarMinHeight: number;
@@ -28,33 +28,64 @@ export class ScrollBar {
   wrapClassName: (className: string) => string;
   onDragScroll?: (pageScrollTop: number) => void;
 
-  scale: number;
-  pagesScrollTop: number;
-  scrollbarHeight: number;
-
   readonly $scrollbar: HTMLButtonElement;
 
-  readonly scrolling$ = new Val(false);
+  readonly containerRect$: ScrollBarConfig["containerRect$"];
+  readonly stageRect$: ScrollBarConfig["stageRect$"];
 
-  constructor(config: ScrollBarConfig) {
-    this.pagesScrollTop = config.pagesScrollTop || 0;
-    this.containerWidth = config.containerWidth || 1;
-    this.containerHeight = config.containerHeight || 1;
-    this.pagesWidth = config.pagesWidth || 1;
-    this.pagesHeight = config.pagesHeight || 1;
-    this.scale = this._calcScale();
-    this.scrollbarMinHeight = config.scrollbarMinHeight || SCROLLBAR_DEFAULT_MIN_HEIGHT;
-    this.scrollbarHeight = this._calcScrollbarHeight(); // after scale is set
-    this.readonly = config.readonly;
-    this.wrapClassName = config.wrapClassName;
-    this.onDragScroll = config.onDragScroll;
+  readonly scrolling$ = new Val(false);
+  readonly scrollbarHeight$: ReadonlyVal<number>;
+  readonly pagesScrollTop$: Val<number>;
+  readonly scrollTop$: ReadonlyVal<number>;
+
+  constructor({
+    pagesScrollTop = 0,
+    containerRect$,
+    stageRect$,
+    pagesWidth = 1,
+    pagesHeight = 1,
+    readonly = false,
+    scrollbarMinHeight = SCROLLBAR_DEFAULT_MIN_HEIGHT,
+    wrapClassName,
+    onDragScroll,
+  }: ScrollBarConfig) {
+    this.containerRect$ = containerRect$;
+    this.stageRect$ = stageRect$;
+    this.pagesWidth = pagesWidth || 1;
+    this.pagesHeight = pagesHeight || 1;
+    this.scrollbarMinHeight = scrollbarMinHeight;
+    this.readonly = readonly;
+    this.wrapClassName = wrapClassName;
+    this.onDragScroll = onDragScroll;
+
+    this.scrollbarHeight$ = combine(
+      [this.containerRect$, this.stageRect$],
+      ([containerRect, stageRect]) =>
+        clamp(
+          (stageRect.height / ((stageRect.width / pagesWidth) * pagesHeight)) *
+            containerRect.height,
+          scrollbarMinHeight,
+          containerRect.height
+        )
+    );
+
+    this.pagesScrollTop$ = new Val(pagesScrollTop);
+    this.scrollTop$ = combine(
+      [containerRect$, stageRect$, this.scrollbarHeight$, this.pagesScrollTop$],
+      ([containerRect, stageRect, scrollbarHeight, pagesScrollTop]) =>
+        clamp(
+          (pagesScrollTop / (pagesHeight - (pagesWidth / stageRect.width) * stageRect.height)) *
+            (containerRect.height - scrollbarHeight),
+          0,
+          containerRect.height - scrollbarHeight
+        )
+    );
 
     this.$scrollbar = this.renderScrollbar();
   }
 
   mount($parent: HTMLElement): void {
     $parent.appendChild(this.$scrollbar);
-    this.pagesScrollTo(this.pagesScrollTop, true);
   }
 
   unmount(): void {
@@ -65,43 +96,15 @@ export class ScrollBar {
     this.readonly = readonly;
   }
 
-  setContainerSize(width: number, height: number): void {
-    if (width > 0 && height > 0) {
-      if (width !== this.containerWidth || height !== this.containerHeight) {
-        this.containerWidth = width;
-        this.containerHeight = height;
-
-        this.scale = this._calcScale();
-        this._updateScrollbarHeight();
-
-        if (this.$scrollbar.parentElement) {
-          this.pagesScrollTo(this.pagesScrollTop, true);
-        }
-      }
-    }
-  }
-
-  pagesScrollTo(pagesScrollTop: number, force?: boolean): void {
-    pagesScrollTop = clamp(pagesScrollTop, 0, this.pagesHeight - this.containerHeight / this.scale);
-
-    if (force || Math.abs(pagesScrollTop - this.pagesScrollTop) >= 0.001) {
-      this.pagesScrollTop = pagesScrollTop;
-
-      const elScrollTop = this.pagesScrollTop * this.scale;
-      const elPagesHeight = this.pagesHeight * this.scale;
-      const translateY =
-        (elScrollTop / (elPagesHeight - this.containerHeight)) *
-        (this.containerHeight - this.scrollbarHeight);
-
-      this._toScrollingState();
-      if (window.requestAnimationFrame) {
-        window.requestAnimationFrame(() => {
-          this.$scrollbar.style.transform = `translateY(${translateY}px)`;
-        });
-      } else {
-        this.$scrollbar.style.transform = `translateY(${translateY}px)`;
-      }
-    }
+  pagesScrollTo(pagesScrollTop: number): void {
+    this.pagesScrollTop$.setValue(
+      clamp(
+        pagesScrollTop,
+        0,
+        this.pagesHeight -
+          (this.pagesWidth / this.stageRect$.value.width) * this.stageRect$.value.height
+      )
+    );
   }
 
   destroy() {
@@ -114,14 +117,21 @@ export class ScrollBar {
     const $scrollbar = document.createElement("button");
     $scrollbar.className = this.wrapClassName("scrollbar");
     $scrollbar.style.minHeight = `${this.scrollbarMinHeight}px`;
-    $scrollbar.style.height = `${this.scrollbarHeight}px`;
 
-    const scrollingClassName = this.wrapClassName("scrolling");
-    this.sideEffect.addDisposer(
+    this.sideEffect.addDisposer([
+      this.scrollbarHeight$.subscribe(scrollbarHeight => {
+        $scrollbar.style.height = `${scrollbarHeight}px`;
+      }),
+      this.scrollTop$.subscribe(scrollTop => {
+        this.scrolling$.setValue(true);
+        this.sideEffect.setTimeout(() => this.scrolling$.setValue(false), 100, "reset-scrolling");
+        const update = () => ($scrollbar.style.transform = `translateY(${scrollTop}px)`);
+        window.requestAnimationFrame ? window.requestAnimationFrame(update) : update();
+      }),
       this.scrolling$.subscribe(scrolling => {
-        $scrollbar.classList.toggle(scrollingClassName, scrolling);
-      })
-    );
+        $scrollbar.classList.toggle(this.wrapClassName("scrolling"), scrolling);
+      }),
+    ]);
 
     const trackStart = (ev: PointerEvent): void => {
       if (!ev.isPrimary || this.readonly) {
@@ -139,7 +149,7 @@ export class ScrollBar {
 
       $scrollbar.classList.toggle(draggingClassName, true);
 
-      const startTop = this.pagesScrollTop;
+      const startTop = this.pagesScrollTop$.value;
 
       const { clientY: startY } = flattenEvent(ev);
 
@@ -149,10 +159,10 @@ export class ScrollBar {
         }
 
         const { clientY } = flattenEvent(ev);
-        const offsetY = (clientY - startY) / this.scale;
+        const offsetY = clientY - startY;
         if (Math.abs(offsetY) > 0 && this.onDragScroll) {
           this.onDragScroll(
-            startTop + offsetY * ((this.pagesHeight * this.scale) / this.containerHeight)
+            startTop + (offsetY / this.containerRect$.value.height) * this.pagesHeight
           );
         }
       };
@@ -175,36 +185,5 @@ export class ScrollBar {
     this.sideEffect.addEventListener($scrollbar, "pointerdown", trackStart);
 
     return $scrollbar;
-  }
-
-  private _toScrollingState(): void {
-    this.scrolling$.setValue(true);
-    this.sideEffect.setTimeout(
-      () => {
-        this.scrolling$.setValue(false);
-      },
-      100,
-      "reset-scrolling"
-    );
-  }
-
-  private _calcScale(): number {
-    return this.containerWidth / this.pagesWidth || 1;
-  }
-
-  private _calcScrollbarHeight() {
-    return clamp(
-      (this.containerHeight / (this.pagesHeight * this.scale)) * this.containerHeight,
-      this.scrollbarMinHeight,
-      this.containerHeight
-    );
-  }
-
-  private _updateScrollbarHeight(): void {
-    const newHeight = this._calcScrollbarHeight();
-    if (Math.abs(newHeight - this.scrollbarHeight) > 0.001) {
-      this.scrollbarHeight = newHeight;
-      this.$scrollbar.style.height = `${newHeight}px`;
-    }
   }
 }

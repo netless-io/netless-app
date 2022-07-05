@@ -107,31 +107,31 @@ function setupStaticDocsViewer(
     (window as any).docsViewer = docsViewer;
   }
 
-  let baseRatio = 1;
-  let maxRatio = 1;
-  if (pages.length > 0) {
-    const { width, height } = pages[0];
-    if (height <= width) {
-      baseRatio = height / width;
-      maxRatio = baseRatio;
-    } else {
-      baseRatio = ((2 / 5) * height) / width;
-      maxRatio = ((1 / 2) * height) / width;
-    }
-  }
+  // let baseRatio = 1;
+  // let maxRatio = 1;
+  // if (pages.length > 0) {
+  //   const { width, height } = pages[0];
+  //   if (height <= width) {
+  //     baseRatio = height / width;
+  //     maxRatio = baseRatio;
+  //   } else {
+  //     baseRatio = ((2 / 5) * height) / width;
+  //     maxRatio = ((1 / 2) * height) / width;
+  //   }
+  // }
 
-  sideEffect.addDisposer(
-    box._maximized$.subscribe(maximized => {
-      //  ensure stage top-bottom will always touch box content area
-      if (maximized) {
-        box.setBoxRatio(maxRatio);
-        box.setStageRatio(maxRatio);
-      } else {
-        box.setBoxRatio(baseRatio);
-        box.setStageRatio(baseRatio);
-      }
-    })
-  );
+  // sideEffect.addDisposer(
+  //   box._maximized$.subscribe(maximized => {
+  //     //  ensure stage top-bottom will always touch box content area
+  //     if (maximized) {
+  //       box.setBoxRatio(maxRatio);
+  //       box.setStageRatio(maxRatio);
+  //     } else {
+  //       box.setBoxRatio(baseRatio);
+  //       box.setStageRatio(baseRatio);
+  //     }
+  //   })
+  // );
 
   sideEffect.addDisposer(
     storage.addStateChangedListener(diff => {

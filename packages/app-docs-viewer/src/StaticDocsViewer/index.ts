@@ -67,8 +67,8 @@ export class StaticDocsViewer {
 
     this.scrollbar = new ScrollBar({
       pagesScrollTop: this.pageRenderer.pagesScrollTop,
-      containerWidth: box.bodyRect.width,
-      containerHeight: box.bodyRect.height,
+      containerRect$: box._bodyRect$,
+      stageRect$: box._stageRect$,
       pagesWidth: this.pageRenderer.pagesIntrinsicWidth,
       pagesHeight: this.pageRenderer.pagesIntrinsicHeight,
       readonly: this.readonly,
@@ -250,7 +250,6 @@ export class StaticDocsViewer {
     this.sideEffect.addDisposer(
       this.box._stageRect$.subscribe(stageRect => {
         this.pageRenderer.setContainerSize(this.box.stageRect.width, this.box.stageRect.height);
-        this.scrollbar.setContainerSize(this.box.bodyRect.width, this.box.bodyRect.height);
 
         const { pagesIntrinsicWidth, pagesIntrinsicHeight } = this.pageRenderer;
 
