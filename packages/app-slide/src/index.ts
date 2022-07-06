@@ -90,6 +90,11 @@ export function previewSlide(options: SlideViewerOptions & { container: HTMLElem
   return viewer;
 }
 
+if (import.meta.env.DEV) {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  (window as any).previewSlide = previewSlide;
+}
+
 function make_timestamp(context: AppContext): () => number {
   const room = context.room;
   const player = context.displayer as Player;

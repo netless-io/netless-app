@@ -429,6 +429,11 @@ export class SlideViewer {
 
     this.sideEffect.addDisposer(this.sidebar.destroy);
     this.sideEffect.addDisposer(() => this.slide.destroy());
+    this.sideEffect.addDisposer(() => {
+      this.$content.parentElement && this.$content.remove();
+      this.$footer.parentElement && this.$footer.remove();
+      this.$slide.parentElement && this.$slide.remove();
+    });
 
     let saved_is_frozen = false;
     this.sideEffect.addDisposer(
