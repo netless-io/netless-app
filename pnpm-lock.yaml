@@ -175,14 +175,14 @@ importers:
 
   packages/app-slide:
     specifiers:
-      '@netless/slide': ^0.4.7
+      '@netless/slide': ^0.5.3
       '@types/color-string': ^1.5.2
       color-string: ^1.9.1
       side-effect-manager: ^1.1.0
       value-enhancer: ^1.3.0
       vanilla-lazyload: ^17.8.2
     devDependencies:
-      '@netless/slide': 0.4.7
+      '@netless/slide': 0.5.3
       '@types/color-string': 1.5.2
       color-string: 1.9.1
       side-effect-manager: 1.1.0
@@ -511,14 +511,15 @@ packages:
     resolution: {integrity: sha512-7NzsJrba0R/mq/l10SkIZQwbrNVJyPxZYrjK6xL3Ts732iWAVuS2UB0u3s6iGeUVcqV39A679yva8APWRl4M0A==}
     dev: true
 
-  /@netless/slide/0.4.7:
-    resolution: {integrity: sha512-WuERoMHkoFdbnrnfKu7q4ZTPMAgFzCzUl+OniRDfN35bAiHUpIvs6355oRmhn5yvaDofeA2VxXv/CX17FYAfUA==}
+  /@netless/slide/0.5.3:
+    resolution: {integrity: sha512-P7In3No9vkr5b1OpZ3AzsDr06v2PI6Jcg/VM1yZT7Llv3z/N2xhgnHvzYPTCdbxV//xXxXd4odE50MMZCRMLZQ==}
     dependencies:
       '@juggle/resize-observer': 3.3.1
-      '@types/dat.gui': 0.7.7
+      '@types/lodash': 4.14.182
       dat.gui: 0.7.9
       eventemitter3: 4.0.7
       localforage: 1.10.0
+      lodash: 4.17.21
     dev: true
 
   /@netless/telebox-insider/1.0.0-alpha.25:
@@ -714,16 +715,16 @@ packages:
     resolution: {integrity: sha512-hAhTmfFYVdzgsKwpC9Flc6h9Do64PhKoNxy3YxE0ze+0LIh3a7TrDQAxiujmANQbDRDgGduEz+9sMS+Zd+J7hA==}
     dev: true
 
-  /@types/dat.gui/0.7.7:
-    resolution: {integrity: sha512-CxLCme0He5Jk3uQwfO/fGZMyNhb/ypANzqX0yU9lviBQMlen5SOvQTBQ/Cd9x5mFlUAK5Tk8RgvTyLj1nYkz+w==}
-    dev: true
-
   /@types/estree/0.0.39:
     resolution: {integrity: sha512-EYNwp3bU+98cpU4lAWYYL7Zz+2gryWH1qbdDTidVd6hkiR6weksdbMadyXKXNPEkQFhXM+hVO9ZygomHXp+AIw==}
     dev: true
 
   /@types/json-schema/7.0.11:
     resolution: {integrity: sha512-wOuvG1SN4Us4rez+tylwwwCV1psiNVOkJeM3AUWUNWg/jDQY2+HE/444y5gc+jBmRqASOm2Oeh5c1axHobwRKQ==}
+    dev: true
+
+  /@types/lodash/4.14.182:
+    resolution: {integrity: sha512-/THyiqyQAP9AfARo4pF+aCGcyiQ94tX/Is2I7HofNRqoYLgN1PBoOWu2/zTA5zMxzP5EFutMtWtGAFRKUe961Q==}
     dev: true
 
   /@types/long/4.0.2:

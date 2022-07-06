@@ -538,25 +538,18 @@ export class SlideViewer {
   }
 
   private _isFrozen = false;
-  private _freezePromise: Promise<void> | null = null;
 
   freeze() {
     if (this._destroyed) return;
     this._isFrozen = true;
-    if (!this._ready || this._freezePromise) return;
-    this._freezePromise = this.slide.frozen().then(() => {
-      this._freezePromise = null;
-      if (!this._isFrozen) this.unfreeze();
-    });
+    if (!this._ready) return;
+    this.slide.frozen();
   }
 
   unfreeze() {
     if (this._destroyed) return;
     this._isFrozen = false;
-    if (!this._ready || this._freezePromise) return;
-    this._freezePromise = this.slide.release().then(() => {
-      this._freezePromise = null;
-      if (this._isFrozen) this.freeze();
-    });
+    if (!this._ready) return;
+    this.slide.release();
   }
 }
