@@ -93,15 +93,6 @@ export async function reset({
 } = {}): Promise<void> {
   // close all apps
   await Promise.all(Object.keys(manager.apps || {}).map(appId => manager.closeApp(appId)));
-  // clear attributes
-  Object.keys(manager.attributes).forEach(key => {
-    // {kind}-{nanoid(8)}
-    if (/-[-_a-zA-Z0-9]{8}$/.test(key)) {
-      manager.updateAttributes([key], undefined);
-    } else if (key === "apps") {
-      manager.updateAttributes([key], {});
-    }
-  });
   // reset camera
   manager.mainView.moveCamera({ centerX: 0, centerY: 0, scale: 1 });
   // clear screen

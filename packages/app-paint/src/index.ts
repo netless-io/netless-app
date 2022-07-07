@@ -1,9 +1,7 @@
-import type { Event } from "white-web-sdk";
 import type { NetlessApp } from "@netless/window-manager";
 import type { Path } from "./paper";
 import type { BroadcastEvent, Curve, PID, Point } from "./typings";
 
-import { ensureAttributes } from "@netless/app-shared";
 import { SideEffectManager } from "side-effect-manager";
 import FitCurve from "./fit-curve-worker?worker";
 import Paper, { simulateDrawing } from "./paper";
@@ -12,16 +10,11 @@ export interface Attributes {
   curves: Record<PID, Curve[]>;
 }
 
-const Paint: NetlessApp<Attributes> = {
+const Paint: NetlessApp<Attributes, { broadcast: BroadcastEvent }> = {
   kind: "Paint",
   setup(context) {
-    const { appId } = context;
     const box = context.box;
-    const room = context.room;
-    const displayer = context.displayer;
-    const attrs = ensureAttributes(context, {
-      curves: {},
-    });
+    const curves = context.createStorage("curves", context.storage.state.curves || {});
 
     const svg = Paper.createSVGElement();
     svg.setAttribute("fill", "transparent");
@@ -31,12 +24,9 @@ const Paint: NetlessApp<Attributes> = {
       display: "block",
       width: "100%",
       height: "100%",
+      touchAction: "none",
     });
     box.mountContent(svg as unknown as HTMLElement);
-    // NOTE: instead of hack touchstart, we can also add "touch-action: none"
-    //       to the element to let pointer events work properly.
-    box.$content?.addEventListener("touchstart", e => e.preventDefault());
-    box.$content?.addEventListener("touchmove", e => e.preventDefault());
 
     const sideEffect = new SideEffectManager();
 
@@ -48,11 +38,9 @@ const Paint: NetlessApp<Attributes> = {
 
     const fitCurve = new FitCurve();
 
-    const channel = `channel-${appId}`;
-
     const broadcast = (payload: BroadcastEvent) => {
       if (context.isWritable) {
-        room?.dispatchMagixEvent(channel, payload);
+        context.dispatchMagixEvent("broadcast", payload);
       }
     };
 
@@ -64,25 +52,21 @@ const Paint: NetlessApp<Attributes> = {
 
     const paths: Record<PID, PathInfo> = {};
 
-    const magixEventListener = (ev: Event) => {
-      if (ev.event === channel && ev.authorId !== displayer.observerId) {
-        const { clear, pid, done }: BroadcastEvent = ev.payload;
+    sideEffect.addDisposer(
+      context.addMagixEventListener("broadcast", ({ authorId, payload }) => {
+        if (authorId === context.displayer.observerId) return;
+        const { clear, pid, done }: BroadcastEvent = payload;
         if (clear) {
           paper.clear();
-          paper.initCurves(attrs.curves);
+          paper.initCurves(curves.state);
         }
         if (pid) {
           if (done) {
-            simulateDrawing(paper, attrs.curves[pid]);
+            simulateDrawing(paper, curves.state[pid]);
           }
         }
-      }
-    };
-
-    sideEffect.add(() => {
-      displayer.addMagixEventListener(channel, magixEventListener);
-      return () => displayer?.removeMagixEventListener(channel);
-    });
+      })
+    );
 
     const paper = new Paper(
       svg,
@@ -109,27 +93,22 @@ const Paint: NetlessApp<Attributes> = {
       }
     );
 
-    paper.initCurves(attrs.curves);
+    paper.initCurves(curves.state);
 
     fitCurve.onmessage = (ev: MessageEvent<{ id: string; curves: ReadonlyArray<Curve> }>) => {
-      const { id: pid, curves } = ev.data;
+      const { id: pid, curves: data } = ev.data;
       if (context.isWritable) {
-        context.updateAttributes(["curves", pid], curves);
+        curves.setState({ [pid]: data as Curve[] });
         broadcast({ pid, done: true });
       }
     };
 
-    box.mountStyles(`
-      .telebox-color-scheme-dark .netless-app-paint-clear-btn {
-        color-scheme: dark;
-      }
-    `);
     const clearBtn = document.createElement("button");
     clearBtn.classList.add("netless-app-paint-clear-btn");
     clearBtn.textContent = "CLEAR ALL";
     clearBtn.addEventListener("click", () => {
       paper.clear();
-      context.updateAttributes(["curves"], {});
+      curves.emptyStorage();
       broadcast({ clear: true });
     });
     const wrapper = document.createElement("div");

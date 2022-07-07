@@ -128,6 +128,7 @@ export default class Paper {
 
   pointerDown = (ev: PointerEvent) => {
     if (ev.isPrimary) {
+      this.target.setPointerCapture(ev.pointerId);
       this.currentPathUID = nanoid();
       this.onDraw(this.currentPathUID, pointFromEvent(ev, this.target), ev.timeStamp);
     }
@@ -143,6 +144,7 @@ export default class Paper {
     if (this.currentPathUID) {
       this.onDrawEnd(this.currentPathUID, ev.timeStamp);
       this.currentPathUID = "";
+      this.target.releasePointerCapture(ev.pointerId);
     }
   };
 
