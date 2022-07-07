@@ -4,7 +4,13 @@ const Whiteboard: NetlessApp<void, void, void, WhiteBoardView> = {
   kind: "Whiteboard",
   setup(context) {
     context.box.mountStage(document.createElement("div"));
-    return context.createWhiteBoardView();
+
+    const view = context.createWhiteBoardView();
+    if (context.isAddApp) {
+      view.setBaseRect({ width: 1280, height: 720 });
+    }
+
+    return view;
   },
 };
 

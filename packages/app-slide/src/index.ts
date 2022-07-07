@@ -170,6 +170,7 @@ function connect({ context, viewer, sideEffect, logger }: ConnectParams) {
     if (context.destroyed) return;
     width && context.box.setStageRatio(height / width);
     whiteboard = context.createWhiteBoardView({ size: slideCount });
+    whiteboard.setBaseRect({ width, height });
     kick_start();
   });
 
