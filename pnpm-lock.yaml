@@ -73,7 +73,7 @@ importers:
     specifiers:
       '@netless/app-shared': workspace:*
       debounce-fn: ^5.1.0
-      side-effect-manager: ^1.1.0
+      side-effect-manager: ^1.1.1
       value-enhancer: ^1.3.0
       vanilla-lazyload: ^17.8.2
     dependencies:
@@ -82,43 +82,43 @@ importers:
       vanilla-lazyload: 17.8.2
     devDependencies:
       '@netless/app-shared': link:../app-shared
-      side-effect-manager: 1.1.0
+      side-effect-manager: 1.1.1
 
   packages/app-embedded-page:
     specifiers:
       '@netless/app-shared': workspace:*
-      side-effect-manager: ^1.1.0
+      side-effect-manager: ^1.1.1
     devDependencies:
       '@netless/app-shared': link:../app-shared
-      side-effect-manager: 1.1.0
+      side-effect-manager: 1.1.1
 
   packages/app-embedded-page-sdk:
     specifiers:
       '@netless/app-embedded-page': workspace:*
       '@netless/app-shared': workspace:*
-      side-effect-manager: ^1.1.0
+      side-effect-manager: ^1.1.1
     devDependencies:
       '@netless/app-embedded-page': link:../app-embedded-page
       '@netless/app-shared': link:../app-shared
-      side-effect-manager: 1.1.0
+      side-effect-manager: 1.1.1
 
   packages/app-geogebra:
     specifiers:
       '@netless/app-shared': workspace:*
-      side-effect-manager: ^1.1.0
+      side-effect-manager: ^1.1.1
     devDependencies:
       '@netless/app-shared': link:../app-shared
-      side-effect-manager: 1.1.0
+      side-effect-manager: 1.1.1
 
   packages/app-iframe-bridge:
     specifiers:
       '@netless/app-shared': workspace:*
       emittery: ^0.10.1
-      side-effect-manager: ^1.1.0
+      side-effect-manager: ^1.1.1
     devDependencies:
       '@netless/app-shared': link:../app-shared
       emittery: 0.10.1
-      side-effect-manager: 1.1.0
+      side-effect-manager: 1.1.1
 
   packages/app-monaco:
     specifiers:
@@ -130,7 +130,7 @@ importers:
       lib0: ^0.2.42
       monaco-editor: ^0.29.1
       randomcolor: ^0.6.2
-      side-effect-manager: ^1.1.0
+      side-effect-manager: ^1.1.1
       yjs: 13.5.13
     devDependencies:
       '@monaco-editor/loader': 1.2.0_monaco-editor@0.29.1
@@ -141,18 +141,18 @@ importers:
       lib0: 0.2.42
       monaco-editor: 0.29.1
       randomcolor: 0.6.2
-      side-effect-manager: 1.1.0
+      side-effect-manager: 1.1.1
       yjs: 13.5.13
 
   packages/app-paint:
     specifiers:
       '@netless/app-shared': workspace:*
       nanoid: ^3.2.0
-      side-effect-manager: ^1.1.0
+      side-effect-manager: ^1.1.1
     devDependencies:
       '@netless/app-shared': link:../app-shared
       nanoid: 3.2.0
-      side-effect-manager: 1.1.0
+      side-effect-manager: 1.1.1
 
   packages/app-plyr:
     specifiers:
@@ -167,25 +167,25 @@ importers:
   packages/app-shared:
     specifiers:
       randomcolor: ^0.6.2
-      side-effect-manager: ^1.1.0
+      side-effect-manager: ^1.1.1
     dependencies:
       randomcolor: 0.6.2
     devDependencies:
-      side-effect-manager: 1.1.0
+      side-effect-manager: 1.1.1
 
   packages/app-slide:
     specifiers:
       '@netless/slide': ^0.5.3
       '@types/color-string': ^1.5.2
       color-string: ^1.9.1
-      side-effect-manager: ^1.1.0
+      side-effect-manager: ^1.1.1
       value-enhancer: ^1.3.0
       vanilla-lazyload: ^17.8.2
     devDependencies:
       '@netless/slide': 0.5.3
       '@types/color-string': 1.5.2
       color-string: 1.9.1
-      side-effect-manager: 1.1.0
+      side-effect-manager: 1.1.1
       value-enhancer: 1.3.0
       vanilla-lazyload: 17.8.2
 
@@ -193,11 +193,11 @@ importers:
     specifiers:
       '@juggle/resize-observer': ^3.3.1
       '@netless/app-shared': workspace:*
-      side-effect-manager: ^1.1.0
+      side-effect-manager: ^1.1.1
     devDependencies:
       '@juggle/resize-observer': 3.3.1
       '@netless/app-shared': link:../app-shared
-      side-effect-manager: 1.1.0
+      side-effect-manager: 1.1.1
 
   packages/app-vote:
     specifiers: {}
@@ -3179,6 +3179,10 @@ packages:
 
   /side-effect-manager/1.1.0:
     resolution: {integrity: sha512-Gqy1tsBBYcKclLPIGDxMQiZJLM8CGdGg/DM3a5/8ic2x2A19rVUhVk/+Mt5RwNbpaNKmBPO/wxxzAnY2myQVTg==}
+    dev: true
+
+  /side-effect-manager/1.1.1:
+    resolution: {integrity: sha512-ppUBbzOXLydre40Yz553eIIlTdf2WCJcqMI4n06sTRCA2o5AwG5WQ2qq6fHp5C8RK3TAfgtZKrhllNG2F1jzCA==}
     dev: true
 
   /signal-exit/3.0.7:
