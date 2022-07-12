@@ -1,16 +1,18 @@
 import type {
   ReadonlyTeleBox,
-  Displayer,
   AppContext,
   SceneState,
   WhiteBoardView,
 } from "@netless/window-manager";
 import { SideEffectManager } from "side-effect-manager";
+import type { ReadonlyVal } from "value-enhancer";
+import { Val } from "value-enhancer";
 import type { DocsViewerPage } from "../DocsViewer";
 import { DocsViewer } from "../DocsViewer";
 import { clamp } from "../utils/helpers";
 
 export interface DynamicDocsViewerConfig {
+  readonly$: ReadonlyVal<boolean>;
   context: AppContext;
   whiteboard: WhiteBoardView;
   box: ReadonlyTeleBox;
@@ -18,36 +20,16 @@ export interface DynamicDocsViewerConfig {
 }
 
 export class DynamicDocsViewer {
-  public constructor({ context, whiteboard, box, pages }: DynamicDocsViewerConfig) {
+  public pagesIndex$: Val<number, boolean>;
+
+  public constructor({ readonly$, context, whiteboard, box, pages }: DynamicDocsViewerConfig) {
     this.context = context;
     this.whiteboard = whiteboard;
     this.box = box;
     this.pages = pages;
-    this.displayer = context.displayer;
 
-    this.viewer = new DocsViewer({
-      readonly: !context.isWritable,
-      box,
-      pages,
-      onPlay: () => this.context.room?.pptNextStep(),
-    });
-
-    this.sideEffect.addDisposer(
-      this.viewer.onValChanged(
-        "pageIndex",
-        (index, isUserAction) => isUserAction && this.jumpToPage(index, true)
-      )
-    );
-
-    this.render();
-
-    this.sideEffect.add(() => {
-      const handler = (isWritable: boolean): void => {
-        this.viewer.setReadonly(!isWritable);
-      };
-      this.context.emitter.on("writableChange", handler);
-      return () => this.context.emitter.off("writableChange", handler);
-    });
+    const pagesIndex$ = new Val<number, boolean>(context.displayer.state.sceneState.index || 0);
+    this.pagesIndex$ = pagesIndex$;
 
     this.sideEffect.add(() => {
       const handler = (sceneState: SceneState) => {
@@ -56,6 +38,50 @@ export class DynamicDocsViewer {
       this.context.emitter.on("sceneStateChange", handler);
       return () => this.context.emitter.off("sceneStateChange", handler);
     });
+
+    this.viewer = new DocsViewer({
+      readonly$,
+      pagesIndex$,
+      box,
+      pages,
+      playable: true,
+    });
+
+    this.sideEffect.addDisposer([
+      this.viewer.events.on("jumpPage", pageIndex => this.jumpToPage(pageIndex, true)),
+      this.viewer.events.on("play", () => this.context.room?.pptNextStep()),
+      this.viewer.events.on("back", () => this.prevPage()),
+      this.viewer.events.on("next", () => this.nextPage()),
+    ]);
+
+    this.render();
+
+    this.sideEffect.addDisposer(
+      pagesIndex$.subscribe((pageIndex, isUserAction) => {
+        if (readonly$.value) return;
+
+        const initScenePath = this.context.getInitScenePath();
+        const scene = this.context.getScenes()?.[pageIndex]?.name;
+        if (initScenePath && scene) {
+          this.context.setScenePath(`${initScenePath}/${scene}`);
+        }
+
+        if (isUserAction) {
+          const room = this.context.room;
+          if (room) {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const pptState = (room.state.globalState as any).__pptState;
+            room.setGlobalState({
+              __pptState: pptState && {
+                uuid: pptState.uuid,
+                pageIndex,
+                disableAutoPlay: pptState.disableAutoPlay,
+              },
+            });
+          }
+        }
+      })
+    );
   }
 
   protected sideEffect = new SideEffectManager();
@@ -64,75 +90,35 @@ export class DynamicDocsViewer {
   protected pages: DocsViewerPage[];
   protected box: ReadonlyTeleBox;
   protected whiteboard: WhiteBoardView;
-  protected displayer: Displayer;
 
   public viewer: DocsViewer;
 
-  public $mask!: HTMLElement;
-
-  public mount(): this {
-    this.viewer.mount();
-
-    const pageIndex = this.getPageIndex();
-    if (pageIndex !== 0) {
-      this.jumpToPage(pageIndex);
-    }
-
-    return this;
-  }
-
-  public unmount(): this {
-    this.viewer.unmount();
-    return this;
-  }
-
   public destroy(): void {
     this.sideEffect.flushAll();
-    this.unmount();
     this.viewer.destroy();
   }
 
-  public getPageIndex(): number {
-    return this.displayer.state.sceneState.index;
+  public nextPage(): void {
+    this.jumpToPage(this.pagesIndex$.value + 1, true);
   }
 
-  public jumpToPage(index: number, reset?: boolean): void {
-    index = clamp(index, 0, this.pages.length - 1);
-    if (index !== this.getPageIndex()) {
-      if (this.context.isWritable) {
-        const initScenePath = this.context.getInitScenePath();
-        const scene = this.context.getScenes()?.[index]?.name;
-        if (initScenePath && scene) {
-          this.context.setScenePath(`${initScenePath}/${scene}`);
-        }
-      }
-    }
-    if (index !== this.viewer.pageIndex) {
-      this.viewer.jumpToPage(index);
-    }
-    if (reset) {
-      const room = this.context.room;
-      if (room) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const pptState = (room.state.globalState as any).__pptState;
-        room.setGlobalState({
-          __pptState: pptState && {
-            uuid: pptState.uuid,
-            pageIndex: index,
-            disableAutoPlay: pptState.disableAutoPlay,
-          },
-        });
-      }
-    }
+  public prevPage(): void {
+    this.jumpToPage(this.pagesIndex$.value - 1, true);
+  }
+
+  public jumpToPage(pageIndex: number, isUserAction = false): void {
+    this.pagesIndex$.setValue(clamp(pageIndex, 0, this.pages.length - 1), isUserAction);
   }
 
   public render(): void {
+    this.box.mountStage(document.createElement("div"));
+
     this.sideEffect.addEventListener(window, "keydown", ev => {
       if (this.box.focus) {
         switch (ev.key) {
           case "ArrowUp":
           case "ArrowLeft": {
-            this.jumpToPage(this.getPageIndex() - 1, true);
+            this.prevPage();
             break;
           }
           case "ArrowRight":
@@ -146,6 +132,7 @@ export class DynamicDocsViewer {
         }
       }
     });
+
     const whiteboardWrapper = this.whiteboard.view.divElement?.parentElement;
     if (whiteboardWrapper) {
       this.sideEffect.addEventListener(whiteboardWrapper, "click", ev => {

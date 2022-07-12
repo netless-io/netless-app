@@ -20,7 +20,7 @@ $static-scrollbar-color-active: rgba(68, 78, 96, 0.6);
   outline: none;
   opacity: 0;
   background: transparent;
-  transition: opacity 0.4s 3s, transform 0.2s;
+  transition: opacity 0.4s 3s, transform 0.1s;
   user-select: none;
   touch-action: none;
 
@@ -37,7 +37,7 @@ $static-scrollbar-color-active: rgba(68, 78, 96, 0.6);
 
   &.#{$namespace}-scrolling {
     opacity: 1;
-    transition: opacity 0.4s, transform 0.2s;
+    transition: opacity 0.4s, transform 0.1s;
   }
 
   &.#{$namespace}-scrollbar-dragging {
@@ -66,7 +66,7 @@ $static-scrollbar-color-active: rgba(68, 78, 96, 0.6);
 .telebox-body-wrap:hover {
   .#{$namespace}-scrollbar {
     opacity: 1;
-    transition: opacity 0.4s, transform 0.2s;
+    transition: opacity 0.4s, transform 0.1s;
   }
 }
 

@@ -7,12 +7,11 @@ import { preventEvent, flattenEvent, clamp } from "../utils/helpers";
 const SCROLLBAR_DEFAULT_MIN_HEIGHT = 30;
 
 export interface ScrollBarConfig {
-  pagesScrollTop?: number;
+  pagesScrollTop$: ReadonlyVal<number>;
   containerRect$: ReadonlyVal<TeleBoxRect>;
   stageRect$: ReadonlyVal<TeleBoxRect>;
-  pagesWidth: number;
-  pagesHeight: number;
-  readonly: boolean;
+  pagesSize$: ReadonlyVal<{ width: number; height: number }>;
+  readonly$: ReadonlyVal<boolean>;
   scrollbarMinHeight?: number;
   wrapClassName: (className: string) => string;
   onDragScroll?: (pageScrollTop: number) => void;
@@ -21,60 +20,58 @@ export interface ScrollBarConfig {
 export class ScrollBar {
   private sideEffect = new SideEffectManager();
 
-  readonly pagesWidth: number;
-  readonly pagesHeight: number;
   readonly scrollbarMinHeight: number;
-  readonly: boolean;
+  readonly readonly$: ScrollBarConfig["readonly$"];
   wrapClassName: (className: string) => string;
   onDragScroll?: (pageScrollTop: number) => void;
 
   readonly $scrollbar: HTMLButtonElement;
 
+  readonly pagesScrollTop$: ScrollBarConfig["pagesScrollTop$"];
   readonly containerRect$: ScrollBarConfig["containerRect$"];
   readonly stageRect$: ScrollBarConfig["stageRect$"];
+  readonly pagesSize$: ScrollBarConfig["pagesSize$"];
 
   readonly scrolling$ = new Val(false);
   readonly scrollbarHeight$: ReadonlyVal<number>;
-  readonly pagesScrollTop$: Val<number>;
   readonly scrollTop$: ReadonlyVal<number>;
 
   constructor({
-    pagesScrollTop = 0,
+    pagesScrollTop$,
     containerRect$,
     stageRect$,
-    pagesWidth = 1,
-    pagesHeight = 1,
-    readonly = false,
+    pagesSize$,
+    readonly$,
     scrollbarMinHeight = SCROLLBAR_DEFAULT_MIN_HEIGHT,
     wrapClassName,
     onDragScroll,
   }: ScrollBarConfig) {
+    this.pagesScrollTop$ = pagesScrollTop$;
     this.containerRect$ = containerRect$;
     this.stageRect$ = stageRect$;
-    this.pagesWidth = pagesWidth || 1;
-    this.pagesHeight = pagesHeight || 1;
+    this.pagesSize$ = pagesSize$;
     this.scrollbarMinHeight = scrollbarMinHeight;
-    this.readonly = readonly;
+    this.readonly$ = readonly$;
     this.wrapClassName = wrapClassName;
     this.onDragScroll = onDragScroll;
 
     this.scrollbarHeight$ = combine(
-      [this.containerRect$, this.stageRect$],
-      ([containerRect, stageRect]) =>
+      [containerRect$, stageRect$, pagesSize$],
+      ([containerRect, stageRect, pagesSize]) =>
         clamp(
-          (stageRect.height / ((stageRect.width / pagesWidth) * pagesHeight)) *
+          (stageRect.height / ((stageRect.width / pagesSize.width) * pagesSize.height)) *
             containerRect.height,
           scrollbarMinHeight,
           containerRect.height
         )
     );
 
-    this.pagesScrollTop$ = new Val(pagesScrollTop);
     this.scrollTop$ = combine(
-      [containerRect$, stageRect$, this.scrollbarHeight$, this.pagesScrollTop$],
-      ([containerRect, stageRect, scrollbarHeight, pagesScrollTop]) =>
+      [containerRect$, stageRect$, pagesSize$, this.scrollbarHeight$, this.pagesScrollTop$],
+      ([containerRect, stageRect, pagesSize, scrollbarHeight, pagesScrollTop]) =>
         clamp(
-          (pagesScrollTop / (pagesHeight - (pagesWidth / stageRect.width) * stageRect.height)) *
+          (pagesScrollTop /
+            (pagesSize.height - (pagesSize.width / stageRect.width) * stageRect.height)) *
             (containerRect.height - scrollbarHeight),
           0,
           containerRect.height - scrollbarHeight
@@ -88,27 +85,8 @@ export class ScrollBar {
     $parent.appendChild(this.$scrollbar);
   }
 
-  unmount(): void {
-    this.$scrollbar.remove();
-  }
-
-  setReadonly(readonly: boolean): void {
-    this.readonly = readonly;
-  }
-
-  pagesScrollTo(pagesScrollTop: number): void {
-    this.pagesScrollTop$.setValue(
-      clamp(
-        pagesScrollTop,
-        0,
-        this.pagesHeight -
-          (this.pagesWidth / this.stageRect$.value.width) * this.stageRect$.value.height
-      )
-    );
-  }
-
   destroy() {
-    this.unmount();
+    this.$scrollbar.remove();
     this.onDragScroll = void 0;
     this.sideEffect.flushAll();
   }
@@ -134,7 +112,7 @@ export class ScrollBar {
     ]);
 
     const trackStart = (ev: PointerEvent): void => {
-      if (!ev.isPrimary || this.readonly) {
+      if (!ev.isPrimary || this.readonly$.value) {
         return;
       }
 
@@ -154,7 +132,7 @@ export class ScrollBar {
       const { clientY: startY } = flattenEvent(ev);
 
       const tracking = (ev: PointerEvent): void => {
-        if (!ev.isPrimary || this.readonly) {
+        if (!ev.isPrimary || this.readonly$.value) {
           return;
         }
 
@@ -162,7 +140,7 @@ export class ScrollBar {
         const offsetY = clientY - startY;
         if (Math.abs(offsetY) > 0 && this.onDragScroll) {
           this.onDragScroll(
-            startTop + (offsetY / this.containerRect$.value.height) * this.pagesHeight
+            startTop + (offsetY / this.containerRect$.value.height) * this.pagesSize$.value.height
           );
         }
       };

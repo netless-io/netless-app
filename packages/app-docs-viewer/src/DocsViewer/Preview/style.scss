@@ -1,15 +1,6 @@
-@import "./variables.scss";
-
-@import "./Footer/style.scss";
-@import "./Preview/style.scss";
+@import "../variables.scss";
 
 $namespace: $docs-viewer-namespace;
-
-.#{$namespace}-content {
-  position: relative;
-  height: 100%;
-  overflow: hidden;
-}
 
 .#{$namespace}-preview-mask {
   position: absolute;
@@ -37,14 +28,8 @@ $namespace: $docs-viewer-namespace;
   background: rgba(237, 237, 240, 0.9);
   box-shadow: inset -1px 0 0 rgba(0, 0, 0, 0.11);
   transition: transform 0.4s;
-}
 
-.#{$namespace}-preview-active {
-  .#{$namespace}-preview-mask {
-    display: block;
-  }
-
-  .#{$namespace}-preview {
+  &.#{$namespace}-preview-active {
     transform: translateX(0);
   }
 }

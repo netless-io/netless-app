@@ -1,0 +1,151 @@
+@import "../variables.scss";
+
+$namespace: $docs-viewer-namespace;
+
+.#{$namespace}-footer {
+  box-sizing: border-box;
+  height: 26px;
+  display: flex;
+  align-items: center;
+  padding: 0 16px;
+  border-top: 1px solid #eeeef7;
+  font-family: "PingFang SC", "Source Han Sans SC", "Microsoft YaHei", "Helvetica Neue",
+    "Noto Sans CJK SC", "WenQuanYi Micro Hei", sans-serif;
+}
+
+.#{$namespace}-footer-btn {
+  box-sizing: border-box;
+  width: 26px;
+  height: 26px;
+  font-size: 0;
+  margin: 0;
+  padding: 3px;
+  border: none;
+  border-radius: 1px;
+  outline: none;
+  color: currentColor;
+  background: transparent;
+  transition: background 0.4s;
+  cursor: pointer;
+  user-select: none;
+  -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
+
+  &:hover {
+    background: rgba(237, 237, 240, 0.9);
+  }
+
+  @media (hover: none) {
+    &:hover {
+      background: transparent !important;
+    }
+  }
+
+  & > svg {
+    width: 100%;
+    height: 100%;
+  }
+
+  & > svg:nth-of-type(2) {
+    display: none;
+  }
+
+  &.#{$namespace}-footer-btn-playing {
+    & > svg:nth-of-type(1) {
+      display: none;
+    }
+
+    & > svg:nth-of-type(2) {
+      display: initial;
+    }
+  }
+
+  & ~ & {
+    margin-left: 15px;
+  }
+}
+
+.#{$namespace}-page-jumps {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.#{$namespace}-page-number {
+  display: flex;
+  align-items: center;
+  height: 26px;
+  margin-left: auto;
+  font-size: 13px;
+  user-select: none;
+  white-space: nowrap;
+  word-break: keep-all;
+}
+
+.#{$namespace}-page-number-input {
+  border: none;
+  outline: none;
+  width: 3em;
+  margin: 0;
+  padding: 0 0.5em 0 2px;
+  text-align: right;
+  font-size: 13px;
+  line-height: 1;
+  font-weight: normal;
+  font-family: inherit;
+  border-radius: 2px;
+  color: currentColor;
+  font-family: "PingFang SC", "Source Han Sans SC", "Microsoft YaHei", "Helvetica Neue",
+    "Noto Sans CJK SC", "WenQuanYi Micro Hei", sans-serif;
+  background: transparent;
+  transition: background 0.4s;
+  user-select: text;
+  -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
+
+  &:hover,
+  &:focus,
+  &:active {
+    background: #fff;
+    box-shadow: rgba(99, 99, 99, 0.2) 0px 2px 8px 0px;
+  }
+}
+
+.#{$namespace}-readonly {
+  .#{$namespace}-footer-btn {
+    cursor: not-allowed;
+
+    &:hover {
+      background: transparent;
+    }
+  }
+
+  .#{$namespace}-page-number-input {
+    cursor: not-allowed;
+
+    &:hover,
+    &:focus,
+    &:active {
+      background: transparent;
+      box-shadow: none;
+    }
+
+    &:disabled {
+      color: inherit;
+    }
+  }
+}
+
+.telebox-color-scheme-dark {
+  .#{$namespace}-page-number-input:active,
+  .#{$namespace}-page-number-input:focus,
+  .#{$namespace}-page-number-input:hover {
+    color: currentColor;
+    background: #25282e;
+  }
+  .#{$namespace}-footer {
+    border-top: none;
+  }
+  .#{$namespace}-footer-btn:hover {
+    background: #212126;
+  }
+}

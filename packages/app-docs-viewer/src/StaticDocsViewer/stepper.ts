@@ -2,7 +2,7 @@ export interface StepperConfig {
   start?: number;
   stiffness?: number;
   damping?: number;
-  onStep: (value: number) => void;
+  onStep?: (value: number) => void;
 }
 
 export class Stepper {
@@ -12,11 +12,15 @@ export class Stepper {
   public current: number;
   public target: number;
   public velocity = 0;
-  public onStep: (value: number, stepper: Stepper) => void;
-  public paused = true;
+  public onStep?: (value: number) => void;
 
-  protected _animationFrameID: number | null = null;
-  protected _loopTimestamp = 0;
+  public get paused(): boolean {
+    return this._paused;
+  }
+
+  private _paused = true;
+  private _animationFrameID: number | null = null;
+  private _loopTimestamp = 0;
 
   public constructor(config: StepperConfig) {
     this.current = config.start ?? 0;
@@ -27,26 +31,30 @@ export class Stepper {
   }
 
   public stepTo(target: number, start?: number) {
-    if (this.paused && start != null) {
+    if (this._paused && start != null) {
       this.current = start;
     }
-    this.paused = false;
+    this._paused = false;
     this.target = target;
-    this.onStep(this.current, this);
+    this.onStep?.(this.current);
     this._loopTimestamp = Date.now();
-    window.requestAnimationFrame(this.looper);
+    this._animationFrameID = window.requestAnimationFrame(this.looper);
   }
 
   public pause() {
-    this.paused = true;
+    this._paused = true;
+    if (this._animationFrameID != null) {
+      window.cancelAnimationFrame(this._animationFrameID);
+    }
   }
 
   public destroy() {
     this.pause();
+    this.onStep = undefined;
   }
 
   protected looper = (timestamp: number) => {
-    if (this.paused) {
+    if (this._paused) {
       return;
     }
 
@@ -56,10 +64,12 @@ export class Stepper {
       this.stepper();
     }
 
-    this.onStep(this.current, this);
+    this.onStep?.(this.current);
 
-    if (!this.paused && this.current !== this.target) {
-      window.requestAnimationFrame(this.looper);
+    if (!this._paused) {
+      this._animationFrameID = window.requestAnimationFrame(this.looper);
+    } else {
+      this._animationFrameID = null;
     }
   };
 
@@ -73,6 +83,7 @@ export class Stepper {
     if (Math.abs(newVelocity - 0) < 0.01 && Math.abs(newCurrent - this.target) < 0.01) {
       this.current = this.target;
       this.velocity = 0;
+      this._paused = true;
     } else {
       this.current = newCurrent;
       this.velocity = newVelocity;

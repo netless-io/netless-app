@@ -22,8 +22,8 @@
     "cleanup": "rimraf ./dist"
   },
   "dependencies": {
-    "debounce-fn": "^5.1.0",
-    "value-enhancer": "^1.3.0",
+    "remitter": "^0.2.3",
+    "value-enhancer": "^1.3.2",
     "vanilla-lazyload": "^17.8.2"
   },
   "devDependencies": {

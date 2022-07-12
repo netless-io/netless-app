@@ -7,7 +7,9 @@ import type { DocsViewerPage } from "./DocsViewer";
 import { DynamicDocsViewer } from "./DynamicDocsViewer";
 import { kind } from "./constants";
 import { SideEffectManager } from "side-effect-manager";
-import { combine } from "value-enhancer";
+import type { ReadonlyVal } from "value-enhancer";
+import { combine, Val } from "value-enhancer";
+import { sameSize } from "./utils/helpers";
 
 export type { DocsViewerPage } from "./DocsViewer";
 
@@ -51,19 +53,28 @@ const NetlessAppDocsViewer: NetlessApp<
 
     box.mountStyles(styles);
 
+    const readonly$ = new Val(!context.isWritable);
+    sideEffect.addDisposer(
+      context.emitter.on("writableChange", isWritable => {
+        readonly$.setValue(!isWritable);
+      })
+    );
+
     if (pages[0].src.startsWith("ppt")) {
       setupDynamicDocsViewer(
         sideEffect,
         context as AppContext<NetlessAppDynamicDocsViewerAttributes>,
         box,
-        pages
+        pages,
+        readonly$
       );
     } else {
       setupStaticDocsViewer(
         sideEffect,
         context as AppContext<NetlessAppStaticDocsViewerAttributes>,
         box,
-        pages
+        pages,
+        readonly$
       );
     }
 
@@ -81,32 +92,40 @@ function setupStaticDocsViewer(
   sideEffect: SideEffectManager,
   context: AppContext<NetlessAppStaticDocsViewerAttributes>,
   box: ReadonlyTeleBox,
-  pages: DocsViewerPage[]
+  pages: DocsViewerPage[],
+  readonly$: Val<boolean>
 ): void {
   const whiteboard = context.createWhiteBoardView({ syncCamera: false });
 
-  whiteboard.view.disableCameraTransform = !context.isWritable;
+  sideEffect.addDisposer(
+    readonly$.subscribe(readonly => {
+      whiteboard.view.disableCameraTransform = readonly;
+    })
+  );
 
-  const storage = context.createStorage("static-docs-viewer", { pageScrollTop: 0 });
+  const storage = context.createStorage("static-docs-viewer", { pagesScrollTop: 0 });
 
-  const docsViewer = new StaticDocsViewer({
+  const staticDocsViewer = new StaticDocsViewer({
     whiteboard,
-    readonly: !context.isWritable,
+    readonly$,
     box,
-    pages: pages,
-    pageScrollTop: storage.state.pageScrollTop,
-    onUserScroll: pageScrollTop => {
+    pages,
+    pagesScrollTop: storage.state.pagesScrollTop,
+    onUserScroll: pagesScrollTop => {
       if (context.isWritable) {
-        storage.setState({ pageScrollTop });
+        storage.setState({ pagesScrollTop });
       }
     },
-  }).mount();
-  sideEffect.addDisposer(() => docsViewer.destroy());
+  });
+  sideEffect.addDisposer(() => staticDocsViewer.destroy());
 
-  if (import.meta.env.DEV) {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (window as any).docsViewer = docsViewer;
-  }
+  sideEffect.addDisposer(
+    storage.addStateChangedListener(diff => {
+      if (diff.pagesScrollTop) {
+        staticDocsViewer.syncPageScrollTop(diff.pagesScrollTop.newValue || 0);
+      }
+    })
+  );
 
   let maxRatio = 1;
   if (pages.length > 0) {
@@ -131,45 +150,53 @@ function setupStaticDocsViewer(
     })
   );
 
-  sideEffect.addDisposer(
-    storage.addStateChangedListener(diff => {
-      if (diff.pageScrollTop) {
-        docsViewer.syncPageScrollTop(diff.pageScrollTop.newValue || 0);
-      }
-    })
-  );
-
-  sideEffect.addDisposer(
-    context.emitter.on("writableChange", isWritable => {
-      docsViewer.setReadonly(!isWritable);
-      whiteboard.view.disableCameraTransform = !isWritable;
-    })
-  );
+  if (import.meta.env.DEV) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (window as any).staticDocsViewer = staticDocsViewer;
+  }
 }
 
 function setupDynamicDocsViewer(
   sideEffect: SideEffectManager,
   context: AppContext<NetlessAppDynamicDocsViewerAttributes>,
   box: ReadonlyTeleBox,
-  pages: DocsViewerPage[]
+  pages: DocsViewerPage[],
+  readonly$: ReadonlyVal<boolean>
 ): void {
   const whiteboard = context.createWhiteBoardView();
 
   whiteboard.view.disableCameraTransform = true;
 
-  const docsViewer = new DynamicDocsViewer({
+  const dynamicDocsViewer = new DynamicDocsViewer({
     context,
     whiteboard,
     box,
     pages,
-  }).mount();
-  sideEffect.addDisposer(() => docsViewer.destroy());
+    readonly$,
+  });
+  sideEffect.addDisposer(() => dynamicDocsViewer.destroy());
 
-  if (context.isWritable) {
-    if (pages[0]) {
-      whiteboard.setBaseRect({ width: pages[0].width, height: pages[0].height });
-    }
-  }
+  const whiteboardBaseRect$ = new Val(
+    { width: pages[0].width, height: pages[0].height },
+    { compare: sameSize }
+  );
+
+  sideEffect.addDisposer(
+    dynamicDocsViewer.pagesIndex$.subscribe(pageIndex => {
+      const page = pages[pageIndex];
+      if (page) {
+        whiteboardBaseRect$.setValue({ width: page.width, height: page.height });
+      }
+    })
+  );
+
+  sideEffect.addDisposer(
+    whiteboardBaseRect$.subscribe(rect => {
+      if (!readonly$.value) {
+        whiteboard.setBaseRect(rect);
+      }
+    })
+  );
 
   if (context.isAddApp) {
     const disposerID = sideEffect.add(() => {
@@ -194,6 +221,6 @@ function setupDynamicDocsViewer(
 
   if (import.meta.env.DEV) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (window as any).docsViewer = docsViewer;
+    (window as any).dynamicDocsViewer = dynamicDocsViewer;
   }
 }

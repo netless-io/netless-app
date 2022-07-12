@@ -1,3 +1,4 @@
+import type { ReadonlyVal } from "value-enhancer";
 import type { DocsViewerPage } from "../DocsViewer";
 import { PageEl } from "./PageEl";
 
@@ -13,15 +14,24 @@ export class PageElManager {
   private gcTimer: number | null = null;
 
   constructor(
-    private pages: ReadonlyArray<DocsViewerPage>,
-    private pagesIntrinsicWidth: number,
-    private scale: number
+    private pages$: ReadonlyVal<DocsViewerPage[]>,
+    private pagesSize$: ReadonlyVal<{ width: number; height: number }>,
+    private scale$: ReadonlyVal<number>,
+    private pagesYs$: ReadonlyVal<number[]>,
+    private pagesScrollTop$: ReadonlyVal<number>
   ) {}
 
   getEl(index: number): PageEl {
     let el = this.els.get(index);
     if (!el) {
-      el = new PageEl(index, this.pages[index], this.scale, this.pagesIntrinsicWidth);
+      el = new PageEl(
+        index,
+        this.pages$,
+        this.pagesSize$,
+        this.scale$,
+        this.pagesYs$,
+        this.pagesScrollTop$
+      );
       this.els.set(index, el);
     }
     el.lastVisit = Date.now();
@@ -33,14 +43,8 @@ export class PageElManager {
     return el;
   }
 
-  setScale(scale: number): void {
-    if (scale !== this.scale) {
-      this.scale = scale;
-      this.els.forEach(pageEl => pageEl.setScale(scale));
-    }
-  }
-
   destroy() {
+    this.els.forEach(el => el.destroy());
     this.els.clear();
     if (this.gcTimer !== null) {
       cancelSchedule(this.gcTimer);
@@ -54,6 +58,7 @@ export class PageElManager {
     if (this.els.size > this.maxElCount) {
       const sortedEls = [...this.els.values()].sort((x, y) => y.lastVisit - x.lastVisit);
       for (let i = Math.floor(this.maxElCount / 4); i < sortedEls.length; i++) {
+        this.els.get(sortedEls[i].index)?.destroy();
         this.els.delete(sortedEls[i].index);
       }
     }
