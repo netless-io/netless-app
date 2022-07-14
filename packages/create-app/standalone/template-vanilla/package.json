@@ -1,8 +1,8 @@
 {
   "name": "netless-app-starter",
   "version": "0.0.0",
-  "main": "dist/main.cjs.js",
-  "module": "dist/main.es.js",
+  "main": "dist/main.js",
+  "module": "dist/main.mjs",
   "unpkg": "dist/main.iife.js",
   "jsdelivr": "dist/main.iife.js",
   "scripts": {
@@ -16,7 +16,7 @@
   "devDependencies": {
     "@netless/window-manager": "^1.0.0-canary.32",
     "@types/node": "^18.0.0",
-    "vite": "^2.9.10",
+    "vite": "^3.0.0",
     "white-web-sdk": "2.16.24"
   }
 }

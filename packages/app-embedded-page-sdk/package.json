@@ -1,8 +1,8 @@
 {
   "name": "@netless/app-embedded-page-sdk",
   "version": "0.1.1",
-  "main": "dist/main.cjs.js",
-  "module": "dist/main.es.js",
+  "main": "dist/main.js",
+  "module": "dist/main.mjs",
   "types": "src/index.ts",
   "scripts": {
     "types": "cross-env NODE_ENV=production tsc --declaration --emitDeclarationOnly --outDir dist",

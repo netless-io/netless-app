@@ -1,8 +1,8 @@
 {
   "name": "@netless/app-embedded-page",
   "version": "0.2.0",
-  "main": "dist/main.cjs.js",
-  "module": "dist/main.es.js",
+  "main": "dist/main.js",
+  "module": "dist/main.mjs",
   "unpkg": "dist/main.iife.js",
   "jsdelivr": "dist/main.iife.js",
   "types": "src/index.ts",

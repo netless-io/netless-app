@@ -8,8 +8,8 @@
   "sideEffects": [
     "*.css"
   ],
-  "main": "./dist/main.cjs.js",
-  "module": "./dist/main.es.js",
+  "main": "./dist/main.js",
+  "module": "./dist/main.mjs",
   "types": "./dist/index.d.ts",
   "files": [
     "src",
