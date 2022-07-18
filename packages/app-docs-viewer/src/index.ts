@@ -127,24 +127,23 @@ function setupStaticDocsViewer(
     })
   );
 
-  let maxRatio = 1;
-  if (pages.length > 0) {
-    const { width, height } = pages[0];
-    if (height <= width) {
-      maxRatio = height / width;
-    } else {
-      maxRatio = ((1 / 2) * height) / width;
-    }
-  }
-
   //  ensure stage top-bottom will always touch box content area
   sideEffect.addDisposer(
     combine(
-      [box._maximized$, box._managerStageRect$, box._intrinsicSize$],
-      ([maximized, managerStageRect, size]) =>
+      [
+        box._maximized$,
+        box._managerStageRect$,
+        box._intrinsicSize$,
+        staticDocsViewer.pagesSize$,
+        staticDocsViewer.pageRenderer._pagesMinHeight$,
+      ],
+      ([maximized, managerStageRect, size, pagesSize, pagesMinHeight]) =>
         maximized
-          ? maxRatio
-          : (size.height * (managerStageRect.height / managerStageRect.width)) / size.width
+          ? Math.max(
+              (pagesMinHeight / pagesSize.width) * (2 / 5),
+              managerStageRect.height / managerStageRect.width
+            )
+          : (size.height / size.width) * (managerStageRect.height / managerStageRect.width)
     ).subscribe(ratio => {
       box.setStageRatio(ratio);
     })
