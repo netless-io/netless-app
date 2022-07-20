@@ -71,17 +71,14 @@ export class Sync {
     if (behavior === "owner" && owner === this.uid) return;
 
     if (paused !== player.paused && !this._skip_next_play_pause) {
-      console.log("< sync paused", paused);
       paused ? player.pause() : safePlay(player);
     }
 
     if (muted !== player.muted) {
-      console.log("< sync muted", muted);
       player.muted = muted;
     }
 
     if (volume !== player.volume) {
-      console.log("< sync volume", volume);
       player.volume = volume;
     }
     // if buffering, don't sync currentTime in immediate
@@ -89,7 +86,6 @@ export class Sync {
 
     if (paused) {
       if (Math.abs(player.currentTime - currentTime) > 0.5) {
-        console.log("< sync current time (paused)", currentTime);
         player.currentTime = currentTime;
       }
     } else {
@@ -168,13 +164,11 @@ export class Sync {
 
   private dispatchOwner() {
     if (this.context.storage.state.owner !== this.uid) {
-      console.log("> set owner", this.uid);
       this.context.storage.setState({ owner: this.uid });
     }
   }
 
   private dispatchPlayPause(player: Plyr) {
-    console.log("> set paused", player.paused);
     this.context.storage.setState({
       hostTime: this.getTimestamp(),
       currentTime: player.currentTime,
@@ -189,7 +183,6 @@ export class Sync {
   }
 
   private dispatchVolume(player: Plyr) {
-    console.log("> set volume", player.volume);
     this.context.storage.setState({
       muted: player.muted,
       volume: player.volume,
@@ -198,7 +191,6 @@ export class Sync {
 
   private dispatchSeek(player: Plyr, $seek: HTMLInputElement) {
     const currentTime = ($seek.valueAsNumber * player.duration) / 100;
-    console.log("> set current time (seek)", currentTime);
     this.context.storage.setState({ hostTime: this.getTimestamp(), currentTime });
   }
 
@@ -207,7 +199,6 @@ export class Sync {
       this._dispatch_time_again = true;
       return;
     }
-    console.log("> set current time", player.currentTime);
     this.context.storage.setState({
       hostTime: this.getTimestamp(),
       currentTime: player.currentTime,
@@ -232,7 +223,6 @@ export class Sync {
     if (now && hostTime) {
       const expected = currentTime + (now - hostTime) / 1000;
       if (Math.abs(expected - player.currentTime) > 1) {
-        console.log("< sync current time (playing)", expected);
         player.currentTime = expected;
         this._blink++;
         if (this._blink > 3) {
