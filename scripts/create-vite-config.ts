@@ -17,10 +17,12 @@ export function createViteConfig({
   entry = path.resolve(process.cwd(), "src/index.ts"),
   name,
   formats = ["es", "cjs", "iife"],
+  minify,
 }: {
   entry?: string;
   name?: string;
   formats?: LibraryFormats[];
+  minify?: boolean;
 } = {}): UserConfigFn {
   return defineConfig(({ mode }) => {
     const isProd = mode === "production";
@@ -67,7 +69,7 @@ export function createViteConfig({
           },
           plugins: [peerDepsExternal() as Plugin],
         },
-        minify: isProd,
+        minify: minify ?? isProd,
       },
     };
   }) as UserConfigFn;
