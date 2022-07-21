@@ -17,6 +17,9 @@ export type NetlessAppMonacoAppOptions = {
 
 const NetlessAppMonaco: NetlessApp<NetlessAppMonacoAttributes> = {
   kind,
+  config: {
+    enableShadowDOM: false,
+  },
   async setup(context) {
     const box = context.box;
 
