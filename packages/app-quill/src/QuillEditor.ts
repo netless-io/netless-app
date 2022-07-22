@@ -1,3 +1,5 @@
+import type IQuillRange from "quill-cursors/dist/quill-cursors/i-range";
+
 import type { AppContext } from "@netless/window-manager";
 import type { NetlessAppQuillAttributes, NetlessAppQuillEvents } from "./index";
 
@@ -103,7 +105,7 @@ function setup_sync_handlers({
       sideEffect.setTimeout(
         () => {
           const text = fromUint8Array(Y.encodeStateAsUpdate(doc));
-          if (context.storage.state.text !== text) {
+          if (context.isWritable && context.storage.state.text !== text) {
             context.storage.setState({ text });
           }
         },
@@ -146,43 +148,49 @@ function setup_sync_handlers({
   // #region Cursors
 
   const cursors$$ = context.createStorage<{ [id: number]: UserCursor | null }>("cursors", {});
+  const timers = new Map<string, number>();
 
   const refreshCursors = () => {
     Object.keys(cursors$$.state).forEach(memberIdStr => {
       const memberId = parseInt(memberIdStr);
       if (memberId === ME) {
-        return update_cursor(cursors, null, memberId, doc, type);
+        return update_cursor(cursors, null, memberId, doc, type, timers);
       }
       const cursor = cursors$$.state[memberId];
       const member = context.members.find(a => a.memberId === memberId);
       if (!member) {
-        next_tick().then(() => cursors$$.setState({ [memberId]: undefined }));
-        return update_cursor(cursors, null, memberId, doc, type);
+        // setState() will trigger refreshCursors() synchronously, so we must schedule it to next tick.
+        if (context.isWritable) {
+          next_tick().then(() => cursors$$.setState({ [memberId]: undefined }));
+        }
+        return update_cursor(cursors, null, memberId, doc, type, timers);
       }
-      const user: UserInfo = member && {
+      const user: UserInfo = {
         name: member.payload?.nickName,
         color: color_to_string(member.memberState.strokeColor),
       };
-      update_cursor(cursors, { user, cursor }, memberId, doc, type);
+      update_cursor(cursors, { user, cursor }, memberId, doc, type, timers);
     });
   };
-  sideEffect.add(() => {
-    const onSelectionChange = (_0: string, _1: unknown, _2: unknown, origin: string) => {
-      const sel = editor.getSelection();
-      // prevent incorrect cursor jumping https://github.com/yjs/y-quill/issues/14
-      if (origin === "silent") return;
-      if (sel === null) {
-        cursors$$.setState({ [ME]: null });
-      } else {
-        const anchor = Y.createRelativePositionFromTypeIndex(type, sel.index);
-        const head = Y.createRelativePositionFromTypeIndex(type, sel.index + sel.length);
-        cursors$$.setState({ [ME]: { anchor, head } });
-      }
-      refreshCursors();
-    };
-    editor.on("editor-change", onSelectionChange);
-    return () => editor.off("editor-change", onSelectionChange);
-  });
+  if (context.isWritable) {
+    sideEffect.add(() => {
+      const onSelectionChange = (_0: string, _1: unknown, _2: unknown, origin: string) => {
+        const sel = editor.getSelection();
+        // prevent incorrect cursor jumping https://github.com/yjs/y-quill/issues/14
+        if (origin === "silent") return;
+        if (sel === null) {
+          cursors$$.setState({ [ME]: null });
+        } else {
+          const anchor = Y.createRelativePositionFromTypeIndex(type, sel.index);
+          const head = Y.createRelativePositionFromTypeIndex(type, sel.index + sel.length);
+          cursors$$.setState({ [ME]: { anchor, head } });
+        }
+        refreshCursors();
+      };
+      editor.on("editor-change", onSelectionChange);
+      return () => editor.off("editor-change", onSelectionChange);
+    });
+  }
   sideEffect.addDisposer(cursors$$.addStateChangedListener(refreshCursors));
   sideEffect.addDisposer(context.emitter.on("roomMembersChange", refreshCursors));
 
@@ -199,14 +207,16 @@ function update_cursor(
   aw: CursorAware | null,
   clientId: number,
   doc: Y.Doc,
-  type: Y.Text
+  type: Y.Text,
+  timers: Map<string, number>
 ) {
+  const id = String(clientId);
   try {
     if (aw && aw.cursor && clientId !== doc.clientID) {
       const user = aw.user || {};
       const color = user.color || "#ffa500";
-      const name = user.name || `User: ${clientId}`;
-      cursors.createCursor(clientId.toString(), name, color);
+      const name = user.name || `User: ${id}`;
+      const cursor = cursors.createCursor(id, name, color);
       const anchor = Y.createAbsolutePositionFromRelativePosition(
         Y.createRelativePositionFromJSON(aw.cursor.anchor),
         doc
@@ -216,14 +226,25 @@ function update_cursor(
         doc
       );
       if (anchor && head && anchor.type === type) {
-        cursors.moveCursor(String(clientId), {
+        const range: IQuillRange = {
           index: anchor.index,
           length: head.index - anchor.index,
-        });
-        cursors.toggleFlag(String(clientId), true);
+        };
+        if (
+          !cursor.range ||
+          range.index !== cursor.range.index ||
+          range.length !== cursor.range.length
+        ) {
+          cursors.moveCursor(id, range);
+          let timer = timers.get(id) || 0;
+          if (timer) clearTimeout(timer);
+          cursor.toggleFlag(true);
+          timer = setTimeout(() => cursor.toggleFlag(false), 3000);
+          timers.set(id, timer);
+        }
       }
     } else {
-      cursors.removeCursor(String(clientId));
+      cursors.removeCursor(id);
     }
   } catch (err) {
     console.error(err);
