@@ -172,25 +172,23 @@ function setup_sync_handlers({
       update_cursor(cursors, { user, cursor }, memberId, doc, type, timers);
     });
   };
-  if (context.isWritable) {
-    sideEffect.add(() => {
-      const onSelectionChange = (_0: string, _1: unknown, _2: unknown, origin: string) => {
-        const sel = editor.getSelection();
-        // prevent incorrect cursor jumping https://github.com/yjs/y-quill/issues/14
-        if (origin === "silent") return;
-        if (sel === null) {
-          cursors$$.setState({ [ME]: null });
-        } else {
-          const anchor = Y.createRelativePositionFromTypeIndex(type, sel.index);
-          const head = Y.createRelativePositionFromTypeIndex(type, sel.index + sel.length);
-          cursors$$.setState({ [ME]: { anchor, head } });
-        }
-        refreshCursors();
-      };
-      editor.on("editor-change", onSelectionChange);
-      return () => editor.off("editor-change", onSelectionChange);
-    });
-  }
+  sideEffect.add(() => {
+    const onSelectionChange = (_0: string, _1: unknown, _2: unknown, origin: string) => {
+      const sel = editor.getSelection();
+      // prevent incorrect cursor jumping https://github.com/yjs/y-quill/issues/14
+      if (origin === "silent") return;
+      if (sel === null) {
+        context.isWritable && cursors$$.setState({ [ME]: null });
+      } else {
+        const anchor = Y.createRelativePositionFromTypeIndex(type, sel.index);
+        const head = Y.createRelativePositionFromTypeIndex(type, sel.index + sel.length);
+        context.isWritable && cursors$$.setState({ [ME]: { anchor, head } });
+      }
+      refreshCursors();
+    };
+    editor.on("editor-change", onSelectionChange);
+    return () => editor.off("editor-change", onSelectionChange);
+  });
   sideEffect.addDisposer(cursors$$.addStateChangedListener(refreshCursors));
   sideEffect.addDisposer(context.emitter.on("roomMembersChange", refreshCursors));
 
