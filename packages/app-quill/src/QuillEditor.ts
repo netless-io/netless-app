@@ -87,7 +87,7 @@ function setup_sync_handlers({
   yDoc: doc,
   yText: type,
 }: QuillEditor) {
-  const ME = context.currentMember.memberId;
+  const ME = context.room?.uid || "";
 
   sideEffect.addDisposer(
     context.emitter.on("writableChange", () => {
@@ -123,7 +123,7 @@ function setup_sync_handlers({
 
   sideEffect.addDisposer(
     context.addMagixEventListener("edit", ev => {
-      if (ev.authorId !== ME) {
+      if (ev.authorId !== context.displayer.observerId) {
         try {
           Y.applyUpdate(doc, toUint8Array(ev.payload), "_remote_edit_");
         } catch (e) {
@@ -147,29 +147,28 @@ function setup_sync_handlers({
 
   // #region Cursors
 
-  const cursors$$ = context.createStorage<{ [id: number]: UserCursor | null }>("cursors", {});
+  const cursors$$ = context.createStorage<{ [uid: string]: UserCursor | null }>("cursors", {});
   const timers = new Map<string, number>();
 
   const refreshCursors = () => {
-    Object.keys(cursors$$.state).forEach(memberIdStr => {
-      const memberId = parseInt(memberIdStr);
-      if (memberId === ME) {
-        return update_cursor(cursors, null, memberId, doc, type, timers);
+    Object.keys(cursors$$.state).forEach(uid => {
+      if (uid === ME) {
+        return update_cursor(cursors, null, uid, doc, type, timers);
       }
-      const cursor = cursors$$.state[memberId];
-      const member = context.members.find(a => a.memberId === memberId);
+      const cursor = cursors$$.state[uid];
+      const member = context.members.find(a => a.uid === uid);
       if (!member) {
         // setState() will trigger refreshCursors() synchronously, so we must schedule it to next tick.
         if (context.isWritable) {
-          next_tick().then(() => cursors$$.setState({ [memberId]: undefined }));
+          next_tick().then(() => cursors$$.setState({ [uid]: undefined }));
         }
-        return update_cursor(cursors, null, memberId, doc, type, timers);
+        return update_cursor(cursors, null, uid, doc, type, timers);
       }
       const user: UserInfo = {
         name: member.payload?.nickName,
         color: color_to_string(member.memberState.strokeColor),
       };
-      update_cursor(cursors, { user, cursor }, memberId, doc, type, timers);
+      update_cursor(cursors, { user, cursor }, uid, doc, type, timers);
     });
   };
   sideEffect.add(() => {
@@ -203,18 +202,17 @@ interface CursorAware {
 function update_cursor(
   cursors: QuillCursors,
   aw: CursorAware | null,
-  clientId: number,
+  uid: string,
   doc: Y.Doc,
   type: Y.Text,
   timers: Map<string, number>
 ) {
-  const id = String(clientId);
   try {
-    if (aw && aw.cursor && clientId !== doc.clientID) {
+    if (aw && aw.cursor) {
       const user = aw.user || {};
       const color = user.color || "#ffa500";
-      const name = user.name || `User: ${id}`;
-      const cursor = cursors.createCursor(id, name, color);
+      const name = user.name || `User: ${uid}`;
+      const cursor = cursors.createCursor(uid, name, color);
       const anchor = Y.createAbsolutePositionFromRelativePosition(
         Y.createRelativePositionFromJSON(aw.cursor.anchor),
         doc
@@ -233,16 +231,16 @@ function update_cursor(
           range.index !== cursor.range.index ||
           range.length !== cursor.range.length
         ) {
-          cursors.moveCursor(id, range);
-          let timer = timers.get(id) || 0;
+          cursors.moveCursor(uid, range);
+          let timer = timers.get(uid) || 0;
           if (timer) clearTimeout(timer);
           cursor.toggleFlag(true);
           timer = setTimeout(() => cursor.toggleFlag(false), 3000);
-          timers.set(id, timer);
+          timers.set(uid, timer);
         }
       }
     } else {
-      cursors.removeCursor(id);
+      cursors.removeCursor(uid);
     }
   } catch (err) {
     console.error(err);
