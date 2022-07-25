@@ -1,7 +1,8 @@
 import type IQuillRange from "quill-cursors/dist/quill-cursors/i-range";
 
 import type { AppContext } from "@netless/window-manager";
-import type { NetlessAppQuillAttributes, NetlessAppQuillEvents } from "./index";
+import type { Vector } from "@netless/y";
+import type { NetlessAppQuillAttributes } from "./index";
 
 import * as Y from "yjs";
 
@@ -9,7 +10,8 @@ import Quill from "quill";
 import QuillCursors from "quill-cursors";
 import { QuillBinding } from "y-quill";
 import { SideEffectManager } from "side-effect-manager";
-import { fromUint8Array, toUint8Array } from "js-base64";
+import { createVector } from "@netless/y";
+import { connect } from "@netless/y/yjs";
 
 import { add_class, color_to_string, element, next_tick } from "./internal";
 import styles from "./style.scss?inline";
@@ -29,11 +31,16 @@ export class QuillEditor {
   readonly $container: HTMLDivElement;
   readonly $editor: HTMLDivElement;
 
+  readonly vector: Vector;
   readonly sideEffect = new SideEffectManager();
 
-  constructor(readonly context: AppContext<NetlessAppQuillAttributes, NetlessAppQuillEvents>) {
+  constructor(readonly context: AppContext<NetlessAppQuillAttributes>) {
+    this.vector = createVector(context, "quill");
+    this.sideEffect.addDisposer(this.vector.destroy.bind(this.vector));
+
     this.yDoc = new Y.Doc();
     this.yText = this.yDoc.getText("quill");
+    this.sideEffect.addDisposer(connect(this.vector, this.yDoc));
 
     this.$container = add_class(element("div"), "container");
     this.$editor = add_class(element("div"), "editor");
@@ -46,11 +53,12 @@ export class QuillEditor {
       modules: {
         cursors: true,
         toolbar: [
-          [{ header: [1, 2, false] }],
-          [{ list: "ordered" }, { list: "bullet" }],
-          ["bold", "italic", "underline"],
-          ["code-block"],
-          [{ color: [] }, { background: [] }],
+          [{ header: [1, 2, false] }, "blockquote", "code-block"],
+          [{ list: "ordered" }, { list: "bullet" }, { indent: "-1" }, { indent: "+1" }],
+          ["bold", "italic", "underline", "strike"],
+          [{ color: [] }, { background: [] }, { align: [] }],
+          ["link", "formula"],
+          ["clean"],
         ],
         history: {
           userOnly: true,
@@ -94,56 +102,6 @@ function setup_sync_handlers({
       context.isWritable ? editor.enable() : editor.disable();
     })
   );
-
-  // #region Persist
-
-  if (context.storage.state.text) {
-    Y.applyUpdate(doc, toUint8Array(context.storage.state.text), "_persist_");
-  }
-  sideEffect.add(() => {
-    const persistText = () => {
-      sideEffect.setTimeout(
-        () => {
-          const text = fromUint8Array(Y.encodeStateAsUpdate(doc));
-          if (context.isWritable && context.storage.state.text !== text) {
-            context.storage.setState({ text });
-          }
-        },
-        1000,
-        "persistText"
-      );
-    };
-    doc.on("update", persistText);
-    return () => doc.off("update", persistText);
-  });
-
-  // #endregion
-
-  // #region Deltas
-
-  sideEffect.addDisposer(
-    context.addMagixEventListener("edit", ev => {
-      if (ev.authorId !== context.displayer.observerId) {
-        try {
-          Y.applyUpdate(doc, toUint8Array(ev.payload), "_remote_edit_");
-        } catch (e) {
-          console.warn(e);
-        }
-      }
-    })
-  );
-
-  sideEffect.add(() => {
-    const handleUpdate = (update: Uint8Array, origin: unknown) => {
-      if (origin !== "_remote_edit_" && context.isWritable) {
-        context.dispatchMagixEvent("edit", fromUint8Array(update));
-      }
-    };
-    doc.on("update", handleUpdate);
-    return () => doc.off("update", handleUpdate);
-  });
-
-  // #endregion
 
   // #region Cursors
 
