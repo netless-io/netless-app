@@ -292,9 +292,6 @@ function create_footer() {
   const $pageNumberInput = h("input");
   set_class($pageNumberInput, "page-number-input");
   $pageNumberInput.value = String(page_index + 1);
-  $pageNumberInput.onfocus = function on_focus_page_number_input() {
-    $pageNumberInput.select();
-  };
   $pageNumberInput.onchange = function on_change_page_number_input() {
     if (readonly) return;
     if ($pageNumberInput.value) {
