@@ -85,4 +85,6 @@
   </video>
 {/if}
 
-<Sprites />
+<div style="display:none">
+  <Sprites />
+</div>
