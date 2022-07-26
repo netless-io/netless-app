@@ -1,1 +1,9 @@
 $docs-viewer-namespace: "netless-app-docs-viewer";
+
+@mixin no-user-select {
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}

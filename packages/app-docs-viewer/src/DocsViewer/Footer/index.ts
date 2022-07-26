@@ -137,14 +137,17 @@ export class Footer {
     this.sideEffect.addDisposer(
       this.pagesIndex$.subscribe(pagesIndex => ($pageNumberInput.value = String(pagesIndex + 1)))
     );
-    this.sideEffect.addEventListener($pageNumberInput, "focus", () => {
-      $pageNumberInput.select();
+    this.sideEffect.addEventListener($pageNumberInput, "blur", () => {
+      // Workaround for Safari keyboard folding
+      $pageNumberInput.value = String(this.pagesIndex$.value + 1);
     });
     this.sideEffect.addEventListener($pageNumberInput, "change", () => {
       if (this.readonly$.value) return;
-      const pageIndex = Number($pageNumberInput.value) - 1;
+      const pageIndex = $pageNumberInput.value ? Number($pageNumberInput.value) - 1 : NaN;
       if (pageIndex >= 0) {
         this.events.emit("jumpPage", pageIndex);
+      } else {
+        $pageNumberInput.value = String(this.pagesIndex$.value + 1);
       }
     });
 
