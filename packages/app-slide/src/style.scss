@@ -1,5 +1,13 @@
 @import "./fancy-scrollbar.scss";
 
+@mixin no-user-select {
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
 $namespace: "netless-app-slide";
 
 .#{$namespace}-content {
@@ -11,6 +19,7 @@ $namespace: "netless-app-slide";
 .#{$namespace}-slide {
   width: 100%;
   height: 100%;
+  @include no-user-select;
 }
 
 .#{$namespace}-preview-mask {
@@ -39,6 +48,7 @@ $namespace: "netless-app-slide";
   background: rgba(237, 237, 240, 0.9);
   box-shadow: inset -1px 0 0 rgba(0, 0, 0, 0.11);
   transition: transform 0.4s;
+  @include no-user-select;
 }
 
 .#{$namespace}-preview-active {
@@ -62,7 +72,7 @@ $namespace: "netless-app-slide";
   border: 7px solid transparent;
   border-radius: 4px;
   transition: border-color 0.3s;
-  user-select: none;
+  @include no-user-select;
 
   &:hover,
   &.#{$namespace}-preview-page-active {
@@ -88,7 +98,7 @@ $namespace: "netless-app-slide";
   text-align: right;
   font-size: 12px;
   color: #5f5f5f;
-  user-select: none;
+  @include no-user-select;
 }
 
 .#{$namespace}-footer {
@@ -127,7 +137,7 @@ $namespace: "netless-app-slide";
   background: transparent;
   transition: background 0.4s;
   cursor: pointer;
-  user-select: none;
+  @include no-user-select;
   -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
 
   &:hover {
@@ -177,7 +187,7 @@ $namespace: "netless-app-slide";
   height: 26px;
   margin-left: auto;
   font-size: 13px;
-  user-select: none;
+  @include no-user-select;
   white-space: nowrap;
   word-break: keep-all;
   font-variant-numeric: tabular-nums;
@@ -200,13 +210,13 @@ $namespace: "netless-app-slide";
     sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
   background: transparent;
   transition: background 0.4s;
-  user-select: text;
   font-variant-numeric: tabular-nums;
   -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
 
   &:hover,
   &:focus,
   &:active {
+    user-select: text;
     background: #fff;
     box-shadow: rgba(99, 99, 99, 0.2) 0px 2px 8px 0px;
   }

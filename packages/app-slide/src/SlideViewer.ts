@@ -176,8 +176,8 @@ function create_sidebar() {
     }
   }
 
-  function set_page_index(page_index_: number) {
-    if (page_index !== page_index_) {
+  function set_page_index(page_index_: number, force = false) {
+    if (force || page_index !== page_index_) {
       page_index = page_index_;
       const $page = $preview.querySelector<HTMLElement>(
         `.${wrap_class(`preview-page-${page_index}`)}`
@@ -326,8 +326,8 @@ function create_footer() {
     }
   }
 
-  function set_page_index(page_index_: number) {
-    if (page_index !== page_index_) {
+  function set_page_index(page_index_: number, force = false) {
+    if (force || page_index !== page_index_) {
       page_index = page_index_;
       $pageNumberInput.value = String(page_index + 1);
     }
@@ -411,6 +411,8 @@ export class SlideViewer {
     const on_new_page_index = (index: number) => {
       if (this._ready && index >= 0 && index < this._slideCount) {
         this.slide.renderSlide(index + 1);
+      } else {
+        this.setPage(this.slide.slideState.currentSlideIndex);
       }
     };
     this.sidebar.on_new_page_index(on_new_page_index);
@@ -530,8 +532,8 @@ export class SlideViewer {
   }
 
   setPage(page: number) {
-    this.sidebar.set_page_index(page - 1);
-    this.footer.set_page_index(page - 1);
+    this.sidebar.set_page_index(page - 1, true);
+    this.footer.set_page_index(page - 1, true);
   }
 
   private _isFrozen = false;
