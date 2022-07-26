@@ -120,6 +120,6 @@ app.onPageChanged.addListener(() => {
 });
 ```
 
-### Licence
+### License
 
 MIT @ [netless](https://github.com/netless-io)

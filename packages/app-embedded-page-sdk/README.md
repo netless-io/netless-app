@@ -257,6 +257,6 @@ app.onMessage.addListener(({ type, payload }) => {
   });
   ```
 
-### Licence
+### License
 
 MIT @ [netless](https://github.com/netless-io)

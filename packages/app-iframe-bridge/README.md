@@ -27,6 +27,6 @@ Also refer to [netless-io/netless-iframe-sdk](https://github.com/netless-io/netl
 - Not support whiteboard (draw on iframe).
 - Refresh page will set page to 1 (mainly because of cocos).
 
-### Licence
+### License
 
 MIT @ [netless](https://github.com/netless-io)

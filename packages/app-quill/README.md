@@ -6,6 +6,6 @@ Netless App for rich-text collaborative editing, powered with [Yjs](https://gith
 
 See [playground](https://github.com/netless-io/netless-app/tree/master/packages/playground).
 
-### Licence
+### License
 
 MIT @ [netless](https://github.com/netless-io)
