@@ -1,0 +1,25 @@
+{
+  "name": "@netless/app-mindmap",
+  "version": "0.1.0",
+  "description": "Netless App MindMap based on @antv/x6",
+  "repository": "netless-io/netless-mindmap",
+  "license": "MIT",
+  "main": "./dist/main.js",
+  "module": "./dist/main.mjs",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "src",
+    "dist"
+  ],
+  "scripts": {
+    "types": "cross-env NODE_ENV=production tsc --declaration --emitDeclarationOnly --outDir dist",
+    "build": "NODE_OPTIONS='--max-old-space-size=6144' vite build && npm run types",
+    "build:dev": "NODE_OPTIONS='--max-old-space-size=6144' vite build --mode development && npm run types",
+    "cleanup": "rimraf ./dist"
+  },
+  "devDependencies": {
+    "@antv/hierarchy": "^0.6.8",
+    "@antv/x6": "^1.32.11",
+    "side-effect-manager": "^1.1.1"
+  }
+}

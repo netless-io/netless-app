@@ -39,7 +39,8 @@ export function registerApps(): AppGroup[] {
     WindowManager.register(params);
   };
 
-  const apps = Object.entries(CONFIGS).map(([path, m]) => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const apps = Object.entries(CONFIGS).map(([path, m]: [path: string, m: any]) => {
     const name = (/^(?:\.\.\/){2}([^/]+)/.exec(path) || ["", ""])[1];
     const url = `https://github.com/netless-io/netless-app/tree/master/packages/${name}`;
     const configs: PlaygroundConfigs = Array.isArray(m.default) ? m.default : [m.default];
