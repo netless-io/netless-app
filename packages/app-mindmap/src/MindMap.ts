@@ -39,9 +39,6 @@ export class MindMapEditor {
       connecting: {
         connectionPoint: "anchor",
       },
-      resizing: {
-        enabled: true,
-      },
       selecting: {
         enabled: true,
       },
@@ -61,6 +58,14 @@ export class MindMapEditor {
     });
 
     setup(this);
+
+    this.sideEffect.add(() => {
+      const update = () => {
+        this.$container.classList.toggle("is-readonly", !context.isWritable);
+      };
+      update();
+      return context.emitter.on("writableChange", update);
+    });
 
     this.sideEffect.add(() => {
       const observer = new ResizeObserver(() => {
@@ -85,7 +90,7 @@ export class MindMapEditor {
   render() {
     if (this._destroyed) return;
 
-    if (!this.nodes$$.state.root) {
+    if (!this.nodes$$.state.root && this.context.isWritable) {
       this.nodes$$.setState({ root: createNode(null, this.context.box.title, 0) });
     }
 
@@ -107,7 +112,7 @@ export class MindMapEditor {
   }
 }
 
-function setup({ sideEffect, graph, nodes$$, tree }: MindMapEditor) {
+function setup({ sideEffect, graph, nodes$$, tree, context }: MindMapEditor) {
   defineShapes();
 
   function findTreeNode(id: string) {
@@ -123,6 +128,7 @@ function setup({ sideEffect, graph, nodes$$, tree }: MindMapEditor) {
   }
 
   function addChildNode(id: string, label: string) {
+    if (!context.isWritable) return;
     const parent = findTreeNode(id);
     if (!parent) return;
     const children = parent.children;
@@ -136,6 +142,7 @@ function setup({ sideEffect, graph, nodes$$, tree }: MindMapEditor) {
   }
 
   function addSiblingNode(id: string, label: string) {
+    if (!context.isWritable) return;
     const parentId = nodes$$.state[id]?.parent;
     if (!parentId) return;
     const parent = findTreeNode(parentId);
@@ -154,6 +161,7 @@ function setup({ sideEffect, graph, nodes$$, tree }: MindMapEditor) {
   }
 
   function removeNode(id: string) {
+    if (!context.isWritable) return;
     const partial: Record<string, undefined> = { [id]: undefined };
     Object.keys(nodes$$.state).forEach(key => {
       const parent = nodes$$.state[key].parent;
@@ -170,10 +178,12 @@ function setup({ sideEffect, graph, nodes$$, tree }: MindMapEditor) {
   }
 
   graph.on("add:topic", ({ node }: { node: Node }) => {
+    if (!context.isWritable) return;
     addChildNode(node.id, getChildLabel(node.prop("type")));
   });
 
   graph.bindKey("tab", e => {
+    if (!context.isWritable) return;
     if (!e.target || isX6NodeTool(e.target)) return;
     e.preventDefault();
     const selectedNodes = graph.getSelectedCells().filter(e => e.isNode());
@@ -184,6 +194,7 @@ function setup({ sideEffect, graph, nodes$$, tree }: MindMapEditor) {
   });
 
   graph.bindKey("enter", e => {
+    if (!context.isWritable) return;
     if (!e.target) return;
     e.preventDefault();
     const selectedNodes = graph.getSelectedCells().filter(e => e.isNode());
@@ -199,6 +210,7 @@ function setup({ sideEffect, graph, nodes$$, tree }: MindMapEditor) {
   });
 
   graph.bindKey(["backspace", "delete"], e => {
+    if (!context.isWritable) return;
     if (!e.target || isX6NodeTool(e.target)) return;
     const selectedNodes = graph.getSelectedCells().filter(e => e.isNode());
     if (selectedNodes.length) {
@@ -208,6 +220,7 @@ function setup({ sideEffect, graph, nodes$$, tree }: MindMapEditor) {
   });
 
   graph.on("node:dblclick", ({ node, e }: { node: Node; e: PointerEvent }) => {
+    if (!context.isWritable) return;
     node.removeTool("node-editor");
     node.addTools({
       name: "node-editor",
@@ -221,6 +234,7 @@ function setup({ sideEffect, graph, nodes$$, tree }: MindMapEditor) {
   });
 
   graph.bindKey("space", e => {
+    if (!context.isWritable) return;
     if (!e.target || isX6NodeTool(e.target)) return;
     e.preventDefault();
     const selectedNodes = graph.getSelectedCells().filter(e => e.isNode());
@@ -240,6 +254,7 @@ function setup({ sideEffect, graph, nodes$$, tree }: MindMapEditor) {
   });
 
   graph.on("node:changed", ({ node }: { node: Node }) => {
+    if (!context.isWritable) return;
     const data = nodes$$.state[node.id];
     if (!data) return;
     const label = node.getAttrByPath("text/text") as string;
