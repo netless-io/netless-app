@@ -1,6 +1,6 @@
 import type Plyr from "plyr";
 import type { AppContext, Player } from "@netless/window-manager";
-import type { Attributes } from ".";
+import type { Attributes } from "./index";
 
 import { clamp, first, safePlay } from "./utils";
 
@@ -35,7 +35,14 @@ export class Sync {
       ? () => room.calibrationTimestamp
       : () => player.beginTimestamp + player.progressTime;
 
-    this._disposer = this.context.storage.addStateChangedListener(this.syncAll.bind(this));
+    const disposeSyncAll = context.storage.addStateChangedListener(this.syncAll.bind(this));
+    const disposeWritableChange = context.emitter.on("writableChange", () => {
+      context.box.$content.classList.toggle("netless-app-plyr-is-readonly", !context.isWritable);
+    });
+    this._disposer = () => {
+      disposeSyncAll();
+      disposeWritableChange();
+    };
   }
 
   dispose() {
@@ -55,9 +62,14 @@ export class Sync {
   }
 
   setupPlayer(player: Plyr) {
+    player.toggleControls(this.context.isWritable);
     this.registerListeners(player);
     this.watchUserInputs(player);
     this._sync_timer = setInterval(this.syncAll.bind(this), this._interval);
+  }
+
+  setState(partial: Partial<Attributes>) {
+    this.context.isWritable && this.context.storage.setState(partial);
   }
 
   syncAll() {
@@ -68,7 +80,7 @@ export class Sync {
     const { storage } = context;
     const { currentTime, hostTime, muted, paused, volume, owner } = storage.state;
     // if the state comes from self, don't sync
-    if (behavior === "owner" && owner === this.uid) return;
+    if (behavior === "owner" && owner === this.uid && context.isWritable) return;
 
     if (paused !== player.paused && !this._skip_next_play_pause) {
       paused ? player.pause() : safePlay(player);
@@ -134,7 +146,7 @@ export class Sync {
   private registerListeners(player: Plyr) {
     player.on("ended", () => {
       player.stop();
-      this.context.storage.setState({ paused: true, currentTime: 0 });
+      this.setState({ paused: true, currentTime: 0 });
     });
     player.on("waiting", () => {
       this._buffering = true;
@@ -164,12 +176,12 @@ export class Sync {
 
   private dispatchOwner() {
     if (this.context.storage.state.owner !== this.uid) {
-      this.context.storage.setState({ owner: this.uid });
+      this.setState({ owner: this.uid });
     }
   }
 
   private dispatchPlayPause(player: Plyr) {
-    this.context.storage.setState({
+    this.setState({
       hostTime: this.getTimestamp(),
       currentTime: player.currentTime,
       paused: player.paused,
@@ -183,7 +195,7 @@ export class Sync {
   }
 
   private dispatchVolume(player: Plyr) {
-    this.context.storage.setState({
+    this.setState({
       muted: player.muted,
       volume: player.volume,
     });
@@ -191,7 +203,7 @@ export class Sync {
 
   private dispatchSeek(player: Plyr, $seek: HTMLInputElement) {
     const currentTime = ($seek.valueAsNumber * player.duration) / 100;
-    this.context.storage.setState({ hostTime: this.getTimestamp(), currentTime });
+    this.setState({ hostTime: this.getTimestamp(), currentTime });
   }
 
   private dispatchCurrentTime(player: Plyr) {
@@ -199,7 +211,7 @@ export class Sync {
       this._dispatch_time_again = true;
       return;
     }
-    this.context.storage.setState({
+    this.setState({
       hostTime: this.getTimestamp(),
       currentTime: player.currentTime,
     });

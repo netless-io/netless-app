@@ -21,3 +21,8 @@
   --plyr-audio-controls-background: #121212;
   --plyr-audio-control-color: #eee;
 }
+
+.netless-app-plyr-is-readonly {
+  pointer-events: none;
+  cursor: not-allowed;
+}
