@@ -24,7 +24,9 @@
 .x6-node-tool-editor {
   position: absolute;
   text-align: center;
-  line-height: 30px;
+  line-height: 26px;
+  outline: none;
+  cursor: text;
 }
 .x6-graph-scroller.x6-graph-scroller-pannable[data-panning="false"] {
   cursor: grab;
@@ -37,6 +39,7 @@
   box-sizing: border-box;
   overflow: scroll;
   outline: none;
+  touch-action: manipulation;
 }
 .x6-graph-scroller-content {
   position: relative;

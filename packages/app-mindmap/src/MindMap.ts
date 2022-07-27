@@ -184,11 +184,16 @@ function setup({ sideEffect, graph, nodes$$, tree }: MindMapEditor) {
   });
 
   graph.bindKey("enter", e => {
-    if (!e.target || isX6NodeTool(e.target)) return;
+    if (!e.target) return;
     e.preventDefault();
     const selectedNodes = graph.getSelectedCells().filter(e => e.isNode());
     if (selectedNodes.length) {
       const node = selectedNodes[0];
+      if (node.hasTool("node-editor")) {
+        // trigger node editor hide itself
+        document.dispatchEvent(new MouseEvent("mousedown"));
+        return;
+      }
       addSiblingNode(node.id, getLabel(node.prop("type")));
     }
   });
