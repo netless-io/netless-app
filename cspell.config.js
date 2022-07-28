@@ -52,6 +52,8 @@ module.exports = {
     "courseware",
     "vite",
     "NETLESSROOM",
+    "antv",
+    "xflow",
   ],
   flagWords: ["fuck", "bitch", "asshole", "bullshit", "crap", "suck", "wtf"],
   dictionaries: [
