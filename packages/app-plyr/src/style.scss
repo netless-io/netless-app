@@ -22,7 +22,12 @@
   --plyr-audio-control-color: #eee;
 }
 
-.netless-app-plyr-is-readonly {
+.netless-app-plyr-container {
+  width: 100%;
+  height: 100%;
+}
+
+.netless-app-plyr-container.is-readonly {
   pointer-events: none;
   cursor: not-allowed;
 }

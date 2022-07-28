@@ -35,14 +35,7 @@ export class Sync {
       ? () => room.calibrationTimestamp
       : () => player.beginTimestamp + player.progressTime;
 
-    const disposeSyncAll = context.storage.addStateChangedListener(this.syncAll.bind(this));
-    const disposeWritableChange = context.emitter.on("writableChange", () => {
-      context.box.$content.classList.toggle("netless-app-plyr-is-readonly", !context.isWritable);
-    });
-    this._disposer = () => {
-      disposeSyncAll();
-      disposeWritableChange();
-    };
+    this._disposer = context.storage.addStateChangedListener(this.syncAll.bind(this));
   }
 
   dispose() {

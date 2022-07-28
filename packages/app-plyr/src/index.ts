@@ -50,12 +50,19 @@ const Plyr: NetlessApp<Attributes> = {
     }
 
     const box = context.box;
+    const container = document.createElement("div");
+    container.className = "netless-app-plyr-container";
 
     box.mountStyles(styles);
+    box.mountContent(container);
+
+    const dispose = context.emitter.on("writableChange", () => {
+      container.classList.toggle("is-readonly", !context.isWritable);
+    });
 
     const sync = new Sync(context);
     const app = new Player({
-      target: box.$content,
+      target: container,
       props: { storage: context.storage, sync },
     });
 
@@ -69,6 +76,7 @@ const Plyr: NetlessApp<Attributes> = {
 
     context.emitter.on("destroy", () => {
       try {
+        dispose();
         sync.dispose();
         app.$destroy();
       } catch (err) {
