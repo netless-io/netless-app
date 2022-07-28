@@ -13,7 +13,7 @@ export class FlowSync {
       const model = await this.getSelectedModel();
       if (model) {
         const originNode = model.getValue() || [];
-        const originIds = (originNode as any).map((item: any) => item.id);
+        const originIds = (originNode as NsGraph.INodeConfig[]).map(item => item.id);
         const newValue = diff.ids?.newValue;
         if (!isEqual(originIds, newValue) && newValue && newValue.length > 0) {
           await this.app?.executeCommand(XFlowNodeCommands.SELECT_NODE.id, {
@@ -58,7 +58,6 @@ export class FlowSync {
 
   public updateNode = async (nodeConfig: NsGraph.INodeConfig) => {
     const node = await this.app?.getNodeById(nodeConfig.id);
-    console.log("updateNode", nodeConfig);
     const nextConfig = omit(nodeConfig, ["isCollapsed"]);
     if (node?.toJSON() === nextConfig) return;
     return this.app?.executeCommand(XFlowNodeCommands.UPDATE_NODE.id, { nodeConfig: nextConfig });

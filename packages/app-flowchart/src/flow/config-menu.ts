@@ -86,8 +86,9 @@ export namespace NsMenuItemConfig {
     label: "删除节点",
     iconName: "DeleteOutlined",
     onClick: async ({ target, commandService }) => {
+      if (!target.data?.id) return;
       commandService.executeCommand<NsNodeCmd.DelNode.IArgs>(XFlowNodeCommands.DEL_NODE.id, {
-        nodeConfig: { id: target?.data!.id },
+        nodeConfig: { id: target.data.id },
       });
     },
   };

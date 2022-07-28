@@ -1,9 +1,20 @@
-import './dnd-node.less'
+import "./dnd-node.less";
 
-export const DndNode = (props: any) => {
-  const { size = { width: 126, height: 104 }, data } = props
-  const { width, height } = size
-  const { label, stroke, fill, fontFill, fontSize } = data
+type INndNodeProps = {
+  size: { width: number; height: number };
+  data: {
+    label: string;
+    stroke: string;
+    fill: string;
+    fontFill: string;
+    fontSize: number;
+  };
+};
+
+export const DndNode = (props: INndNodeProps) => {
+  const { size = { width: 126, height: 104 }, data } = props;
+  const { width, height } = size;
+  const { label, stroke, fill, fontFill, fontSize } = data;
 
   return (
     <div
@@ -19,5 +30,5 @@ export const DndNode = (props: any) => {
     >
       <span>{label}</span>
     </div>
-  )
-}
+  );
+};

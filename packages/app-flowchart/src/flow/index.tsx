@@ -3,9 +3,8 @@ import {
   XFlowGraphCommands,
   XFlowGroupCommands,
   XFlowNodeCommands,
-  type IApplication,
 } from "@antv/xflow";
-import type { IAppLoad, NsGraph } from "@antv/xflow";
+import type { IAppLoad, NsGraph, IApplication, ICommandConfig } from "@antv/xflow";
 import React, { useRef, useEffect, useState } from "preact/compat";
 /** 交互组件 */
 import {
@@ -46,9 +45,11 @@ import { DndNode } from "./react-node/dnd-node";
 import type { AppContext, Storage } from "@netless/window-manager";
 import type { FlowSync } from "./flow-sync";
 
+type FN = () => void;
+
 export interface IProps {
   meta: { flowId: string };
-  stageRect$: any;
+  stageRect$: { subscribe: (fn: FN) => void };
   nodeStorage: Storage<Record<string, NsGraph.INodeConfig>>;
   edgeStorage: Storage<Record<string, NsGraph.IEdgeConfig>>;
   groupStorage: Storage<Record<string, NsGraph.IGroupConfig>>;
@@ -107,18 +108,19 @@ export const Flow: React.FC<IProps> = props => {
   const onLoad: IAppLoad = async app => {
     appRef.current = app;
     graphRef.current = await app.getGraphInstance();
-    const pipeline: any = groups.map(group => {
-      return {
-        commandId: XFlowGroupCommands.ADD_GROUP.id,
-        getCommandOption: async () => {
-          return {
-            args: {
-              nodeConfig: group,
-            },
-          };
-        },
-      };
-    });
+    const pipeline: { commandId: string; getCommandOption: () => Promise<ICommandConfig> }[] =
+      groups.map(group => {
+        return {
+          commandId: XFlowGroupCommands.ADD_GROUP.id,
+          getCommandOption: async () => {
+            return {
+              args: {
+                nodeConfig: group,
+              },
+            };
+          },
+        };
+      });
     if (selected?.length) {
       pipeline.push({
         commandId: XFlowNodeCommands.SELECT_NODE.id,

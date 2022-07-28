@@ -4,9 +4,7 @@ import { debounce } from "lodash-es";
 
 export const useCmdConfig = createCmdConfig((config, value) => {
   const apis = value.getValue() as CmdConfigProps;
-  const updateNode = async (args: any) => {
-    apis.updateNode(args.nodeConfig);
-  };
+
   config.setRegisterHookFn(hooks => {
     const list = [
       hooks.addNode.registerHook({
@@ -31,7 +29,9 @@ export const useCmdConfig = createCmdConfig((config, value) => {
       hooks.updateNode.registerHook({
         name: "sync node",
         handler: async args => {
-          updateNode(args);
+          if (args.nodeConfig) {
+            apis.updateNode(args.nodeConfig);
+          }
         },
       }),
       hooks.delNode.registerHook({

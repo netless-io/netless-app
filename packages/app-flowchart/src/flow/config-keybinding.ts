@@ -26,8 +26,10 @@ export const useKeybindingConfig = createKeybindingConfig(config => {
               });
             }
             if (cell.isEdge()) {
+              const cellData = cell.getData();
+              if (!cellData) return;
               return cmd.executeCommand<NsEdgeCmd.DelEdge.IArgs>(XFlowEdgeCommands.DEL_EDGE.id, {
-                edgeConfig: { ...cell.getData(), id: cell.id } as any,
+                edgeConfig: { ...cellData, id: cell.id },
               });
             }
           });
