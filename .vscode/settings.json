@@ -45,8 +45,5 @@
     "editor.formatOnSave": true,
     "editor.defaultFormatter": "esbenp.prettier-vscode"
   },
-  "cSpell.words": [
-    "antv",
-    "xflow"
-  ]
+  "cSpell.words": ["antv", "xflow"]
 }

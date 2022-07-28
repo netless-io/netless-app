@@ -30,15 +30,15 @@ export default defineConfig({
   },
   resolve: {
     alias: {
-      react: 'preact/compat',
-      'react-dom': 'preact/compat'
-    }
+      react: "preact/compat",
+      "react-dom": "preact/compat",
+    },
   },
   css: {
     preprocessorOptions: {
       less: {
         javascriptEnabled: true,
-      }
-    }
-  }
+      },
+    },
+  },
 });
