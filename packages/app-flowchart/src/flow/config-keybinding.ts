@@ -14,7 +14,7 @@ export const useKeybindingConfig = createKeybindingConfig(config => {
       {
         id: "delete node or edge",
         keybinding: "backspace",
-        callback: async function (item, modelService, cmd) {
+        callback: async function (_item, modelService, cmd) {
           const cells = await MODELS.SELECTED_CELLS.useValue(modelService);
           cells.map(cell => {
             if (cell.isNode()) {
@@ -38,7 +38,7 @@ export const useKeybindingConfig = createKeybindingConfig(config => {
       {
         id: "copy",
         keybinding: ["command+c", "ctrl+c"],
-        callback: async function (item, modelService, cmd, e) {
+        callback: async function (_item, _modelService, cmd, e) {
           e.preventDefault();
           cmd.executeCommand<NsGraphCmd.GraphCopySelection.IArgs>(
             XFlowGraphCommands.GRAPH_COPY.id,
@@ -49,7 +49,7 @@ export const useKeybindingConfig = createKeybindingConfig(config => {
       {
         id: "paste",
         keybinding: ["command+v", "ctrl+v"],
-        callback: async function (item, ctx, cmd, e) {
+        callback: async function (_item, _ctx, cmd, e) {
           e.preventDefault();
           cmd.executeCommand<NsGraphCmd.GraphPasteSelection.IArgs>(
             XFlowGraphCommands.GRAPH_PASTE.id,
@@ -60,7 +60,7 @@ export const useKeybindingConfig = createKeybindingConfig(config => {
       {
         id: "undo",
         keybinding: ["meta+z", "ctrl+z"],
-        callback: async function (item, ctx, cmd, e) {
+        callback: async function (_item, _ctx, cmd, e) {
           e.preventDefault();
           cmd.executeCommand<NsGraphCmd.GraphHistoryUndo.IArgs>(
             XFlowGraphCommands.GRAPH_HISTORY_UNDO.id,
@@ -71,7 +71,7 @@ export const useKeybindingConfig = createKeybindingConfig(config => {
       {
         id: "redo",
         keybinding: ["meta+shift+z", "ctrl+shift+z"],
-        callback: async function (item, ctx, cmd, e) {
+        callback: async function (_item, _ctx, cmd, e) {
           e.preventDefault();
           cmd.executeCommand<NsGraphCmd.GraphHistoryRedo.IArgs>(
             XFlowGraphCommands.GRAPH_HISTORY_REDO.id,

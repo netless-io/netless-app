@@ -226,7 +226,8 @@ const registerIcon = () => {
   IconStore.set("SnippetsOutlined", SnippetsOutlined);
 };
 
-export const useToolbarConfig = createToolbarConfig(toolbarConfig => {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export const useToolbarConfig: any = createToolbarConfig(toolbarConfig => {
   registerIcon();
   /** 生产 toolbar item */
   toolbarConfig.setToolbarModelService(async (toolbarModel, modelService, toDispose) => {

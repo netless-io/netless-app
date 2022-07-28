@@ -106,7 +106,8 @@ export namespace NsMenuItemConfig {
   };
 }
 
-export const useMenuConfig = createCtxMenuConfig(config => {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export const useMenuConfig: any = createCtxMenuConfig(config => {
   config.setMenuModelService(async (target, model) => {
     if (!target) return;
     const { type } = target;

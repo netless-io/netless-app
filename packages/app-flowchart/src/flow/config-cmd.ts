@@ -2,7 +2,8 @@ import { createCmdConfig, DisposableCollection, uuidv4 } from "@antv/xflow";
 import type { CmdConfigProps } from "./index";
 import { debounce } from "lodash-es";
 
-export const useCmdConfig = createCmdConfig((config, value) => {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export const useCmdConfig: any = createCmdConfig((config, value) => {
   const apis = value.getValue() as CmdConfigProps;
 
   config.setRegisterHookFn(hooks => {
