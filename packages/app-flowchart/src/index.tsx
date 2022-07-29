@@ -5,7 +5,7 @@ import type { NetlessApp } from "@netless/window-manager";
 import { Flow } from "./flow";
 import type { NsGraph } from "@antv/xflow";
 import { FlowSync } from "./flow/flow-sync";
-import { isEqual } from "lodash-es";
+import { debounce, isEqual } from "lodash-es";
 
 export interface FlowchartAttributes {
   count: number;
@@ -102,50 +102,17 @@ const Flowchart: NetlessApp<FlowchartAttributes, MagixEventPayloads> = {
     const apis = Object.assign(nodeStorageApis(), edgeStorageApis(), groupStorageApis());
 
     const flowSync = new FlowSync({ selectedStorage });
-
-    nodeStorage.addStateChangedListener(diff => {
-      Object.keys(diff).forEach(nodeID => {
-        const node = diff[nodeID];
-        if (node?.oldValue && node?.newValue) {
-          flowSync.updateNode(node.newValue);
-          // if (
-          //   node.oldValue.isCollapsed !== undefined &&
-          //   node.oldValue.isCollapsed !== node.newValue.isCollapsed
-          // ) {
-          //   flowSync.collapseGroup(node.newValue.id, node.newValue.isCollapsed);
-          // }
-        } else if (node?.newValue) {
-          flowSync.addNode(node.newValue);
-        } else if (node?.newValue === undefined) {
-          flowSync.delNode(nodeID);
-        }
-      });
+    const getGraphData = () => {
+      const nodes = Object.values(nodeStorage.state);
+      const edges = Object.values(edgeStorage.state);
+      return { nodes, edges };
+    };
+    const updateGraph = debounce(flowSync.updateGraph, 100);
+    nodeStorage.addStateChangedListener(() => {
+      updateGraph(getGraphData());
     });
-
-    edgeStorage.addStateChangedListener(diff => {
-      Object.keys(diff).forEach(edgeID => {
-        const edge = diff[edgeID];
-        if (edge?.oldValue && edge?.newValue) {
-          flowSync.updateEdge(edge.newValue);
-        } else if (edge?.newValue) {
-          flowSync.addEdge(edge.newValue);
-        } else if (edge?.newValue === undefined && edge?.oldValue) {
-          flowSync.delEdge(edge.oldValue);
-        }
-      });
-    });
-
-    groupStorage.addStateChangedListener(diff => {
-      Object.keys(diff).forEach(groupID => {
-        const group = diff[groupID];
-        if (group?.oldValue && group?.newValue) {
-          flowSync.updateGroup(group.newValue);
-        } else if (!group?.oldValue && group?.newValue) {
-          flowSync.addGroup(group.newValue);
-        } else if (group?.newValue === undefined && group?.oldValue) {
-          flowSync.delGroup(group.oldValue.id);
-        }
-      });
+    edgeStorage.addStateChangedListener(() => {
+      updateGraph(getGraphData());
     });
     log("render", apis);
 
