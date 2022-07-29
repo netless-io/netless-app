@@ -267,7 +267,7 @@ function setup({ sideEffect, graph, nodes$$, tree, context }: MindMapEditor) {
     if (!data) return;
     const label = node.getAttrByPath("text/text") as string;
     if (label !== data.label) {
-      nodes$$.setState({ [node.id]: { ...data, label } });
+      nodes$$.setState({ [node.id]: createNode(data.parent, label, data.order) });
     }
   });
 

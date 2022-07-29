@@ -97,8 +97,8 @@ export function deconstruct(node: MindMapNode) {
 }
 
 function deconstruct_(node: MindMapNode, nodes: Nodes, parent: string | null, index: number) {
-  const id = next_id();
-  nodes[id] = createNode(parent, node.label, index * 16);
+  const id = parent === null ? "root" : next_id();
+  nodes[id] = createNode(parent, node.label, index * 16 || 1);
   if (node.children) {
     node.children.forEach((child, index) => {
       deconstruct_(child, nodes, id, index);
