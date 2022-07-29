@@ -1,16 +1,18 @@
 import type { AppContext, Storage } from "@netless/window-manager";
+import type { NetlessAppMindMapAttributes } from "./index";
 
 import { Graph, type Node } from "@antv/x6";
 import { SideEffectManager } from "side-effect-manager";
 
 import { add_class, element, next_id } from "./internal";
-import { reconstruct, createNode, orderBy, type Nodes, type TreeNode } from "./model";
+import { reconstruct, createNode, orderBy, type Nodes, type TreeNode, deconstruct } from "./model";
 import { defineShapes, doLayout, gatherCells, toMindMapData, type NodeType } from "./antv";
 import styles from "./style.scss?inline";
 
 export class MindMapEditor {
   static readonly styles = styles;
 
+  readonly defaultNodes: Nodes;
   readonly nodes$$: Storage<Nodes>;
 
   readonly $container: HTMLDivElement;
@@ -24,7 +26,13 @@ export class MindMapEditor {
 
   private _destroyed = false;
 
-  constructor(readonly context: AppContext) {
+  constructor(readonly context: AppContext<NetlessAppMindMapAttributes>) {
+    if (context.storage.state.root) {
+      this.defaultNodes = deconstruct(context.storage.state.root);
+    } else {
+      this.defaultNodes = { root: createNode(null, this.context.box.title, 0) };
+    }
+
     this.nodes$$ = context.createStorage<Nodes>("nodes");
 
     this.$container = add_class(element("div"), "container");
@@ -91,7 +99,7 @@ export class MindMapEditor {
     if (this._destroyed) return;
 
     if (!this.nodes$$.state.root && this.context.isWritable) {
-      this.nodes$$.setState({ root: createNode(null, this.context.box.title, 0) });
+      this.nodes$$.setState(this.defaultNodes);
     }
 
     const roots = reconstruct(this.nodes$$.state);

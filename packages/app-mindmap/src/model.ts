@@ -1,5 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import type { MindMapNode } from "./index";
 import { MIN_ORDER, MAX_ORDER } from "./constants";
+import { next_id } from "./internal";
 
 export interface Node {
   parent: string | null;
@@ -86,6 +88,22 @@ export function reconstruct(nodes: Nodes): TreeNode[] {
   });
   roots.sort(compareNode);
   return roots;
+}
+
+export function deconstruct(node: MindMapNode) {
+  const nodes: Nodes = {};
+  deconstruct_(node, nodes, null, 0);
+  return nodes;
+}
+
+function deconstruct_(node: MindMapNode, nodes: Nodes, parent: string | null, index: number) {
+  const id = next_id();
+  nodes[id] = createNode(parent, node.label, index * 16);
+  if (node.children) {
+    node.children.forEach((child, index) => {
+      deconstruct_(child, nodes, id, index);
+    });
+  }
 }
 
 export function compareNode(a: TreeNode, b: TreeNode) {

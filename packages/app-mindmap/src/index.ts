@@ -2,7 +2,16 @@
 import type { NetlessApp } from "@netless/window-manager";
 import { MindMapEditor } from "./MindMap";
 
-const MindMap: NetlessApp<void> = {
+export interface MindMapNode {
+  label: string;
+  children?: MindMapNode[];
+}
+
+export interface NetlessAppMindMapAttributes {
+  root?: MindMapNode;
+}
+
+const MindMap: NetlessApp<NetlessAppMindMapAttributes> = {
   kind: "MindMap",
   setup(context) {
     const editor = new MindMapEditor(context);

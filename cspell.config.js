@@ -10,6 +10,7 @@ module.exports = {
     "antv",
     "autoplay",
     "autorun",
+    "Azkaban",
     "blockly",
     "canplay",
     "crossorigin",

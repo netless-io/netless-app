@@ -27,12 +27,32 @@ export function toMindMapData(root: TreeNode, depth = 0): MindMapData {
   const { id, label, children } = root;
   const index = depth > 2 ? 2 : depth;
   const type = typeMap[index];
-  const [width, height] = sizeMap[index]; // TODO: calculate from label
+  const [minWidth, height] = sizeMap[index];
+  const width = calculateWidth(label, minWidth);
   const data: MindMapData = { id, type, label, width, height };
   if (children) {
     data.children = children.map(e => toMindMapData(e, depth + 1));
   }
   return data;
+}
+
+const PADDING = 10;
+
+let canvas: HTMLCanvasElement | undefined;
+let context: CanvasRenderingContext2D | null | undefined;
+function calculateWidth(label: string, minWidth: number) {
+  if (context === undefined) {
+    canvas = document.createElement("canvas");
+    context = canvas.getContext("2d");
+    if (context) {
+      context.font = "14px sans-serif";
+    }
+  }
+  if (context === null) {
+    return label.length * 10;
+  }
+  const width = context.measureText(label).width + PADDING;
+  return width < minWidth ? minWidth : width;
 }
 
 export interface HierarchyResult {
@@ -80,12 +100,10 @@ export function defineShapes() {
       markup: [
         { tagName: "rect", selector: "body" },
         { tagName: "text", selector: "label" },
-        { tagName: "path", selector: "line" },
       ],
       attrs: {
-        body: { fill: "transparent", strokeWidth: 0, stroke: "#5F95FF" },
-        label: { fontSize: 14, fill: "currentColor", textVerticalAnchor: "bottom" },
-        line: { stroke: "#5F95FF", strokeWidth: 2, d: "M 0 15 L 70 15" },
+        body: { rx: 6, ry: 6, fill: "transparent", strokeWidth: 1, stroke: "#5F95FF" },
+        label: { fontSize: 14, fill: "currentColor" },
       },
     },
     true
