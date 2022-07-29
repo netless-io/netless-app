@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "vite --open --host",
-    "build:ci": "vite build",
+    "build:ci": "NODE_OPTIONS='--max-old-space-size=6144' vite build",
     "cleanup": "rimraf dist"
   },
   "devDependencies": {
