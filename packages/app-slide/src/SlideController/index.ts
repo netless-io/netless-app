@@ -294,33 +294,12 @@ export class SlideController {
 
   public isFrozen = false;
   private _toFreeze: -1 | 0 | 1 = 0; // -1: unfreeze, 0: no change, 1: freeze
-  private freezePromise: Promise<void> | null = null;
-
-  private afterFreeze(from: -1 | 1) {
-    if (from === 1) {
-      this.isFrozen = true;
-      this.freezePromise = null;
-      if (this._toFreeze === -1) {
-        this.unfreeze();
-      }
-    } else if (from === -1) {
-      this.isFrozen = false;
-      this.freezePromise = null;
-      if (this._toFreeze === 1) {
-        this.freeze();
-      }
-    }
-  }
 
   public freeze = () => {
+    this.isFrozen = true;
     if (this.ready) {
       log("[Slide] freeze", this.context.appId);
-      if (this.freezePromise) {
-        this._toFreeze = 1;
-      } else if (!this.isFrozen) {
-        this._toFreeze = 0;
-        this.freezePromise = this.slide.frozen().then(this.afterFreeze.bind(this, 1));
-      }
+      this.slide.frozen();
     } else {
       this._toFreeze = 1;
     }
@@ -328,14 +307,10 @@ export class SlideController {
 
   public unfreeze = async () => {
     if (!this.visible) return;
+    this.isFrozen = false;
     if (this.ready) {
       log("[Slide] unfreeze", this.context.appId);
-      if (this.freezePromise) {
-        this._toFreeze = -1;
-      } else if (this.isFrozen) {
-        this._toFreeze = 0;
-        this.freezePromise = this.slide.release().then(this.afterFreeze.bind(this, -1));
-      }
+      this.slide.release();
     } else {
       this._toFreeze = -1;
     }
@@ -343,7 +318,7 @@ export class SlideController {
 
   private onVisibilityChange = async () => {
     if (!(this.visible = document.visibilityState === "visible")) {
-      this.savedIsFrozen = this.freezePromise ? this._toFreeze === 1 : this.isFrozen;
+      this.savedIsFrozen = this.isFrozen;
       log("[Slide] freeze because tab becomes invisible");
       this.freeze();
     } else {
