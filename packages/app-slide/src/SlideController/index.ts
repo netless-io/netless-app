@@ -264,6 +264,13 @@ export class SlideController {
         transactionBgColor: options.bgColor || cachedGetBgColor(anchor),
         maxResolutionLevel: options.maxResolutionLevel,
       },
+      fixedFrameSize: options.fixedFrameSize,
+      loaderDelegate: options.loaderDelegate,
+      navigatorDelegate: options.navigatorDelegate,
+      resourceTimeout: options.resourceTimeout,
+      rtcAudio: options.rtcAudio,
+      useLocalCache: options.useLocalCache,
+      logger: options.logger,
       timestamp: this.timestamp,
     });
     if (import.meta.env.DEV) {

@@ -1,10 +1,11 @@
 import type { NetlessApp } from "@netless/window-manager";
 import type { RoomState } from "white-web-sdk";
-import type { Slide } from "@netless/slide";
+import type { ISlideConfig } from "@netless/slide";
 import type { MountSlideOptions } from "./SlideDocsViewer";
 import type { Attributes, MagixEvents } from "./typings";
 import type { AddHooks, FreezableSlide } from "./utils/freezer";
 
+import { Slide } from "@netless/slide";
 import { SideEffectManager } from "side-effect-manager";
 import {
   DefaultUrl,
@@ -21,12 +22,25 @@ export type { PreviewParams } from "./SlidePreviewer";
 export { SlidePreviewer, default as previewSlide } from "./SlidePreviewer";
 
 export type { Attributes, AddHooks, FreezableSlide };
+export { Slide };
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export const usePlugin: (plugin: any) => any = /* @__PURE__ */ Slide.usePlugin.bind(Slide);
 
 export const version = __APP_VERSION__;
 
 export { DefaultUrl, apps, FreezerLength, addHooks };
 
-export interface AppOptions {
+export interface AppOptions
+  extends Pick<
+    ISlideConfig,
+    | "rtcAudio"
+    | "useLocalCache"
+    | "resourceTimeout"
+    | "loaderDelegate"
+    | "navigatorDelegate"
+    | "fixedFrameSize"
+    | "logger"
+  > {
   /** show debug controller */
   debug?: boolean;
   /** scale */
@@ -43,6 +57,12 @@ export interface AppOptions {
   autoResolution?: boolean;
   /** 1~4, default: 3 */
   maxResolutionLevel?: number;
+}
+
+export interface ILogger {
+  info?(msg: string): void;
+  error?(msg: string): void;
+  warn?(msg: string): void;
 }
 
 export interface Controller {
