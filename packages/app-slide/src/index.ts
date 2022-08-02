@@ -42,7 +42,8 @@ const SlideApp: NetlessApp<Attributes, MagixEvents, AppOptions, void> = {
         autoFPS: options.autoFPS ?? true,
         autoResolution: options.autoResolution ?? true,
         resolution: options.resolution,
-        transactionBgColor: options.bgColor || make_bg_color(context.box.$content),
+        maxResolutionLevel: options.maxResolutionLevel,
+        transactionBgColor: options.transactionBgColor || make_bg_color(context.box.$content),
       },
 
       taskId: context.storage.state.taskId,

@@ -15,8 +15,10 @@
     "dist",
     "README-zh.md"
   ],
+  "dependencies": {
+    "@netless/slide": "^0.5.10"
+  },
   "devDependencies": {
-    "@netless/slide": "^0.5.10",
     "@types/color-string": "^1.5.2",
     "color-string": "^1.9.1",
     "side-effect-manager": "^1.1.1",

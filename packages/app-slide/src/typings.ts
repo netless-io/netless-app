@@ -1,4 +1,4 @@
-import type { Slide, SLIDE_EVENTS, SyncEvent } from "@netless/slide";
+import type { ISlideRenderOptions, Slide, SLIDE_EVENTS, SyncEvent } from "@netless/slide";
 import type { RegisterParams } from "@netless/window-manager";
 
 export type SlideState = Slide["slideState"];
@@ -18,19 +18,6 @@ export interface MagixEvents {
   [SLIDE_EVENTS.syncDispatch]: SyncEvent;
 }
 
-export interface AppOptions {
-  /** show debug controller */
+export interface AppOptions extends ISlideRenderOptions {
   debug?: boolean;
-  /** scale */
-  resolution?: number;
-  /** background color for slide animations */
-  bgColor?: string;
-  /** minimal fps  (default: 25) */
-  minFPS?: number;
-  /** maximal fps  (default: 30) */
-  maxFPS?: number;
-  /** automatically decrease fps  (default: true) */
-  autoFPS?: boolean;
-  /** whether to re-scale automatically (default: true) */
-  autoResolution?: boolean;
 }
