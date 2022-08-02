@@ -16,11 +16,11 @@
     "README-zh.md"
   ],
   "devDependencies": {
-    "@netless/slide": "^0.5.3",
+    "@netless/slide": "^0.5.10",
     "@types/color-string": "^1.5.2",
     "color-string": "^1.9.1",
     "side-effect-manager": "^1.1.1",
-    "value-enhancer": "^1.3.0",
-    "vanilla-lazyload": "^17.8.2"
+    "value-enhancer": "^1.3.2",
+    "vanilla-lazyload": "^17.8.3"
   }
 }

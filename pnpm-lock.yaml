@@ -244,19 +244,19 @@ importers:
 
   packages/app-slide:
     specifiers:
-      '@netless/slide': ^0.5.3
+      '@netless/slide': ^0.5.10
       '@types/color-string': ^1.5.2
       color-string: ^1.9.1
       side-effect-manager: ^1.1.1
-      value-enhancer: ^1.3.0
-      vanilla-lazyload: ^17.8.2
+      value-enhancer: ^1.3.2
+      vanilla-lazyload: ^17.8.3
     devDependencies:
-      '@netless/slide': 0.5.3
+      '@netless/slide': 0.5.10
       '@types/color-string': 1.5.2
       color-string: 1.9.1
       side-effect-manager: 1.1.1
-      value-enhancer: 1.3.0
-      vanilla-lazyload: 17.8.2
+      value-enhancer: 1.3.2
+      vanilla-lazyload: 17.8.3
 
   packages/app-talkative:
     specifiers:
@@ -1066,8 +1066,8 @@ packages:
     resolution: {integrity: sha512-7NzsJrba0R/mq/l10SkIZQwbrNVJyPxZYrjK6xL3Ts732iWAVuS2UB0u3s6iGeUVcqV39A679yva8APWRl4M0A==}
     dev: true
 
-  /@netless/slide/0.5.3:
-    resolution: {integrity: sha512-P7In3No9vkr5b1OpZ3AzsDr06v2PI6Jcg/VM1yZT7Llv3z/N2xhgnHvzYPTCdbxV//xXxXd4odE50MMZCRMLZQ==}
+  /@netless/slide/0.5.10:
+    resolution: {integrity: sha512-NdosWWWhn1szp9X5O/yoMeoIeVjVkjsXlToSVCv7adxTrHD1O4eZQs7G4rLgM6AQ59J1/DFT8MvnBpUyP426Aw==}
     dependencies:
       '@juggle/resize-observer': 3.3.1
       '@types/lodash': 4.14.182
@@ -5028,15 +5028,16 @@ packages:
       spdx-expression-parse: 3.0.1
     dev: true
 
-  /value-enhancer/1.3.0:
-    resolution: {integrity: sha512-shI9N5ML4MGwD6bMu/My1l1+REFqhZGOuIjDN5Gf+k7gACfY2k8WtJEcqgdZMfepwivfhQxIfZp0riobUDZpDQ==}
-    dev: true
-
   /value-enhancer/1.3.2:
     resolution: {integrity: sha512-RC+yfNMwuLZO2iDtHh4dxvtHP00DnSO0VARBkVoxT1eOwMJ/Rs5jKh6nBUcotWncJhjfGGhQE4SUK8goLEC5oQ==}
 
   /vanilla-lazyload/17.8.2:
     resolution: {integrity: sha512-sz/dFM5tXi5LbDhx9l31bAdXXtYvKCZ2cCva4SgsKxFIHf0r/4j1HsnaDn60ga2DhbxLRtHh65J8JmHZHW0F8w==}
+    dev: false
+
+  /vanilla-lazyload/17.8.3:
+    resolution: {integrity: sha512-0eYjhkSkfP/JCDIzVpmgnh9I3XKAA8/i/6FpRrH8qjcC+nHv5mYZ6DQZUIGU16TqJei23hHl0J/Zuv/zmCC2Zw==}
+    dev: true
 
   /vite/3.0.3:
     resolution: {integrity: sha512-sDIpIcl3mv1NUaSzZwiXGEy1ZoWwwC2vkxUHY6yiDacR6zf//ZFuBJrozO62gedpE43pmxnLATNR5IYUdAEkMQ==}
