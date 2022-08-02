@@ -247,6 +247,7 @@ export class SlideController {
   }
 
   private createSlide(anchor: HTMLDivElement) {
+    const options = this.context.getAppOptions() || {};
     const slide = new Slide({
       anchor,
       interactive: true,
@@ -255,12 +256,13 @@ export class SlideController {
       controller: logger.enable,
       enableGlobalClick: true,
       renderOptions: {
-        minFPS: this.context.getAppOptions()?.minFPS || 25,
-        maxFPS: this.context.getAppOptions()?.maxFPS || 30,
-        autoFPS: this.context.getAppOptions()?.autoFPS ?? true,
-        autoResolution: this.context.getAppOptions()?.autoResolution ?? true,
-        resolution: this.context.getAppOptions()?.resolution,
-        transactionBgColor: this.context.getAppOptions()?.bgColor || cachedGetBgColor(anchor),
+        minFPS: options.minFPS || 25,
+        maxFPS: options.maxFPS || 30,
+        autoFPS: options.autoFPS ?? true,
+        autoResolution: options.autoResolution ?? true,
+        resolution: options.resolution,
+        transactionBgColor: options.bgColor || cachedGetBgColor(anchor),
+        maxResolutionLevel: options.maxResolutionLevel,
       },
       timestamp: this.timestamp,
     });

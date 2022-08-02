@@ -41,6 +41,8 @@ export interface AppOptions {
   autoFPS?: boolean;
   /** whether to re-scale automatically @default true */
   autoResolution?: boolean;
+  /** 1~4, default: 3 */
+  maxResolutionLevel?: number;
 }
 
 export interface Controller {
