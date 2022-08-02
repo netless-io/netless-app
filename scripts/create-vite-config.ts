@@ -1,5 +1,6 @@
 import { svelte } from "@sveltejs/vite-plugin-svelte";
-import peerDepsExternal from "rollup-plugin-peer-deps-external";
+// import peerDepsExternal from "rollup-plugin-peer-deps-external";
+import excludeDependencies from "rollup-plugin-exclude-dependencies-from-bundle";
 import type { LibraryFormats, Plugin, UserConfigFn } from "vite";
 import { defineConfig } from "vite";
 import { existsSync } from "fs";
@@ -67,7 +68,7 @@ export function createViteConfig({
             inlineDynamicImports: true,
             exports: "named",
           },
-          plugins: [peerDepsExternal() as Plugin],
+          plugins: [excludeDependencies() as Plugin],
         },
         minify: minify ?? isProd,
       },
