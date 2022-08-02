@@ -1,4 +1,4 @@
-import type { ISlideRenderOptions, Slide, SLIDE_EVENTS, SyncEvent } from "@netless/slide";
+import type { ISlideConfig, Slide, SLIDE_EVENTS, SyncEvent } from "@netless/slide";
 import type { RegisterParams } from "@netless/window-manager";
 
 export type SlideState = Slide["slideState"];
@@ -18,6 +18,16 @@ export interface MagixEvents {
   [SLIDE_EVENTS.syncDispatch]: SyncEvent;
 }
 
-export interface AppOptions extends ISlideRenderOptions {
+export interface AppOptions
+  extends Pick<
+    ISlideConfig,
+    | "renderOptions"
+    | "rtcAudio"
+    | "useLocalCache"
+    | "resourceTimeout"
+    | "loaderDelegate"
+    | "navigatorDelegate"
+    | "fixedFrameSize"
+  > {
   debug?: boolean;
 }

@@ -22,8 +22,9 @@ const SlideApp: NetlessApp<Attributes, MagixEvents, AppOptions, void> = {
       throw new Error("[Slide] no taskId");
     }
 
-    const options = context.getAppOptions() || {};
-    const logger = make_logger(context);
+    const appOptions = context.getAppOptions() || {};
+    const options = appOptions.renderOptions || {};
+    const logger = make_logger(context, appOptions.debug);
     logger.info("[Slide] setup @ " + __APP_VERSION__);
 
     const sideEffect = new SideEffectManager();
@@ -45,7 +46,12 @@ const SlideApp: NetlessApp<Attributes, MagixEvents, AppOptions, void> = {
         maxResolutionLevel: options.maxResolutionLevel,
         transactionBgColor: options.transactionBgColor || make_bg_color(context.box.$content),
       },
-
+      rtcAudio: appOptions.rtcAudio,
+      useLocalCache: appOptions.useLocalCache,
+      resourceTimeout: appOptions.resourceTimeout,
+      loaderDelegate: appOptions.loaderDelegate,
+      navigatorDelegate: appOptions.navigatorDelegate,
+      fixedFrameSize: appOptions.fixedFrameSize,
       taskId: context.storage.state.taskId,
       url: context.storage.state.url,
     });
@@ -81,9 +87,9 @@ const SlideApp: NetlessApp<Attributes, MagixEvents, AppOptions, void> = {
 export default SlideApp;
 
 export function previewSlide(options: SlideViewerOptions & { container: HTMLElement }) {
-  const { container } = options;
+  const { container, ...slideOptions } = options;
   container.style.cssText = "display:flex;flex-direction:column";
-  const viewer = new SlideViewer(options);
+  const viewer = new SlideViewer(slideOptions);
   container.appendChild(document.createElement("style")).textContent = SlideViewer.styles;
   container.appendChild(viewer.$content);
   container.appendChild(viewer.$footer);
@@ -108,7 +114,8 @@ function make_timestamp(context: AppContext): () => number {
   }
 }
 
-function make_logger(context: AppContext): { info: (msg: string) => void } {
+function make_logger(context: AppContext, debug?: boolean): { info: (msg: string) => void } {
+  void debug; // not used for now
   if (import.meta.env.DEV) {
     return { info: console.debug.bind(console) };
   }
