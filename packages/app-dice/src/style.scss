@@ -1,0 +1,84 @@
+$namespace: "netless-app-dice";
+
+.#{$namespace}-container {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  perspective: 800px;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.#{$namespace}-cube {
+  display: inline-block;
+  width: 100px;
+  height: 100px;
+  transform-style: preserve-3d;
+  transform-origin: center;
+  position: relative;
+  cursor: pointer;
+}
+
+.#{$namespace}-reset {
+  animation: #{$namespace}-anti-rotate 0.1s paused;
+}
+
+.#{$namespace}-activate {
+  animation: #{$namespace}-rotate 3s running;
+  cursor: not-allowed;
+}
+
+.#{$namespace}-face {
+  width: 100%;
+  height: 100%;
+  border: 1px solid;
+  overflow: hidden;
+  position: absolute;
+  transform-origin: 0 0;
+  background-color: #68ab5d;
+  transform-style: preserve-3d;
+  backface-visibility: hidden;
+}
+
+.#{$namespace}-face-1 {
+  transform: translateZ(50px);
+}
+.#{$namespace}-face-2 {
+  left: 100px;
+  transform: translateZ(-50px) rotateY(180deg);
+}
+.#{$namespace}-face-3 {
+  transform: rotateY(-90deg) translateX(-50px);
+}
+.#{$namespace}-face-4 {
+  left: 100px;
+  transform: rotateY(90deg) translateX(-50px);
+}
+.#{$namespace}-face-5 {
+  top: 100px;
+  transform: rotateX(-90deg) translateY(-50px);
+}
+.#{$namespace}-face-6 {
+  transform: rotateX(90deg) translateY(-50px);
+}
+
+@keyframes #{$namespace}-rotate {
+  from {
+    transform: rotateX(0) rotateY(0) rotateZ(0);
+  }
+  to {
+    transform: rotateX(1080deg) rotateY(-720deg) rotateZ(0);
+  }
+}
+
+@keyframes #{$namespace}-anti-rotate {
+  from {
+    transform: rotateX(1080deg) rotateY(-720deg) rotateZ(0);
+  }
+  to {
+    transform: rotateX(0) rotateY(0) rotateZ(0);
+  }
+}
