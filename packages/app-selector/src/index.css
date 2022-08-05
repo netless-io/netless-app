@@ -1,0 +1,21 @@
+@import "./tailwind.css";
+@import "antd/dist/antd.css";
+@tailwind components;
+@tailwind utilities;
+
+.app-selector-container {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.telebox-color-scheme-dark .app-selector-container {
+  color: #eee;
+}
+
+.warn-button {
+  @apply bg-yellow-500 hover:bg-yellow-500 hover:border-yellow-500 border-yellow-500 focus:bg-yellow-500 focus:border-yellow-500;
+}

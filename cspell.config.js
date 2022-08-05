@@ -56,6 +56,9 @@ module.exports = {
     "NETLESSROOM",
     "antv",
     "xflow",
+    "Sider",
+    "antd",
+    "clsx",
   ],
   flagWords: ["fuck", "bitch", "asshole", "bullshit", "crap", "suck", "wtf"],
   dictionaries: [
