@@ -2,7 +2,7 @@ import type { AnswerStorage, Step } from "./index";
 import type { Storage } from "@netless/window-manager";
 import { Table, Layout, Button } from "antd";
 import { useEffect, useState } from "react";
-import { dayjs } from "./utils";
+import { computedCorrectRate, dayjs } from "./utils";
 import { useCountUp } from "./use-count-up";
 import { clsx } from "clsx";
 
@@ -20,17 +20,11 @@ export const TeacherWaiting = (props: TeacherWaitingProps) => {
   const { storage, answerStorage } = props;
   const [step, setStep] = useState<Step>(storage.state.step);
   const [stopTimer, setStopTimer] = useState(step === "start" ? false : true);
+  const [answers, setAnswers] = useState(Object.values(answerStorage.state));
+  const [correctRate, setCorrectRate] = useState(
+    computedCorrectRate(answers, storage.state.selected)
+  );
   useCountUp({ startAt: storage.state.startAt, stop: stopTimer, updateTitle: props.updateTitle });
-
-  const answers = Object.values(answerStorage.state);
-
-  let correctRate = 0;
-  if (answers.length > 0) {
-    const correctAnswers = answers.filter(
-      a => JSON.stringify(a.answer) === JSON.stringify(storage.state.selected)
-    );
-    correctRate = (correctAnswers.length / answers.length) * 100;
-  }
 
   const columns = [
     {
@@ -63,6 +57,14 @@ export const TeacherWaiting = (props: TeacherWaitingProps) => {
     });
   }, []);
 
+  useEffect(() => {
+    return props.answerStorage.addStateChangedListener(() => {
+      const newAnswers = Object.values(props.answerStorage.state);
+      setAnswers(newAnswers);
+      setCorrectRate(computedCorrectRate(newAnswers, props.storage.state.selected));
+    });
+  }, []);
+
   const finish = () => {
     if (step === "start") {
       props.finish();
@@ -86,7 +88,6 @@ export const TeacherWaiting = (props: TeacherWaitingProps) => {
           scroll={{ y: 240 }}
           footer={() => <span>正确率: {correctRate}%</span>}
         ></Table>
-        {/* <div className="mt-4 pl-12 pr-12"></div> */}
       </Content>
       <Footer>
         <Button

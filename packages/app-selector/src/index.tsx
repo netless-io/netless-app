@@ -4,21 +4,10 @@ import type { NetlessApp, Storage } from "@netless/window-manager";
 import ReactDOM from "react-dom";
 import { App } from "./app";
 
-export interface SelectorAttributes {
-  count: number;
-  teacher: string;
-}
-
-export interface MagixEventPayloads {
-  ping: number; // ping as message event key, `number` is the payload format.
-  pong: {
-    c: number;
-  };
-}
-
 export type Step = "pickOptions" | "start" | "finish";
 
 export type SelectorStorage = {
+  teacher?: string;
   selected: string[];
   step: Step;
   startAt?: number;
@@ -43,7 +32,7 @@ export type Api = {
   updateTitle: (time: string, reset?: boolean) => void;
 };
 
-const Selector: NetlessApp<SelectorAttributes, MagixEventPayloads> = {
+const Selector: NetlessApp = {
   kind: "Selector",
   config: {
     enableShadowDOM: true,
@@ -72,10 +61,12 @@ const Selector: NetlessApp<SelectorAttributes, MagixEventPayloads> = {
       selected: [],
       step: "pickOptions",
     });
+    if (context.isAddApp) {
+      storage.setState({ teacher: context.room?.uid });
+    }
     const answerStorage = context.createStorage("answer");
 
-    // const isTeacher = context.storage.state.teacher === context.currentMember?.uid;
-    const isTeacher = false;
+    const isTeacher = storage.state.teacher === context.currentMember?.uid;
     const updateStep = (step: Step, optionsCount: number, selected: string[]) => {
       const startAt = Date.now();
       storage.setState({ step, optionsCount, selected, startAt });
@@ -93,7 +84,7 @@ const Selector: NetlessApp<SelectorAttributes, MagixEventPayloads> = {
         },
       });
     };
-    (window as any).answerStorage = answerStorage;
+
     const finish = () => {
       storage.setState({ step: "finish", finishAt: Date.now() });
     };
@@ -114,9 +105,5 @@ const Selector: NetlessApp<SelectorAttributes, MagixEventPayloads> = {
     );
   },
 };
-
-// function log(...args: unknown[]) {
-//   return console.log("%c [Selector] ", "background:#FF8C00;color:#fff;", ...args);
-// }
 
 export default Selector;

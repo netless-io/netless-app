@@ -1,5 +1,5 @@
 import { Button, Col, Layout, Row, Table } from "antd";
-import { dayjs } from "./utils";
+import { computedCorrectRate, dayjs } from "./utils";
 import { pickOption } from "./app";
 import { useCountUp } from "./use-count-up";
 import { useEffect, useState } from "react";
@@ -137,13 +137,7 @@ export const StudentFinish = (props: StudentFinishProps) => {
       },
     },
   ];
-  let correctRate = 0;
-  if (answers.length > 0) {
-    const correctAnswers = answers.filter(
-      a => JSON.stringify(a.answer) === JSON.stringify(storage.state.selected)
-    );
-    correctRate = (correctAnswers.length / answers.length) * 100;
-  }
+  const correctRate = computedCorrectRate(answers, storage.state.selected);
 
   return (
     <div className="p-6">
