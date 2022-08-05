@@ -1,0 +1,23 @@
+{
+  "name": "@netless/app-gomoku",
+  "version": "0.1.0",
+  "main": "dist/main.js",
+  "module": "dist/main.mjs",
+  "unpkg": "dist/main.iife.js",
+  "jsdelivr": "dist/main.iife.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "src",
+    "dist"
+  ],
+  "scripts": {
+    "types": "cross-env NODE_ENV=production tsc --declaration --emitDeclarationOnly --outDir dist",
+    "build": "vite build && npm run types",
+    "build:dev": "vite build --mode development && npm run types",
+    "cleanup": "rimraf ./dist"
+  },
+  "devDependencies": {
+    "clsx": "^1.2.1",
+    "preact": "^10.7.3"
+  }
+}

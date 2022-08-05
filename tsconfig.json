@@ -1,6 +1,7 @@
 {
   "extends": "@tsconfig/svelte/tsconfig.json",
   "compilerOptions": {
+    "jsx": "react",
     "noEmit": true,
     "strict": true,
     "isolatedModules": true,

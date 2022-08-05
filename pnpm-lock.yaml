@@ -149,6 +149,14 @@ importers:
       '@netless/app-shared': link:../app-shared
       side-effect-manager: 1.1.1
 
+  packages/app-gomoku:
+    specifiers:
+      clsx: ^1.2.1
+      preact: ^10.7.3
+    devDependencies:
+      clsx: 1.2.1
+      preact: 10.7.3
+
   packages/app-iframe-bridge:
     specifiers:
       '@netless/app-shared': workspace:*
@@ -1874,6 +1882,11 @@ packages:
   /clone/2.1.2:
     resolution: {integrity: sha512-3Pe/CF1Nn94hyhIYpjtiLhdCoEoz0DqQ+988E9gmeEdQZlojxnOb74wctFyuwWQHzqyf9X7C7MG8juUpqBJT8w==}
     engines: {node: '>=0.8'}
+    dev: true
+
+  /clsx/1.2.1:
+    resolution: {integrity: sha512-EcR6r5a8bj6pu3ycsa/E/cKVGuTgZJZdsyUYHOksG/UHIiKfjxzRxYJpyVBwYaQeOvghal9fcc4PidlgzugAQg==}
+    engines: {node: '>=6'}
     dev: true
 
   /color-convert/1.9.3:

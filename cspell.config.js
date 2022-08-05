@@ -19,6 +19,7 @@ module.exports = {
     "fontscssurl",
     "fullscreen",
     "geogebra",
+    "gomoku",
     "Geos",
     "isequal",
     "lazyload",
