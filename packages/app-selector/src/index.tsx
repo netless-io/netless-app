@@ -84,7 +84,6 @@ const Selector: NetlessApp = {
         },
       });
     };
-
     const finish = () => {
       storage.setState({ step: "finish", finishAt: Date.now() });
     };
