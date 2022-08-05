@@ -53,6 +53,7 @@ export class FlowSync {
     this._sideEffect.add(() => selectNodeDispose.dispose);
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   public updateGraph: AnyFunc = async (graphData: any) => {
     return this.app?.executeCommand(XFlowGraphCommands.GRAPH_RENDER.id, { graphData });
   };
