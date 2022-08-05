@@ -34,11 +34,4 @@ export default defineConfig({
       "react-dom": "preact/compat",
     },
   },
-  css: {
-    preprocessorOptions: {
-      less: {
-        javascriptEnabled: true,
-      },
-    },
-  },
 });
