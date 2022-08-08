@@ -1,15 +1,15 @@
-import styles from "./style.scss?inline";
-import editorStyles from "monaco-editor/min/vs/editor/editor.main.css?inline";
+import type { NetlessApp } from "@netless/window-manager";
+import type { NetlessAppMonacoAttributes } from "./typings";
 
 import monacoLoader from "@monaco-editor/loader";
-import type { NetlessApp } from "@netless/window-manager";
-import { ensureAttributes } from "@netless/app-shared";
-import type { NetlessAppMonacoAttributes } from "./typings";
-import { NetlessAppMonacoPersistence } from "./monaco-persistence";
+
 import { kind } from "./constants";
 import { MonacoEditor } from "./MonacoEditor";
 
-export type { NetlessAppMonacoAttributes } from "./typings";
+import editorStyles from "monaco-editor/min/vs/editor/editor.main.css?inline";
+import styles from "./style.scss?inline";
+
+export type { NetlessAppMonacoAttributes };
 
 export type NetlessAppMonacoAppOptions = {
   loader?: Parameters<typeof monacoLoader.config>[0];
@@ -23,10 +23,7 @@ const NetlessAppMonaco: NetlessApp<NetlessAppMonacoAttributes> = {
   async setup(context) {
     const box = context.box;
 
-    const attrs = ensureAttributes(context, {
-      text: "",
-      cursors: {},
-      selections: {},
+    context.storage.ensureState({
       lang: "javascript",
       terminal: "",
       codeRunning: false,
@@ -51,14 +48,7 @@ const NetlessAppMonaco: NetlessApp<NetlessAppMonacoAttributes> = {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     if ((window as any).require && nodeRequire) (window as any).require = nodeRequire;
 
-    const monacoEditor = new MonacoEditor(context, attrs, box, monaco, !context.isWritable);
-
-    const persistence = new NetlessAppMonacoPersistence(
-      context,
-      attrs,
-      monacoEditor.yDoc,
-      monacoEditor.yText
-    );
+    const monacoEditor = new MonacoEditor(context, box, monaco, !context.isWritable);
 
     if (import.meta.env.DEV) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -72,7 +62,6 @@ const NetlessAppMonaco: NetlessApp<NetlessAppMonacoAttributes> = {
     });
 
     context.emitter.on("destroy", () => {
-      persistence.destroy();
       monacoEditor.destroy();
     });
 

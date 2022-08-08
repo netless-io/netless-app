@@ -1,6 +1,7 @@
-import type { Doc } from "yjs";
 import type * as Monaco from "monaco-editor";
+import type { Doc } from "yjs";
 import type { StyleManager } from "./StyleManager";
+
 import { CursorDecoration } from "./CursorDecoration";
 
 export class CursorDecorations {

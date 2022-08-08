@@ -1,9 +1,10 @@
-import type { Doc } from "yjs";
 import type * as Monaco from "monaco-editor";
+import type { Doc } from "yjs";
+
 import randomColor from "randomcolor";
-import { StyleManager } from "./StyleManager";
 import { CursorDecorations } from "./CursorDecorations";
 import { SelectionDecorations } from "./SelectionDecorations";
+import { StyleManager } from "./StyleManager";
 
 export class Decoration {
   public cursorDecorations: CursorDecorations;

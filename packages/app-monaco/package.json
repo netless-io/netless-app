@@ -24,6 +24,7 @@
   "devDependencies": {
     "@monaco-editor/loader": "^1.2.0",
     "@netless/app-shared": "workspace:*",
+    "@netless/y": "^0.1.4",
     "@types/randomcolor": "^0.5.6",
     "debounce-fn": "^5.1.0",
     "js-base64": "^3.7.2",

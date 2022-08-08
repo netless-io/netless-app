@@ -1,21 +1,26 @@
-import type { Text, Doc, YTextEvent } from "yjs";
-import { createRelativePositionFromTypeIndex, applyUpdate } from "yjs";
+import type { AppContext, Member, ReadonlyTeleBox, Storage } from "@netless/window-manager";
+import type { Vector } from "@netless/y";
 import type * as Monaco from "monaco-editor";
-import { createMutex } from "lib0/mutex.js";
-import { fromUint8Array, toUint8Array } from "js-base64";
-import type { AppContext, ReadonlyTeleBox } from "@netless/window-manager";
-import type { DisplayerState, Event as WhiteEvent } from "white-web-sdk";
-import { SideEffectManager } from "side-effect-manager";
+import type { Doc, Text, YTextEvent } from "yjs";
 import type { NetlessAppMonacoAttributes } from "./typings";
+
+import { createVector } from "@netless/y";
+import { connect as connectYjs } from "@netless/y/yjs";
+import { createMutex } from "lib0/mutex.js";
+import { SideEffectManager } from "side-effect-manager";
+import { createRelativePositionFromTypeIndex } from "yjs";
 import { Decoration } from "./Decorations";
 
 export class YMonaco {
   public monacoModel: Monaco.editor.ITextModel;
   public authorId: string;
 
+  public cursors$$: Storage<{ [key: string]: string[] }>;
+  public selections$$: Storage<{ [key: string]: string }>;
+  public vector: Vector;
+
   public constructor(
     public context: AppContext<NetlessAppMonacoAttributes>,
-    public attrs: NetlessAppMonacoAttributes,
     public box: ReadonlyTeleBox,
     public monaco: typeof Monaco,
     public monacoEditor: Monaco.editor.IStandaloneCodeEditor,
@@ -25,7 +30,6 @@ export class YMonaco {
   ) {
     const monacoModel = monacoEditor.getModel();
     this.authorId = String(this.context.displayer.observerId);
-    this.MagixMonacoDocChannel = this.context.appId + "AppMonacoDoc";
 
     if (!monacoModel) {
       throw new Error("[NetlessAppMonaco] No Monaco Model");
@@ -37,12 +41,27 @@ export class YMonaco {
 
     this.observerId = String(context.displayer.observerId);
 
+    this.cursors$$ = context.createStorage("cursors");
+    this.selections$$ = context.createStorage("selections");
+
+    if (import.meta.env.DEV) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (window as any).monaco$$ = this;
+    }
+
+    this.vector = createVector(context, "text");
+
     this.setupDecorations();
 
     this.setupAttrsUpdate();
-    this.setupDocUpdate();
     this.setupYText();
     this.setupMembers();
+    this.setupDocUpdate();
+  }
+
+  // https://github.com/yjs/y-monaco/issues/6
+  private ensureLF() {
+    this.monacoModel.setEOL(this.monaco.editor.EndOfLineSequence.LF);
   }
 
   public setReadonly(readonly: boolean): void {
@@ -56,8 +75,8 @@ export class YMonaco {
   }
 
   public clearDecorationAttrs(): void {
-    this.context.updateAttributes(["cursors", this.observerId], undefined);
-    this.context.updateAttributes(["selections", this.observerId], undefined);
+    this.cursors$$.setState({ [this.observerId]: undefined });
+    this.selections$$.setState({ [this.observerId]: undefined });
   }
 
   public destroy(): void {
@@ -65,6 +84,7 @@ export class YMonaco {
     this.decorations.forEach(decoration => decoration.destroy());
     this.decorations.clear();
     this.clearDecorationAttrs();
+    this.vector.destroy();
   }
 
   private setupYText(): void {
@@ -74,6 +94,7 @@ export class YMonaco {
           if (this.monacoModel.isDisposed()) {
             return;
           }
+          this.ensureLF();
           let index = 0;
           event.delta.forEach(op => {
             if (op.retain != null) {
@@ -116,6 +137,7 @@ export class YMonaco {
       const disposer = this.monacoModel.onDidChangeContent(event => {
         // apply changes from right to left
         this.mux(() => {
+          this.ensureLF();
           this.doc.transact(() => {
             event.changes
               .sort((change1, change2) => change2.rangeOffset - change1.rangeOffset)
@@ -131,36 +153,7 @@ export class YMonaco {
   }
 
   private setupDocUpdate(): void {
-    const displayer = this.context.displayer;
-
-    this.sideEffect.add(() => {
-      const handleUpdate = (event: WhiteEvent) => {
-        this.authorId = String(event.authorId);
-        if (event.authorId !== displayer.observerId) {
-          try {
-            applyUpdate(this.doc, toUint8Array(event.payload), "_remote_edit_");
-          } catch (e) {
-            console.warn(e);
-          }
-        }
-      };
-      displayer.addMagixEventListener(this.MagixMonacoDocChannel, handleUpdate);
-      return () => displayer.removeMagixEventListener(this.MagixMonacoDocChannel, handleUpdate);
-    });
-
-    this.sideEffect.add(() => {
-      const handleUpdate = (update: Uint8Array, origin: unknown) => {
-        if (origin !== "_remote_edit_" && this.context.isWritable) {
-          const room = this.context.room;
-          if (room) {
-            this.authorId = String(displayer.observerId);
-            room.dispatchMagixEvent(this.MagixMonacoDocChannel, fromUint8Array(update));
-          }
-        }
-      };
-      this.doc.on("update", handleUpdate);
-      return () => this.doc.off("update", handleUpdate);
-    });
+    this.sideEffect.addDisposer(connectYjs(this.vector, this.doc));
   }
 
   private setupDecorations(): void {
@@ -185,19 +178,21 @@ export class YMonaco {
   }
 
   private broadcastCursors(): void {
+    this.ensureLF();
     try {
       const rawCursorStrList = this.cursorPositions.map(position =>
         JSON.stringify(
           createRelativePositionFromTypeIndex(this.yText, this.monacoModel.getOffsetAt(position))
         )
       );
-      this.context.updateAttributes(["cursors", this.observerId], rawCursorStrList);
+      this.cursors$$.setState({ [this.observerId]: rawCursorStrList });
     } catch (e) {
       console.warn(e);
     }
   }
 
   private broadcastSelections(): void {
+    this.ensureLF();
     const selections = this.monacoEditor.getSelections();
     if (selections) {
       try {
@@ -215,7 +210,7 @@ export class YMonaco {
               ),
             }))
         );
-        this.context.updateAttributes(["selections", this.observerId], rawSelectionsStr);
+        this.selections$$.setState({ [this.observerId]: rawSelectionsStr });
       } catch (e) {
         console.warn(e);
       }
@@ -223,63 +218,55 @@ export class YMonaco {
   }
 
   private setupAttrsUpdate(): void {
-    this.sideEffect.add(() => {
-      const handleAttrsUpdate = () => {
-        this.context.displayer.state.roomMembers.forEach(member => {
-          const id = String(member.memberId);
-          if (id !== this.observerId) {
-            let decoration = this.decorations.get(id);
-            if (!decoration) {
-              decoration = new Decoration(
-                this.doc,
-                this.monaco,
-                this.monacoEditor,
-                this.monacoModel,
-                id,
-                member.payload?.nickName || id
-              );
-              this.decorations.set(id, decoration);
-            }
-            decoration.setCursor(this.attrs.cursors?.[id]);
-            decoration.setSelection(this.attrs.selections?.[id]);
-            this.renderDecorations();
+    const handleAttrsUpdate = () => {
+      this.context.members.forEach(member => {
+        const id = String(member.memberId);
+        if (id !== this.observerId) {
+          let decoration = this.decorations.get(id);
+          if (!decoration) {
+            decoration = new Decoration(
+              this.doc,
+              this.monaco,
+              this.monacoEditor,
+              this.monacoModel,
+              id,
+              member.payload?.nickName || id
+            );
+            this.decorations.set(id, decoration);
           }
-        });
-      };
-      this.context.emitter.on("attributesUpdate", handleAttrsUpdate);
-      return () => this.context.emitter.off("attributesUpdate", handleAttrsUpdate);
-    });
+          decoration.setCursor(this.cursors$$.state[id]);
+          decoration.setSelection(this.selections$$.state[id]);
+          this.renderDecorations();
+        }
+      });
+    };
+    this.sideEffect.addDisposer(this.cursors$$.addStateChangedListener(handleAttrsUpdate));
+    this.sideEffect.addDisposer(this.selections$$.addStateChangedListener(handleAttrsUpdate));
   }
 
   private setupMembers(): void {
     this.sideEffect.add(() => {
-      const handleStateChanged = (state: Partial<DisplayerState>) => {
-        if (state.roomMembers) {
-          const members = new Set(state.roomMembers.map(member => String(member.memberId)));
-          this.decorations.forEach((decoration, memberId) => {
-            if (!members.has(memberId)) {
-              decoration.destroy();
-              this.decorations.delete(memberId);
-            }
-          });
-          if (this.attrs.cursors) {
-            Object.keys(this.attrs.cursors).forEach(memberId => {
-              if (!members.has(memberId)) {
-                this.context.updateAttributes(["cursors", memberId], undefined);
-              }
-            });
+      const handleMembersChanged = (members: Member[]) => {
+        const memberIds = new Set(members.map(member => String(member.memberId)));
+        this.decorations.forEach((decoration, memberId) => {
+          if (!memberIds.has(memberId)) {
+            decoration.destroy();
+            this.decorations.delete(memberId);
           }
-          if (this.attrs.selections) {
-            Object.keys(this.attrs.selections).forEach(memberId => {
-              if (!members.has(memberId)) {
-                this.context.updateAttributes(["selections", memberId], undefined);
-              }
-            });
+        });
+        Object.keys(this.cursors$$.state).forEach(memberId => {
+          if (!memberIds.has(memberId)) {
+            this.cursors$$.setState({ [memberId]: undefined });
           }
-        }
+        });
+
+        Object.keys(this.selections$$.state).forEach(memberId => {
+          if (!memberIds.has(memberId)) {
+            this.selections$$.setState({ [memberId]: undefined });
+          }
+        });
       };
-      this.context.emitter.on("roomStateChange", handleStateChanged);
-      return () => this.context.emitter.off("roomStateChange", handleStateChanged);
+      return this.context.emitter.on("roomMembersChange", handleMembersChanged);
     });
   }
 
@@ -303,8 +290,6 @@ export class YMonaco {
   private mux = createMutex();
 
   private deltaDecorations: string[] = [];
-
-  private readonly MagixMonacoDocChannel: string;
 
   private cursorPositions: Monaco.Position[] = [];
 }

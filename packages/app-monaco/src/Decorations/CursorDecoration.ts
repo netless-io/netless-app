@@ -1,7 +1,8 @@
-import type { Doc } from "yjs";
 import type * as Monaco from "monaco-editor";
-import { createAbsolutePositionFromRelativePosition, createRelativePositionFromJSON } from "yjs";
+import type { Doc } from "yjs";
 import type { StyleManager } from "./StyleManager";
+
+import { createAbsolutePositionFromRelativePosition, createRelativePositionFromJSON } from "yjs";
 
 export class CursorDecoration {
   public readonly cursorClassName: string;

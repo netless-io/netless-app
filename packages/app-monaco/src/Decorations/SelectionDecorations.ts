@@ -1,7 +1,8 @@
-import type { Doc } from "yjs";
-import { createAbsolutePositionFromRelativePosition, createRelativePositionFromJSON } from "yjs";
 import type * as Monaco from "monaco-editor";
+import type { Doc } from "yjs";
 import type { StyleManager } from "./StyleManager";
+
+import { createAbsolutePositionFromRelativePosition, createRelativePositionFromJSON } from "yjs";
 
 export class SelectionDecorations {
   public rawSelectionsStr?: string;
