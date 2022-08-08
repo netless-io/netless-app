@@ -23,7 +23,7 @@ export const StudentSelecting = (props: SelectingProps) => {
   const [selected, setSelected] = useState<string[]>([]);
   const [canSubmit, setCanSubmit] = useState(false);
   const [isSubmit, setIsSubmit] = useState(false);
-  const [stopTimer, setStopTimer] = useState(false);
+  const [stopTimer, setStopTimer] = useState(props.step === "start" ? false : true);
   useCountUp({ startAt: storage.state.startAt, updateTitle: props.updateTitle, stop: stopTimer });
 
   useEffect(() => {
@@ -36,6 +36,10 @@ export const StudentSelecting = (props: SelectingProps) => {
       }
     }
   }, []);
+
+  useEffect(() => {
+    setStopTimer(props.step === "start" ? false : true);
+  }, [props.step]);
 
   useEffect(() => {
     setCanSubmit(selected.length > 0);
