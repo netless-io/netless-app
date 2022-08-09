@@ -381,6 +381,7 @@ export interface SlideViewerInfoResponse {
 
 export class SlideViewer {
   static styles = styles;
+  static fetchSlideInfo = fetch_slide_info;
 
   private readonly sideEffect = new SideEffectManager();
 

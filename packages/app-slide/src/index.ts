@@ -6,10 +6,15 @@ export type { SlideState, AddHooks, AppOptions, Attributes, MagixEvents, SlideVi
 
 import ColorString from "color-string";
 import { SideEffectManager } from "side-effect-manager";
+import { Slide } from "@netless/slide";
 import { SlideViewer } from "./SlideViewer";
 import { refrigerator, addHooks } from "./Refrigerator";
+import { DefaultUrl } from "./constants";
 
-export { SlideViewer, refrigerator, addHooks };
+export { Slide, SlideViewer, refrigerator, addHooks, DefaultUrl };
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export const usePlugin = /* @__PURE__ */ Slide.usePlugin.bind(Slide) as (plugin: any) => void;
 
 export const version = __APP_VERSION__;
 
@@ -36,7 +41,7 @@ const SlideApp: NetlessApp<Attributes, MagixEvents, AppOptions, void> = {
       resize: true,
       enableGlobalClick: true,
       timestamp: make_timestamp(context),
-      logger,
+      logger: appOptions.logger || logger,
       renderOptions: {
         minFPS: options.minFPS || 25,
         maxFPS: options.maxFPS || 30,
@@ -81,6 +86,8 @@ const SlideApp: NetlessApp<Attributes, MagixEvents, AppOptions, void> = {
       logger.info("[Slide] destroy");
       sideEffect.flushAll();
     });
+
+    return viewer;
   },
 };
 
