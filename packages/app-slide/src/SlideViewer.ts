@@ -45,15 +45,25 @@ interface PreviewPage {
   thumbnail: string;
 }
 
-async function fetch_slide_info({ taskId, url }: SlideAttributes) {
+interface PreviewInfo {
+  width: number;
+  height: number;
+}
+
+interface SlideInfo {
+  width: number;
+  height: number;
+  slideCount: number;
+}
+
+async function fetch_slide_info({ taskId, url }: SlideAttributes): Promise<{
+  preview: PreviewInfo | null;
+  slide: SlideInfo;
+}> {
   const prefix = make_prefix(taskId, url);
   const imgSrc = `${prefix}/preview/1.png`;
   const jsonUrl = `${prefix}/jsonOutput/slide-1.json`;
 
-  interface PreviewInfo {
-    width: number;
-    height: number;
-  }
   const p1 = new Promise<PreviewInfo | null>(resolve => {
     const image = new Image();
     image.onload = () => resolve(image);
@@ -61,11 +71,6 @@ async function fetch_slide_info({ taskId, url }: SlideAttributes) {
     image.src = imgSrc;
   });
 
-  interface SlideInfo {
-    width: number;
-    height: number;
-    slideCount: number;
-  }
   const p2: Promise<SlideInfo> = fetch(jsonUrl).then(r => r.json());
 
   return { preview: await p1, slide: await p2 };
