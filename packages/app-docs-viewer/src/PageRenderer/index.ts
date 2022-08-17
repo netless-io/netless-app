@@ -80,7 +80,10 @@ export class PageRenderer {
 
     const pagesIndex$ = combine(
       [pagesScrollTop$, pagesYs$, pages$],
-      ([pagesScrollTop, pagesYs, pages]) => {
+      ([pagesScrollTop, pagesYs, pages]): number => {
+        if (pagesYs.length !== pages.length) {
+          return pagesIndex$.value;
+        }
         for (let i = 0; i < pagesYs.length; i++) {
           if (pagesYs[i] + pages[i].height - pagesScrollTop >= 0.001) {
             return i;
