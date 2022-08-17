@@ -44,7 +44,7 @@ export class DynamicDocsViewer {
       pagesIndex$,
       previewRoot: box.$body,
       footerRoot: box.$footer,
-      pages,
+      pages$: new Val(pages),
       playable: true,
     });
 

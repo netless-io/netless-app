@@ -1,5 +1,5 @@
 import { SideEffectManager } from "side-effect-manager";
-import { withValueEnhancer, type ReadonlyVal, Val, type ValEnhancedResult } from "value-enhancer";
+import type { Val, ReadonlyVal, ValEnhancedResult } from "value-enhancer";
 import type { DocsViewerEventData, DocsViewerPage } from "./typings";
 import { Preview } from "./Preview";
 import { Footer } from "./Footer";
@@ -16,7 +16,7 @@ export interface DocsViewer extends ValEnhancedResult<ValConfig> {}
 export interface DocsViewerConfig {
   readonly$: ReadonlyVal<boolean>;
   pagesIndex$: ReadonlyVal<number>;
-  pages?: DocsViewerPage[];
+  pages$: ReadonlyVal<DocsViewerPage[]>;
   previewRoot: HTMLElement;
   footerRoot: HTMLElement;
   playable: boolean;
@@ -28,15 +28,9 @@ export class DocsViewer {
     pagesIndex$,
     previewRoot,
     footerRoot,
-    pages = [],
+    pages$,
     playable,
   }: DocsViewerConfig) {
-    const pages$ = new Val(pages);
-
-    withValueEnhancer(this, {
-      pages: pages$,
-    });
-
     this.preview = new Preview({
       pages$,
       readonly$,

@@ -83,7 +83,7 @@ export class StaticDocsViewer {
       pagesIndex$: this.pageRenderer._pagesIndex$,
       previewRoot: box.$body,
       footerRoot: box.$footer,
-      pages,
+      pages$,
       playable: false,
     });
 
