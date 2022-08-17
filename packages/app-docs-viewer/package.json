@@ -1,6 +1,6 @@
 {
   "name": "@netless/app-docs-viewer",
-  "version": "0.3.3",
+  "version": "1.0.0-canary.0",
   "description": "Netless App Docs Viewer",
   "repository": "netless-io/netless-app",
   "license": "MIT",
@@ -22,12 +22,9 @@
     "cleanup": "rimraf ./dist"
   },
   "dependencies": {
-    "remitter": "^0.2.3",
+    "remitter": "^0.2.7",
+    "side-effect-manager": "^1.1.3",
     "value-enhancer": "^1.3.2",
     "vanilla-lazyload": "^17.8.2"
-  },
-  "devDependencies": {
-    "@netless/app-shared": "workspace:*",
-    "side-effect-manager": "^1.1.1"
   }
 }

@@ -2,11 +2,6 @@ import type { ReadonlyVal } from "value-enhancer";
 import type { DocsViewerPage } from "../DocsViewer";
 import { PageEl } from "./PageEl";
 
-const schedule: (handler: () => void) => number =
-  window.requestIdleCallback || ((handler: () => void) => window.setTimeout(handler, 5000));
-
-const cancelSchedule = window.cancelIdleCallback || window.clearTimeout;
-
 export class PageElManager {
   els = new Map<number, PageEl>();
 
@@ -19,7 +14,12 @@ export class PageElManager {
     private scale$: ReadonlyVal<number>,
     private pagesYs$: ReadonlyVal<number[]>,
     private pagesScrollTop$: ReadonlyVal<number>
-  ) {}
+  ) {
+    this.schedule =
+      window.requestIdleCallback || ((handler: () => void) => window.setTimeout(handler, 5000));
+
+    this.cancelSchedule = window.cancelIdleCallback || window.clearTimeout;
+  }
 
   getEl(index: number): PageEl {
     let el = this.els.get(index);
@@ -37,7 +37,7 @@ export class PageElManager {
     el.lastVisit = Date.now();
 
     if (this.els.size > this.maxElCount && this.gcTimer === null) {
-      this.gcTimer = schedule(this.gc);
+      this.gcTimer = this.schedule(this.gc);
     }
 
     return el;
@@ -47,10 +47,13 @@ export class PageElManager {
     this.els.forEach(el => el.destroy());
     this.els.clear();
     if (this.gcTimer !== null) {
-      cancelSchedule(this.gcTimer);
+      this.cancelSchedule(this.gcTimer);
       this.gcTimer = null;
     }
   }
+
+  private schedule: (handler: () => void) => number;
+  private cancelSchedule: (handle: number) => void;
 
   private gc = () => {
     this.gcTimer = null;

@@ -81,7 +81,8 @@ export class StaticDocsViewer {
     this.viewer = new DocsViewer({
       readonly$,
       pagesIndex$: this.pageRenderer._pagesIndex$,
-      box,
+      previewRoot: box.$body,
+      footerRoot: box.$footer,
       pages,
       playable: false,
     });

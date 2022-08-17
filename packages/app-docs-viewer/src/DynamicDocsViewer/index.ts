@@ -42,7 +42,8 @@ export class DynamicDocsViewer {
     this.viewer = new DocsViewer({
       readonly$,
       pagesIndex$,
-      box,
+      previewRoot: box.$body,
+      footerRoot: box.$footer,
       pages,
       playable: true,
     });

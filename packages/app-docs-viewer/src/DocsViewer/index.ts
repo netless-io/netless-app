@@ -1,5 +1,3 @@
-import type { ReadonlyTeleBox } from "@netless/window-manager";
-
 import { SideEffectManager } from "side-effect-manager";
 import { withValueEnhancer, type ReadonlyVal, Val, type ValEnhancedResult } from "value-enhancer";
 import type { DocsViewerEventData, DocsViewerPage } from "./typings";
@@ -19,12 +17,20 @@ export interface DocsViewerConfig {
   readonly$: ReadonlyVal<boolean>;
   pagesIndex$: ReadonlyVal<number>;
   pages?: DocsViewerPage[];
-  box: ReadonlyTeleBox;
+  previewRoot: HTMLElement;
+  footerRoot: HTMLElement;
   playable: boolean;
 }
 
 export class DocsViewer {
-  public constructor({ readonly$, pagesIndex$, box, pages = [], playable }: DocsViewerConfig) {
+  public constructor({
+    readonly$,
+    pagesIndex$,
+    previewRoot,
+    footerRoot,
+    pages = [],
+    playable,
+  }: DocsViewerConfig) {
     const pages$ = new Val(pages);
 
     withValueEnhancer(this, {
@@ -35,7 +41,7 @@ export class DocsViewer {
       pages$,
       readonly$,
       pagesIndex$,
-      root: box.$body,
+      root: previewRoot,
       sideEffect: this.sideEffect,
       events: this.events,
       namespace: this.namespace,
@@ -47,7 +53,7 @@ export class DocsViewer {
       readonly$,
       playable,
       pagesIndex$,
-      root: box.$footer,
+      root: footerRoot,
       namespace: this.namespace,
       sideEffect: this.sideEffect,
       events: this.events,
