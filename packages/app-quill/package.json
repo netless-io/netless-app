@@ -19,7 +19,7 @@
   },
   "devDependencies": {
     "@highlightjs/cdn-assets": "^11.6.0",
-    "@netless/y": "^0.1.4",
+    "@netless/y": "^0.1.5",
     "@types/quill": "^2.0.9",
     "js-base64": "^3.7.2",
     "katex": "^0.16.0",

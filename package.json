@@ -40,5 +40,17 @@
     "build-all:ci": "pnpm --aggregate-output -r build:dev",
     "dev": "pnpm -F playground dev",
     "start": "pnpm -F playground dev"
+  },
+  "pnpm": {
+    "peerDependencyRules": {
+      "ignoreMissing": [
+        "@babel/core",
+        "@netless/window-manager",
+        "react",
+        "react-dom",
+        "rollup",
+        "vite"
+      ]
+    }
   }
 }

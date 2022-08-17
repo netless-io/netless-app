@@ -178,7 +178,7 @@ importers:
     specifiers:
       '@monaco-editor/loader': ^1.2.0
       '@netless/app-shared': workspace:*
-      '@netless/y': ^0.1.4
+      '@netless/y': ^0.1.5
       '@types/randomcolor': ^0.5.6
       debounce-fn: ^5.1.0
       js-base64: ^3.7.2
@@ -190,7 +190,7 @@ importers:
     devDependencies:
       '@monaco-editor/loader': 1.2.0_monaco-editor@0.29.1
       '@netless/app-shared': link:../app-shared
-      '@netless/y': 0.1.4_yjs@13.5.13
+      '@netless/y': 0.1.5_yjs@13.5.13
       '@types/randomcolor': 0.5.6
       debounce-fn: 5.1.0
       js-base64: 3.7.2
@@ -223,7 +223,7 @@ importers:
   packages/app-quill:
     specifiers:
       '@highlightjs/cdn-assets': ^11.6.0
-      '@netless/y': ^0.1.4
+      '@netless/y': ^0.1.5
       '@types/quill': ^2.0.9
       js-base64: ^3.7.2
       katex: ^0.16.0
@@ -237,7 +237,7 @@ importers:
       yjs: 13.5.13
     devDependencies:
       '@highlightjs/cdn-assets': 11.6.0
-      '@netless/y': 0.1.4_yjs@13.5.13
+      '@netless/y': 0.1.5_yjs@13.5.13
       '@types/quill': 2.0.9
       js-base64: 3.7.2
       katex: 0.16.0
@@ -1241,10 +1241,10 @@ packages:
     hasBin: true
     dev: true
 
-  /@netless/y/0.1.4_yjs@13.5.13:
-    resolution: {integrity: sha512-8KbSVi61akceFNOUA7DtLT0MmIjanDMSVi8Vsy9TIVRFwNr5spledG2lZxtpMIYhEeBey9RdqP8E4TGdabI5nw==}
+  /@netless/y/0.1.5_yjs@13.5.13:
+    resolution: {integrity: sha512-zTyKXCEyZAkhT/bccPq09xwvi1hvv6+K06nnCtsyG1z44hugE+UMSM4XLuxmsqwalkMYswq9KpIkPZdyf97tsw==}
     peerDependencies:
-      '@netless/window-manager': '>=1'
+      '@netless/window-manager': '>=1.0.0-canary.0'
       yjs: '*'
     peerDependenciesMeta:
       yjs:
