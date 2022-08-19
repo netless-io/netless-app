@@ -21,7 +21,7 @@ export interface Attributes {
   owner?: string;
 }
 
-const DefaultAttributes: Pick<Attributes, "volume" | "paused" | "muted" | "currentTime"> = {
+export const DefaultAttributes: Pick<Attributes, "volume" | "paused" | "muted" | "currentTime"> = {
   volume: 1,
   paused: true,
   muted: false,
@@ -36,7 +36,9 @@ const Plyr: NetlessApp<Attributes> = {
   },
   setup(context) {
     const storage = context.storage;
-    storage.ensureState(DefaultAttributes);
+    if (context.isWritable) {
+      storage.ensureState(DefaultAttributes);
+    }
 
     if (!storage.state.src) {
       context.emitter.emit("destroy", {
