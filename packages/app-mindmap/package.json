@@ -17,9 +17,11 @@
     "build:dev": "NODE_OPTIONS='--max-old-space-size=6144' vite build --mode development && npm run types",
     "cleanup": "rimraf ./dist"
   },
-  "devDependencies": {
+  "dependencies": {
     "@antv/hierarchy": "^0.6.8",
-    "@antv/x6": "^1.32.11",
+    "@antv/x6": "^1.32.11"
+  },
+  "devDependencies": {
     "side-effect-manager": "^1.1.1"
   }
 }
