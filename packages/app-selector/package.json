@@ -1,8 +1,8 @@
 {
   "name": "@netless/app-selector",
   "version": "0.0.1",
-  "main": "dist/main.cjs.js",
-  "module": "dist/main.es.js",
+  "main": "dist/main.js",
+  "module": "dist/main.mjs.js",
   "types": "./dist/index.d.ts",
   "scripts": {
     "types": "cross-env NODE_ENV=production tsc --declaration --emitDeclarationOnly --outDir dist",
