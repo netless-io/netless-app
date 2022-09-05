@@ -119,7 +119,6 @@ export class SlidePreviewer {
       anchor: this.$slide,
       interactive: true,
       mode: "local",
-      resize: true,
       controller: this.debug,
       enableGlobalClick: true,
       renderOptions: {

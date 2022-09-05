@@ -253,7 +253,6 @@ export class SlideController {
       anchor,
       interactive: true,
       mode: "interactive",
-      resize: true,
       controller: logger.enable,
       enableGlobalClick: true,
       renderOptions: {
