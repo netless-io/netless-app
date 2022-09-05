@@ -141,6 +141,7 @@ const SlideApp: NetlessApp<Attributes, MagixEvents, AppOptions, Controller> = {
         }
         const page = slideController.slide.slideState.currentSlideIndex;
         log("[Slide] page to", page, synced ? "(synced)" : "", "(on ready)");
+        slideController.slide.on("renderEnd", options.onRenderEnd);
       });
       return slideController;
     };

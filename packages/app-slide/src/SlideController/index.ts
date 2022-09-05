@@ -31,6 +31,7 @@ export const EmptyAttributes: Attributes = {
 export interface SlideControllerOptions {
   context: AppContext<Attributes, MagixEvents, AppOptions>;
   anchor: HTMLDivElement;
+  onRenderEnd: () => void;
   onPageChanged: (page: number) => void;
   onTransitionStart: () => void;
   onTransitionEnd: () => void;

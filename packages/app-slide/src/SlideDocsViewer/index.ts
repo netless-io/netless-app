@@ -54,10 +54,12 @@ export class SlideDocsViewer {
 
   public $slide!: HTMLDivElement;
   public $whiteboardView!: HTMLDivElement;
+  public $overlay!: HTMLDivElement;
 
   public render() {
     this.viewer.$content.appendChild(this.renderSlideContainer());
     this.viewer.$content.appendChild(this.renderWhiteboardView());
+    this.viewer.$content.appendChild(this.renderOverlay());
     this.sideEffect.addEventListener(window, "keydown", ev => {
       if (this.box.focus && this.slideController) {
         switch (ev.key) {
@@ -77,6 +79,15 @@ export class SlideDocsViewer {
         }
       }
     });
+  }
+
+  protected renderOverlay(): HTMLDivElement {
+    if (!this.$overlay) {
+      const $overlay = document.createElement("div");
+      $overlay.className = this.wrapClassName("overlay");
+      this.$overlay = $overlay;
+    }
+    return this.$overlay;
   }
 
   protected renderSlideContainer(): HTMLDivElement {
@@ -103,6 +114,7 @@ export class SlideDocsViewer {
 
     this.slideController = this.mountSlideController({
       anchor: this.$slide,
+      onRenderEnd: this.onRenderEnd,
       onTransitionStart: this.viewer.setPlaying,
       onTransitionEnd: this.viewer.setPaused,
       onReady: this.refreshPages,
@@ -120,7 +132,13 @@ export class SlideDocsViewer {
 
   protected onError = ({ error }: { error: Error }) => {
     this.viewer.setPaused();
+    this.$overlay.textContent = `Error on slide[page=${this.slideController?.page}]: ${error.message}`;
+    this.$overlay.style.opacity = "1";
     logger.warn("[Slide] render error", error);
+  };
+
+  protected onRenderEnd = () => {
+    this.$overlay.style.opacity = "";
   };
 
   protected refreshPages = () => {
