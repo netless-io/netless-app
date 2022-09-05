@@ -459,7 +459,6 @@ export class SlideViewer {
 
     this.slide = new Slide({
       anchor: this.$slide,
-      resize: true,
       mode: "local",
       interactive: true,
       enableGlobalClick: true,
