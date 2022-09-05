@@ -395,6 +395,7 @@ export class SlideViewer {
   readonly footer = create_footer();
   readonly $content: HTMLElement;
   readonly $footer: HTMLElement;
+  readonly $overlay: HTMLElement;
 
   readonly slide;
 
@@ -408,6 +409,9 @@ export class SlideViewer {
     this.$content = this.sidebar.$content;
     this.$footer = this.footer.$footer;
     append(this.$content, this.$slide);
+    this.$overlay = h("div");
+    set_class(this.$overlay, "overlay");
+    append(this.$content, this.$overlay);
 
     let resolveReady: () => void;
     this._readyPromise = new Promise(resolve => {
@@ -474,11 +478,23 @@ export class SlideViewer {
     });
 
     this.slide.on("renderEnd", () => {
-      if (!this._ready)
+      if (!this._ready) {
         setTimeout(() => {
           this._ready = true;
           resolveReady();
         }, 1000);
+      } else {
+        this.$overlay.style.opacity = "";
+      }
+    });
+
+    this.slide.on("renderError", ({ error, index }) => {
+      if (this._destroyed) return;
+      if (error) {
+        console.error(error);
+        this.$overlay.textContent = `Error on slide[index=${index}]: ${error.message}`;
+        this.$overlay.style.opacity = "1";
+      }
     });
 
     const fetching = fetch_slide_info(options).then(({ preview, slide }) => {
