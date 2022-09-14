@@ -397,7 +397,7 @@ export class SlideViewer {
   readonly $footer: HTMLElement;
   readonly $overlay: HTMLElement;
 
-  readonly slide;
+  readonly slide: Slide;
 
   private readonly _readyPromise: Promise<void>;
   private readonly _infoPromise: Promise<SlideViewerInfoResponse>;

@@ -95,11 +95,13 @@ export default SlideApp;
 
 export function previewSlide(options: SlideViewerOptions & { container: HTMLElement }) {
   const { container, ...slideOptions } = options;
-  container.style.cssText = "display:flex;flex-direction:column";
+  const wrapper = document.createElement("div");
+  wrapper.className = "netless-app-slide-preview-wrapper";
   const viewer = new SlideViewer(slideOptions);
-  container.appendChild(document.createElement("style")).textContent = SlideViewer.styles;
-  container.appendChild(viewer.$content);
-  container.appendChild(viewer.$footer);
+  wrapper.appendChild(document.createElement("style")).textContent = SlideViewer.styles;
+  wrapper.appendChild(viewer.$content);
+  wrapper.appendChild(viewer.$footer);
+  container.appendChild(wrapper);
   viewer.prepare(() => viewer.slide.renderSlide(1));
   return viewer;
 }

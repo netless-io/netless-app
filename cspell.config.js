@@ -14,6 +14,7 @@ module.exports = {
     "blockly",
     "canplay",
     "crossorigin",
+    "displayer",
     "Emittery",
     "fittoscreen",
     "fontscssurl",
