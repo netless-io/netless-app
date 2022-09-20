@@ -462,6 +462,7 @@ export class SlideViewer {
       mode: "local",
       interactive: true,
       enableGlobalClick: true,
+      useLocalCache: true,
       ...options,
     });
     this.slide.setResource(options.taskId, options.url || DefaultUrl);

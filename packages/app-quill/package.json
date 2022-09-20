@@ -20,10 +20,10 @@
   "dependencies": {
     "@netless/y": "^0.1.5",
     "katex": "^0.16.0",
-    "yjs": "13.5.13",
-    "y-quill": "^0.1.5",
     "quill": "^1.3.7",
-    "quill-cursors": "^3.1.2"
+    "quill-cursors": "^3.1.2",
+    "y-quill": "^0.1.5",
+    "yjs": "13.5.13"
   },
   "devDependencies": {
     "@highlightjs/cdn-assets": "^11.6.0",

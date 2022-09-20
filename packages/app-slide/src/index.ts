@@ -263,4 +263,15 @@ function connect({ context, viewer, sideEffect, logger }: ConnectParams) {
       viewer.setReadonly(!w);
     })
   );
+
+  sideEffect.addEventListener(window, "keydown", ev => {
+    if (context.box.focus) {
+      if (ev.key === "ArrowUp" || ev.key === "ArrowLeft") {
+        viewer.slide.prevStep();
+      }
+      if (ev.key === "ArrowRight" || ev.key === "ArrowDown") {
+        viewer.slide.nextStep();
+      }
+    }
+  });
 }
