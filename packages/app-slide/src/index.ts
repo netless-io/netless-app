@@ -10,6 +10,7 @@ import { Slide } from "@netless/slide";
 import { SlideViewer } from "./SlideViewer";
 import { refrigerator, addHooks } from "./Refrigerator";
 import { DefaultUrl } from "./constants";
+import { get } from "./utils";
 
 export { Slide, SlideViewer, refrigerator, addHooks, DefaultUrl };
 
@@ -21,7 +22,7 @@ export const version = __APP_VERSION__;
 const SlideApp: NetlessApp<Attributes, MagixEvents, AppOptions, void> = {
   kind: "Slide",
   setup(context) {
-    console.log("[Slide] setup @ " + __APP_VERSION__);
+    console.log("[Slide] setup @ " + __APP_VERSION__ + " (" + context.appId + ")");
 
     if (!context.storage.state.taskId) {
       throw new Error("[Slide] no taskId");
@@ -125,11 +126,21 @@ function make_timestamp(context: AppContext): () => number {
 
 function make_logger(context: AppContext, debug?: boolean): { info: (msg: string) => void } {
   void debug; // not used for now
+  const suffix = " (" + context.appId + ")";
   if (import.meta.env.DEV) {
-    return { info: console.debug.bind(console) };
+    return {
+      info(msg: string) {
+        console.debug(msg + suffix);
+      },
+    };
   }
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  return (context.displayer as any).logger;
+  const roomLogger = (context.displayer as any).logger;
+  return {
+    info(msg: string) {
+      roomLogger.info(msg + suffix);
+    },
+  };
 }
 
 function make_bg_color(el: HTMLElement): string {
@@ -179,7 +190,7 @@ interface ConnectParams {
 }
 
 function connect({ context, viewer, sideEffect, logger }: ConnectParams) {
-  const log = import.meta.env.DEV ? console.log.bind(console) : logger.info.bind(logger);
+  const log = logger.info.bind(logger);
 
   let whiteboard: WhiteBoardView | null = null;
 
@@ -193,9 +204,13 @@ function connect({ context, viewer, sideEffect, logger }: ConnectParams) {
 
   const { slide } = viewer;
 
+  function dump_state(state: unknown = context.storage.state.state) {
+    return JSON.stringify(state);
+  }
+
   function kick_start() {
     if (context.storage.state.state) {
-      log("[Slide] restore", { ...context.storage.state.state });
+      log("[Slide] restore " + dump_state());
       slide.setSlideState(context.storage.state.state);
     } else if (context.isAddApp) {
       log("[Slide] kick start");
@@ -214,7 +229,7 @@ function connect({ context, viewer, sideEffect, logger }: ConnectParams) {
       const disposerID = sideEffect.addDisposer(
         context.storage.addStateChangedListener(() => {
           if (context.storage.state.state) {
-            log("[Slide] restore", { ...context.storage.state.state });
+            log("[Slide] restore " + dump_state());
             slide.setSlideState(context.storage.state.state);
             sideEffect.flush(disposerID);
             sideEffect.flush(timeoutID);
@@ -227,13 +242,13 @@ function connect({ context, viewer, sideEffect, logger }: ConnectParams) {
   // setup sync event
   slide.on("stateChange", () => {
     if (context.isWritable) {
-      log("[Slide] save state", { ...slide.slideState });
+      log("[Slide] save state " + dump_state(slide.slideState));
       context.storage.setState({ state: slide.slideState });
     }
   });
   slide.on("syncDispatch", payload => {
     if (context.isWritable) {
-      log("[Slide] dispatch", { ...payload });
+      log("[Slide] dispatch " + dump_state(payload));
       context.dispatchMagixEvent("syncDispatch", payload);
     }
   });
@@ -241,7 +256,7 @@ function connect({ context, viewer, sideEffect, logger }: ConnectParams) {
     context.addMagixEventListener(
       "syncDispatch",
       ({ payload }) => {
-        log("[Slide] receive", { ...payload });
+        log("[Slide] receive " + dump_state(get(payload, "uuid")));
         slide.emit("syncReceive", payload);
       },
       { fireSelfEventAfterCommit: true }
@@ -251,7 +266,7 @@ function connect({ context, viewer, sideEffect, logger }: ConnectParams) {
   // save state
   slide.on("slideChange", page => {
     if (context.isWritable && whiteboard) {
-      log("[Slide] page to", page);
+      log("[Slide] page to " + page);
       whiteboard.jumpPage(page - 1);
     }
   });
