@@ -30,7 +30,7 @@
       }
       player = new Plyr(player_element, {
         fullscreen: { enabled: false },
-        controls: ["play", "progress", "current-time", "mute", "volume"],
+        controls: ["play", "progress", "current-time", "mute", "volume", "pip"],
         clickToPlay: false,
         youtube: { autoplay: true },
         loadSprite: false,
