@@ -18,9 +18,9 @@ interface AppProps {
 
 export const App: FunctionalComponent<AppProps> = memo(({ context, storage }) => {
   const [isWritable, setWritable] = useState(() => context.isWritable);
-  const [countdownSecs, setCountdownSecs] = useState(0);
-  const [startTime, setStartTime] = useState(0);
-  const [paused, setPaused] = useState(false);
+  const [countdownSecs, setCountdownSecs] = useState(storage.state.countdownSecs);
+  const [startTime, setStartTime] = useState(storage.state.startTime);
+  const [paused, setPaused] = useState(storage.state.paused);
 
   const started = startTime > 0;
 
