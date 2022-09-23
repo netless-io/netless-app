@@ -44,6 +44,9 @@ export function createViteConfig({
       define: {
         __APP_VERSION__: pkg ? JSON.stringify(pkg.version) : "undefined",
       },
+      esbuild: {
+        target: "esnext",
+      },
       plugins: [
         svelte({
           emitCss: false,
