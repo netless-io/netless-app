@@ -23,7 +23,7 @@
     "side-effect-manager": "^1.1.1"
   },
   "devDependencies": {
-    "@preact/preset-vite": "^2.3.0",
+    "@preact/preset-vite": "^2.4.0",
     "@types/lodash-es": "^4.17.6"
   }
 }

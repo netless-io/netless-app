@@ -22,7 +22,7 @@
     "cleanup": "rimraf ./dist"
   },
   "dependencies": {
-    "remitter": "^0.2.7",
+    "remitter": "^0.2.9",
     "side-effect-manager": "^1.1.3",
     "value-enhancer": "^1.3.2",
     "vanilla-lazyload": "^17.8.2"

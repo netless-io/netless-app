@@ -8,6 +8,7 @@ export default defineConfig({
     __APP_VERSION__: "undefined",
   },
   esbuild: {
+    target: "esnext",
     jsxFactory: "h",
     jsxFragment: "Fragment",
     jsxInject: `import { h, Fragment } from 'preact'`,

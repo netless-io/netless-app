@@ -29,9 +29,7 @@ export interface AppOptions
     | "navigatorDelegate"
     | "fixedFrameSize"
     | "logger"
-  > {
-  debug?: boolean;
-}
+  > {}
 
 export interface ILogger {
   info?(msg: string): void;
