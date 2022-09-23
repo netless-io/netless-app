@@ -19,6 +19,8 @@
   import { fade, fly } from "svelte/transition";
   import Loading from "./loading.svelte";
 
+  export let VITE_TOKEN = "";
+
   let phase: "prepare" | "404" | "join-room" | "main" = "prepare";
   let apps: AppGroup[];
   let room: Room;
@@ -107,7 +109,7 @@
   }
 
   function keydown(e: KeyboardEvent) {
-    if (e.key === "Shift" && e.shiftKey && import.meta.env.VITE_TOKEN) {
+    if (e.key === "Shift" && e.shiftKey && VITE_TOKEN) {
       shareMode = "new-room";
     }
   }

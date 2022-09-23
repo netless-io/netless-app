@@ -6,7 +6,10 @@ import type { AppGroup } from "./apps";
 import App from "./app.svelte";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-(window as any).app = new App({ target: document.querySelector("#app") as HTMLElement });
+(window as any).app = new App({
+  target: document.querySelector("#app") as HTMLElement,
+  props: { VITE_TOKEN: import.meta.env.VITE_TOKEN },
+});
 
 declare global {
   // eslint-disable-next-line no-var

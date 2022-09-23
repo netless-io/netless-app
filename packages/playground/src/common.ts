@@ -12,6 +12,8 @@ export interface RoomInfo {
   roomToken: string;
 }
 
+console.log(import.meta.env);
+
 export const post = <T>(path: string, body: unknown): Promise<T> =>
   fetch(`https://api.netless.link/v5/${path}`, {
     method: "POST",
