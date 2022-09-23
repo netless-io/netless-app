@@ -246,7 +246,7 @@ export class StaticDocsViewer {
         }
         const pagesScrollTop =
           camera.centerY - this.pageRenderer.containerRect.height / this.pageRenderer.scale / 2;
-        this.pagesScrollTop$.setValue(pagesScrollTop);
+        this.pagesScrollTop$.setValue(Math.max(0, pagesScrollTop));
       };
       this.whiteboard.view.callbacks.on("onCameraUpdated", handleCameraUpdate);
       return () => this.whiteboard.view.callbacks.off("onCameraUpdated", handleCameraUpdate);
