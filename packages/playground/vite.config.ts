@@ -16,6 +16,7 @@ export default defineConfig({
   plugins: [
     svelte({
       emitCss: false,
+      hot: false,
       experimental: {
         useVitePreprocess: true,
       },
