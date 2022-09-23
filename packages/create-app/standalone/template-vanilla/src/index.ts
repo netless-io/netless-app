@@ -19,11 +19,11 @@ export interface Attributes {
 const Demo: NetlessApp<Attributes> = {
   kind: "Demo",
   setup(context) {
-    let box = context.getBox();
+    let box = context.box;
     box.mountStyles(styles);
 
     const storage = context.createStorage("state", {
-      count: context.getAttributes()?.count || 0,
+      count: context.attributes.count || 0,
     });
 
     let content = document.createElement("div");
@@ -38,7 +38,7 @@ const Demo: NetlessApp<Attributes> = {
     let incButton = document.createElement("button");
     incButton.textContent = "++";
     incButton.addEventListener("click", () => {
-      if (context.getIsWritable()) {
+      if (context.isWritable) {
         storage.setState({ count: storage.state.count + 1 });
       }
     });
@@ -47,7 +47,7 @@ const Demo: NetlessApp<Attributes> = {
     let decButton = document.createElement("button");
     decButton.textContent = "--";
     decButton.addEventListener("click", () => {
-      if (context.getIsWritable()) {
+      if (context.isWritable) {
         storage.setState({ count: storage.state.count - 1 });
       }
     });
@@ -55,10 +55,10 @@ const Demo: NetlessApp<Attributes> = {
 
     refresh();
 
-    storage.onStateChanged.addListener(refresh);
+    const dispose = storage.on("stateChanged", refresh);
 
     context.emitter.on("destroy", () => {
-      storage.onStateChanged.removeListener(refresh);
+      dispose();
     });
   },
 };

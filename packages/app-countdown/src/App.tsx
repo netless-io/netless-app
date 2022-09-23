@@ -3,7 +3,7 @@ import type { FunctionalComponent } from "preact";
 import { memo } from "preact/compat";
 import { TimeAdjustment } from "./Clock";
 import { Countdown } from "./Countdown";
-import type { AppContext, Storage, StorageStateChangedListener } from "@netless/window-manager";
+import type { AppContext, Storage } from "@netless/window-manager";
 
 export interface StorageState {
   countdownSecs: number;
@@ -109,7 +109,7 @@ export const App: FunctionalComponent<AppProps> = memo(({ context, storage }) =>
   }, [context]);
 
   useEffect(() => {
-    const handler: StorageStateChangedListener<StorageState> = diff => {
+    const handler = (diff: Partial<Record<"countdownSecs" | "paused" | "startTime", unknown>>) => {
       if (diff.countdownSecs) {
         setCountdownSecs(storage.state.countdownSecs);
       }
@@ -120,8 +120,7 @@ export const App: FunctionalComponent<AppProps> = memo(({ context, storage }) =>
         setStartTime(storage.state.startTime);
       }
     };
-    storage.onStateChanged.addListener(handler);
-    return () => storage.onStateChanged.removeListener(handler);
+    return storage.on("stateChanged", handler);
   }, [storage]);
 
   useEffect(() => {

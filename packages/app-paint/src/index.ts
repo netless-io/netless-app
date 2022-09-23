@@ -14,7 +14,7 @@ const Paint: NetlessApp<Attributes, { broadcast: BroadcastEvent }> = {
   kind: "Paint",
   setup(context) {
     const box = context.box;
-    const curves = context.createStorage("curves", context.storage.state.curves || {});
+    const curves = context.createStorage("curves", context.attributes.curves || {});
 
     const svg = Paper.createSVGElement();
     svg.setAttribute("fill", "transparent");
@@ -108,7 +108,7 @@ const Paint: NetlessApp<Attributes, { broadcast: BroadcastEvent }> = {
     clearBtn.textContent = "CLEAR ALL";
     clearBtn.addEventListener("click", () => {
       paper.clear();
-      curves.emptyStorage();
+      curves.resetState();
       broadcast({ clear: true });
     });
     const wrapper = document.createElement("div");

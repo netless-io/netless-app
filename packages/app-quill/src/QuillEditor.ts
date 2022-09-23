@@ -146,7 +146,7 @@ function setup_sync_handlers({
     editor.on("editor-change", onSelectionChange);
     return () => editor.off("editor-change", onSelectionChange);
   });
-  sideEffect.addDisposer(cursors$$.addStateChangedListener(refreshCursors));
+  sideEffect.addDisposer(cursors$$.on("stateChanged", refreshCursors));
   sideEffect.addDisposer(context.emitter.on("roomMembersChange", refreshCursors));
 
   // #endregion

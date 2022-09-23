@@ -108,10 +108,10 @@ const Flowchart: NetlessApp<FlowchartAttributes, MagixEventPayloads> = {
       return { nodes, edges };
     };
     const updateGraph = debounce(flowSync.updateGraph, 100);
-    nodeStorage.addStateChangedListener(() => {
+    nodeStorage.on("stateChanged", () => {
       updateGraph(getGraphData());
     });
-    edgeStorage.addStateChangedListener(() => {
+    edgeStorage.on("stateChanged", () => {
       updateGraph(getGraphData());
     });
     log("render", apis);
@@ -130,13 +130,6 @@ const Flowchart: NetlessApp<FlowchartAttributes, MagixEventPayloads> = {
       />,
       $content
     );
-
-    // Remember to remove unused listener
-    context.emitter.on("destroy", () => {
-      nodeStorage.destroy();
-      edgeStorage.destroy();
-      groupStorage.destroy();
-    });
 
     // little log helper for visual appealing
     function log(...args: unknown[]) {

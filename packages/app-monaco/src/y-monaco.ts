@@ -240,8 +240,8 @@ export class YMonaco {
         }
       });
     };
-    this.sideEffect.addDisposer(this.cursors$$.addStateChangedListener(handleAttrsUpdate));
-    this.sideEffect.addDisposer(this.selections$$.addStateChangedListener(handleAttrsUpdate));
+    this.sideEffect.addDisposer(this.cursors$$.on("stateChanged", handleAttrsUpdate));
+    this.sideEffect.addDisposer(this.selections$$.on("stateChanged", handleAttrsUpdate));
   }
 
   private setupMembers(): void {

@@ -27,7 +27,7 @@ export const App: FunctionComponent<IAppProps> = props => {
 
   useEffect(() => {
     console.log("[App] useEffect", storage.state, props.answerStorage.state);
-    return storage.addStateChangedListener(() => {
+    return storage.on("stateChanged", () => {
       updateStep(storage.state.step);
     });
   }, []);

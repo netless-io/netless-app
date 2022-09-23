@@ -19,7 +19,7 @@ const <%- camelName %>: NetlessApp<<%- camelName %>Attributes, MagixEventPayload
     /* ------------------------------------------------- *\
      * Mount App Styles
     \* ------------------------------------------------- */
-    const box = context.getBox();
+    const box = context.box;
     box.mountStyles(styles);
 
     /* ------------------------------------------------- *\
@@ -42,7 +42,7 @@ const <%- camelName %>: NetlessApp<<%- camelName %>Attributes, MagixEventPayload
     log("Storage 'counter' state", storage1.state.count); // 1
 
     // Listen to state changes
-    const storage1StateListenerDisposer = storage1.addStateChangedListener(diff => {
+    const storage1StateListenerDisposer = storage1.on("stateChanged", diff => {
       if (diff.count) {
         log(diff.count.newValue, diff.count.oldValue);
       }
@@ -54,7 +54,7 @@ const <%- camelName %>: NetlessApp<<%- camelName %>Attributes, MagixEventPayload
     };
 
     // Only writable user can setState
-    if (context.getIsWritable()) {
+    if (context.isWritable) {
       // Similar to React setState, unchanged values will be filtered by a root-level shallow-compare.
       storage1.setState({
         count: 2,
@@ -66,23 +66,6 @@ const <%- camelName %>: NetlessApp<<%- camelName %>Attributes, MagixEventPayload
       });
     }
 
-    // There is also a default `context.storage` which handles the `attributes`
-    // option from `WindowManager.addApp` config.
-    // This is useful if you want initial values from the client who creates the app.
-    context.storage.ensureState({ count: 0 });
-
-    log("Storage state", context.storage.state);
-
-    const stateListenerDisposer = context.storage.addStateChangedListener(diff => {
-      if (diff.count) {
-        log("Storage state changed", diff.count.newValue, diff.count.oldValue);
-      }
-    });
-
-    if (context.getIsWritable()) {
-      context.storage.setState({ count: 12 });
-    }
-
     /* ------------------------------------------------- *\
      * Replayable Messaging between client (and self).
     \* ------------------------------------------------- */
@@ -90,7 +73,7 @@ const <%- camelName %>: NetlessApp<<%- camelName %>Attributes, MagixEventPayload
       log("Received Message", message);
     });
 
-    if (context.getIsWritable()) {
+    if (context.isWritable) {
       context.dispatchMagixEvent("ping", 22);
     }
 

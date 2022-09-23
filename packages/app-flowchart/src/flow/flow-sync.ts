@@ -12,7 +12,7 @@ export class FlowSync {
   private _sideEffect = new SideEffectManager();
 
   constructor(private storages: { selectedStorage: Storage<{ ids: string[] }> }) {
-    storages.selectedStorage.addStateChangedListener(async diff => {
+    storages.selectedStorage.on("stateChanged", async diff => {
       const model = await this.getSelectedModel();
       if (model) {
         const originNode = model.getValue() || [];

@@ -1,23 +1,24 @@
 import type { Logger } from "@netless/app-shared";
-import type { AppContext } from "@netless/window-manager";
+import type { AppContext, Storage } from "@netless/window-manager";
 import type { TalkativeAttributes, MagixEventPayloads } from "./index";
 import { SideEffectManager } from "side-effect-manager";
 
 export interface ConnectParams {
   context: AppContext<TalkativeAttributes, MagixEventPayloads>;
+  storage: Storage<TalkativeAttributes>;
   logger: Logger;
   postMessage: (message: string) => void;
   onRatioChanged: (ratio: number) => void;
   isSentBySelf: (source: MessageEventSource | null) => boolean;
 }
 
-export function connect({ context, logger, ...callbacks }: ConnectParams): () => void {
+export function connect({ context, storage, logger, ...callbacks }: ConnectParams): () => void {
   const sideEffect = new SideEffectManager();
 
   const handlers = {
     onPagenum({ totalPages }: { totalPages: number }) {
       if (context.isWritable && totalPages) {
-        context.storage.setState({ pageNum: totalPages });
+        storage.setState({ pageNum: totalPages });
       }
     },
 
@@ -25,11 +26,11 @@ export function connect({ context, logger, ...callbacks }: ConnectParams): () =>
       callbacks.onRatioChanged(data.coursewareRatio);
 
       if (context.isWritable && data.totalPages) {
-        context.storage.setState({ pageNum: data.totalPages });
+        storage.setState({ pageNum: data.totalPages });
       }
 
       // send last message to sync state
-      const { page, lastMsg } = context.storage.state;
+      const { page, lastMsg } = storage.state;
       lastMsg && callbacks.postMessage(lastMsg);
 
       // send first page jump message
@@ -42,7 +43,7 @@ export function connect({ context, logger, ...callbacks }: ConnectParams): () =>
 
         // save last message
         const lastMsg = JSON.stringify({ ...event, isRestore: true });
-        context.storage.setState({ lastMsg });
+        storage.setState({ lastMsg });
       }
     },
   };

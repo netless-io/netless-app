@@ -1,4 +1,4 @@
-import type { AppContext, ReadonlyTeleBox } from "@netless/window-manager";
+import type { AppContext, ReadonlyTeleBox, Storage } from "@netless/window-manager";
 import type * as Monaco from "monaco-editor";
 import type { Text } from "yjs";
 import type { NetlessAppMonacoAttributes } from "./typings";
@@ -32,11 +32,12 @@ export class MonacoEditor {
 
   public constructor(
     public readonly context: AppContext<NetlessAppMonacoAttributes>,
+    public readonly storage: Storage<NetlessAppMonacoAttributes>,
     public readonly box: ReadonlyTeleBox,
     public readonly monaco: typeof Monaco,
     public readonly: boolean
   ) {
-    this.terminal = new Terminal(context, this.compiler);
+    this.terminal = new Terminal(storage, this.compiler);
 
     this.yDoc = new Doc();
     this.yText = this.yDoc.getText("monaco");
@@ -52,7 +53,7 @@ export class MonacoEditor {
       value: "",
       automaticLayout: true,
       readOnly: readonly,
-      language: context.storage.state.lang,
+      language: storage.state.lang,
       fixedOverflowWidgets: false,
       theme: box.darkMode ? "vs-dark" : "vs",
     });
@@ -119,25 +120,24 @@ export class MonacoEditor {
       $langSelect.appendChild(opt);
     });
 
-    $langSelect.value = this.context.storage.state.lang;
+    $langSelect.value = this.storage.state.lang;
     $ctrl.appendChild($langSelect);
 
     const $runCode = document.createElement("button");
     $runCode.className = this.wrapClassName("run-code");
     $runCode.textContent = "Run";
-    $runCode.disabled =
-      !this.compiler.hasLanguage(this.context.storage.state.lang) || this.readonly;
+    $runCode.disabled = !this.compiler.hasLanguage(this.storage.state.lang) || this.readonly;
     $ctrl.appendChild($runCode);
 
     this.sideEffect.addEventListener($langSelect, "change", () => {
       const lang = $langSelect.value;
-      if (!this.readonly && lang && lang !== this.context.storage.state.lang) {
-        this.context.storage.setState({ lang });
+      if (!this.readonly && lang && lang !== this.storage.state.lang) {
+        this.storage.setState({ lang });
       }
     });
 
     this.sideEffect.addDisposer(
-      this.context.storage.addStateChangedListener(diff => {
+      this.storage.on("stateChanged", diff => {
         const lang = diff.lang?.newValue;
         if (lang) {
           this.monaco.editor.setModelLanguage(this.yBinding.monacoModel, lang);
@@ -155,9 +155,9 @@ export class MonacoEditor {
       if (this.readonly || !text.trim()) {
         return;
       }
-      this.context.storage.setState({ codeRunning: true });
-      await this.terminal.runCode(text, this.context.storage.state.lang);
-      this.context.storage.setState({ codeRunning: false });
+      this.storage.setState({ codeRunning: true });
+      await this.terminal.runCode(text, this.storage.state.lang);
+      this.storage.setState({ codeRunning: false });
     });
 
     $footer.appendChild(this.terminal.$content);

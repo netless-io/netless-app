@@ -35,13 +35,10 @@ const Plyr: NetlessApp<Attributes> = {
     minheight: 80,
   },
   setup(context) {
-    // user input
-    const attributes = context.storage.state;
-
     // synced state
     const storage = context.createStorage<Attributes>("player", {
       ...DefaultAttributes,
-      ...attributes,
+      ...context.attributes,
     });
 
     if (!storage.state.src) {

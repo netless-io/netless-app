@@ -30,9 +30,11 @@ const SlideApp: NetlessApp<Attributes, MagixEvents, AppOptions, void> = {
     const logger = new Logger(context);
     logger.info("[Slide] setup @ " + __APP_VERSION__);
 
-    if (!context.storage.state.taskId) {
+    if (!context.attributes.taskId) {
       throw new Error("[Slide] no taskId");
     }
+
+    const storage = context.createStorage("slide", context.attributes);
 
     const appOptions = context.getAppOptions() || {};
     const renderOptions = appOptions.renderOptions || {};
@@ -61,8 +63,8 @@ const SlideApp: NetlessApp<Attributes, MagixEvents, AppOptions, void> = {
       loaderDelegate: appOptions.loaderDelegate,
       navigatorDelegate: appOptions.navigatorDelegate,
       fixedFrameSize: appOptions.fixedFrameSize,
-      taskId: context.storage.state.taskId,
-      url: context.storage.state.url,
+      taskId: storage.state.taskId,
+      url: storage.state.url,
     });
 
     // For debugging.
@@ -97,7 +99,7 @@ const SlideApp: NetlessApp<Attributes, MagixEvents, AppOptions, void> = {
     sideEffect.push(() => viewer.destroy());
 
     // Connect UI with Netless App
-    connect({ context, viewer, sideEffect, logger });
+    connect({ context, storage, viewer, sideEffect, logger });
 
     context.emitter.on("destroy", () => {
       logger.info("[Slide] destroy");

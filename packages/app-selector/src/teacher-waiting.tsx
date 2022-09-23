@@ -52,13 +52,13 @@ export const TeacherWaiting = (props: TeacherWaitingProps) => {
   ];
 
   useEffect(() => {
-    return props.storage.addStateChangedListener(() => {
+    return props.storage.on("stateChanged", () => {
       setStep(props.storage.state.step);
     });
   }, []);
 
   useEffect(() => {
-    return props.answerStorage.addStateChangedListener(() => {
+    return props.answerStorage.on("stateChanged", () => {
       const newAnswers = Object.values(props.answerStorage.state);
       setAnswers(newAnswers);
       setCorrectRate(computedCorrectRate(newAnswers, props.storage.state.selected));

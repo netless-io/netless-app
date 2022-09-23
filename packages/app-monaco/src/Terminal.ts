@@ -1,4 +1,4 @@
-import type { AppContext } from "@netless/window-manager";
+import type { Storage } from "@netless/window-manager";
 import type { Compiler } from "./compiler/typings";
 import type { NetlessAppMonacoAttributes } from "./typings";
 
@@ -9,17 +9,17 @@ export class Terminal {
   public content = "";
 
   public constructor(
-    public readonly context: AppContext<NetlessAppMonacoAttributes>,
+    public readonly storage: Storage<NetlessAppMonacoAttributes>,
     public readonly compiler: Compiler
   ) {
     this.$content = document.createElement("pre");
     this.$content.className = `${this.namespace} tele-fancy-scrollbar`;
 
-    this.content = this.context.storage.state.terminal;
+    this.content = this.storage.state.terminal;
     this.render();
 
     this.sideEffect.addDisposer(
-      this.context.storage.addStateChangedListener(diff => {
+      this.storage.on("stateChanged", diff => {
         if (diff.terminal && diff.terminal.newValue !== this.content) {
           this.content = diff.terminal.newValue || "";
           this.render();
@@ -38,22 +38,22 @@ export class Terminal {
   }
 
   private updateTerminal(content: string): void {
-    if (content !== this.context.storage.state.terminal) {
-      this.context.storage.setState({ terminal: content });
+    if (content !== this.storage.state.terminal) {
+      this.storage.setState({ terminal: content });
     }
   }
 
   private updateCodeRunning(codeRunning: boolean): void {
-    if (codeRunning !== this.context.storage.state.codeRunning) {
-      this.context.storage.setState({ codeRunning });
+    if (codeRunning !== this.storage.state.codeRunning) {
+      this.storage.setState({ codeRunning });
       if (codeRunning) {
-        this.context.storage.setState({ terminal: "" });
+        this.storage.setState({ terminal: "" });
       }
     }
   }
 
   private render(): void {
-    if (this.context.storage.state.codeRunning) {
+    if (this.storage.state.codeRunning) {
       this.$content.style.display = "block";
       this.$content.textContent = "Code Running...\n";
     } else if (this.content) {

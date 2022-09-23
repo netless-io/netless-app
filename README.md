@@ -51,7 +51,7 @@ const storage1 = context.createStorage("counter", { count: 1 });
 console.log(storage1.state.count); // 1
 
 // Listen to state changes
-const storage1StateListenerDisposer = storage1.addStateChangedListener(diff => {
+const storage1StateListenerDisposer = storage1.on("stateChanged", diff => {
   if (diff.count) {
     console.log(diff.count.newValue, diff.count.oldValue);
   }
@@ -63,7 +63,7 @@ const sea = {
 };
 
 // Only writable user can setState
-if (context.getIsWritable()) {
+if (context.isWritable) {
   // Similar to React setState, unchanged values will be filtered by a root-level shallow-compare.
   storage1.setState({
     count: 2,
@@ -80,23 +80,6 @@ context.emitter.on("destroy", () => {
   storage1StateListenerDisposer();
 });
 
-// There is also a default `context.storage` which handles the `attributes`
-// option from `WindowManager.addApp` config.
-// This is useful if you want initial values from the client who creates the app.
-context.storage.ensureState({ count: 0 });
-
-console.log("Storage state", context.storage.state);
-
-const stateListenerDisposer = context.storage.addStateChangedListener(diff => {
-  if (diff.count) {
-    console.log("Storage state changed", diff.count.newValue, diff.count.oldValue);
-  }
-});
-
-if (context.getIsWritable()) {
-  context.storage.setState({ count: 12 });
-}
-
 context.emitter.on("destroy", () => {
   stateListenerDisposer();
 });
@@ -111,7 +94,7 @@ const magixListenerDisposer = context.addMagixEventListener("ping", message => {
   console.log("Received Message", message);
 });
 
-if (context.getIsWritable()) {
+if (context.isWritable) {
   context.dispatchMagixEvent("ping", 22);
 }
 

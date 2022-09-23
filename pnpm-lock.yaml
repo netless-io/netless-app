@@ -6,7 +6,7 @@ importers:
     specifiers:
       '@commitlint/cli': ^16.3.0
       '@commitlint/config-conventional': ^16.2.4
-      '@netless/window-manager': 1.0.0-canary.56
+      '@netless/window-manager': 1.0.0-canary.57
       '@sveltejs/vite-plugin-svelte': 1.0.8
       '@tsconfig/svelte': ^3.0.0
       '@types/node': ^18.0.4
@@ -34,7 +34,7 @@ importers:
     devDependencies:
       '@commitlint/cli': 16.3.0
       '@commitlint/config-conventional': 16.2.4
-      '@netless/window-manager': 1.0.0-canary.56_white-web-sdk@2.16.35
+      '@netless/window-manager': 1.0.0-canary.57_white-web-sdk@2.16.35
       '@sveltejs/vite-plugin-svelte': 1.0.8_svelte@3.49.0+vite@3.1.3
       '@tsconfig/svelte': 3.0.0
       '@types/node': 18.0.4
@@ -294,7 +294,7 @@ importers:
 
   packages/app-slide:
     specifiers:
-      '@netless/slide': ^0.7.2
+      '@netless/slide': ^0.7.3
       '@types/color-string': ^1.5.2
       color-string: ^1.9.1
       remitter: ^0.2.9
@@ -302,7 +302,7 @@ importers:
       value-enhancer: ^1.3.2
       vanilla-lazyload: ^17.8.3
     dependencies:
-      '@netless/slide': 0.7.2
+      '@netless/slide': 0.7.3
     devDependencies:
       '@types/color-string': 1.5.2
       color-string: 1.9.1
@@ -347,12 +347,12 @@ importers:
 
   packages/create-app/standalone/template-vanilla:
     specifiers:
-      '@netless/window-manager': ^1.0.0-canary.56
+      '@netless/window-manager': ^1.0.0-canary.57
       '@types/node': ^18.0.0
       vite: ^3.1.3
       white-web-sdk: 2.16.35
     devDependencies:
-      '@netless/window-manager': 1.0.0-canary.56_white-web-sdk@2.16.35
+      '@netless/window-manager': 1.0.0-canary.57_white-web-sdk@2.16.35
       '@types/node': 18.0.0
       vite: 3.1.3
       white-web-sdk: 2.16.35
@@ -1326,8 +1326,8 @@ packages:
     resolution: {integrity: sha512-7NzsJrba0R/mq/l10SkIZQwbrNVJyPxZYrjK6xL3Ts732iWAVuS2UB0u3s6iGeUVcqV39A679yva8APWRl4M0A==}
     dev: true
 
-  /@netless/slide/0.7.2:
-    resolution: {integrity: sha512-OE+8eBPx9027LGqTXeafRYQBXI56v2lrdpqU3iSZ72tCQEFCz7XA6JHi/AvqHTPGKrFkoyT7v0BzISUd/0x1hQ==}
+  /@netless/slide/0.7.3:
+    resolution: {integrity: sha512-isycdbksdDQ3+kLyvU0ZZy/HeIQdc/E5KT3rJ8vzaJV32zbO1ZjcvVf/RQQ583czw9vkz40/g8wfszWai37Jgg==}
     dependencies:
       '@juggle/resize-observer': 3.3.1
       '@types/lodash': 4.14.182
@@ -1361,8 +1361,8 @@ packages:
       value-enhancer: 1.3.2
     dev: true
 
-  /@netless/window-manager/1.0.0-canary.56_white-web-sdk@2.16.35:
-    resolution: {integrity: sha512-VCDeZHQtw5T7N8t7Dljk6Be/uxtSF9i/OTqlrMWmiGib0gV3TVo0vj0BW2xQOlxe38AmzANCS6HRLOdwdTTp0Q==}
+  /@netless/window-manager/1.0.0-canary.57_white-web-sdk@2.16.35:
+    resolution: {integrity: sha512-b0OWTfErSuIHRIKQmNdVqyQTFVztoFN1kupU5B+3MawFClK88tgel3fECHojk5FkuV+ujMCX2APqzJ/dpu33lw==}
     peerDependencies:
       white-web-sdk: ^2.16.0
     dependencies:

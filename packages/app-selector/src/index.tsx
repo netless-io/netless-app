@@ -89,7 +89,7 @@ const Selector: NetlessApp = {
     };
     const restart = () => {
       storage.setState({ step: "pickOptions", finishAt: undefined, startAt: undefined });
-      answerStorage.emptyStorage();
+      answerStorage.resetState();
     };
     const api = { updateStep, studentAnswer, finish, restart, updateTitle };
     ReactDOM.render(

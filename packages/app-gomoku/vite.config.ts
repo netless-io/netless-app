@@ -9,6 +9,7 @@ const configFn = defineConfig(options => {
   config.plugins = [];
   Object.assign(config, {
     esbuild: {
+      target: "esnext",
       jsxFactory: "h",
       jsxFragment: "Fragment",
       jsxInject: `import { h, Fragment } from 'preact'`,

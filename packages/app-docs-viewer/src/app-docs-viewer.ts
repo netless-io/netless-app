@@ -116,7 +116,7 @@ function setupStaticDocsViewer(
   sideEffect.addDisposer(() => staticDocsViewer.destroy());
 
   sideEffect.addDisposer(
-    storage.addStateChangedListener(diff => {
+    storage.on("stateChanged", diff => {
       if (diff.pagesScrollTop) {
         staticDocsViewer.syncPageScrollTop(diff.pagesScrollTop.newValue || 0);
       }

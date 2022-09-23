@@ -32,7 +32,7 @@ export function useStorage<T>(
 
   useEffect(
     () =>
-      storage.addStateChangedListener(() => {
+      storage.on("stateChanged", () => {
         _setState({ ...storage.state });
       }),
     [storage]

@@ -1,17 +1,19 @@
-import type { AppContext, WhiteBoardView } from "@netless/window-manager";
+import type { AppContext, Storage, WhiteBoardView } from "@netless/window-manager";
 import type { SideEffectManager } from "side-effect-manager";
 import type { SlideViewer } from "./SlideViewer";
+import type { Attributes } from "./typings";
 
 import { get } from "./utils";
 
 export interface ConnectParams {
   context: AppContext;
+  storage: Storage<Attributes>;
   viewer: SlideViewer;
   sideEffect: SideEffectManager;
   logger: { info: (msg: string) => void };
 }
 
-export function connect({ context, viewer, sideEffect, logger }: ConnectParams) {
+export function connect({ context, storage, viewer, sideEffect, logger }: ConnectParams) {
   const log = logger.info.bind(logger);
 
   let whiteboard: WhiteBoardView | null = null;
@@ -26,14 +28,14 @@ export function connect({ context, viewer, sideEffect, logger }: ConnectParams) 
 
   const { slide } = viewer;
 
-  function dump_state(state: unknown = context.storage.state.state) {
+  function dump_state(state: unknown = storage.state.state) {
     return JSON.stringify(state);
   }
 
   function kick_start() {
-    if (context.storage.state.state) {
+    if (storage.state.state) {
       log("[Slide] restore " + dump_state());
-      slide.setSlideState(context.storage.state.state);
+      slide.setSlideState(storage.state.state);
     } else if (context.isAddApp) {
       log("[Slide] kick start");
       slide.renderSlide(1);
@@ -41,7 +43,7 @@ export function connect({ context, viewer, sideEffect, logger }: ConnectParams) 
       log("[Slide] wait for restore");
       const timeoutID = sideEffect.add(() => {
         const timer = setInterval(() => {
-          if (!context.storage.state.state) {
+          if (!storage.state.state) {
             log("[Slide] timeout");
             slide.renderSlide(1);
           }
@@ -49,10 +51,10 @@ export function connect({ context, viewer, sideEffect, logger }: ConnectParams) 
         return () => clearInterval(timer);
       });
       const disposerID = sideEffect.push(
-        context.storage.on("stateChanged", () => {
-          if (context.storage.state.state) {
+        storage.on("stateChanged", () => {
+          if (storage.state.state) {
             log("[Slide] restore " + dump_state());
-            slide.setSlideState(context.storage.state.state);
+            slide.setSlideState(storage.state.state);
             sideEffect.flush(disposerID);
             sideEffect.flush(timeoutID);
           }
@@ -65,7 +67,7 @@ export function connect({ context, viewer, sideEffect, logger }: ConnectParams) 
   slide.on("stateChange", () => {
     if (context.isWritable) {
       // log("[Slide] save state " + dump_state(slide.slideState));
-      context.storage.setState({ state: slide.slideState });
+      storage.setState({ state: slide.slideState });
     }
   });
   slide.on("syncDispatch", payload => {

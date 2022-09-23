@@ -46,7 +46,7 @@ const Vote: NetlessApp<Attributes> = {
       }
     });
 
-    const dispose = storage.addStateChangedListener(diff => {
+    const dispose = storage.on("stateChanged", diff => {
       console.log(storage.state);
       if (diff.title) {
         app.$set({ title: diff.title.newValue });

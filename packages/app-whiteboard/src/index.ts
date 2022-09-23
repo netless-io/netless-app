@@ -1,6 +1,7 @@
 import type { NetlessApp, WhiteBoardView } from "@netless/window-manager";
 
-const Whiteboard: NetlessApp<void, void, void, WhiteBoardView> = {
+// eslint-disable-next-line @typescript-eslint/ban-types
+const Whiteboard: NetlessApp<{}, void, void, WhiteBoardView> = {
   kind: "Whiteboard",
   setup(context) {
     context.box.mountStage(document.createElement("div"));

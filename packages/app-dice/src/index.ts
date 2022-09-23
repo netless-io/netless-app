@@ -45,7 +45,7 @@ const Dice: NetlessApp = {
       disposers.add(cancel);
     }
 
-    disposers.add(faces$$.addStateChangedListener(refreshCube));
+    disposers.add(faces$$.on("stateChanged", refreshCube));
 
     context.box.mountStyles(styles);
     context.box.mountContent($ui.$container);

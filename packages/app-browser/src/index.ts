@@ -10,20 +10,22 @@ export interface Attributes {
 const Browser: NetlessApp<Attributes> = {
   kind: "Browser",
   setup(context) {
+    const storage = context.createStorage("browser", context.attributes);
+
     const box = context.box;
     box.mountStyles(styles);
 
     const app = new App({
       target: box.$content as HTMLElement,
-      props: { url: context.storage.state.url || "about:blank" },
+      props: { url: storage.state.url || "about:blank" },
     });
 
     app.$on("update", ({ detail: url }) => {
-      context.storage.setState({ url });
+      storage.setState({ url });
     });
 
-    const disposeListener = context.storage.addStateChangedListener(() => {
-      const { url } = context.storage.state;
+    const disposeListener = storage.on("stateChanged", () => {
+      const { url } = storage.state;
       app.$set({ url: url, dummyURL: url });
     });
 

@@ -27,8 +27,8 @@ export class MindMapEditor {
   private _destroyed = false;
 
   constructor(readonly context: AppContext<NetlessAppMindMapAttributes>) {
-    if (context.storage.state.root) {
-      this.defaultNodes = deconstruct(context.storage.state.root);
+    if (context.attributes.root) {
+      this.defaultNodes = deconstruct(context.attributes.root);
     } else {
       this.defaultNodes = { root: createNode(null, this.context.box.title, 0) };
     }
@@ -89,7 +89,7 @@ export class MindMapEditor {
       cancelAnimationFrame(raf);
       raf = requestAnimationFrame(() => this.render());
     };
-    this.sideEffect.addDisposer(this.nodes$$.addStateChangedListener(rerender));
+    this.sideEffect.addDisposer(this.nodes$$.on("stateChanged", rerender));
 
     this.render();
     this.graph.centerContent();
