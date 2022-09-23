@@ -1,5 +1,5 @@
 import type Plyr from "plyr";
-import type { AppContext, Player } from "@netless/window-manager";
+import type { AppContext, Player, Storage } from "@netless/window-manager";
 import type { Attributes } from "./index";
 
 import { clamp, first, safePlay } from "./utils";
@@ -26,7 +26,7 @@ export class Sync {
   private _buffering_timer = 0;
   private _disposer: (() => void) | null = null;
 
-  constructor(readonly context: AppContext<Attributes>) {
+  constructor(readonly context: AppContext<Attributes>, readonly storage: Storage<Attributes>) {
     const room = context.room;
     const player = context.displayer as Player;
 
@@ -35,7 +35,7 @@ export class Sync {
       ? () => room.calibrationTimestamp
       : () => player.beginTimestamp + player.progressTime;
 
-    this._disposer = context.storage.addStateChangedListener(this.syncAll.bind(this));
+    this._disposer = storage.on("stateChanged", this.syncAll.bind(this));
   }
 
   dispose() {
@@ -62,15 +62,14 @@ export class Sync {
   }
 
   setState(partial: Partial<Attributes>) {
-    this.context.isWritable && this.context.storage.setState(partial);
+    this.context.isWritable && this.storage.setState(partial);
   }
 
   syncAll() {
-    const { behavior, player, context } = this;
+    const { behavior, player, context, storage } = this;
     // wait before player set
     if (!player) return;
 
-    const { storage } = context;
     const { currentTime, hostTime, muted, paused, volume, owner } = storage.state;
     // if the state comes from self, don't sync
     if (behavior === "owner" && owner === this.uid && context.isWritable) return;
@@ -129,7 +128,7 @@ export class Sync {
   }
 
   private fixSeekBarOnInit($seek: HTMLInputElement, player: Plyr) {
-    const { currentTime } = this.context.storage.state;
+    const { currentTime } = this.storage.state;
     if (player.duration && currentTime && $seek) {
       const percent = (100 * currentTime) / player.duration;
       $seek.value = percent.toFixed(2);
@@ -168,7 +167,7 @@ export class Sync {
   }
 
   private dispatchOwner() {
-    if (this.context.storage.state.owner !== this.uid) {
+    if (this.storage.state.owner !== this.uid) {
       this.setState({ owner: this.uid });
     }
   }
@@ -220,7 +219,7 @@ export class Sync {
   }
 
   private isOwner() {
-    return this.behavior === "owner" && this.context.storage.state.owner === this.uid;
+    return this.behavior === "owner" && this.storage.state.owner === this.uid;
   }
 
   private syncCurrentTime(hostTime: number, currentTime: number, player: Plyr) {

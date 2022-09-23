@@ -35,10 +35,14 @@ const Plyr: NetlessApp<Attributes> = {
     minheight: 80,
   },
   setup(context) {
-    const storage = context.storage;
-    if (context.isWritable) {
-      storage.ensureState(DefaultAttributes);
-    }
+    // user input
+    const attributes = context.storage.state;
+
+    // synced state
+    const storage = context.createStorage<Attributes>("player", {
+      ...DefaultAttributes,
+      ...attributes,
+    });
 
     if (!storage.state.src) {
       context.emitter.emit("destroy", {
@@ -62,10 +66,10 @@ const Plyr: NetlessApp<Attributes> = {
       container.classList.toggle("is-readonly", !context.isWritable);
     });
 
-    const sync = new Sync(context);
+    const sync = new Sync(context, storage);
     const app = new Player({
       target: container,
-      props: { storage: context.storage, sync },
+      props: { storage, sync },
     });
 
     // sync.behavior = "ideal";

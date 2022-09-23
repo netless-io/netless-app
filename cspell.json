@@ -29,6 +29,8 @@
     "listcontents",
     "Magix",
     "mindmap",
+    "minheight",
+    "minwidth",
     "mpegurl",
     "Multiuser",
     "Mutex",
