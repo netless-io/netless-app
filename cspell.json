@@ -65,15 +65,7 @@
     "Zcoord",
     "zscale"
   ],
-  "flagWords": [
-    "fuck",
-    "bitch",
-    "asshole",
-    "bullshit",
-    "crap",
-    "suck",
-    "wtf"
-  ],
+  "flagWords": ["fuck", "bitch", "asshole", "bullshit", "crap", "suck", "wtf"],
   "dictionaries": [
     "softwareTerms",
     "typescript",
@@ -94,7 +86,7 @@
     "packages/flat-components/storybook-static/**",
     "desktop/main-app/release/**",
     "desktop/main-app/static/**",
-    "cspell.config.js",
+    "cspell.json",
     "pnpm-lock.yaml",
     "CHANGELOG.md"
   ]
