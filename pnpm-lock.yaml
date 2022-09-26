@@ -6,7 +6,7 @@ importers:
     specifiers:
       '@commitlint/cli': ^16.3.0
       '@commitlint/config-conventional': ^16.2.4
-      '@netless/window-manager': 1.0.0-canary.57
+      '@netless/window-manager': 1.0.0-canary.58
       '@sveltejs/vite-plugin-svelte': 1.0.8
       '@tsconfig/svelte': ^3.0.0
       '@types/node': ^18.0.4
@@ -34,7 +34,7 @@ importers:
     devDependencies:
       '@commitlint/cli': 16.3.0
       '@commitlint/config-conventional': 16.2.4
-      '@netless/window-manager': 1.0.0-canary.57_white-web-sdk@2.16.35
+      '@netless/window-manager': 1.0.0-canary.58_white-web-sdk@2.16.35
       '@sveltejs/vite-plugin-svelte': 1.0.8_svelte@3.49.0+vite@3.1.3
       '@tsconfig/svelte': 3.0.0
       '@types/node': 18.0.4
@@ -1363,6 +1363,23 @@ packages:
 
   /@netless/window-manager/1.0.0-canary.57_white-web-sdk@2.16.35:
     resolution: {integrity: sha512-b0OWTfErSuIHRIKQmNdVqyQTFVztoFN1kupU5B+3MawFClK88tgel3fECHojk5FkuV+ujMCX2APqzJ/dpu33lw==}
+    peerDependencies:
+      white-web-sdk: ^2.16.0
+    dependencies:
+      '@juggle/resize-observer': 3.3.1
+      '@netless/synced-store': 2.0.7_white-web-sdk@2.16.35
+      '@netless/telebox-insider': 1.0.0-alpha.37
+      emittery: 0.11.0
+      lodash: 4.17.21
+      p-retry: 4.6.2
+      side-effect-manager: 1.2.1
+      uuid: 7.0.3
+      value-enhancer: 1.3.2
+      white-web-sdk: 2.16.35
+    dev: true
+
+  /@netless/window-manager/1.0.0-canary.58_white-web-sdk@2.16.35:
+    resolution: {integrity: sha512-czqKN7RtOl0x5yiT5pqjqc3Do79BGhcKGyancY/m29VMA/KhIzXqM4vH2tdj2MM5bV06aNZr5mp4doU2H85LWg==}
     peerDependencies:
       white-web-sdk: ^2.16.0
     dependencies:
