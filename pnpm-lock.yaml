@@ -82,14 +82,14 @@ importers:
   packages/app-docs-viewer:
     specifiers:
       remitter: ^0.2.9
-      side-effect-manager: ^1.1.3
+      side-effect-manager: ^1.2.1
       value-enhancer: ^1.3.2
-      vanilla-lazyload: ^17.8.2
+      vanilla-lazyload: ^17.8.3
     dependencies:
       remitter: 0.2.9
-      side-effect-manager: 1.1.3
+      side-effect-manager: 1.2.1
       value-enhancer: 1.3.2
-      vanilla-lazyload: 17.8.2
+      vanilla-lazyload: 17.8.3
 
   packages/app-embedded-page:
     specifiers:
@@ -6470,13 +6470,8 @@ packages:
   /side-effect-manager/1.1.1:
     resolution: {integrity: sha512-ppUBbzOXLydre40Yz553eIIlTdf2WCJcqMI4n06sTRCA2o5AwG5WQ2qq6fHp5C8RK3TAfgtZKrhllNG2F1jzCA==}
 
-  /side-effect-manager/1.1.3:
-    resolution: {integrity: sha512-bD3zMAmMpVa5OR42UHK5HKY6XB/+d4NiICTMQAxwMTGkGY8epcnjK3+b0nuFb+9r1YBlVhSh+lt6wLMLdOxP4w==}
-    dev: false
-
   /side-effect-manager/1.2.1:
     resolution: {integrity: sha512-RBosCqit8LYMfrEXBt+4klzwWi3faGy4vfXNmUFZhgJY/oY6ZqF7RyUxWOJb0EUfA3jsY3juvFBJHYTk1q/3RQ==}
-    dev: true
 
   /signal-exit/3.0.7:
     resolution: {integrity: sha512-wnD2ZE+l+SPC/uoS0vXeE9L1+0wuaMqKlfz9AMUo38JsyLSBWSFcHR1Rri62LZc12vLr1gb3jl7iwQhgwpAbGQ==}
@@ -6882,13 +6877,8 @@ packages:
   /value-enhancer/1.3.2:
     resolution: {integrity: sha512-RC+yfNMwuLZO2iDtHh4dxvtHP00DnSO0VARBkVoxT1eOwMJ/Rs5jKh6nBUcotWncJhjfGGhQE4SUK8goLEC5oQ==}
 
-  /vanilla-lazyload/17.8.2:
-    resolution: {integrity: sha512-sz/dFM5tXi5LbDhx9l31bAdXXtYvKCZ2cCva4SgsKxFIHf0r/4j1HsnaDn60ga2DhbxLRtHh65J8JmHZHW0F8w==}
-    dev: false
-
   /vanilla-lazyload/17.8.3:
     resolution: {integrity: sha512-0eYjhkSkfP/JCDIzVpmgnh9I3XKAA8/i/6FpRrH8qjcC+nHv5mYZ6DQZUIGU16TqJei23hHl0J/Zuv/zmCC2Zw==}
-    dev: true
 
   /vite/3.1.3:
     resolution: {integrity: sha512-/3XWiktaopByM5bd8dqvHxRt5EEgRikevnnrpND0gRfNkrMrPaGGexhtLCzv15RcCMtV2CLw+BPas8YFeSG0KA==}
