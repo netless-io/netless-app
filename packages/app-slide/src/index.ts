@@ -126,7 +126,7 @@ const SlideApp: NetlessApp<Attributes, MagixEvents, AppOptions, Controller> = {
         ...options,
         onPageChanged,
       });
-      if (useFreezer) apps.set(context.appId, slideController);
+      if (useFreezer) apps.set(context.appId, slideController, box);
       logger.setAppController(context.appId, slideController);
       if (import.meta.env.DEV) {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any

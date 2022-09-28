@@ -1,4 +1,4 @@
-import type { RegisterParams } from "@netless/window-manager";
+import type { ReadonlyTeleBox, RegisterParams } from "@netless/window-manager";
 import { log } from "./logger";
 
 export interface FreezableSlide {
@@ -15,8 +15,15 @@ const inspect = (arr: string[]) => {
 
 export const apps = {
   map: new Map<string, FreezableSlide>(),
+  boxes: new Map<string, ReadonlyTeleBox>(),
   queue: [] as string[],
   validateQueue() {
+    // queue = [5, 4, 3, 2, 1]
+    this.queue.sort((a, b) => {
+      const za = this.boxes.get(a)?.zIndex ?? 0;
+      const zb = this.boxes.get(b)?.zIndex ?? 0;
+      return -(za - zb);
+    });
     log("[Slide] freezer: validate", inspect(this.queue));
     while (this.queue.length > FreezerLength) {
       const appId = this.queue.pop() as string;
@@ -27,9 +34,10 @@ export const apps = {
       }
     }
   },
-  set(appId: string, slide: FreezableSlide) {
+  set(appId: string, slide: FreezableSlide, box: ReadonlyTeleBox) {
     log("[Slide] freezer: add", appId, inspect(this.queue));
     this.map.set(appId, slide);
+    this.boxes.set(appId, box);
     if (!this.queue.includes(appId)) {
       this.queue.unshift(appId);
     }
@@ -37,6 +45,7 @@ export const apps = {
   },
   delete(appId: string) {
     this.map.delete(appId);
+    this.boxes.delete(appId);
     this.queue = this.queue.filter(id => id !== appId);
     log("[Slide] freezer: delete", appId, inspect(this.queue));
   },
