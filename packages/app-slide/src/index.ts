@@ -70,7 +70,7 @@ const SlideApp: NetlessApp<Attributes, MagixEvents, AppOptions, void> = {
     // For debugging.
     Object.assign(viewer, { context, logger });
 
-    sideEffect.push(refrigerator.set(context.appId, viewer));
+    sideEffect.push(refrigerator.set(context.appId, viewer, context.box));
 
     if (import.meta.env.DEV) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any

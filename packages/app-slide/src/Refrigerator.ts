@@ -1,3 +1,4 @@
+import type { ReadonlyTeleBox } from "@netless/window-manager";
 import type { SlideViewer } from "./SlideViewer";
 import type { AddHooks } from "./typings";
 
@@ -5,10 +6,12 @@ export class Refrigerator {
   threshold = 2;
 
   private _map = new Map<string, SlideViewer>();
+  private _box = new Map<string, ReadonlyTeleBox>();
   private _queue: string[] = [];
 
-  set(appId: string, viewer: SlideViewer) {
+  set(appId: string, viewer: SlideViewer, box: ReadonlyTeleBox) {
     this._map.set(appId, viewer);
+    this._box.set(appId, box);
     if (!this._queue.includes(appId)) {
       this._queue.unshift(appId);
     }
@@ -20,6 +23,7 @@ export class Refrigerator {
 
   delete(appId: string) {
     this._map.delete(appId);
+    this._box.delete(appId);
     this._queue = this._queue.filter(id => id !== appId);
     this._refresh();
   }
@@ -35,6 +39,12 @@ export class Refrigerator {
 
   private _refresh() {
     let viewer: SlideViewer | undefined;
+    // queue = [5, 4, 3, 2, 1]
+    this._queue.sort((a, b) => {
+      const za = this._box.get(a)?.zIndex ?? 0;
+      const zb = this._box.get(b)?.zIndex ?? 0;
+      return -(za - zb);
+    });
     this._queue.forEach((appId, i) => {
       if (!(viewer = this._map.get(appId))) return;
       if (i < this.threshold) {
