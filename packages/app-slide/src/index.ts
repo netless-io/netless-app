@@ -149,6 +149,7 @@ const SlideApp: NetlessApp<Attributes, MagixEvents, AppOptions, Controller> = {
     docsViewer = new SlideDocsViewer({
       box,
       view,
+      preview: context.storage.state.preview ?? true,
       mountSlideController,
       mountWhiteboard: context.mountView.bind(context),
     });

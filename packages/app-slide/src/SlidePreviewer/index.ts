@@ -61,6 +61,7 @@ export class SlidePreviewer {
     this.target = config.target;
     this.bgColor = cachedGetBgColor(this.target);
     this.viewer = new DocsViewer({
+      preview: true,
       readonly: false,
       onNewPageIndex: this.onNewPageIndex,
       onPlay: this.onPlay,

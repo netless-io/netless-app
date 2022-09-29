@@ -26,6 +26,7 @@ export const EmptyAttributes: Attributes = {
   taskId: "",
   url: "",
   state: null,
+  preview: true,
 };
 
 export interface SlideControllerOptions {

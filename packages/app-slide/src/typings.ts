@@ -7,6 +7,8 @@ export interface Attributes {
   taskId: string;
   /** base url of converted resources */
   url: string;
+  /** show preview thumbnails (default: true) */
+  preview: boolean;
   /** internal state of slide, do not change */
   state: SlideState | null;
 }

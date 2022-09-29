@@ -15,6 +15,7 @@ export type MountSlideOptions = Omit<SlideControllerOptions, "context" | "onPage
 export interface SlideDocsViewerConfig {
   box: ReadonlyTeleBox;
   view: View;
+  preview: boolean;
   mountSlideController: (options: MountSlideOptions) => SlideController;
   mountWhiteboard: (dom: HTMLDivElement) => void;
 }
@@ -29,13 +30,20 @@ export class SlideDocsViewer {
   protected readonly mountWhiteboard: SlideDocsViewerConfig["mountWhiteboard"];
   private isViewMounted = false;
 
-  public constructor({ box, view, mountSlideController, mountWhiteboard }: SlideDocsViewerConfig) {
+  public constructor({
+    box,
+    view,
+    preview,
+    mountSlideController,
+    mountWhiteboard,
+  }: SlideDocsViewerConfig) {
     this.box = box;
     this.whiteboardView = view;
     this.mountSlideController = mountSlideController;
     this.mountWhiteboard = mountWhiteboard;
 
     this.viewer = new DocsViewer({
+      preview,
       readonly: box.readonly,
       onNewPageIndex: this.onNewPageIndex,
       onPlay: this.onPlay,

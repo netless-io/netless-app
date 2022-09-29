@@ -17,13 +17,15 @@ export interface DocsViewerPage {
 
 export interface DocsViewerConfig {
   readonly: boolean;
+  preview: boolean;
   onNewPageIndex: (index: number) => void;
   onPlay?: () => void;
 }
 
 export class DocsViewer {
-  public constructor({ readonly, onNewPageIndex, onPlay }: DocsViewerConfig) {
+  public constructor({ readonly, preview, onNewPageIndex, onPlay }: DocsViewerConfig) {
     this.readonly = readonly;
+    this.preview = preview;
     this.onNewPageIndex = onNewPageIndex;
     this.onPlay = onPlay;
 
@@ -31,6 +33,7 @@ export class DocsViewer {
   }
 
   protected readonly: boolean;
+  protected preview: boolean;
   protected onNewPageIndex: (index: number) => void;
   protected onPlay?: () => void;
 
@@ -114,7 +117,9 @@ export class DocsViewer {
       }
 
       $content.appendChild(this.renderPreviewMask());
-      $content.appendChild(this.renderPreview());
+      if (this.preview) {
+        $content.appendChild(this.renderPreview());
+      }
     }
     return this.$content;
   }
@@ -155,6 +160,8 @@ export class DocsViewer {
   }
 
   private refreshPreview() {
+    if (!this.preview) return;
+
     const { $preview } = this;
     const pageClassName = this.wrapClassName("preview-page");
     const pageNameClassName = this.wrapClassName("preview-page-name");
@@ -219,7 +226,9 @@ export class DocsViewer {
   };
 
   public refreshBtnSidebar() {
-    this.$btnSidebar.style.display = this.pages.length > 0 ? "" : "none";
+    if (this.preview) {
+      this.$btnSidebar.style.display = this.pages.length > 0 ? "" : "none";
+    }
   }
 
   protected renderFooter(): HTMLElement {
