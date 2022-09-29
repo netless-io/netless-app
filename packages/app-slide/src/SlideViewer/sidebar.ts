@@ -89,8 +89,8 @@ export function create_sidebar() {
         const $img = h("img");
         $img.width = page.width;
         $img.height = page.height;
-        $img.src = page.thumbnail;
         $img.alt = `page-${i}`;
+        $img.dataset.src = page.thumbnail;
         $img.dataset.pageIndex = pageIndex;
 
         append($page, $img);
