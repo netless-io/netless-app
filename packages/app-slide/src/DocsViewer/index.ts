@@ -71,6 +71,7 @@ export class DocsViewer {
   }
 
   public destroy(): void {
+    this.previewLazyLoad?.destroy();
     this.sideEffect.flushAll();
     this.unmount();
   }
@@ -126,13 +127,6 @@ export class DocsViewer {
       const $preview = document.createElement("div");
       $preview.className = this.wrapClassName("preview") + " tele-fancy-scrollbar";
       this.$preview = $preview;
-      this.sideEffect.add(() => {
-        this.previewLazyLoad = new LazyLoad({
-          container: this.$preview,
-          elements_selector: `.${this.wrapClassName("preview-page>img")}`,
-        });
-        return () => this.previewLazyLoad?.destroy();
-      });
 
       this.refreshPreview();
 
@@ -347,6 +341,10 @@ export class DocsViewer {
         "." + this.wrapClassName(`preview-page-${this.pageIndex}`)
       );
       if ($previewPage) {
+        this.previewLazyLoad ||= new LazyLoad({
+          container: this.$preview,
+          elements_selector: `.${this.wrapClassName("preview-page>img")}`,
+        });
         this.$preview.scrollTo({
           top: $previewPage.offsetTop - 16,
         });
