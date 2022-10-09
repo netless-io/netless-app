@@ -1,3 +1,4 @@
+import type { ILazyLoadInstance } from "vanilla-lazyload";
 import type { PreviewPage } from "./typings";
 
 import LazyLoad from "vanilla-lazyload";
@@ -47,10 +48,7 @@ export function create_sidebar() {
   };
   append($content, $preview);
 
-  const lazyload = new LazyLoad({
-    container: $preview,
-    elements_selector: `.${wrap_class("preview-page>img")}`,
-  });
+  let lazyload: ILazyLoadInstance | undefined;
 
   function set_readonly(readonly_: boolean) {
     if (readonly !== readonly_) {
@@ -63,6 +61,12 @@ export function create_sidebar() {
     if (active !== active_) {
       active = active_;
       $content.classList.toggle(class_preview_active, active);
+      if (active && !lazyload) {
+        lazyload = new LazyLoad({
+          container: $preview,
+          elements_selector: `.${wrap_class("preview-page>img")}`,
+        });
+      }
     }
   }
 
@@ -99,7 +103,7 @@ export function create_sidebar() {
       });
 
       if (!destroyed) {
-        lazyload.update();
+        lazyload?.update();
       }
     }
   }
@@ -118,7 +122,7 @@ export function create_sidebar() {
 
   function destroy() {
     destroyed = true;
-    lazyload.destroy();
+    lazyload?.destroy();
   }
 
   function get_active() {
