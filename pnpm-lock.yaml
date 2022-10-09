@@ -178,13 +178,13 @@ importers:
 
   packages/app-slide:
     specifiers:
-      '@netless/slide': ^0.7.4
+      '@netless/slide': ^0.7.5
       '@types/color-string': ^1.5.2
       color-string: ^1.9.1
       side-effect-manager: ^1.2.1
       vanilla-lazyload: ^17.8.3
     devDependencies:
-      '@netless/slide': 0.7.4
+      '@netless/slide': 0.7.5
       '@types/color-string': 1.5.2
       color-string: 1.9.1
       side-effect-manager: 1.2.1
@@ -500,8 +500,8 @@ packages:
     resolution: {integrity: sha512-7NzsJrba0R/mq/l10SkIZQwbrNVJyPxZYrjK6xL3Ts732iWAVuS2UB0u3s6iGeUVcqV39A679yva8APWRl4M0A==}
     dev: true
 
-  /@netless/slide/0.7.4:
-    resolution: {integrity: sha512-9Gd6BY/JWcvpBotyyS7c/IHaGC1yVOb5AfvF7l9ZdSWnqyMU5GEMxcmc2AgFn+DezS24wDJN/zAL33M6fGS+3Q==}
+  /@netless/slide/0.7.5:
+    resolution: {integrity: sha512-1iBJaZcIvwtTwgWd5YQqsBuC6ha8rv6K2JkO5P4lfwIdrDJdgTI1ctMmKV4gyVZpz6wjpCH08cvvD6W1uSz6RQ==}
     dependencies:
       '@juggle/resize-observer': 3.3.1
       '@types/lodash': 4.14.182
