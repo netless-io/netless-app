@@ -7,16 +7,13 @@ Netless App for viewing animated slides, in our new engine.
 ### Usage
 
 ```ts
-import type { Attributes as SlideAttributes } from "@netless/app-slide";
+import AppSlide, { addHooks } from "@netless/app-slide";
 
 // 1. register before joining room
 WindowManager.register({
   kind: "Slide",
-  appOptions: {
-    // turn on to show debug controller
-    debug: false,
-  },
-  src: () => import("@netless/app-slide"),
+  src: AppSlide,
+  addHooks, // enables auto-freeze
 });
 
 // 2. when joined room, add ppt to whiteboard
@@ -29,7 +26,7 @@ manager.addApp({
   attributes: {
     taskId: "1234567...", // [2]
     url: "https://convertcdn.netless.link/dynamicConvert", // [3]
-  } as SlideAttributes,
+  },
 });
 ```
 

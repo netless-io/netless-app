@@ -5,16 +5,13 @@ WebGL 版 PPT 展示插件。
 ### 用法
 
 ```ts
-import type { Attributes as SlideAttributes } from "@netless/app-slide";
+import AppSlide, { addHooks } from "@netless/app-slide";
 
 // 1. 在加入房间前注册此 app
 WindowManager.register({
   kind: "Slide",
-  appOptions: {
-    // 打开这个选项显示 debug 工具栏
-    debug: false,
-  },
-  src: () => import("@netless/app-slide"),
+  src: AppSlide,
+  addHooks, // 启用自动冻结功能，优化 CPU 和内存占用
 });
 
 // 2. 加入房间后，这样插入 PPT
@@ -27,7 +24,7 @@ manager.addApp({
   attributes: {
     taskId: "1234567...", // [2]
     url: "https://convertcdn.netless.link/dynamicConvert", // [3]
-  } as SlideAttributes,
+  },
 });
 ```
 
@@ -44,6 +41,19 @@ manager.addApp({
 3. (可选) `url`
 
    PPT 转码后资源存储服务器链接前缀，默认为 `https://convertcdn.netless.link/dynamicConvert`。
+
+### 本地预览
+
+```ts
+import { previewSlide } from "@netless/app-slide";
+
+const previewer = previewSlide({
+  container: document.getElementById("preview"),
+  taskId: "1234567...",
+});
+
+previewer.destroy();
+```
 
 ### 协议
 
