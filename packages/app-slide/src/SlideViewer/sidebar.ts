@@ -2,7 +2,7 @@ import type { ILazyLoadInstance } from "vanilla-lazyload";
 import type { PreviewPage } from "./typings";
 
 import LazyLoad from "vanilla-lazyload";
-import { append, h, noop, set_class, wrap_class } from "../utils";
+import { append, h, hc, noop, wrap_class } from "../utils";
 
 export function create_sidebar() {
   type NewPageIndexCallback = (newPageIndex: number) => void;
@@ -20,11 +20,9 @@ export function create_sidebar() {
   const class_readonly = wrap_class("readonly");
   const class_preview_active = wrap_class("preview-active");
 
-  const $content = h("div");
-  set_class($content, "content");
+  const $content = hc("div", "content");
 
-  const $previewMask = h("div");
-  set_class($previewMask, "preview-mask");
+  const $previewMask = hc("div", "preview-mask");
   $previewMask.onclick = function on_click_preview_mask(ev) {
     if (readonly) return;
     if (ev.target !== $previewMask) return;
@@ -32,8 +30,7 @@ export function create_sidebar() {
   };
   append($content, $previewMask);
 
-  const $preview = h("div");
-  set_class($preview, "preview");
+  const $preview = hc("div", "preview");
   $preview.classList.add(wrap_class("tele-fancy-scrollbar"));
   $preview.onclick = function on_click_preview(ev) {
     if (readonly) return;

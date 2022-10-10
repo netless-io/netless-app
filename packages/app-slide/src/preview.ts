@@ -1,11 +1,11 @@
 import type { SlideViewerOptions } from "./SlideViewer";
 
 import { SlideViewer } from "./SlideViewer";
+import { hc } from "./utils";
 
 export function previewSlide(options: SlideViewerOptions & { container: HTMLElement }) {
   const { container, ...slideOptions } = options;
-  const wrapper = document.createElement("div");
-  wrapper.className = "netless-app-slide-preview-wrapper";
+  const wrapper = hc("div", "preview-wrapper");
   const viewer = new SlideViewer(slideOptions);
   wrapper.appendChild(document.createElement("style")).textContent = SlideViewer.styles;
   wrapper.appendChild(viewer.$content);

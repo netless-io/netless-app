@@ -1,6 +1,6 @@
 import { class_name } from "../constants";
 import { arrowLeftSVG, arrowRightSVG, pauseSVG, playSVG, sidebarSVG } from "../icons";
-import { h, noop, set_class, wrap_class } from "../utils";
+import { hc, noop, wrap_class } from "../utils";
 
 export function create_footer() {
   type NewPageIndexCallback = (newPageIndex: number) => void;
@@ -24,11 +24,9 @@ export function create_footer() {
   let page_index = 0;
   let page_count = 0;
 
-  const $footer = h("div");
-  set_class($footer, "footer");
+  const $footer = hc("div", "footer");
 
-  const $btnSidebar = h("button");
-  set_class($btnSidebar, "btn-sidebar");
+  const $btnSidebar = hc("button", "btn-sidebar");
   $btnSidebar.classList.add(wrap_class("footer-btn"));
   $btnSidebar.appendChild(sidebarSVG(class_name));
   $btnSidebar.onclick = function on_click_btn_sidebar() {
@@ -38,11 +36,9 @@ export function create_footer() {
   $btnSidebar.style.display = "none";
   $footer.appendChild($btnSidebar);
 
-  const $pageJumps = h("div");
-  set_class($pageJumps, "page-jumps");
+  const $pageJumps = hc("div", "page-jumps");
 
-  const $btnPageBack = h("button");
-  set_class($btnPageBack, "btn-page-back");
+  const $btnPageBack = hc("button", "btn-page-back");
   $btnPageBack.classList.add(wrap_class("footer-btn"));
   $btnPageBack.appendChild(arrowLeftSVG(class_name));
   $btnPageBack.onclick = function on_click_btn_page_back() {
@@ -51,8 +47,7 @@ export function create_footer() {
   };
   $pageJumps.appendChild($btnPageBack);
 
-  const $btnPlay = h("button");
-  set_class($btnPlay, "btn-page-play");
+  const $btnPlay = hc("button", "btn-page-play");
   $btnPlay.classList.add(wrap_class("footer-btn"));
   $btnPlay.appendChild(playSVG(class_name));
   $btnPlay.appendChild(pauseSVG(class_name));
@@ -68,8 +63,7 @@ export function create_footer() {
   };
   $pageJumps.appendChild($btnPlay);
 
-  const $btnPageNext = h("button");
-  set_class($btnPageNext, "btn-page-next");
+  const $btnPageNext = hc("button", "btn-page-next");
   $btnPageNext.classList.add(wrap_class("footer-btn"));
   $btnPageNext.appendChild(arrowRightSVG(class_name));
   $btnPageNext.onclick = function on_click_btn_page_next() {
@@ -78,11 +72,9 @@ export function create_footer() {
   };
   $pageJumps.appendChild($btnPageNext);
 
-  const $pageNumber = h("div");
-  set_class($pageNumber, "page-number");
+  const $pageNumber = hc("div", "page-number");
 
-  const $pageNumberInput = h("input");
-  set_class($pageNumberInput, "page-number-input");
+  const $pageNumberInput = hc("input", "page-number-input");
   $pageNumberInput.value = String(page_index + 1);
   $pageNumberInput.onchange = function on_change_page_number_input() {
     if (readonly) return;
@@ -91,8 +83,7 @@ export function create_footer() {
     }
   };
 
-  const $totalPage = h("span");
-  set_class($totalPage, "total-page");
+  const $totalPage = hc("span", "total-page");
   $totalPage.textContent = " / ";
 
   $pageNumber.appendChild($pageNumberInput);
