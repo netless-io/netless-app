@@ -6,7 +6,7 @@ importers:
     specifiers:
       '@commitlint/cli': ^16.3.0
       '@commitlint/config-conventional': ^16.2.4
-      '@netless/window-manager': 1.0.0-canary.58
+      '@netless/window-manager': 1.0.0-canary.61
       '@sveltejs/vite-plugin-svelte': 1.0.8
       '@tsconfig/svelte': ^3.0.0
       '@types/node': ^18.0.4
@@ -30,11 +30,11 @@ importers:
       typescript: ^4.7.4
       typings: workspace:0.1.0
       vite: ^3.1.3
-      white-web-sdk: 2.16.35
+      white-web-sdk: 2.16.36
     devDependencies:
       '@commitlint/cli': 16.3.0
       '@commitlint/config-conventional': 16.2.4
-      '@netless/window-manager': 1.0.0-canary.58_white-web-sdk@2.16.35
+      '@netless/window-manager': 1.0.0-canary.61_white-web-sdk@2.16.36
       '@sveltejs/vite-plugin-svelte': 1.0.8_svelte@3.49.0+vite@3.1.3
       '@tsconfig/svelte': 3.0.0
       '@types/node': 18.0.4
@@ -58,7 +58,7 @@ importers:
       typescript: 4.7.4
       typings: link:packages/typings
       vite: 3.1.3_sass@1.53.0
-      white-web-sdk: 2.16.35
+      white-web-sdk: 2.16.36
 
   packages/app-browser:
     specifiers: {}
@@ -294,7 +294,7 @@ importers:
 
   packages/app-slide:
     specifiers:
-      '@netless/slide': ^0.7.4
+      '@netless/slide': ^0.7.5
       '@types/color-string': ^1.5.2
       color-string: ^1.9.1
       remitter: ^0.2.9
@@ -302,7 +302,7 @@ importers:
       value-enhancer: ^1.3.2
       vanilla-lazyload: ^17.8.3
     dependencies:
-      '@netless/slide': 0.7.4
+      '@netless/slide': 0.7.5
     devDependencies:
       '@types/color-string': 1.5.2
       color-string: 1.9.1
@@ -347,15 +347,15 @@ importers:
 
   packages/create-app/standalone/template-vanilla:
     specifiers:
-      '@netless/window-manager': ^1.0.0-canary.57
+      '@netless/window-manager': ^1.0.0-canary.61
       '@types/node': ^18.0.0
       vite: ^3.1.3
-      white-web-sdk: 2.16.35
+      white-web-sdk: 2.16.36
     devDependencies:
-      '@netless/window-manager': 1.0.0-canary.57_white-web-sdk@2.16.35
+      '@netless/window-manager': 1.0.0-canary.61_white-web-sdk@2.16.36
       '@types/node': 18.0.0
       vite: 3.1.3
-      white-web-sdk: 2.16.35
+      white-web-sdk: 2.16.36
 
   packages/playground:
     specifiers:
@@ -1326,8 +1326,8 @@ packages:
     resolution: {integrity: sha512-7NzsJrba0R/mq/l10SkIZQwbrNVJyPxZYrjK6xL3Ts732iWAVuS2UB0u3s6iGeUVcqV39A679yva8APWRl4M0A==}
     dev: true
 
-  /@netless/slide/0.7.4:
-    resolution: {integrity: sha512-9Gd6BY/JWcvpBotyyS7c/IHaGC1yVOb5AfvF7l9ZdSWnqyMU5GEMxcmc2AgFn+DezS24wDJN/zAL33M6fGS+3Q==}
+  /@netless/slide/0.7.5:
+    resolution: {integrity: sha512-1iBJaZcIvwtTwgWd5YQqsBuC6ha8rv6K2JkO5P4lfwIdrDJdgTI1ctMmKV4gyVZpz6wjpCH08cvvD6W1uSz6RQ==}
     dependencies:
       '@juggle/resize-observer': 3.3.1
       '@types/lodash': 4.14.182
@@ -1337,7 +1337,7 @@ packages:
       lodash: 4.17.21
     dev: false
 
-  /@netless/synced-store/2.0.7_white-web-sdk@2.16.35:
+  /@netless/synced-store/2.0.7_white-web-sdk@2.16.36:
     resolution: {integrity: sha512-E5ukXMTLa0Mlhlv9Rcy3MJSAM5kwiLoXQy42OCSIFdBR8jf0BKbSUXSjnA8J+FZq6UidNtGaadDWjhwlM1z5MA==}
     peerDependencies:
       white-web-sdk: '>= 2.16'
@@ -1346,7 +1346,7 @@ packages:
       remitter: 0.2.9
       side-effect-manager: 1.2.1
       value-enhancer: 1.3.2
-      white-web-sdk: 2.16.35
+      white-web-sdk: 2.16.36
     dev: true
 
   /@netless/telebox-insider/1.0.0-alpha.37:
@@ -1361,13 +1361,16 @@ packages:
       value-enhancer: 1.3.2
     dev: true
 
-  /@netless/window-manager/1.0.0-canary.57_white-web-sdk@2.16.35:
-    resolution: {integrity: sha512-b0OWTfErSuIHRIKQmNdVqyQTFVztoFN1kupU5B+3MawFClK88tgel3fECHojk5FkuV+ujMCX2APqzJ/dpu33lw==}
+  /@netless/window-manager/1.0.0-canary.61_white-web-sdk@2.16.36:
+    resolution: {integrity: sha512-37fwXPD3QjUj4DimOsVOpTr8/proELXmHexQbj5vdxquLLtUyhEth091z5vPEl4EkO7jOuPtuwm38Wak1QCBYw==}
     peerDependencies:
       white-web-sdk: ^2.16.0
+    peerDependenciesMeta:
+      white-web-sdk:
+        optional: true
     dependencies:
       '@juggle/resize-observer': 3.3.1
-      '@netless/synced-store': 2.0.7_white-web-sdk@2.16.35
+      '@netless/synced-store': 2.0.7_white-web-sdk@2.16.36
       '@netless/telebox-insider': 1.0.0-alpha.37
       emittery: 0.11.0
       lodash: 4.17.21
@@ -1375,24 +1378,7 @@ packages:
       side-effect-manager: 1.2.1
       uuid: 7.0.3
       value-enhancer: 1.3.2
-      white-web-sdk: 2.16.35
-    dev: true
-
-  /@netless/window-manager/1.0.0-canary.58_white-web-sdk@2.16.35:
-    resolution: {integrity: sha512-czqKN7RtOl0x5yiT5pqjqc3Do79BGhcKGyancY/m29VMA/KhIzXqM4vH2tdj2MM5bV06aNZr5mp4doU2H85LWg==}
-    peerDependencies:
-      white-web-sdk: ^2.16.0
-    dependencies:
-      '@juggle/resize-observer': 3.3.1
-      '@netless/synced-store': 2.0.7_white-web-sdk@2.16.35
-      '@netless/telebox-insider': 1.0.0-alpha.37
-      emittery: 0.11.0
-      lodash: 4.17.21
-      p-retry: 4.6.2
-      side-effect-manager: 1.2.1
-      uuid: 7.0.3
-      value-enhancer: 1.3.2
-      white-web-sdk: 2.16.35
+      white-web-sdk: 2.16.36
     dev: true
 
   /@netless/xml-js/1.6.15:
@@ -6370,6 +6356,11 @@ packages:
 
   /rollup-plugin-peer-deps-external/2.2.4:
     resolution: {integrity: sha512-AWdukIM1+k5JDdAqV/Cxd+nejvno2FVLVeZ74NKggm3Q5s9cbbcOgUPGdbxPi4BXu7xGaZ8HG12F+thImYu/0g==}
+    peerDependencies:
+      rollup: '*'
+    peerDependenciesMeta:
+      rollup:
+        optional: true
     dev: true
 
   /rollup/0.63.5:
@@ -6960,8 +6951,8 @@ packages:
       isexe: 2.0.0
     dev: true
 
-  /white-web-sdk/2.16.35:
-    resolution: {integrity: sha512-HgpTTPN0np9/4UWDVBFV05bpfEBHyN0mseXKdUjS+31VcjbvLhbeX7kSM3wRAEkh7svmzZAAUhOWwBHD14MACA==}
+  /white-web-sdk/2.16.36:
+    resolution: {integrity: sha512-qmyi6Slkxkbo7+FM3MudieQGhhKRtEztQaTDya1whl7ntD1BRavZzpRBgnJ1NMX2A1wKjILGHXRg9zyZhnAZaA==}
     dependencies:
       '@juggle/resize-observer': 3.3.1
       '@netless/canvas-polyfill': 0.0.4
