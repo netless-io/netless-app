@@ -35,7 +35,9 @@ export interface SlideControllerOptions {
   onPageChanged: (page: number) => void;
   onTransitionStart: () => void;
   onTransitionEnd: () => void;
-  onError: (args: { error: Error }) => void;
+  onError: (args: { error: Error; index: number }) => void;
+  onRenderError?: (error: Error, pageIndex: number) => void;
+  showRenderError?: boolean;
 }
 
 type MagixEventListener = Parameters<
@@ -45,6 +47,8 @@ type MagixEventListener = Parameters<
 export class SlideController {
   public readonly context: SlideControllerOptions["context"];
   public readonly slide: Slide;
+  public readonly showRenderError: boolean;
+  public readonly onRenderError?: (error: Error, pageIndex: number) => void;
 
   private readonly room?: Room;
   private readonly player?: Player;
@@ -67,11 +71,15 @@ export class SlideController {
     onTransitionStart,
     onTransitionEnd,
     onError,
+    onRenderError,
+    showRenderError,
   }: SlideControllerOptions) {
     this.onPageChanged = onPageChanged;
     this.onTransitionStart = onTransitionStart;
     this.onTransitionEnd = onTransitionEnd;
     this.onError = onError;
+    this.onRenderError = onRenderError;
+    this.showRenderError = showRenderError ?? true;
 
     this.context = context;
     this.room = context.getRoom();

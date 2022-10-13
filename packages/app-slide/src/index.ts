@@ -30,6 +30,8 @@ export const version = __APP_VERSION__;
 
 export { DefaultUrl, apps, FreezerLength, addHooks };
 
+export { setFreezerLength, getFreezerLength, onCreated, onDestroyed } from "./utils/freezer";
+
 export interface AppOptions
   extends Pick<
     ISlideConfig,
@@ -57,6 +59,10 @@ export interface AppOptions
   autoResolution?: boolean;
   /** 1~4, default: 3 */
   maxResolutionLevel?: number;
+  /** custom error handler */
+  onRenderError?: (error: Error, pageIndex: number) => void;
+  /** whether to show an overlay of error message @default: true */
+  showRenderError?: boolean;
 }
 
 export interface ILogger {
@@ -65,7 +71,9 @@ export interface ILogger {
   warn?(msg: string): void;
 }
 
-export interface Controller {
+export interface AppResult {
+  viewer: () => SlideDocsViewer | null;
+  controller: () => SlideController | null | undefined;
   slide: () => Slide | undefined;
   position: () => [page: number, pageCount: number] | undefined;
   nextStep: () => boolean;
@@ -75,7 +83,7 @@ export interface Controller {
   jumpToPage: (page: number) => boolean;
 }
 
-const SlideApp: NetlessApp<Attributes, MagixEvents, AppOptions, Controller> = {
+const SlideApp: NetlessApp<Attributes, MagixEvents, AppOptions, AppResult> = {
   kind: "Slide",
   setup(context) {
     console.log("[Slide] setup @ " + version);
@@ -121,10 +129,14 @@ const SlideApp: NetlessApp<Attributes, MagixEvents, AppOptions, Controller> = {
     };
 
     const mountSlideController = (options: MountSlideOptions): SlideController => {
+      const appOptions = context.getAppOptions() || {};
+
       const slideController = new SlideController({
         context,
         ...options,
         onPageChanged,
+        onRenderError: appOptions.onRenderError,
+        showRenderError: appOptions.showRenderError,
       });
       if (useFreezer) apps.set(context.appId, slideController, box);
       logger.setAppController(context.appId, slideController);
@@ -194,6 +206,12 @@ const SlideApp: NetlessApp<Attributes, MagixEvents, AppOptions, Controller> = {
     docsViewer.mount();
 
     return {
+      viewer: () => {
+        return docsViewer;
+      },
+      controller: () => {
+        return docsViewer?.slideController;
+      },
       slide: () => {
         return docsViewer?.slideController?.slide;
       },

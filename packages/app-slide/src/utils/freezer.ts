@@ -7,7 +7,16 @@ export interface FreezableSlide {
 }
 
 export let useFreezer = false;
-export const FreezerLength = 2;
+export let FreezerLength = 2;
+
+export function getFreezerLength() {
+  return FreezerLength;
+}
+
+/** @param length - must be >= 1, default is 2 */
+export function setFreezerLength(length: number) {
+  FreezerLength = length < 1 ? Infinity : length;
+}
 
 const inspect = (arr: string[]) => {
   return "[" + arr + "]";
@@ -69,16 +78,39 @@ if (import.meta.env.DEV) {
   (window as any).freezer = apps;
 }
 
+const on_created_callbacks = new Set<(appId: string) => void>();
+
+export function onCreated(callback: (appId: string) => void) {
+  on_created_callbacks.add(callback);
+  return () => on_created_callbacks.delete(callback);
+}
+
+const on_destroyed_callbacks = new Set<(appId: string) => void>();
+
+export function onDestroyed(callback: (appId: string) => void) {
+  on_destroyed_callbacks.add(callback);
+  return () => on_destroyed_callbacks.delete(callback);
+}
+
 export type AddHooks = NonNullable<RegisterParams["addHooks"]>;
 
 /**
  * Put this function in your register code:
- * `WindowManager.register({ addHooks })`
+ * `WindowManager.register({ kind: 'Slide', src: SlideApp, addHooks })`
  * So that it will automatically freeze the app when it is not in focus.
  */
 export const addHooks: AddHooks = emitter => {
   useFreezer = true;
+
   emitter.on("focus", ({ appId }) => {
     apps.focus(appId);
+  });
+
+  emitter.on("created", ({ appId }) => {
+    on_created_callbacks.forEach(callback => callback(appId));
+  });
+
+  emitter.on("destroy", ({ appId }) => {
+    on_destroyed_callbacks.forEach(callback => callback(appId));
   });
 };

@@ -130,10 +130,15 @@ export class SlideDocsViewer {
     return this;
   }
 
-  protected onError = ({ error }: { error: Error }) => {
+  protected onError = ({ error, index }: { error: Error; index: number }) => {
     this.viewer.setPaused();
-    this.$overlay.textContent = `Error on slide[page=${this.slideController?.page}]: ${error.message}`;
-    this.$overlay.style.opacity = "1";
+    if (this.slideController?.showRenderError) {
+      this.$overlay.textContent = `Error on slide[page=${this.slideController.page}]: ${error.message}`;
+      this.$overlay.style.opacity = "1";
+    }
+    if (this.slideController?.onRenderError) {
+      this.slideController.onRenderError(error, index);
+    }
     logger.warn("[Slide] render error", error);
   };
 
