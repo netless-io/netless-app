@@ -271,6 +271,8 @@ export class SlideController {
         resolution: options.resolution,
         transactionBgColor: options.bgColor || cachedGetBgColor(anchor),
         maxResolutionLevel: options.maxResolutionLevel,
+        forceCanvas: options.forceCanvas,
+        enableNvidiaDetect: options.enableNvidiaDetect,
       },
       fixedFrameSize: options.fixedFrameSize,
       loaderDelegate: options.loaderDelegate,

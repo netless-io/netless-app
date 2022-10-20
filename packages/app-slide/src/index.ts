@@ -59,6 +59,10 @@ export interface AppOptions
   autoResolution?: boolean;
   /** 1~4, default: 3 */
   maxResolutionLevel?: number;
+  /** use canvas2d mode, downside: some 3d effects are lost */
+  forceCanvas?: boolean;
+  /** fix windows 11 nvidia rendering bug, downside: render next page slows down */
+  enableNvidiaDetect?: boolean;
   /** custom error handler */
   onRenderError?: (error: Error, pageIndex: number) => void;
   /** whether to show an overlay of error message @default: true */
