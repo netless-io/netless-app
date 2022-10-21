@@ -74,8 +74,17 @@ export class Sync {
     // if the state comes from self, don't sync
     if (behavior === "owner" && owner === this.uid && context.isWritable) return;
 
-    if (paused !== player.paused && !this._skip_next_play_pause) {
-      paused ? player.pause() : safePlay(player);
+    // if we are in replace mode and is pausing, pause the player
+    let merged_paused = paused;
+    if (!merged_paused && context.isReplay) {
+      type PlayerPhase = `${Player["phase"]}`;
+      const pausing: PlayerPhase[] = ["pause", "ended", "stop"];
+      if (pausing.includes((context.displayer as Player).phase as PlayerPhase)) {
+        merged_paused = true;
+      }
+    }
+    if (merged_paused !== player.paused && !this._skip_next_play_pause) {
+      merged_paused ? player.pause() : safePlay(player);
     }
 
     if (muted !== player.muted) {
