@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import type { AkkoObjectUpdatedProperty } from "white-web-sdk";
 
 type TransformMessage<TKey extends keyof Messages, Messages> = TKey extends keyof Messages
@@ -21,7 +22,7 @@ export interface RoomMember {
 }
 
 // me --> iframe
-export interface ToSDKMessagePayloads<TState = DefaultState, TMagix = unknown> {
+export interface ToSDKMessagePayloads<TState extends object = DefaultState, TMagix = unknown> {
   Init: InitData<TState>;
   StateChanged: {
     storeId: string;
@@ -38,7 +39,7 @@ export type ToSDKMessageKey = keyof ToSDKMessagePayloads;
 
 export type ToSDKMessage<
   TKey extends ToSDKMessageKey = ToSDKMessageKey,
-  TState = DefaultState,
+  TState extends object = DefaultState,
   TMagix = unknown
 > = TransformMessage<TKey, ToSDKMessagePayloads<TState, TMagix>>;
 
@@ -83,9 +84,9 @@ export interface InitData<TState = DefaultState> {
   mainStoreId: string;
 }
 
-export type PostToSDKMessage<TState = unknown, TMessage = unknown> = <
+export type PostToSDKMessage<TState extends object = any, TMessage = unknown> = <
   TType extends ToSDKMessageKey = ToSDKMessageKey,
-  S = TState
+  S extends object = TState
 >(
   message: ToSDKMessage<TType, S, TMessage>
 ) => void;

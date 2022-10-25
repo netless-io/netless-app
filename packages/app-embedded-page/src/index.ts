@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import styles from "./style.scss?inline";
 
 import type { NetlessApp, WhiteBoardView } from "@netless/window-manager";
@@ -29,7 +30,7 @@ export type Attributes = {
   page: string;
 };
 
-export interface AppOptions<TState = DefaultState, TMessage = unknown> {
+export interface AppOptions<TState extends object = DefaultState, TMessage = unknown> {
   debug?: boolean;
   postMessage?: PostToSDKMessage<TState, TMessage>;
   addMessageListener?: AddFromSDKMessageListener<TState, TMessage>;
@@ -89,7 +90,7 @@ const EmbeddedPage: NetlessApp<Attributes, void, AppOptions> = {
         userPayload: toJSON(payload),
       }));
 
-    const safeListenPropsUpdated = <T>(
+    const safeListenPropsUpdated = <T extends object>(
       getProps: () => T,
       callback: AkkoObjectUpdatedListener<T>
     ) => {
@@ -191,11 +192,11 @@ const EmbeddedPage: NetlessApp<Attributes, void, AppOptions> = {
         storeSideEffect.add(
           () =>
             safeListenPropsUpdated(
-              () => attrs.store[storeId],
+              () => (attrs.store as any)[storeId],
               actions => {
                 postMessage({
                   NEAType: "StateChanged",
-                  payload: { storeId, actions: toJSON(actions) },
+                  payload: { storeId, actions: toJSON(actions) as any },
                 });
               }
             ),

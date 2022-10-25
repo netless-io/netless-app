@@ -57,6 +57,7 @@ export class QuillEditor {
           [{ list: "ordered" }, { list: "bullet" }, { indent: "-1" }, { indent: "+1" }],
           ["bold", "italic", "underline", "strike"],
           [{ color: [] }, { background: [] }, { align: [] }],
+          [{ script: "sub" }, { script: "super" }],
           ["link", "formula"],
           ["clean"],
         ],

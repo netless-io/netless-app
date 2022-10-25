@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import type { Diff } from "@netless/app-embedded-page";
 import type { Logger } from "@netless/app-shared";
 import type { AkkoObjectUpdatedProperty } from "white-web-sdk";
@@ -9,11 +10,11 @@ export type StoreOnSetStatePayload<TState = unknown> = {
   [K in keyof TState]?: MaybeRefValue<TState[K]>;
 };
 
-export type StoreStateChangedPayload<TState = unknown> = ReadonlyArray<
+export type StoreStateChangedPayload<TState extends object = any> = ReadonlyArray<
   AkkoObjectUpdatedProperty<TState, Extract<keyof TState, string>>
 >;
 
-export interface Store<TState = unknown> {
+export interface Store<TState extends object = any> {
   readonly id: string;
   readonly state: TState;
   readonly onStateChanged: EmbeddedPageEvent<Diff<TState>>;
@@ -25,7 +26,7 @@ export interface Store<TState = unknown> {
   ensureState(state: Partial<TState>): void;
 }
 
-export interface StoreConfig<TState = unknown> {
+export interface StoreConfig<TState extends object = any> {
   id: string;
   state?: TState;
   getIsWritable: () => boolean;
@@ -33,7 +34,7 @@ export interface StoreConfig<TState = unknown> {
   logger?: Logger | Console;
 }
 
-export class StoreImpl<TState = unknown> implements Store<TState> {
+export class StoreImpl<TState extends object = any> implements Store<TState> {
   readonly id: string;
   getIsWritable: StoreConfig["getIsWritable"];
 
@@ -110,7 +111,7 @@ export class StoreImpl<TState = unknown> implements Store<TState> {
             this._kMap.set(refValue.v, refValue.k);
             payload[key] = refValue as MaybeRefValue<TState[Extract<keyof TState, string>]>;
           } else {
-            payload[key] = value;
+            payload[key] = value as any;
           }
         }
       });

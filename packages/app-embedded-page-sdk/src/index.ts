@@ -10,17 +10,17 @@ import { has, isObj } from "./utils";
 export * from "./EmbeddedApp";
 export * from "./EmbeddedPageEvent";
 
-export type EmbeddedAppConfigBase<TState = unknown, TMessage = unknown> = {
+export type EmbeddedAppConfigBase<TState extends object = any, TMessage = unknown> = {
   debug?: LoggerDebugLevel;
   postMessage?: PostFromSDKMessage<TState, TMessage>;
   addMessageListener?: AddToSDKMessageListener<TState, TMessage>;
 };
 
-export type EmbeddedAppConfigWithState<TState = unknown, TMessage = unknown> = {
+export type EmbeddedAppConfigWithState<TState extends object = any, TMessage = unknown> = {
   ensureState: TState;
 } & EmbeddedAppConfigBase<TState, TMessage>;
 
-export type EmbeddedAppConfig<TState = unknown, TMessage = unknown> = {
+export type EmbeddedAppConfig<TState extends object = any, TMessage = unknown> = {
   ensureState?: TState;
 } & EmbeddedAppConfigBase<TState, TMessage>;
 
@@ -34,16 +34,17 @@ let singleApp: EmbeddedApp<any, any> | undefined;
  *   app.ensureState({ count: 0 })
  * });
  */
-export function createEmbeddedApp<TState = DefaultState, TMessage = unknown>(): Promise<
-  EmbeddedApp<TState | Record<string, unknown>, TMessage>
->;
-export function createEmbeddedApp<TState = DefaultState, TMessage = unknown>(
+export function createEmbeddedApp<
+  TState extends object = DefaultState,
+  TMessage = unknown
+>(): Promise<EmbeddedApp<TState | Record<string, unknown>, TMessage>>;
+export function createEmbeddedApp<TState extends object = DefaultState, TMessage = unknown>(
   config: EmbeddedAppConfigWithState<TState, TMessage>
 ): Promise<EmbeddedApp<TState, TMessage>>;
-export function createEmbeddedApp<TState = DefaultState, TMessage = unknown>(
+export function createEmbeddedApp<TState extends object = DefaultState, TMessage = unknown>(
   config: EmbeddedAppConfigBase<TState, TMessage>
 ): Promise<EmbeddedApp<TState | Record<string, unknown>, TMessage>>;
-export function createEmbeddedApp<TState = DefaultState, TMessage = unknown>(
+export function createEmbeddedApp<TState extends object = DefaultState, TMessage = unknown>(
   config: EmbeddedAppConfig<TState, TMessage> = {}
 ): Promise<EmbeddedApp<TState, TMessage>> {
   if (!parent) {

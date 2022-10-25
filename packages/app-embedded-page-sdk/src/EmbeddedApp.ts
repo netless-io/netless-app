@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import type {
   CameraState,
   DefaultState,
@@ -28,12 +29,12 @@ export type PostFromSDKMessage<TState = unknown, TMessage = unknown> = <
   message: FromSDKMessage<TType, { [K in keyof S]: MaybeRefValue<S[K]> }, TMessage>
 ) => void;
 
-export type AddToSDKMessageListener<TState = unknown, TMessage = unknown> = (
+export type AddToSDKMessageListener<TState extends object = any, TMessage = unknown> = (
   listener: (message: ToSDKMessage<ToSDKMessageKey, TState, TMessage>) => void,
   options?: boolean | AddEventListenerOptions
 ) => () => void;
 
-export class EmbeddedApp<TState = DefaultState, TMessage = unknown> {
+export class EmbeddedApp<TState extends object = DefaultState, TMessage = unknown> {
   public readonly appId: string;
   public readonly debug: boolean;
   private _logger: Logger;
@@ -185,7 +186,7 @@ export class EmbeddedApp<TState = DefaultState, TMessage = unknown> {
 
   private _stores = new Map<string, Store>();
 
-  connectStore<S>(storeId: string, ensureState?: S): Store<S> {
+  connectStore<S extends object = any>(storeId: string, ensureState?: S): Store<S> {
     let store = this._stores.get(storeId) as Store<S> | undefined;
     if (!store) {
       if (!has(this._storeRawData, storeId)) {
