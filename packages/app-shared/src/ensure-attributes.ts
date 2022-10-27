@@ -1,10 +1,14 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import type { AppContext } from "@netless/window-manager";
 
 function isObject(val: unknown): val is Record<string, unknown> {
   return val != null && typeof val === "object" && !Array.isArray(val);
 }
 
-export function ensureAttributes<T>(context: AppContext<T>, initAttrs: T): T {
+export function ensureAttributes<T extends Record<string, any>>(
+  context: AppContext<T>,
+  initAttrs: T
+): T {
   let attrs = context.getAttributes();
   if (!attrs) {
     context.setAttributes(initAttrs);

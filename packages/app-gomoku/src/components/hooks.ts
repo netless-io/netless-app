@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import type { AppContext } from "@netless/window-manager";
 import type { GomokuState, Operation, Operations } from "../model";
 import { getNickNameByUID, type MemberIDType } from "./utils";
@@ -21,7 +22,7 @@ export function useWritable(context: AppContext) {
   return writable;
 }
 
-export function useStorage<T>(
+export function useStorage<T extends Record<string, any>>(
   context: AppContext,
   namespace: string,
   defaultState: () => T
