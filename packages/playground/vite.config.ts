@@ -11,7 +11,6 @@ export default defineConfig({
     target: "esnext",
     jsxFactory: "h",
     jsxFragment: "Fragment",
-    jsxInject: `import { h, Fragment } from 'preact'`,
   },
   plugins: [
     svelte({
