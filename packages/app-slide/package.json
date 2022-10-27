@@ -16,7 +16,8 @@
     "README-zh.md"
   ],
   "dependencies": {
-    "@netless/slide": "^0.7.6"
+    "@netless/slide": "^0.7.6",
+    "jspdf": "2.5.1"
   },
   "devDependencies": {
     "@types/color-string": "^1.5.2",

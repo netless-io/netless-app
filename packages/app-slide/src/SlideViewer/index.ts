@@ -1,6 +1,7 @@
 import type { ISlideConfig } from "@netless/slide";
 import type { SlideAttributes } from "./typings";
 
+import { jsPDF } from "jspdf";
 import { Slide } from "@netless/slide";
 import { SideEffectManager } from "side-effect-manager";
 import { Remitter } from "remitter";
@@ -49,6 +50,8 @@ export class SlideViewer {
 
   readonly slide: Slide;
 
+  private _getWhiteSnapshot: ((index: number, canvas: HTMLCanvasElement, ctx: CanvasRenderingContext2D) => void) | null = null;
+  private _slideTitle = "";
   private readonly _readyPromise: Promise<void>;
   private readonly _infoPromise: Promise<SlideViewerInfoResponse>;
   private _ready = false;
@@ -69,6 +72,7 @@ export class SlideViewer {
     this.footer.on_new_page_index(this.onNewPageIndex);
     this.footer.on_toggle_preview(this.onTogglePreview);
     this.footer.on_play(this.onPlay);
+    this.footer.on_save_to_pdf(this.toPdf);
 
     // remove dom on cleanup
     this.sideEffect.push(this.sidebar.destroy);
@@ -181,6 +185,14 @@ export class SlideViewer {
     return this._infoPromise.then(callback);
   }
 
+  attachWhiteSnapshot(snapshot: (index: number, canvas: HTMLCanvasElement, ctx: CanvasRenderingContext2D) => void) {
+    this._getWhiteSnapshot = snapshot;
+  }
+
+  setSlideTitle(title: string) {
+    this._slideTitle = title;
+  }
+
   ready(callback: () => void) {
     return this._readyPromise.then(callback);
   }
@@ -231,5 +243,80 @@ export class SlideViewer {
     if (!this._ready) return;
     this.slide.release();
     this.events.emit("unfreeze");
+  }
+
+  toPdf = async (progressCallback: (progress: number) => void) => {
+    const MAX = 1920;
+    const resizeCanvas = document.createElement("canvas");
+    const resizeCtx = resizeCanvas.getContext("2d");
+    const { slideCount, width, height } = this.slide;
+    let pdfWidth = Math.floor(width);
+    let pdfHeight = Math.floor(height);
+    if (pdfWidth > MAX) {
+      pdfWidth = MAX;
+      pdfHeight = Math.floor((height * pdfWidth) / width);
+    }
+    if (pdfHeight > MAX) {
+      pdfHeight = MAX;
+      pdfWidth = Math.floor((width * pdfHeight) / height);
+    }
+    resizeCanvas.width = pdfWidth;
+    resizeCanvas.height = pdfHeight;
+
+    const whiteSnapshotCanvas = document.createElement("canvas");
+    whiteSnapshotCanvas.width = width;
+    whiteSnapshotCanvas.height = height;
+    const whiteCtx = whiteSnapshotCanvas.getContext("2d");
+    if (!whiteCtx || !this._getWhiteSnapshot || !resizeCtx) {
+      return null;
+    }
+
+    const orientation = pdfWidth > pdfHeight ? "l" : "p";
+    const pdf = new jsPDF({
+      format: [pdfWidth, pdfHeight],
+      orientation,
+      compress: true,
+    });
+
+    for (let i = 1; i <= slideCount; i ++) {
+      const slideSnapshot  = await this.slide.snapshotWithTimingEnd(i);
+
+      if (slideSnapshot) {
+        const img = document.createElement("img");
+        img.src = slideSnapshot;
+        await new Promise(resolve => img.onload = resolve);
+        resizeCtx.drawImage(img, 0, 0, pdfWidth, pdfHeight);
+      }
+      whiteCtx.clearRect(0, 0, width, height);
+      this._getWhiteSnapshot(i, whiteSnapshotCanvas, whiteCtx);
+      try {
+        const whiteSnapshot = whiteSnapshotCanvas.toDataURL("image/png");
+        const whiteImg = document.createElement("img");
+        whiteImg.src = whiteSnapshot;
+        await new Promise(resolve => whiteImg.onload = resolve);
+        resizeCtx.drawImage(whiteImg, 0, 0, pdfWidth, pdfHeight);
+      } catch (e) {
+        // ignore
+      }
+
+      const outputDataUrl = resizeCanvas.toDataURL("image/jpeg", 0.6);
+      if (i > 1) {
+        pdf.addPage()
+      }
+      pdf.addImage(outputDataUrl, "JPEG", 0, 0, pdfWidth, pdfHeight, "", "FAST");
+      resizeCtx.clearRect(0, 0, pdfWidth, pdfHeight);
+      progressCallback(Math.ceil((i / slideCount) * 100));
+    }
+    const dataUrl = pdf.output("arraybuffer");
+    const blob = new Blob([dataUrl]);
+    const downloadUrl = URL.createObjectURL(blob);
+    const element = document.createElement('a');
+    element.setAttribute('href', downloadUrl);
+    element.setAttribute('download', `${this._slideTitle || "snapshot"}.pdf`);
+    element.style.display = 'none';
+    document.body.appendChild(element);
+    element.click();
+    document.body.removeChild(element);
+    window.postMessage({ type: "@app-slide/_download_pdf_", buf: dataUrl });
   }
 }

@@ -23,6 +23,22 @@ export function connect({ context, storage, viewer, sideEffect, logger }: Connec
     width && context.box.setStageRatio(height / width);
     whiteboard = context.createWhiteBoardView({ size: slideCount });
     whiteboard.setBaseRect({ width, height });
+
+    viewer.setSlideTitle(context.box.title);
+    viewer.attachWhiteSnapshot((index: number, canvas: HTMLCanvasElement, ctx: CanvasRenderingContext2D) => {
+      if (!whiteboard) {
+        return null;
+      }
+      const scenePath = whiteboard.pageState.pages[index - 1];
+      canvas.width = whiteboard.view.size.width;
+      canvas.height = whiteboard.view.size.height;
+      whiteboard.view.screenshotToCanvas(ctx, scenePath, whiteboard.view.size.width, whiteboard.view.size.height, {
+        centerX: 0,
+        centerY: 0,
+        scale: whiteboard.view.camera.scale,
+      });
+    });
+
     kick_start();
   });
 
