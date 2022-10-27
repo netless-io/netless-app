@@ -298,7 +298,6 @@ importers:
       '@types/color-string': ^1.5.2
       color-string: ^1.9.1
       jspdf: 2.5.1
-      png2pdf: ^0.0.3
       remitter: ^0.2.9
       side-effect-manager: ^1.2.1
       value-enhancer: ^1.3.2
@@ -1385,9 +1384,6 @@ packages:
     resolution: {integrity: sha512-4CK5IDk4twcDCFAMvyN8vZ1Kh+ViHI7M8MfKGWlOJ/EE+WLUuWSxfpGPI1+8R0yQlZuAOx9UbD+JVyNnHhgYag==}
     peerDependencies:
       white-web-sdk: ^2.16.0
-    peerDependenciesMeta:
-      white-web-sdk:
-        optional: true
     dependencies:
       '@juggle/resize-observer': 3.3.1
       '@netless/synced-store': 2.0.7_white-web-sdk@2.16.36
@@ -4381,20 +4377,6 @@ packages:
       rangetouch: 2.0.1
       url-polyfill: 1.1.12
     dev: true
-
-  /png2pdf/0.0.3:
-    resolution: {integrity: sha512-uvP+F973LyXcnMnBOkmgbb2jClkuw5uvjMzpShLL11PydHydDScPxOBWHH8bqDOjRpdINAgyUB1KS572DShlBg==}
-    dependencies:
-      '@babel/runtime': 7.18.6
-      atob: 2.1.2
-      btoa: 1.2.1
-      fflate: 0.4.8
-    optionalDependencies:
-      canvg: 3.0.10
-      core-js: 3.23.4
-      dompurify: 2.4.0
-      html2canvas: 1.4.1
-    dev: false
 
   /polyline-miter-util/1.0.1:
     resolution: {integrity: sha512-/3u91zz6mBerBZo6qnOJOTjv7EfPhKtsV028jMyj86YpzLRNmCCFfrX7IO9tCEQ2W4x45yc+vKOezjf7u2Nd6Q==}
