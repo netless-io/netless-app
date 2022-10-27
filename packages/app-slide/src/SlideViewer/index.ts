@@ -50,7 +50,9 @@ export class SlideViewer {
 
   readonly slide: Slide;
 
-  private _getWhiteSnapshot: ((index: number, canvas: HTMLCanvasElement, ctx: CanvasRenderingContext2D) => void) | null = null;
+  private _getWhiteSnapshot:
+    | ((index: number, canvas: HTMLCanvasElement, ctx: CanvasRenderingContext2D) => void)
+    | null = null;
   private _slideTitle = "";
   private readonly _readyPromise: Promise<void>;
   private readonly _infoPromise: Promise<SlideViewerInfoResponse>;
@@ -185,7 +187,9 @@ export class SlideViewer {
     return this._infoPromise.then(callback);
   }
 
-  attachWhiteSnapshot(snapshot: (index: number, canvas: HTMLCanvasElement, ctx: CanvasRenderingContext2D) => void) {
+  attachWhiteSnapshot(
+    snapshot: (index: number, canvas: HTMLCanvasElement, ctx: CanvasRenderingContext2D) => void
+  ) {
     this._getWhiteSnapshot = snapshot;
   }
 
@@ -278,13 +282,13 @@ export class SlideViewer {
       compress: true,
     });
 
-    for (let i = 1; i <= slideCount; i ++) {
-      const slideSnapshot  = await this.slide.snapshotWithTimingEnd(i);
+    for (let i = 1; i <= slideCount; i++) {
+      const slideSnapshot = await this.slide.snapshotWithTimingEnd(i);
 
       if (slideSnapshot) {
         const img = document.createElement("img");
         img.src = slideSnapshot;
-        await new Promise(resolve => img.onload = resolve);
+        await new Promise(resolve => (img.onload = resolve));
         resizeCtx.drawImage(img, 0, 0, pdfWidth, pdfHeight);
       }
       whiteCtx.clearRect(0, 0, width, height);
@@ -293,7 +297,7 @@ export class SlideViewer {
         const whiteSnapshot = whiteSnapshotCanvas.toDataURL("image/png");
         const whiteImg = document.createElement("img");
         whiteImg.src = whiteSnapshot;
-        await new Promise(resolve => whiteImg.onload = resolve);
+        await new Promise(resolve => (whiteImg.onload = resolve));
         resizeCtx.drawImage(whiteImg, 0, 0, pdfWidth, pdfHeight);
       } catch (e) {
         // ignore
@@ -301,7 +305,7 @@ export class SlideViewer {
 
       const outputDataUrl = resizeCanvas.toDataURL("image/jpeg", 0.6);
       if (i > 1) {
-        pdf.addPage()
+        pdf.addPage();
       }
       pdf.addImage(outputDataUrl, "JPEG", 0, 0, pdfWidth, pdfHeight, "", "FAST");
       resizeCtx.clearRect(0, 0, pdfWidth, pdfHeight);
@@ -310,13 +314,13 @@ export class SlideViewer {
     const dataUrl = pdf.output("arraybuffer");
     const blob = new Blob([dataUrl]);
     const downloadUrl = URL.createObjectURL(blob);
-    const element = document.createElement('a');
-    element.setAttribute('href', downloadUrl);
-    element.setAttribute('download', `${this._slideTitle || "snapshot"}.pdf`);
-    element.style.display = 'none';
+    const element = document.createElement("a");
+    element.setAttribute("href", downloadUrl);
+    element.setAttribute("download", `${this._slideTitle || "snapshot"}.pdf`);
+    element.style.display = "none";
     document.body.appendChild(element);
     element.click();
     document.body.removeChild(element);
     window.postMessage({ type: "@app-slide/_download_pdf_", buf: dataUrl });
-  }
+  };
 }

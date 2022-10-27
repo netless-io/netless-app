@@ -99,7 +99,7 @@ export function create_footer() {
   let saveToPdf: (progressCallback: (p: number) => void) => void = noop;
   const on_save_to_pdf = (callback: (progressCallback: (p: number) => void) => void) => {
     saveToPdf = callback;
-  }
+  };
   const progressCallback = (p: number) => {
     if (p < 99) {
       spinnerIcon.style.display = "block";
