@@ -1,6 +1,8 @@
 import { class_name } from "../constants";
 import { arrowLeftSVG, arrowRightSVG, pauseSVG, playSVG, sidebarSVG } from "../icons";
 import { hc, noop, wrap_class } from "../utils";
+import { saveSVG } from "../icons/save";
+import { spinnerSVG } from "../icons/spinner";
 
 export function create_footer() {
   type NewPageIndexCallback = (newPageIndex: number) => void;
@@ -94,6 +96,35 @@ export function create_footer() {
 
   const class_readonly = wrap_class("readonly");
 
+  let saveToPdf: (progressCallback: (p: number) => void) => void = noop;
+  const on_save_to_pdf = (callback: (progressCallback: (p: number) => void) => void) => {
+    saveToPdf = callback;
+  };
+  const progressCallback = (p: number) => {
+    if (p < 99) {
+      spinnerIcon.style.display = "block";
+      saveIcon.style.display = "none";
+      const progress = spinnerIcon.querySelector("[data-id]");
+      if (progress) {
+        progress.textContent = p.toString().padStart(2, "0");
+      }
+    } else {
+      spinnerIcon.style.display = "none";
+      saveIcon.style.display = "block";
+    }
+  };
+  const saveIcon = saveSVG(class_name);
+  const spinnerIcon = spinnerSVG(class_name);
+  spinnerIcon.style.display = "none";
+  const $saveBtn = hc("button", "footer-btn");
+  $saveBtn.appendChild(saveIcon);
+  $saveBtn.onclick = function () {
+    saveToPdf(progressCallback);
+  };
+  $saveBtn.appendChild(spinnerIcon);
+
+  $footer.appendChild($saveBtn);
+
   function set_readonly(readonly_: boolean) {
     if (readonly !== readonly_) {
       readonly = readonly_;
@@ -133,5 +164,6 @@ export function create_footer() {
     on_new_page_index,
     on_toggle_preview,
     on_play,
+    on_save_to_pdf,
   };
 }
