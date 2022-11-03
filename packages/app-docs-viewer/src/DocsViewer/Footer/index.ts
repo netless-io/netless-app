@@ -3,6 +3,8 @@ import { arrowLeftSVG } from "../icons/arrow-left";
 import { arrowRightSVG } from "../icons/arrow-right";
 import { playSVG } from "../icons/play";
 import { pauseSVG } from "../icons/pause";
+import { saveSVG } from "../icons/save";
+import { spinnerSVG } from "../icons/spinner";
 
 import type { SideEffectManager } from "side-effect-manager";
 import type { ReadonlyVal } from "value-enhancer";
@@ -163,6 +165,32 @@ export class Footer {
 
     $footer.appendChild($pageJumps);
     $footer.appendChild($pageNumber);
+
+    const saveIcon = saveSVG(this.namespace);
+    const spinnerIcon = spinnerSVG(this.namespace);
+    spinnerIcon.style.display = "none";
+    const $saveBtn = document.createElement("button");
+    $saveBtn.className = this.wrapClassName("footer-btn");
+    $saveBtn.appendChild(saveIcon);
+    $saveBtn.appendChild(spinnerIcon);
+
+    $footer.appendChild($saveBtn);
+    this.sideEffect.addEventListener($saveBtn, "click", () => {
+      this.events.emit("save");
+    });
+    this.events.on("saveProgress", (p: number) => {
+      if (p < 99) {
+        spinnerIcon.style.display = "block";
+        saveIcon.style.display = "none";
+        const progress = spinnerIcon.querySelector("[data-id]");
+        if (progress) {
+          progress.textContent = p.toString().padStart(2, "0");
+        }
+      } else {
+        spinnerIcon.style.display = "none";
+        saveIcon.style.display = "block";
+      }
+    });
 
     return $footer;
   }
