@@ -81,11 +81,13 @@ importers:
 
   packages/app-docs-viewer:
     specifiers:
+      jspdf: 2.5.1
       remitter: ^0.2.9
       side-effect-manager: ^1.2.1
       value-enhancer: ^1.3.2
       vanilla-lazyload: ^17.8.3
     dependencies:
+      jspdf: 2.5.1
       remitter: 0.2.9
       side-effect-manager: 1.2.1
       value-enhancer: 1.3.2

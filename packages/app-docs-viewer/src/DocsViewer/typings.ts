@@ -6,6 +6,8 @@ export interface DocsViewerEventData {
   back: void;
   jumpPage: number;
   togglePreview: void;
+  save: void;
+  saveProgress: number;
 }
 
 export type DocsViewerEvent = keyof DocsViewerEventData;

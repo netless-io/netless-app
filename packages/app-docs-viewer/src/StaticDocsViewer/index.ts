@@ -1,4 +1,5 @@
 import type { AnimationMode, ReadonlyTeleBox, WhiteBoardView } from "@netless/window-manager";
+import { jsPDF } from "jspdf";
 import type { Camera } from "white-web-sdk";
 import { SideEffectManager } from "side-effect-manager";
 import type { DocsViewerPage } from "../DocsViewer";
@@ -119,6 +120,7 @@ export class StaticDocsViewer {
     this.sideEffect.addDisposer(
       this.viewer.events.on("jumpPage", pageIndex => this.userScrollToPageIndex(pageIndex))
     );
+    this.sideEffect.addDisposer(this.viewer.events.on("save", () => this.toPdf()));
 
     this.render();
 
@@ -168,6 +170,75 @@ export class StaticDocsViewer {
       this.pageScrollStepper.stepTo(pageScrollTop, this.pagesScrollTop$.value);
     }
   }
+
+  private async getBase64FromUrl(url: string): Promise<string> {
+    const data = await fetch(url);
+    const blob = await data.blob();
+    return new Promise(resolve => {
+      const reader = new FileReader();
+      reader.readAsDataURL(blob);
+      reader.onloadend = () => {
+        const base64data = reader.result as string;
+        resolve(base64data);
+      };
+    });
+  }
+
+  public toPdf = async () => {
+    const whiteSnapshotCanvas = document.createElement("canvas");
+    const whiteCtx = whiteSnapshotCanvas.getContext("2d");
+    if (!whiteCtx) {
+      return null;
+    }
+    const scenePath = this.whiteboard.pageState.pages[0];
+    const firstPage = this.pages[0];
+    const pdf = new jsPDF({
+      format: [firstPage.width, firstPage.height],
+      orientation: firstPage.width > firstPage.height ? "l" : "p",
+      compress: true,
+    });
+
+    for (const [index, page] of this.pages.entries()) {
+      const { width, height, src } = page;
+      whiteSnapshotCanvas.width = width;
+      whiteSnapshotCanvas.height = height;
+      const orientation = width > height ? "l" : "p";
+
+      if (index > 0) {
+        pdf.addPage([width, height], orientation);
+      }
+
+      const pdfPageSrc = await this.getBase64FromUrl(src);
+      const img = document.createElement("img");
+      img.src = pdfPageSrc;
+      await new Promise(resolve => (img.onload = resolve));
+      whiteCtx.drawImage(img, 0, 0);
+      const pdfPageBase64 = whiteSnapshotCanvas.toDataURL("image/jpeg", 0.6);
+      whiteCtx.clearRect(0, 0, width, height);
+      this.whiteboard.view.screenshotToCanvas(whiteCtx, scenePath, width, height, {
+        centerX: width / 2,
+        centerY: height / 2 + index * height,
+        scale: 1,
+      });
+      const snapshot = whiteSnapshotCanvas.toDataURL("image/png");
+      pdf.addImage(pdfPageBase64, "JPEG", 0, 0, width, height, "", "FAST");
+      pdf.addImage(snapshot, "PNG", 0, 0, width, height, "", "FAST");
+
+      whiteCtx.clearRect(0, 0, width, height);
+      this.viewer.events.emit("saveProgress", Math.ceil(((index + 1) / this.pages.length) * 100));
+    }
+    const dataUrl = pdf.output("arraybuffer");
+    const blob = new Blob([dataUrl]);
+    const downloadUrl = URL.createObjectURL(blob);
+    const element = document.createElement("a");
+    element.setAttribute("href", downloadUrl);
+    element.setAttribute("download", `${this.box.title}.pdf`);
+    element.style.display = "none";
+    document.body.appendChild(element);
+    element.click();
+    document.body.removeChild(element);
+    window.postMessage({ type: "@app-slide/_download_pdf_", buf: dataUrl });
+  };
 
   public render(): void {
     this.box.$content.style.overflow = "hidden";
