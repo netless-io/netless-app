@@ -167,6 +167,8 @@ const SlideApp: NetlessApp<Attributes, MagixEvents, AppOptions, AppResult> = {
       view,
       mountSlideController,
       mountWhiteboard: context.mountView.bind(context),
+      baseScenePath,
+      appId: context.appId,
     });
 
     if (import.meta.env.DEV) {

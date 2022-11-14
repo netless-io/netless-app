@@ -92,6 +92,8 @@ function setupStaticDocsViewer(
         context.updateAttributes(["pageScrollTop"], pageScrollTop);
       }
     },
+    baseScenePath: context.getInitScenePath(),
+    appId: context.appId,
   }).mount();
 
   if (import.meta.env.DEV) {
