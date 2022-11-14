@@ -1,4 +1,5 @@
 import type { AnimationMode, ReadonlyTeleBox } from "@netless/window-manager";
+import { jsPDF } from "jspdf";
 import type { View, Size, Camera } from "white-web-sdk";
 import type { DebouncedFunction, Options } from "debounce-fn";
 import debounceFn from "debounce-fn";
@@ -24,6 +25,13 @@ export interface StaticDocsViewerConfig {
   /** Scroll Top of the original page */
   pageScrollTop?: number;
   onUserScroll?: (pageScrollTop: number) => void;
+  baseScenePath: string | undefined;
+  appId: string;
+}
+
+export interface SavePdfConfig {
+  appId: string;
+  type: "@netless/_request_save_pdf_";
 }
 
 export class StaticDocsViewer {
@@ -35,11 +43,15 @@ export class StaticDocsViewer {
     pageScrollTop = 0,
     mountWhiteboard,
     onUserScroll,
+    baseScenePath,
+    appId,
   }: StaticDocsViewerConfig) {
     this.whiteboardView = whiteboardView;
     this.readonly = readonly;
     this.box = box;
     this.pages = pages;
+    this.baseScenePath = baseScenePath;
+    this.appId = appId;
     this.mountWhiteboard = mountWhiteboard;
     this._onUserScroll = onUserScroll;
 
@@ -112,6 +124,8 @@ export class StaticDocsViewer {
   protected pages: DocsViewerPage[];
   protected box: ReadonlyTeleBox;
   protected whiteboardView: View;
+  private readonly baseScenePath: string | undefined;
+  private readonly appId: string;
   protected mountWhiteboard: (dom: HTMLDivElement) => void;
 
   public _onUserScroll?: (pageScrollTop: number) => void;
@@ -141,6 +155,18 @@ export class StaticDocsViewer {
         this.pageScrollTo(this.pageRenderer.pagesScrollTop);
       }
     }, 100);
+
+    this.sideEffect.add(() => {
+      const handleDownloadPdf = (evt: MessageEvent<SavePdfConfig>) => {
+        if (evt.data.type === "@netless/_request_save_pdf_" && evt.data.appId === this.appId) {
+          this.toPdf().catch(() => this.reportProgress(100, null));
+        }
+      };
+      window.addEventListener("message", handleDownloadPdf);
+      return () => {
+        window.removeEventListener("message", handleDownloadPdf);
+      };
+    });
 
     return this;
   }
@@ -417,5 +443,78 @@ export class StaticDocsViewer {
 
   protected onNewPageIndex = (index: number): void => {
     this.scrollToPage(index);
+  };
+
+  private async getBase64FromUrl(url: string): Promise<string> {
+    const data = await fetch(url);
+    const blob = await data.blob();
+    return new Promise(resolve => {
+      const reader = new FileReader();
+      reader.readAsDataURL(blob);
+      reader.onloadend = () => {
+        const base64data = reader.result as string;
+        resolve(base64data);
+      };
+    });
+  }
+
+  private reportProgress(progress: number, result: { pdf: ArrayBuffer; title: string } | null) {
+    window.postMessage({
+      type: "@netless/_result_save_pdf_",
+      appId: this.appId,
+      progress,
+      result,
+    });
+  }
+
+  public toPdf = async () => {
+    const whiteSnapshotCanvas = document.createElement("canvas");
+    const whiteCtx = whiteSnapshotCanvas.getContext("2d");
+    if (!whiteCtx || !this.baseScenePath) {
+      this.reportProgress(100, null);
+      return;
+    }
+    const scenePath = `${this.baseScenePath}/1`;
+    const firstPage = this.pages[0];
+    const pdf = new jsPDF({
+      format: [firstPage.width, firstPage.height],
+      orientation: firstPage.width > firstPage.height ? "l" : "p",
+      compress: true,
+    });
+
+    for (const [index, page] of this.pages.entries()) {
+      const { width, height, src } = page;
+      whiteSnapshotCanvas.width = width;
+      whiteSnapshotCanvas.height = height;
+      const orientation = width > height ? "l" : "p";
+
+      if (index > 0) {
+        pdf.addPage([width, height], orientation);
+      }
+
+      const pdfPageSrc = await this.getBase64FromUrl(src);
+      const img = document.createElement("img");
+      img.src = pdfPageSrc;
+      await new Promise(resolve => (img.onload = resolve));
+      whiteCtx.drawImage(img, 0, 0);
+      const pdfPageBase64 = whiteSnapshotCanvas.toDataURL("image/jpeg", 0.6);
+      whiteCtx.clearRect(0, 0, width, height);
+      this.whiteboardView.screenshotToCanvas(whiteCtx, scenePath, width, height, {
+        centerX: width / 2,
+        centerY: height / 2 + index * height,
+        scale: 1,
+      });
+      const snapshot = whiteSnapshotCanvas.toDataURL("image/png");
+      pdf.addImage(pdfPageBase64, "JPEG", 0, 0, width, height, "", "FAST");
+      pdf.addImage(snapshot, "PNG", 0, 0, width, height, "", "FAST");
+
+      whiteCtx.clearRect(0, 0, width, height);
+      const progress = Math.ceil(((index + 1) / this.pages.length) * 100);
+      if (progress < 100) {
+        this.reportProgress(Math.ceil(((index + 1) / this.pages.length) * 100), null);
+      }
+    }
+    const dataUrl = pdf.output("arraybuffer");
+    this.reportProgress(100, { pdf: dataUrl, title: this.box.title });
   };
 }
