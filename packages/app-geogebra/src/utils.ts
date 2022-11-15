@@ -43,7 +43,7 @@ export function createSyncService(
       room?.dispatchMagixEvent(event, payload);
     },
     load() {
-      return attributes[key];
+      return attributes[key]!;
     },
     save(value: string) {
       context.updateAttributes([key], value);

@@ -20,12 +20,15 @@ export type {
 export interface Attributes {
   uid: string;
   ggbBase64: string;
+  appName?: "classic" | "graphing" | "geometry" | "3d" | "suite" | "evaluator" | "scientific";
 }
 
 interface UserPayload {
   uid: string;
   nickName: string;
 }
+
+const ValidAppNames = new Set(["classic", "graphing", "geometry", "3d", "suite", "evaluator", "scientific"]);
 
 /**
  * NOTE: GeoGebra is licensed under GPLv3 and is free only in non-commercial use.
@@ -52,6 +55,7 @@ const GeoGebra: NetlessApp<Attributes> = {
     const attrs = ensureAttributes(context, {
       uid: "",
       ggbBase64: "",
+      appName: "classic",
     });
 
     const box = context.getBox();
@@ -67,6 +71,9 @@ const GeoGebra: NetlessApp<Attributes> = {
     const sideEffectManager = new SideEffectManager();
 
     const params: GGBAppletParameters = { ...defaultParameters };
+    if (ValidAppNames.has(attrs.appName!)) {
+      params.appName = attrs.appName;
+    }
     params.language = navigator.language.startsWith("zh") ? "zh" : "en";
     if (attrs.ggbBase64) {
       params.ggbBase64 = attrs.ggbBase64;

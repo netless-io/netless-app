@@ -17,6 +17,9 @@ const options: PlaygroundConfig<Attributes> = {
     // https://wiki.geogebra.org/en/Reference:GeoGebra_Apps_Embedding#Offline_and_Self-Hosted_Solution
     HTML5Codebase: "https://flat-storage-cn-hz.whiteboard.agora.io/GeoGebra/HTML5/5.0/web3d",
   },
+  attributes: {
+    appName: "suite",
+  }
 };
 
 export default options;

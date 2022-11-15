@@ -6,7 +6,7 @@ importers:
     specifiers:
       '@commitlint/cli': ^16.2.3
       '@commitlint/config-conventional': ^16.2.1
-      '@netless/window-manager': 0.4.27
+      '@netless/window-manager': 0.4.49
       '@sveltejs/vite-plugin-svelte': 1.0.0-next.48
       '@tsconfig/svelte': ^3.0.0
       '@types/node': ^17.0.41
@@ -29,11 +29,11 @@ importers:
       typescript: ^4.7.3
       typings: workspace:*
       vite: ^2.9.10
-      white-web-sdk: 2.16.24
+      white-web-sdk: 2.16.37
     devDependencies:
       '@commitlint/cli': 16.2.3
       '@commitlint/config-conventional': 16.2.1
-      '@netless/window-manager': 0.4.27_white-web-sdk@2.16.24
+      '@netless/window-manager': 0.4.49_white-web-sdk@2.16.37
       '@sveltejs/vite-plugin-svelte': 1.0.0-next.48_svelte@3.48.0+vite@2.9.10
       '@tsconfig/svelte': 3.0.0
       '@types/node': 17.0.41
@@ -56,7 +56,7 @@ importers:
       typescript: 4.7.3
       typings: link:packages/typings
       vite: 2.9.10_sass@1.52.2
-      white-web-sdk: 2.16.24
+      white-web-sdk: 2.16.37
 
   packages/app-browser:
     specifiers: {}
@@ -225,15 +225,15 @@ importers:
 
   packages/create-app/standalone/template-vanilla:
     specifiers:
-      '@netless/window-manager': ^0.4.27
+      '@netless/window-manager': ^0.4.49
       '@types/node': ^17.0.41
       vite: ^2.9.10
-      white-web-sdk: 2.16.24
+      white-web-sdk: 2.16.37
     devDependencies:
-      '@netless/window-manager': 0.4.27_white-web-sdk@2.16.24
+      '@netless/window-manager': 0.4.49_white-web-sdk@2.16.37
       '@types/node': 17.0.41
       vite: 2.9.10
-      white-web-sdk: 2.16.24
+      white-web-sdk: 2.16.37
 
   packages/playground:
     specifiers:
@@ -512,8 +512,8 @@ packages:
       localforage: 1.10.0
     dev: true
 
-  /@netless/telebox-insider/0.2.26:
-    resolution: {integrity: sha512-HOBi9HWK0Zf0nvzfjM0V/0QmZ69ec7L/lCKMwRcfiQHxAAJ/zo9fEm468WocYFsliixWW5L7HwMN0eHb0mw7hA==}
+  /@netless/telebox-insider/0.2.27:
+    resolution: {integrity: sha512-6329Zf9Z8M7DI6EI4OyBM25HuVm1moKZfjuBguSEc6YkM0TvNFckq8UEszVYxPn4Wh5p1TJnho3i69gxzgXKLA==}
     dependencies:
       '@types/shallowequal': 1.1.1
       eventemitter3: 4.0.7
@@ -523,20 +523,20 @@ packages:
       value-enhancer: 0.0.8
     dev: true
 
-  /@netless/window-manager/0.4.27_white-web-sdk@2.16.24:
-    resolution: {integrity: sha512-Rlc9mI4iCiB0dLFMmS0rDIgsXtaW/Xz+plAduGe1riSvYZyT7O82u6HRUwmb0gSk4jl3hv2qNK49SM/yvdTz/Q==}
+  /@netless/window-manager/0.4.49_white-web-sdk@2.16.37:
+    resolution: {integrity: sha512-319UF/iWMQ5oaws56gv4N92udbNjY4diGJVXt27AWuebQ5TgTy7yfwhcEwkjjoqOrMBxu1A7xK57Kj5CMsLP5w==}
     peerDependencies:
       white-web-sdk: ^2.16.0
     dependencies:
       '@juggle/resize-observer': 3.3.1
-      '@netless/telebox-insider': 0.2.26
+      '@netless/telebox-insider': 0.2.27
       emittery: 0.9.2
       lodash: 4.17.21
       p-retry: 4.6.2
       side-effect-manager: 0.1.6
       uuid: 7.0.3
       video.js: 7.19.2
-      white-web-sdk: 2.16.24
+      white-web-sdk: 2.16.37
     dev: true
 
   /@netless/xml-js/1.6.15:
@@ -851,9 +851,11 @@ packages:
       eslint-visitor-keys: 3.3.0
     dev: true
 
-  /@videojs/http-streaming/2.14.2:
+  /@videojs/http-streaming/2.14.2_video.js@7.19.2:
     resolution: {integrity: sha512-K1raSfO/pq5r8iUas3OSYni0kXOj91n8ealIpV02khghzGv9LQ6O3YUqYd/eAhJ1HIrmZWOnrYpK/P+mhUExXQ==}
     engines: {node: '>=8', npm: '>=5'}
+    peerDependencies:
+      video.js: ^6 || ^7
     dependencies:
       '@babel/runtime': 7.18.3
       '@videojs/vhs-utils': 3.0.5
@@ -1008,6 +1010,10 @@ packages:
     engines: {node: '>=8'}
     dev: true
 
+  /bowser/2.11.0:
+    resolution: {integrity: sha512-AlcaJBi/pqqJBIQ8U9Mcpc9i8Aqxn88Skv5d+xBX006BY5u8N3mGLHa5Lgppa7L/HfwgwLgZ6NYs+Ag6uUmJRA==}
+    dev: true
+
   /brace-expansion/1.1.11:
     resolution: {integrity: sha512-iCuPHDFgrHX7H2vEI/5xpz07zSHB00TpugqhmYtVmMO6518mCuRMoOYFldEBl0g187ufozdaHgWKcYFb61qGiA==}
     dependencies:
@@ -1157,8 +1163,8 @@ packages:
     engines: {node: '>=10'}
     hasBin: true
     dependencies:
-      is-text-path: 1.0.1
       JSONStream: 1.3.5
+      is-text-path: 1.0.1
       lodash: 4.17.21
       meow: 8.1.2
       split2: 3.2.2
@@ -3047,7 +3053,7 @@ packages:
     dev: true
 
   /strict-uri-encode/1.1.0:
-    resolution: {integrity: sha1-J5siXfHVgrH1TmWt3UNS4Y+qBxM=}
+    resolution: {integrity: sha512-R3f198pcvnB+5IpnBlRkphuE9n46WyVl8I39W/ZUTZLz4nqSP/oLYUrcnJrw462Ds8he4YKMov2efsTIw1BDGQ==}
     engines: {node: '>=0.10.0'}
     dev: true
 
@@ -3322,7 +3328,7 @@ packages:
     resolution: {integrity: sha512-+rV/lJ1bDoMW3SbYlRp0eC9//RgvfBpEQ0USOyx44tHVxVyMjq+G9jZoiulsDXaIp4BX9q5+/y87TbZUysXBHA==}
     dependencies:
       '@babel/runtime': 7.18.3
-      '@videojs/http-streaming': 2.14.2
+      '@videojs/http-streaming': 2.14.2_video.js@7.19.2
       '@videojs/vhs-utils': 3.0.5
       '@videojs/xhr': 2.6.0
       aes-decrypter: 3.1.3
@@ -3403,14 +3409,15 @@ packages:
       isexe: 2.0.0
     dev: true
 
-  /white-web-sdk/2.16.24:
-    resolution: {integrity: sha512-onauWjDLcoOHN5lELmV8vjGU5Mrgi3KaWxI6obciMPQXDrzUPljyosRUPqC0i5BM+xn3oIn8s53yX+J/IOtAKA==}
+  /white-web-sdk/2.16.37:
+    resolution: {integrity: sha512-hpx8merZN56f7KDNHXRxIU+j5xIB9fCAPHQBBlbcrojHlAt0kTPKbgzq5VGcvM9hI400FHsGU67XrwdOyjyglg==}
     dependencies:
       '@juggle/resize-observer': 3.3.1
       '@netless/canvas-polyfill': 0.0.4
       '@netless/xml-js': 1.6.15
       atob: 2.1.2
       bezier-js: 2.6.1
+      bowser: 2.11.0
       color: 3.2.1
       core-js: 3.22.8
       detect-it: 3.0.7
