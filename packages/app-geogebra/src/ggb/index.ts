@@ -6,9 +6,15 @@ declare global {
   }
 }
 
+export interface GetGGBAppletParams {
+  deployggb?: string;
+}
+
 let getGGBAppletPromise: Promise<typeof GGBApplet> | undefined;
 
-export default function getGGBApplet(codebase?: string): Promise<typeof GGBApplet> {
+export default function getGGBApplet({
+  deployggb = "https://www.geogebra.org/apps/latest/deployggb.js",
+}: GetGGBAppletParams = {}): Promise<typeof GGBApplet> {
   if (window.GGBApplet) {
     return Promise.resolve(window.GGBApplet);
   } else if (getGGBAppletPromise) {
@@ -22,12 +28,7 @@ export default function getGGBApplet(codebase?: string): Promise<typeof GGBApple
         reject();
       };
     });
-    if (codebase) {
-      const index = codebase.lastIndexOf("GeoGebra") + 8; /* "GeoGebra".length */
-      script.src = codebase.slice(0, index) + "/deployggb.js";
-    } else {
-      script.src = "https://www.geogebra.org/apps/deployggb.js";
-    }
+    script.src = deployggb;
     document.head.appendChild(script);
     return getGGBAppletPromise;
   }
