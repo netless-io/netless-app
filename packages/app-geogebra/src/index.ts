@@ -23,6 +23,11 @@ export interface Attributes {
   appName?: "classic" | "graphing" | "geometry" | "3d" | "suite" | "evaluator" | "scientific";
 }
 
+export interface AppOptions {
+  deployggb?: string;
+  HTML5Codebase?: string;
+}
+
 interface UserPayload {
   uid: string;
   nickName: string;
@@ -39,7 +44,7 @@ const ValidAppNames = new Set(["classic", "graphing", "geometry", "3d", "suite",
  * partial info of the full picture, this can cause errors because of the order
  * of executing them.
  */
-const GeoGebra: NetlessApp<Attributes> = {
+const GeoGebra: NetlessApp<Attributes, {}, AppOptions> = {
   kind: "GeoGebra",
   async setup(context) {
     const displayer = context.getDisplayer();
@@ -50,7 +55,9 @@ const GeoGebra: NetlessApp<Attributes> = {
     const uid = userPayload?.uid || "";
     const nickName = userPayload?.nickName || uid;
 
-    const codebase = context.getAppOptions()?.HTML5Codebase;
+    const appOptions = context.getAppOptions() || {};
+    const deployggb = appOptions.deployggb;
+    const codebase = appOptions.HTML5Codebase;
 
     const attrs = ensureAttributes(context, {
       uid: "",
@@ -135,7 +142,7 @@ const GeoGebra: NetlessApp<Attributes> = {
       app?.remove();
     });
 
-    const GGBApplet = await getGGBApplet(codebase);
+    const GGBApplet = await getGGBApplet({ deployggb });
     const applet = new GGBApplet(params);
     if (codebase) {
       applet.setHTML5Codebase(codebase);

@@ -19,7 +19,7 @@ const options: PlaygroundConfig<Attributes> = {
   },
   attributes: {
     appName: "suite",
-  }
+  },
 };
 
 export default options;
