@@ -41,7 +41,7 @@ interface UserPayload {
  * partial info of the full picture, this can cause errors because of the order
  * of executing them.
  */
-const GeoGebra: NetlessApp<Attributes, {}, AppOptions> = {
+const GeoGebra: NetlessApp<Attributes, Record<string, never>, AppOptions> = {
   kind: "GeoGebra",
   config: {
     enableShadowDOM: false,
