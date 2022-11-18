@@ -22,5 +22,13 @@
     "color-string": "^1.9.1",
     "side-effect-manager": "^1.2.1",
     "vanilla-lazyload": "^17.8.3"
+  },
+  "peerDependencies": {
+    "jspdf": "2.5.1"
+  },
+  "peerDependenciesMeta": {
+    "jspdf": {
+      "optional": true
+    }
   }
 }

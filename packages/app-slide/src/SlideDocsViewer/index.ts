@@ -1,4 +1,3 @@
-import { jsPDF } from "jspdf";
 import type { ReadonlyTeleBox, AnimationMode, View } from "@netless/window-manager";
 import type { SlideController, SlideControllerOptions } from "../SlideController";
 
@@ -323,6 +322,7 @@ export class SlideDocsViewer {
     }
 
     const orientation = pdfWidth > pdfHeight ? "l" : "p";
+    const { jsPDF } = await import("jspdf");
     const pdf = new jsPDF({
       format: [pdfWidth, pdfHeight],
       orientation,
