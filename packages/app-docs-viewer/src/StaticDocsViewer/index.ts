@@ -1,5 +1,4 @@
 import type { AnimationMode, ReadonlyTeleBox } from "@netless/window-manager";
-import { jsPDF } from "jspdf";
 import type { View, Size, Camera } from "white-web-sdk";
 import type { DebouncedFunction, Options } from "debounce-fn";
 import debounceFn from "debounce-fn";
@@ -476,6 +475,7 @@ export class StaticDocsViewer {
     }
     const scenePath = `${this.baseScenePath}/1`;
     const firstPage = this.pages[0];
+    const { jsPDF } = await import("jspdf");
     const pdf = new jsPDF({
       format: [firstPage.width, firstPage.height],
       orientation: firstPage.width > firstPage.height ? "l" : "p",
