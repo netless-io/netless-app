@@ -180,14 +180,14 @@ importers:
 
   packages/app-slide:
     specifiers:
-      '@netless/slide': ^0.8.5
+      '@netless/slide': ^0.8.7
       '@types/color-string': ^1.5.2
       color-string: ^1.9.1
       jspdf: 2.5.1
       side-effect-manager: ^1.2.1
       vanilla-lazyload: ^17.8.3
     devDependencies:
-      '@netless/slide': 0.8.5
+      '@netless/slide': 0.8.7
       '@types/color-string': 1.5.2
       color-string: 1.9.1
       jspdf: 2.5.1
@@ -504,8 +504,8 @@ packages:
     resolution: {integrity: sha512-7NzsJrba0R/mq/l10SkIZQwbrNVJyPxZYrjK6xL3Ts732iWAVuS2UB0u3s6iGeUVcqV39A679yva8APWRl4M0A==}
     dev: true
 
-  /@netless/slide/0.8.5:
-    resolution: {integrity: sha512-2OsB5xhl76pFEfkVg868lt7BklTNue+rv6VbbePYCeepWVguycNoxcqbHtiXQ0vBtUJQrWvGdI7nOl1Mzbxa+Q==}
+  /@netless/slide/0.8.7:
+    resolution: {integrity: sha512-junwzFGXgCQIKhXQyQquMka6Ge8e1GasFuPRN+78sTtgOI20+PfxBwR0JjRPUE5wwtAbQCw4JdXw+CeDko7VlA==}
     dependencies:
       '@juggle/resize-observer': 3.3.1
       '@types/lodash': 4.14.182
@@ -1094,7 +1094,7 @@ packages:
     dependencies:
       '@babel/runtime': 7.18.3
       '@types/raf': 3.4.0
-      core-js: 3.22.8
+      core-js: 3.26.1
       raf: 3.4.1
       regenerator-runtime: 0.13.9
       rgbcolor: 1.0.1
@@ -1227,6 +1227,12 @@ packages:
     resolution: {integrity: sha512-UoGQ/cfzGYIuiq6Z7vWL1HfkE9U9IZ4Ub+0XSiJTCzvbZzgPA69oDF2f+lgJ6dFFLEdjW5O6svvoKzXX23xFkA==}
     requiresBuild: true
     dev: true
+
+  /core-js/3.26.1:
+    resolution: {integrity: sha512-21491RRQVzUn0GGM9Z1Jrpr6PNPxPi+Za8OM9q4tksTSnlbXXGKK1nXNg/QvwFYettXvSX6zWKCtHHfjN4puyA==}
+    requiresBuild: true
+    dev: true
+    optional: true
 
   /cosmiconfig-typescript-loader/1.0.6_f5eqjuxkorpjvs4z7mviievvou:
     resolution: {integrity: sha512-2nEotziYJWtNtoTjKbchj9QrdTT6DBxCvqjNKoDKARw+e2yZmTQCa07uRrykLIZuvSgp69YXLH89UHc0WhdMfQ==}
@@ -2283,7 +2289,7 @@ packages:
       fflate: 0.4.8
     optionalDependencies:
       canvg: 3.0.10
-      core-js: 3.22.8
+      core-js: 3.26.1
       dompurify: 2.4.1
       html2canvas: 1.4.1
     dev: true
