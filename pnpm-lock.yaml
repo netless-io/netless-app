@@ -180,14 +180,14 @@ importers:
 
   packages/app-slide:
     specifiers:
-      '@netless/slide': ^0.8.7
+      '@netless/slide': ^0.9.2
       '@types/color-string': ^1.5.2
       color-string: ^1.9.1
       jspdf: 2.5.1
       side-effect-manager: ^1.2.1
       vanilla-lazyload: ^17.8.3
     devDependencies:
-      '@netless/slide': 0.8.7
+      '@netless/slide': 0.9.2
       '@types/color-string': 1.5.2
       color-string: 1.9.1
       jspdf: 2.5.1
@@ -491,6 +491,10 @@ packages:
   /@juggle/resize-observer/3.3.1:
     resolution: {integrity: sha512-zMM9Ds+SawiUkakS7y94Ymqx+S0ORzpG3frZirN3l+UlXUmSUR7hF4wxCVqW+ei94JzV5kt0uXBcoOEAuiydrw==}
 
+  /@juggle/resize-observer/3.4.0:
+    resolution: {integrity: sha512-dfLbk+PwWvFzSxwk3n5ySL0hfBog779o8h68wK/7/APo/7cgyWp5jcXockbxdk5kFRkbeXWm4Fbi9FrdN381sA==}
+    dev: true
+
   /@monaco-editor/loader/1.2.0_monaco-editor@0.29.1:
     resolution: {integrity: sha512-cJVCG/T/KxXgzYnjKqyAgsKDbH9mGLjcXxN6AmwumBwa2rVFkwvGcUj1RJtD0ko4XqLqJxwqsN/Z/KURB5f1OQ==}
     peerDependencies:
@@ -504,11 +508,11 @@ packages:
     resolution: {integrity: sha512-7NzsJrba0R/mq/l10SkIZQwbrNVJyPxZYrjK6xL3Ts732iWAVuS2UB0u3s6iGeUVcqV39A679yva8APWRl4M0A==}
     dev: true
 
-  /@netless/slide/0.8.7:
-    resolution: {integrity: sha512-junwzFGXgCQIKhXQyQquMka6Ge8e1GasFuPRN+78sTtgOI20+PfxBwR0JjRPUE5wwtAbQCw4JdXw+CeDko7VlA==}
+  /@netless/slide/0.9.2:
+    resolution: {integrity: sha512-hwlrL3PFZtGbdnYmDJNfDeRkf6G0FECwsmN7Mpl2ZspEsSjcNxfP4/h1y9cKlxbH8p84TknCJgnGvQ3viCW0Rw==}
     dependencies:
-      '@juggle/resize-observer': 3.3.1
-      '@types/lodash': 4.14.182
+      '@juggle/resize-observer': 3.4.0
+      '@types/lodash': 4.14.191
       dat.gui: 0.7.9
       eventemitter3: 4.0.7
       localforage: 1.10.0
@@ -701,8 +705,8 @@ packages:
     resolution: {integrity: sha512-wOuvG1SN4Us4rez+tylwwwCV1psiNVOkJeM3AUWUNWg/jDQY2+HE/444y5gc+jBmRqASOm2Oeh5c1axHobwRKQ==}
     dev: true
 
-  /@types/lodash/4.14.182:
-    resolution: {integrity: sha512-/THyiqyQAP9AfARo4pF+aCGcyiQ94tX/Is2I7HofNRqoYLgN1PBoOWu2/zTA5zMxzP5EFutMtWtGAFRKUe961Q==}
+  /@types/lodash/4.14.191:
+    resolution: {integrity: sha512-BdZ5BCCvho3EIXw6wUCXHe7rS53AIDPLE+JzwgT+OsJk53oBfbSmZZ7CX4VaRoN78N+TJpFi9QPlfIVNmJYWxQ==}
     dev: true
 
   /@types/long/4.0.2:
