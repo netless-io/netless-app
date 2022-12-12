@@ -194,7 +194,7 @@ function update_cursor(
           let timer = timers.get(uid) || 0;
           if (timer) clearTimeout(timer);
           cursor.toggleFlag(true);
-          timer = setTimeout(() => cursor.toggleFlag(false), 3000);
+          timer = window.setTimeout(() => cursor.toggleFlag(false), 3000);
           timers.set(uid, timer);
         }
       }

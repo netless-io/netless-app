@@ -1,4 +1,3 @@
-import { svelte } from "@sveltejs/vite-plugin-svelte";
 // import peerDepsExternal from "rollup-plugin-peer-deps-external";
 import excludeDependencies from "rollup-plugin-exclude-dependencies-from-bundle";
 import type { LibraryFormats, Plugin, UserConfigFn } from "vite";
@@ -25,7 +24,10 @@ export function createViteConfig({
   formats?: LibraryFormats[];
   minify?: boolean;
 } = {}): UserConfigFn {
-  return defineConfig(({ mode }) => {
+  return defineConfig(async ({ mode }) => {
+    // https://github.com/sveltejs/vite-plugin-svelte/blob/main/docs/faq.md#how-can-i-use-vite-plugin-svelte-from-commonjs
+    const { svelte, vitePreprocess } = await import("@sveltejs/vite-plugin-svelte");
+
     const isProd = mode === "production";
     const pkgName = (entry.match(/packages[/\\]([^/\\]+)/) || ["", ""])[1];
 
@@ -50,9 +52,7 @@ export function createViteConfig({
       plugins: [
         svelte({
           emitCss: false,
-          experimental: {
-            useVitePreprocess: true,
-          },
+          preprocess: vitePreprocess(),
         }),
       ],
       build: {

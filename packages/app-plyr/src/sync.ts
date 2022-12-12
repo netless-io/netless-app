@@ -58,7 +58,7 @@ export class Sync {
     player.toggleControls(this.context.isWritable);
     this.registerListeners(player);
     this.watchUserInputs(player);
-    this._sync_timer = setInterval(this.syncAll.bind(this), this._interval);
+    this._sync_timer = window.setInterval(this.syncAll.bind(this), this._interval);
   }
 
   setState(partial: Partial<Attributes>) {
@@ -151,7 +151,7 @@ export class Sync {
     });
     player.on("waiting", () => {
       this._buffering = true;
-      this._buffering_timer = setTimeout(this.clearBuffering.bind(this), this._interval / 2);
+      this._buffering_timer = window.setTimeout(this.clearBuffering.bind(this), this._interval / 2);
     });
     player.on("playing", () => {
       this._buffering = false;
@@ -188,7 +188,7 @@ export class Sync {
       paused: player.paused,
     });
     clearTimeout(this._skip_next_play_pause);
-    this._skip_next_play_pause = setTimeout(this.skipNextPlayPause.bind(this), 500);
+    this._skip_next_play_pause = window.setTimeout(this.skipNextPlayPause.bind(this), 500);
   }
 
   private skipNextPlayPause() {
@@ -216,7 +216,7 @@ export class Sync {
       hostTime: this.getTimestamp(),
       currentTime: player.currentTime,
     });
-    this._throttle = setTimeout(this.clearThrottle.bind(this, player), 1000);
+    this._throttle = window.setTimeout(this.clearThrottle.bind(this, player), 1000);
   }
 
   private clearThrottle(player: Plyr) {
@@ -251,6 +251,6 @@ export class Sync {
     this._blink = 0;
     this._interval = clamp(this._interval + (inc ? 2000 : -2000), 1000, 15000);
     clearTimeout(this._sync_timer);
-    this._sync_timer = setInterval(this.syncAll.bind(this), this._interval);
+    this._sync_timer = window.setInterval(this.syncAll.bind(this), this._interval);
   }
 }

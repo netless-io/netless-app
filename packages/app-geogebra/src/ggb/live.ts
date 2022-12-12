@@ -126,7 +126,7 @@ export default class LiveApp {
     );
 
     if (!this.storageCallback) {
-      this.storageCallback = setTimeout(() => {
+      this.storageCallback = window.setTimeout(() => {
         this.context.save(this.api.getBase64());
         this.storageCallback = 0;
       }, this.delay);
@@ -183,7 +183,7 @@ export default class LiveApp {
 
   dispatchUpdates = (): void => {
     if (!this.updateCallback) {
-      this.updateCallback = setTimeout(this._dispatchUpdates, this.delay);
+      this.updateCallback = window.setTimeout(this._dispatchUpdates, this.delay);
     }
   };
 
@@ -266,7 +266,7 @@ export default class LiveApp {
 
   startSyncViewState(): void {
     clearTimeout(this.isSyncingViewState);
-    this.isSyncingViewState = setTimeout(this.stopSyncViewState, 1000);
+    this.isSyncingViewState = window.setTimeout(this.stopSyncViewState, 1000);
   }
 
   stopSyncViewState = (): void => {
@@ -401,9 +401,9 @@ export default class LiveApp {
       case "viewChanged2D":
         if (!this.viewSyncCallback) {
           if (this.isSyncingViewState || this.viewState.scale === 0) {
-            this.viewSyncCallback = setTimeout(this._flushViewState, this.delay);
+            this.viewSyncCallback = window.setTimeout(this._flushViewState, this.delay);
           } else {
-            this.viewSyncCallback = setTimeout(this._sendViewSyncEvent, this.delay);
+            this.viewSyncCallback = window.setTimeout(this._sendViewSyncEvent, this.delay);
           }
         }
         break;

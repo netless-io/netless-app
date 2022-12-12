@@ -16,7 +16,7 @@ export const useCountUp = (props: ICountUpProps) => {
 
   useEffect(() => {
     if (props.stop) return;
-    const intervalTimer = setInterval(() => {
+    const intervalTimer = window.setInterval(() => {
       setDuration(getDuration(startAt));
     }, 1000);
     setTimer(intervalTimer);

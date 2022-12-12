@@ -110,7 +110,7 @@ export class CursorDecoration {
           this.styleRule.style.setProperty("--dot", "none");
           this.labelVisible = true;
         }
-        this.hideLabelTimeout = setTimeout(() => this.setLabelVisible(false), 3000);
+        this.hideLabelTimeout = window.setTimeout(() => this.setLabelVisible(false), 3000);
       }
     } else {
       if (this.styleRule && this.labelVisible) {
@@ -129,7 +129,7 @@ export class CursorDecoration {
           this.styleRule.style.setProperty("display", "block");
           this.cursorVisible = true;
         }
-        this.hideCursorTimeout = setTimeout(() => this.setCursorVisible(false), 8000);
+        this.hideCursorTimeout = window.setTimeout(() => this.setCursorVisible(false), 8000);
       }
     } else {
       if (this.styleRule && this.cursorVisible) {

@@ -59,7 +59,7 @@ export function create_footer() {
     $btnPlay.classList.add(wrap_class("footer-btn-playing"));
     play_callback();
     clearTimeout(returnPlayTimer);
-    returnPlayTimer = setTimeout(() => {
+    returnPlayTimer = window.setTimeout(() => {
       $btnPlay.classList.remove(wrap_class("footer-btn-playing"));
     }, 500);
   };
