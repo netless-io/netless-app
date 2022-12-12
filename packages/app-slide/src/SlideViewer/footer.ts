@@ -123,7 +123,7 @@ export function create_footer() {
   };
   $saveBtn.appendChild(spinnerIcon);
 
-  $footer.appendChild($saveBtn);
+  // $footer.appendChild($saveBtn);
 
   function set_readonly(readonly_: boolean) {
     if (readonly !== readonly_) {

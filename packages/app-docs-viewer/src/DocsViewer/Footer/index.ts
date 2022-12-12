@@ -174,7 +174,7 @@ export class Footer {
     $saveBtn.appendChild(saveIcon);
     $saveBtn.appendChild(spinnerIcon);
 
-    $footer.appendChild($saveBtn);
+    // $footer.appendChild($saveBtn);
     this.sideEffect.addEventListener($saveBtn, "click", () => {
       this.events.emit("save");
     });
