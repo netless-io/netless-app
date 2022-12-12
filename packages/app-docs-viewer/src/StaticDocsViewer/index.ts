@@ -1,5 +1,4 @@
 import type { AnimationMode, ReadonlyTeleBox, WhiteBoardView } from "@netless/window-manager";
-import { jsPDF } from "jspdf";
 import type { Camera } from "white-web-sdk";
 import { SideEffectManager } from "side-effect-manager";
 import type { DocsViewerPage } from "../DocsViewer";
@@ -192,6 +191,7 @@ export class StaticDocsViewer {
     }
     const scenePath = this.whiteboard.pageState.pages[0];
     const firstPage = this.pages[0];
+    const { jsPDF } = await import("jspdf");
     const pdf = new jsPDF({
       format: [firstPage.width, firstPage.height],
       orientation: firstPage.width > firstPage.height ? "l" : "p",

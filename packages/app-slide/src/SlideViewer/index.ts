@@ -1,7 +1,6 @@
 import type { ISlideConfig } from "@netless/slide";
 import type { SlideAttributes } from "./typings";
 
-import { jsPDF } from "jspdf";
 import { Slide } from "@netless/slide";
 import { SideEffectManager } from "side-effect-manager";
 import { Remitter } from "remitter";
@@ -276,6 +275,8 @@ export class SlideViewer {
     }
 
     const orientation = pdfWidth > pdfHeight ? "l" : "p";
+    const { jsPDF } = await import("jspdf");
+
     const pdf = new jsPDF({
       format: [pdfWidth, pdfHeight],
       orientation,
