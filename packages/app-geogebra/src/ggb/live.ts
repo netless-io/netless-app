@@ -547,10 +547,16 @@ export default class LiveApp {
     } else if (type === "select") {
       if (content) {
         const color = this.context.getColor?.(last.clientId) || "#80808080";
-        target.api.addMultiuserSelection(String(last.nickName), color, content, !!label);
+        target.api.addMultiuserSelection(
+          String(last.clientId),
+          String(last.nickName),
+          color,
+          content,
+          !!label
+        );
       }
     } else if (type === "deselect") {
-      target.api.removeMultiuserSelections(String(last.nickName));
+      target.api.removeMultiuserSelections(String(last.clientId));
     } else if (type === "orderingChange") {
       target.api.updateOrdering(content);
     } else if (type === "groupObjects") {

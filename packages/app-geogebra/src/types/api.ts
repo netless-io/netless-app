@@ -149,8 +149,14 @@ export interface AppletObject {
   setFileJSON(zip: { archive: { fileName: string; fileContent: string }[] }): void;
   setLanguage(lang: string): void;
   showTooltip(tooltip: boolean): void;
-  addMultiuserSelection(user: string, color: string, label: string, newGeo: boolean): void;
-  removeMultiuserSelections(user: string): void;
+  addMultiuserSelection(
+    clientId: string,
+    name: string,
+    color: string,
+    label: string,
+    newGeo: boolean
+  ): void;
+  removeMultiuserSelections(clientId: string): void;
   getExerciseFraction(): number;
   isExercise(): boolean;
   setExternalPath(path: string): void;
