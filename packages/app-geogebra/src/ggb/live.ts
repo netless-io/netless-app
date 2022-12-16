@@ -560,7 +560,7 @@ export default class LiveApp {
         }
       }
     } else if (type === "deselect") {
-      target.api.removeMultiuserSelections(String(last.nickName));
+      target.api.removeMultiuserSelections(String(last.clientId));
     } else if (type === "orderingChange") {
       target.api.updateOrdering(content);
     } else if (type === "groupObjects") {
