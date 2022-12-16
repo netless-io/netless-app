@@ -548,7 +548,13 @@ export default class LiveApp {
       if (content) {
         const color = this.context.getColor?.(last.clientId) || "#80808080";
         try {
-          target.api.addMultiuserSelection(String(last.nickName), color, content, !!label);
+          target.api.addMultiuserSelection(
+            String(last.clientId),
+            String(last.nickName),
+            color,
+            content,
+            !!label
+          );
         } catch (error) {
           console.error(error);
         }
