@@ -89,7 +89,7 @@ export function connect({ context, storage, viewer, sideEffect, logger }: Connec
 
   // setup sync event
   slide.on("stateChange", () => {
-    if (context.isWritable) {
+    if (storage.isWritable) {
       // log("[Slide] save state " + dump_state(slide.slideState));
       storage.setState({ state: slide.slideState });
     }

@@ -16,7 +16,7 @@
     "README-zh.md"
   ],
   "dependencies": {
-    "@netless/slide": "^0.9.2",
+    "@netless/slide": "^0.10.0",
     "jspdf": "2.5.1"
   },
   "devDependencies": {
