@@ -127,8 +127,14 @@ export function connect({ context, storage, viewer, sideEffect, logger }: Connec
     })
   );
 
+  const isEditable = (el: EventTarget | null) => {
+    if (!el) return false;
+    const tagName = (el as HTMLElement).tagName;
+    return tagName === "INPUT" || tagName === "TEXTAREA" || tagName === "SELECT";
+  };
+
   sideEffect.addEventListener(window, "keydown", ev => {
-    if (context.box.focus) {
+    if (context.box.focus && !isEditable(ev.target)) {
       if (ev.key === "ArrowUp" || ev.key === "ArrowLeft") {
         viewer.slide.prevStep();
       }
