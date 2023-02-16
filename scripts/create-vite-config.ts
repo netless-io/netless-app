@@ -13,15 +13,17 @@ function findPackageJSON(entry: string): { version: string } | undefined {
   return findPackageJSON(dir);
 }
 
+interface Options {
+  entry?: string;
+  name?: string;
+  formats?: LibraryFormats[];
+}
+
 export function createViteConfig({
   entry = path.resolve(process.cwd(), "src/index.ts"),
   name,
   formats = ["es", "cjs", "iife"],
-}: {
-  entry?: string;
-  name?: string;
-  formats?: LibraryFormats[];
-} = {}): UserConfigFn {
+}: Options = {}): UserConfigFn {
   return defineConfig(({ mode }) => {
     const isProd = mode === "production";
     const pkgName = (entry.match(/packages[/\\]([^/\\]+)/) || ["", ""])[1];

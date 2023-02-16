@@ -21,6 +21,8 @@
     "prettier": "^2.6.2",
     "prettier-plugin-svelte": "^2.7.0",
     "rimraf": "^3.0.2",
+    "rollup": "^3.15.0",
+    "rollup-plugin-dts": "^5.2.0",
     "rollup-plugin-peer-deps-external": "^2.2.4",
     "sass": "^1.52.2",
     "svelte": "^3.48.0",
