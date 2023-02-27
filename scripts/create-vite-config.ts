@@ -2,8 +2,12 @@
 import excludeDependencies from "rollup-plugin-exclude-dependencies-from-bundle";
 import type { LibraryFormats, Plugin, UserConfigFn } from "vite";
 import { defineConfig } from "vite";
-import { existsSync } from "fs";
+import { readFileSync, existsSync } from "fs";
 import path from "path";
+import esbuild from "esbuild";
+import postcss from "postcss";
+import tailwind from "tailwindcss";
+import autoprefixer from "autoprefixer";
 
 function findPackageJSON(entry: string): { version: string } | undefined {
   const dir = path.dirname(entry);
@@ -54,11 +58,12 @@ export function createViteConfig({
           emitCss: false,
           preprocess: vitePreprocess(),
         }),
+        iife(entry, name || "Netless" + varName),
       ],
       build: {
         lib: {
           entry,
-          formats,
+          formats: formats.filter(e => e !== "iife"),
           fileName: "main",
           name: name || "Netless" + varName,
         },
@@ -77,4 +82,67 @@ export function createViteConfig({
       },
     };
   }) as UserConfigFn;
+}
+
+function iife(entry: string, globalName: string): Plugin {
+  let mode = "development";
+  return {
+    name: "iife",
+    configResolved(config) {
+      mode = config.mode;
+    },
+    async closeBundle() {
+      await esbuild.build({
+        entryPoints: [entry],
+        outfile: "dist/main.iife.js",
+        bundle: true,
+        globalName,
+        minify: mode === "production",
+        logLevel: "info",
+        plugins: [
+          {
+            name: "inline-css",
+            setup({ onResolve, onLoad }) {
+              const processor = postcss([tailwind(), autoprefixer()]);
+
+              onResolve({ filter: /\?inline$/ }, async args => {
+                const file = path.join(args.resolveDir, args.path.slice(0, args.path.indexOf("?")));
+
+                const r = await esbuild.build({
+                  entryPoints: [file],
+                  bundle: true,
+                  minify: mode === "production",
+                  write: false,
+                  logLevel: "silent",
+                  plugins: [
+                    {
+                      name: "postcss",
+                      setup({ onLoad }) {
+                        onLoad({ filter: /\.css$/ }, async args => {
+                          const input = readFileSync(args.path, "utf8");
+                          const result = await processor.process(input, { from: args.path });
+                          return { contents: result.css, loader: "css" };
+                        });
+                      },
+                    },
+                  ],
+                });
+
+                const contents =
+                  `const css = ${JSON.stringify(r.outputFiles[0].text)};\n` +
+                  `const style = document.createElement("style");\n` +
+                  `style.appendChild(document.createTextNode(css));\n` +
+                  `document.head.appendChild(style);\n`;
+                return { path: args.path, namespace: "inline-css", pluginData: contents };
+              });
+
+              onLoad({ filter: /./, namespace: "inline-css" }, args => {
+                return { contents: args.pluginData, loader: "js" };
+              });
+            },
+          },
+        ],
+      });
+    },
+  };
 }
