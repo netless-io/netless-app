@@ -39,6 +39,7 @@ export interface AppOptions
     | "useLocalCache"
     | "resourceTimeout"
     | "loaderDelegate"
+    | "urlInterrupter"
     | "navigatorDelegate"
     | "fixedFrameSize"
     | "logger"
