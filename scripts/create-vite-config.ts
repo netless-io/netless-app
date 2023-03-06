@@ -8,6 +8,7 @@ import esbuild from "esbuild";
 import postcss from "postcss";
 import tailwind from "tailwindcss";
 import autoprefixer from "autoprefixer";
+import SASS from "sass";
 
 function findPackageJSON(entry: string): { version: string } | undefined {
   const dir = path.dirname(entry);
@@ -58,7 +59,7 @@ export function createViteConfig({
           emitCss: false,
           preprocess: vitePreprocess(),
         }),
-        iife(entry, name || "Netless" + varName),
+        formats.includes("iife") && iife(entry, name || "Netless" + varName),
       ],
       build: {
         lib: {
@@ -99,6 +100,9 @@ function iife(entry: string, globalName: string): Plugin {
         globalName,
         minify: mode === "production",
         logLevel: "info",
+        define: {
+          "import.meta.env.DEV": "false",
+        },
         plugins: [
           {
             name: "inline-css",
@@ -122,6 +126,13 @@ function iife(entry: string, globalName: string): Plugin {
                           const input = readFileSync(args.path, "utf8");
                           const result = await processor.process(input, { from: args.path });
                           return { contents: result.css, loader: "css" };
+                        });
+
+                        onLoad({ filter: /\.scss$/ }, async args => {
+                          const { css } = SASS.compile(args.path, {
+                            style: "compressed",
+                          });
+                          return { contents: css, loader: "css" };
                         });
                       },
                     },

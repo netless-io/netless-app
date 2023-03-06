@@ -1,6 +1,6 @@
 {
   "name": "@netless/app-slide",
-  "version": "0.3.0-canary.18",
+  "version": "0.3.0-canary.19",
   "main": "dist/main.js",
   "module": "dist/main.mjs",
   "types": "dist/index.d.ts",
@@ -16,7 +16,7 @@
     "README-zh.md"
   ],
   "dependencies": {
-    "@netless/slide": "^0.10.3",
+    "@netless/slide": "^1.0.1",
     "jspdf": "2.5.1"
   },
   "devDependencies": {
