@@ -134,7 +134,7 @@ export function connect({ context, storage, viewer, sideEffect, logger }: Connec
   };
 
   sideEffect.addEventListener(window, "keydown", ev => {
-    if (context.box.focus && !isEditable(ev.target)) {
+    if (context.box.focus && !context.box.readonly && !isEditable(ev.target)) {
       if (ev.key === "ArrowUp" || ev.key === "ArrowLeft") {
         viewer.slide.prevStep();
       }
