@@ -19,6 +19,7 @@ export interface SlideDocsViewerConfig {
   mountWhiteboard: (dom: HTMLDivElement) => void;
   baseScenePath: string;
   appId: string;
+  urlInterrupter?: (url: string) => Promise<string>;
 }
 
 export interface SavePdfConfig {
@@ -45,6 +46,7 @@ export class SlideDocsViewer {
     mountWhiteboard,
     baseScenePath,
     appId,
+    urlInterrupter,
   }: SlideDocsViewerConfig) {
     this.box = box;
     this.whiteboardView = view;
@@ -56,6 +58,7 @@ export class SlideDocsViewer {
       readonly: box.readonly,
       onNewPageIndex: this.onNewPageIndex,
       onPlay: this.onPlay,
+      urlInterrupter,
     });
 
     this.sideEffect.add(() => {

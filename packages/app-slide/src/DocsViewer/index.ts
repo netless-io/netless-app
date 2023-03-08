@@ -19,13 +19,15 @@ export interface DocsViewerConfig {
   readonly: boolean;
   onNewPageIndex: (index: number) => void;
   onPlay?: () => void;
+  urlInterrupter?: (url: string) => Promise<string>;
 }
 
 export class DocsViewer {
-  public constructor({ readonly, onNewPageIndex, onPlay }: DocsViewerConfig) {
+  public constructor({ readonly, onNewPageIndex, onPlay, urlInterrupter }: DocsViewerConfig) {
     this.readonly = readonly;
     this.onNewPageIndex = onNewPageIndex;
     this.onPlay = onPlay;
+    this.urlInterrupter = urlInterrupter || (url => url);
 
     this.render();
   }
@@ -33,14 +35,14 @@ export class DocsViewer {
   protected readonly: boolean;
   protected onNewPageIndex: (index: number) => void;
   protected onPlay?: () => void;
+  protected urlInterrupter: (url: string) => Promise<string> | string;
 
   private _pages: DocsViewerPage[] = [];
 
   public set pages(value: DocsViewerPage[]) {
     this._pages = value;
-    this.refreshPreview();
+    this.refreshPreview().then(this.refreshBtnSidebar.bind(this));
     this.refreshTotalPage();
-    this.refreshBtnSidebar();
   }
 
   public get pages() {
@@ -148,7 +150,7 @@ export class DocsViewer {
     return this.$preview;
   }
 
-  private refreshPreview() {
+  private async refreshPreview() {
     const { $preview } = this;
     const pageClassName = this.wrapClassName("preview-page");
     const pageNameClassName = this.wrapClassName("preview-page-name");
@@ -156,8 +158,21 @@ export class DocsViewer {
       $preview.firstChild.remove();
     }
 
+    const previewSRCs: Record<number, Promise<string> | string> = [];
+    for (let i = 0, len = this.pages.length; i < len; i++) {
+      const page = this.pages[i];
+      const src = page.thumbnail ?? (page.src.startsWith("ppt") ? void 0 : page.src);
+      if (src) {
+        previewSRCs[i] = this.urlInterrupter(src);
+      }
+    }
+    // Promise.all(), but no closure
+    for (let i = 0, len = this.pages.length; i < len; i++) {
+      previewSRCs[i] = await previewSRCs[i]
+    }
+
     this.pages.forEach((page, i) => {
-      const previewSRC = page.thumbnail ?? (page.src.startsWith("ppt") ? void 0 : page.src);
+      const previewSRC = previewSRCs[i] as string | undefined;
       if (!previewSRC) {
         return;
       }

@@ -170,6 +170,7 @@ const SlideApp: NetlessApp<Attributes, MagixEvents, AppOptions, AppResult> = {
       mountWhiteboard: context.mountView.bind(context),
       baseScenePath,
       appId: context.appId,
+      urlInterrupter: context.getAppOptions()?.urlInterrupter,
     });
 
     if (import.meta.env.DEV) {
