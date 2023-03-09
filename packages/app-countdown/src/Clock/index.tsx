@@ -1,5 +1,3 @@
-import "./style.scss";
-
 import { useMemo, useCallback } from "preact/hooks";
 import type { FunctionalComponent } from "preact";
 import { memo } from "preact/compat";
