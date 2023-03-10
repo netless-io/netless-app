@@ -20,7 +20,7 @@ const Countdown: NetlessApp = {
     const storage = context.createStorage<StorageState>("state", {
       countdownSecs: 0,
       startTime: 0,
-      paused: false,
+      paused: 0,
     });
 
     render(<App context={context} storage={storage} />, box.$content);
