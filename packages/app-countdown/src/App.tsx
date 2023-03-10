@@ -8,7 +8,8 @@ import type { AppContext, Storage } from "@netless/window-manager";
 export interface StorageState {
   countdownSecs: number;
   startTime: number;
-  paused: boolean;
+  /** remember paused time, 0 is not paused */
+  paused: number;
 }
 
 interface AppProps {
@@ -47,25 +48,27 @@ export const App: FunctionalComponent<AppProps> = memo(({ context, storage }) =>
 
   const onStart = useCallback(() => {
     if (context.isWritable) {
-      storage.setState({ paused: false, startTime: Math.floor(Date.now() / 1000) });
+      storage.setState({ paused: 0, startTime: Math.floor(Date.now() / 1000) });
     }
   }, [context, storage]);
 
   const onPause = useCallback(() => {
     if (context.isWritable) {
-      storage.setState({ paused: true });
+      storage.setState({ paused: Math.floor(Date.now() / 1000) });
     }
   }, [context, storage]);
 
   const onResume = useCallback(() => {
-    if (context.isWritable) {
-      storage.setState({ paused: false });
+    if (context.isWritable && storage.state.paused) {
+      const now = Math.floor(Date.now() / 1000);
+      const { startTime, paused } = storage.state;
+      storage.setState({ paused: 0, startTime: startTime + now - paused });
     }
   }, [context, storage]);
 
   const onReset = useCallback(() => {
     if (context.isWritable) {
-      storage.setState({ paused: false, countdownSecs: 0, startTime: 0 });
+      storage.setState({ paused: 0, countdownSecs: 0, startTime: 0 });
     }
   }, [context]);
 
@@ -132,7 +135,7 @@ export const App: FunctionalComponent<AppProps> = memo(({ context, storage }) =>
       readonly={!isWritable}
       countdownSecs={countdownSecs}
       startTime={startTime}
-      paused={paused}
+      paused={paused > 0}
       onAdjustTime={onAdjustTime}
       onStart={onStart}
       onPause={onPause}
