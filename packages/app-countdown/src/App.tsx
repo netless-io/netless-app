@@ -124,7 +124,7 @@ export const App: FunctionalComponent<AppProps> = memo(({ context, storage }) =>
         storage.setState({ countdownSecs: result });
       }
     },
-    [started, context]
+    [started, countdownSecs, context, storage]
   );
 
   return (
