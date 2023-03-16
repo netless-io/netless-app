@@ -6,6 +6,7 @@ importers:
     specifiers:
       '@commitlint/cli': ^16.3.0
       '@commitlint/config-conventional': ^16.2.4
+      '@hyrious/esbuild-plugin-svelte': ^0.1.7
       '@netless/window-manager': 1.0.0-canary.69
       '@sveltejs/vite-plugin-svelte': 2.0.2
       '@tsconfig/svelte': ^3.0.0
@@ -21,6 +22,7 @@ importers:
       eslint-plugin-svelte3: ^4.0.0
       husky: ^7.0.4
       postcss: ^8.4.14
+      postcss-load-config: ^4.0.1
       prettier: ^2.8.1
       prettier-plugin-svelte: ^2.9.0
       rimraf: ^3.0.2
@@ -36,6 +38,7 @@ importers:
     devDependencies:
       '@commitlint/cli': 16.3.0
       '@commitlint/config-conventional': 16.2.4
+      '@hyrious/esbuild-plugin-svelte': 0.1.7_bs4h5rhcxv65opatvgsk3vwzjy
       '@netless/window-manager': 1.0.0-canary.69_white-web-sdk@2.16.40
       '@sveltejs/vite-plugin-svelte': 2.0.2_svelte@3.54.0+vite@4.0.3
       '@tsconfig/svelte': 3.0.0
@@ -51,6 +54,7 @@ importers:
       eslint-plugin-svelte3: 4.0.0_2aagxyyd66x6iymg5nfckajqjq
       husky: 7.0.4
       postcss: 8.4.20
+      postcss-load-config: 4.0.1_postcss@8.4.20
       prettier: 2.8.1
       prettier-plugin-svelte: 2.9.0_sro2v6ld777payjtkjtiuogcxi
       rimraf: 3.0.2
@@ -1380,6 +1384,17 @@ packages:
 
   /@humanwhocodes/object-schema/1.2.1:
     resolution: {integrity: sha512-ZnQMnLV4e7hDlUvw8H+U8ASL02SS2Gn6+9Ac3wGGLIe7+je2AeAOxPY+izIPJDfFDb7eDjev0Us8MO1iFRN8hA==}
+    dev: true
+
+  /@hyrious/esbuild-plugin-svelte/0.1.7_bs4h5rhcxv65opatvgsk3vwzjy:
+    resolution: {integrity: sha512-NyBeGax6sBBm27JKkeBcT8MfSmHRms3su6Im5H8t0gOQo1lI3ijbrfO6EFKzMZe1RHr7VCFPOQ8P1pZVxWvVRw==}
+    engines: {node: '>=14'}
+    peerDependencies:
+      esbuild: '*'
+      svelte: '*'
+    dependencies:
+      esbuild: 0.16.11
+      svelte: 3.54.0
     dev: true
 
   /@icons/material/0.2.4:
@@ -4334,6 +4349,23 @@ packages:
       postcss: 8.4.20
       yaml: 1.10.2
 
+  /postcss-load-config/4.0.1_postcss@8.4.20:
+    resolution: {integrity: sha512-vEJIc8RdiBRu3oRAI0ymerOn+7rPuMvRXslTvZUKZonDHFIczxztIyJ1urxM1x9JXEikvpWWTUUqal5j/8QgvA==}
+    engines: {node: '>= 14'}
+    peerDependencies:
+      postcss: '>=8.0.9'
+      ts-node: '>=9.0.0'
+    peerDependenciesMeta:
+      postcss:
+        optional: true
+      ts-node:
+        optional: true
+    dependencies:
+      lilconfig: 2.0.6
+      postcss: 8.4.20
+      yaml: 2.2.1
+    dev: true
+
   /postcss-nested/5.0.6_postcss@8.4.20:
     resolution: {integrity: sha512-rKqm2Fk0KbA8Vt3AdGN0FB9OBOMDVajMG6ZCf/GoHgdxUJ4sBFp0A/uMIRm+MJUdo33YXEtjqIz8u7DAp8B7DA==}
     engines: {node: '>=12.0'}
@@ -6861,6 +6893,11 @@ packages:
   /yaml/1.10.2:
     resolution: {integrity: sha512-r3vXyErRCYJ7wg28yvBY5VSoAF8ZvlcW9/BwUzEtUsjvX/DKs24dIkuwjtuprwJJHsbyUbLApepYTR1BN4uHrg==}
     engines: {node: '>= 6'}
+
+  /yaml/2.2.1:
+    resolution: {integrity: sha512-e0WHiYql7+9wr4cWMx3TVQrNwejKaEe7/rHNmQmqRjazfOP5W8PB6Jpebb5o6fIapbz9o9+2ipcaTM2ZwDI6lw==}
+    engines: {node: '>= 14'}
+    dev: true
 
   /yargs-parser/20.2.9:
     resolution: {integrity: sha512-y11nGElTIV+CT3Zv9t7VKl+Q3hTQoT9a1Qzezhhl6Rp21gJ/IVTW7Z3y9EWXhuUBC2Shnf+DX0antecpAwSP8w==}

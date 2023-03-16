@@ -8,6 +8,7 @@ import esbuild from "esbuild";
 import postcss from "postcss";
 import tailwind from "tailwindcss";
 import autoprefixer from "autoprefixer";
+import postcssrc from 'postcss-load-config';
 import SASS from "sass";
 
 function findPackageJSON(entry: string): { version: string } | undefined {
@@ -93,21 +94,36 @@ function iife(entry: string, globalName: string): Plugin {
       mode = config.mode;
     },
     async closeBundle() {
+      const { svelte } = await import("@hyrious/esbuild-plugin-svelte")
+      let options: postcssrc.Result | undefined;
+      try {
+        options = await postcssrc({}, path.dirname(entry));
+      } catch {}
+      const loader: Record<string, esbuild.Loader> = {
+        '.woff2': 'dataurl',
+        '.woff': 'dataurl',
+        '.ttf': 'dataurl',
+        '.eot': 'dataurl',
+        '.svg': 'dataurl',
+      };
       await esbuild.build({
         entryPoints: [entry],
         outfile: "dist/main.iife.js",
         bundle: true,
         globalName,
         minify: mode === "production",
+        legalComments: "none",
         logLevel: "info",
         define: {
           "import.meta.env.DEV": "false",
         },
+        loader,
         plugins: [
+          svelte(),
           {
             name: "inline-css",
             setup({ onResolve, onLoad }) {
-              const processor = postcss([tailwind(), autoprefixer()]);
+              const processor = options && postcss(options.plugins);
 
               onResolve({ filter: /\?inline$/ }, async args => {
                 const file = path.join(args.resolveDir, args.path.slice(0, args.path.indexOf("?")));
@@ -118,15 +134,18 @@ function iife(entry: string, globalName: string): Plugin {
                   minify: mode === "production",
                   write: false,
                   logLevel: "silent",
+                  loader,
                   plugins: [
                     {
                       name: "postcss",
                       setup({ onLoad }) {
-                        onLoad({ filter: /\.css$/ }, async args => {
-                          const input = readFileSync(args.path, "utf8");
-                          const result = await processor.process(input, { from: args.path });
-                          return { contents: result.css, loader: "css" };
-                        });
+                        if (processor) {
+                          onLoad({ filter: /\.css$/ }, async args => {
+                            const input = readFileSync(args.path, "utf8");
+                            const result = await processor.process(input, { from: args.path });
+                            return { contents: result.css, loader: "css" };
+                          });
+                        }
 
                         onLoad({ filter: /\.scss$/ }, async args => {
                           const { css } = SASS.compile(args.path, {

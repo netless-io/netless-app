@@ -4,6 +4,7 @@
   "devDependencies": {
     "@commitlint/cli": "^16.3.0",
     "@commitlint/config-conventional": "^16.2.4",
+    "@hyrious/esbuild-plugin-svelte": "^0.1.7",
     "@netless/window-manager": "1.0.0-canary.69",
     "@sveltejs/vite-plugin-svelte": "2.0.2",
     "@tsconfig/svelte": "^3.0.0",
@@ -19,6 +20,7 @@
     "eslint-plugin-svelte3": "^4.0.0",
     "husky": "^7.0.4",
     "postcss": "^8.4.14",
+    "postcss-load-config": "^4.0.1",
     "prettier": "^2.8.1",
     "prettier-plugin-svelte": "^2.9.0",
     "rimraf": "^3.0.2",
