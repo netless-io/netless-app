@@ -165,10 +165,11 @@
   </div>
 {:else}
   <div class="two-side">
+    <!-- svelte-ignore a11y-click-events-have-key-events -->
     <div id="actions" class="app-list" on:click={openApp}>
       {#each apps as { kind, configs, url } (kind)}
         <h2 class="app-list-kind">
-          <a class="app-list-kind-link" href={url} target="_blank">
+          <a class="app-list-kind-link" href={url} target="_blank" rel="noreferrer">
             <img class="app-list-kind-icon" src={categorySVG} alt={kind} />
             <span>{kind}</span>
           </a>
@@ -182,6 +183,7 @@
       {/each}
     </div>
     <div class="right-side">
+      <!-- svelte-ignore a11y-click-events-have-key-events -->
       <div class="nav-bar" on:click={changeTool}>
         <div class="nav-bar-tools-cursor-hider">
           <div class="nav-bar-tools">
@@ -216,6 +218,7 @@
             class="github-btn"
             href="https://github.com/netless-io/netless-app"
             target="_blank"
+            rel="noreferrer"
             title="View my source"
           >
             GITHUB

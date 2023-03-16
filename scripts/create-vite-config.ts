@@ -6,9 +6,7 @@ import { readFileSync, existsSync } from "fs";
 import path from "path";
 import esbuild from "esbuild";
 import postcss from "postcss";
-import tailwind from "tailwindcss";
-import autoprefixer from "autoprefixer";
-import postcssrc from 'postcss-load-config';
+import postcssrc from "postcss-load-config";
 import SASS from "sass";
 
 function findPackageJSON(entry: string): { version: string } | undefined {
@@ -94,17 +92,19 @@ function iife(entry: string, globalName: string): Plugin {
       mode = config.mode;
     },
     async closeBundle() {
-      const { svelte } = await import("@hyrious/esbuild-plugin-svelte")
+      const { svelte } = await import("@hyrious/esbuild-plugin-svelte");
       let options: postcssrc.Result | undefined;
       try {
         options = await postcssrc({}, path.dirname(entry));
-      } catch {}
+      } catch {
+        // ignore
+      }
       const loader: Record<string, esbuild.Loader> = {
-        '.woff2': 'dataurl',
-        '.woff': 'dataurl',
-        '.ttf': 'dataurl',
-        '.eot': 'dataurl',
-        '.svg': 'dataurl',
+        ".woff2": "dataurl",
+        ".woff": "dataurl",
+        ".ttf": "dataurl",
+        ".eot": "dataurl",
+        ".svg": "dataurl",
       };
       await esbuild.build({
         entryPoints: [entry],
