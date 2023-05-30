@@ -348,11 +348,17 @@ export class StaticDocsViewer {
       "whiteboard-size-update"
     );
 
+    const isEditable = (el: EventTarget | null) => {
+      if (!el) return false;
+      const tagName = (el as HTMLElement).tagName;
+      return tagName === "INPUT" || tagName === "TEXTAREA" || tagName === "SELECT";
+    };
+
     this.sideEffect.addEventListener(
       window,
       "keyup",
       ev => {
-        if (this.readonly$.value || !this.box.focus || this.box.minimized) {
+        if (this.readonly$.value || !this.box.focus || this.box.minimized || isEditable(ev.target)) {
           return;
         }
         switch (ev.key) {
