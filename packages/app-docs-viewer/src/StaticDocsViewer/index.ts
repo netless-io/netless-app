@@ -358,7 +358,12 @@ export class StaticDocsViewer {
       window,
       "keyup",
       ev => {
-        if (this.readonly$.value || !this.box.focus || this.box.minimized || isEditable(ev.target)) {
+        if (
+          this.readonly$.value ||
+          !this.box.focus ||
+          this.box.minimized ||
+          isEditable(ev.target)
+        ) {
           return;
         }
         switch (ev.key) {
