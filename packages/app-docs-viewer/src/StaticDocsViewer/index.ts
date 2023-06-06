@@ -6,7 +6,7 @@ import { SideEffectManager } from "side-effect-manager";
 import { ResizeObserver as Polyfill } from "@juggle/resize-observer";
 import type { DocsViewerPage } from "../DocsViewer";
 import { DocsViewer } from "../DocsViewer";
-import { clamp, preventEvent } from "../utils/helpers";
+import { clamp, isEditable, preventEvent } from "../utils/helpers";
 import { Stepper } from "./stepper";
 import { PageRenderer } from "../PageRenderer";
 import { ScrollBar } from "../ScrollBar";
@@ -373,12 +373,6 @@ export class StaticDocsViewer {
         this.whiteboardView.callbacks.off("onSizeUpdated", handleSizeUpdate);
       };
     }, "whiteboard-size-update");
-
-    const isEditable = (el: EventTarget | null) => {
-      if (!el) return false;
-      const tagName = (el as HTMLElement).tagName;
-      return tagName === "INPUT" || tagName === "TEXTAREA" || tagName === "SELECT";
-    };
 
     this.sideEffect.addEventListener(
       window,

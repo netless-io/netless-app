@@ -5,6 +5,7 @@ import { SideEffectManager } from "side-effect-manager";
 import { createDocsViewerPages } from "../SlideController";
 import { DocsViewer } from "../DocsViewer";
 import { logger } from "../utils/logger";
+import { isEditable } from "../utils/helpers";
 
 export const ClickThroughAppliances = new Set(["clicker"]);
 
@@ -92,7 +93,7 @@ export class SlideDocsViewer {
     this.viewer.$content.appendChild(this.renderWhiteboardView());
     this.viewer.$content.appendChild(this.renderOverlay());
     this.sideEffect.addEventListener(window, "keydown", ev => {
-      if (this.box.focus && this.slideController) {
+      if (this.box.focus && this.slideController && !isEditable(ev.target)) {
         switch (ev.key) {
           case "ArrowUp":
           case "ArrowLeft": {

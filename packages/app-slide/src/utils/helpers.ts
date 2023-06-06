@@ -24,3 +24,9 @@ export function wait(ms: number) {
 export function deepClone<T>(obj: T): T {
   return JSON.parse(JSON.stringify(obj));
 }
+
+export function isEditable(el: EventTarget | null) {
+  if (!el) return false;
+  const tagName = (el as HTMLElement).tagName;
+  return tagName === "INPUT" || tagName === "TEXTAREA" || tagName === "SELECT";
+}

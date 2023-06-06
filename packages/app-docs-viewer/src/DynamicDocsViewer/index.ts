@@ -9,7 +9,7 @@ import type {
 import { SideEffectManager } from "side-effect-manager";
 import type { DocsViewerPage } from "../DocsViewer";
 import { DocsViewer } from "../DocsViewer";
-import { clamp } from "../utils/helpers";
+import { clamp, isEditable } from "../utils/helpers";
 
 export interface DynamicDocsViewerConfig {
   context: AppContext;
@@ -142,7 +142,7 @@ export class DynamicDocsViewer {
     this.viewer.$content.appendChild(this.renderMask());
     this.viewer.$content.appendChild(this.renderWhiteboardView());
     this.sideEffect.addEventListener(window, "keydown", ev => {
-      if (this.box.focus) {
+      if (this.box.focus && !isEditable(ev.target)) {
         switch (ev.key) {
           case "ArrowUp":
           case "ArrowLeft": {

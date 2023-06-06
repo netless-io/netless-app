@@ -12,3 +12,9 @@ export function preventEvent(ev: Event): void {
     ev.preventDefault();
   }
 }
+
+export function isEditable(el: EventTarget | null) {
+  if (!el) return false;
+  const tagName = (el as HTMLElement).tagName;
+  return tagName === "INPUT" || tagName === "TEXTAREA" || tagName === "SELECT";
+}
