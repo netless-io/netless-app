@@ -1,4 +1,4 @@
-lockfileVersion: '6.1'
+lockfileVersion: '6.0'
 
 settings:
   autoInstallPeers: true
@@ -240,8 +240,8 @@ importers:
   packages/app-slide:
     devDependencies:
       '@netless/slide':
-        specifier: ^1.0.2
-        version: 1.0.2
+        specifier: ^1.1.0
+        version: 1.1.0
       '@types/color-string':
         specifier: ^1.5.2
         version: 1.5.2
@@ -612,8 +612,8 @@ packages:
     resolution: {integrity: sha512-7NzsJrba0R/mq/l10SkIZQwbrNVJyPxZYrjK6xL3Ts732iWAVuS2UB0u3s6iGeUVcqV39A679yva8APWRl4M0A==}
     dev: true
 
-  /@netless/slide@1.0.2:
-    resolution: {integrity: sha512-4gdVXRVWuvZwDUwuZWhQsDBeXHfV6qjRfmA8m+h79yLN73KMeK6hF/vsypDnZcCYanoD9rICHjEXUoZyT1IYiQ==}
+  /@netless/slide@1.1.0:
+    resolution: {integrity: sha512-48xuKNHFab7CkUJwl5jZ0LIxFJ4El+Du65CBSaITDJdMX12Q6XnWsDVakFF5N0WU7T2uViX/Gjx+6TAzVI9H2A==}
     dependencies:
       '@juggle/resize-observer': 3.4.0
       '@types/lodash': 4.14.191
@@ -2442,7 +2442,7 @@ packages:
     dev: true
 
   /lie@3.1.1:
-    resolution: {integrity: sha1-mkNrLMd0bKWd56QfpGmz77dr2H4=}
+    resolution: {integrity: sha512-RiNhHysUjhrDQntfYSfY4MU24coXXdEOgw9WGcKHNeEwffDYbF//u87M1EWaMGzuFoSbqW0C9C6lEEhDOAswfw==}
     dependencies:
       immediate: 3.0.6
     dev: true
