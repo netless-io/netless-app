@@ -266,20 +266,20 @@ export class SlideDocsViewer {
   private getWhiteSnapshot(
     pageIndex: number,
     canvas: HTMLCanvasElement,
-    ctx: CanvasRenderingContext2D
+    ctx: CanvasRenderingContext2D,
+    slideWidth: number,
+    slideHeight: number
   ) {
-    const { width, height } = this.whiteboardView.size;
-    canvas.width = width;
-    canvas.height = height;
+    // Render whiteboard into canvas, and it must fit the slide size.
     this.whiteboardView.screenshotToCanvas(
       ctx,
       `${this.baseScenePath}/${pageIndex}`,
-      width,
-      height,
+      canvas.width,
+      canvas.height,
       {
         centerX: 0,
         centerY: 0,
-        scale: this.whiteboardView.camera.scale,
+        scale: Math.min(canvas.width / slideWidth, canvas.height / slideHeight),
       }
     );
   }
@@ -317,8 +317,8 @@ export class SlideDocsViewer {
     resizeCanvas.height = pdfHeight;
 
     const whiteSnapshotCanvas = document.createElement("canvas");
-    whiteSnapshotCanvas.width = width;
-    whiteSnapshotCanvas.height = height;
+    whiteSnapshotCanvas.width = pdfWidth;
+    whiteSnapshotCanvas.height = pdfHeight;
     const whiteCtx = whiteSnapshotCanvas.getContext("2d");
     if (!whiteCtx || !this.getWhiteSnapshot || !resizeCtx) {
       this.reportProgress(100, null);
@@ -347,8 +347,8 @@ export class SlideDocsViewer {
         await new Promise(resolve => (img.onload = resolve));
         resizeCtx.drawImage(img, 0, 0, pdfWidth, pdfHeight);
       }
-      whiteCtx.clearRect(0, 0, width, height);
-      this.getWhiteSnapshot(i, whiteSnapshotCanvas, whiteCtx);
+      whiteCtx.clearRect(0, 0, pdfWidth, pdfHeight);
+      this.getWhiteSnapshot(i, whiteSnapshotCanvas, whiteCtx, width, height);
       try {
         const whiteSnapshot = whiteSnapshotCanvas.toDataURL("image/png");
         const whiteImg = document.createElement("img");
