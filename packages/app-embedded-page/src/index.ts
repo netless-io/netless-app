@@ -32,10 +32,11 @@ export type Attributes = {
   page: string;
 };
 
-export interface AppOptions<TState = DefaultState, TMessage = unknown> {
+export interface AppOptions<TState extends Object = DefaultState, TMessage = unknown> {
   debug?: boolean;
   postMessage?: PostToSDKMessage<TState, TMessage>;
   addMessageListener?: AddFromSDKMessageListener<TState, TMessage>;
+  setupIframe?: (iframe: HTMLIFrameElement) => void;
 }
 
 const ClickThroughAppliances = new Set(["clicker", "selector"]);
@@ -80,6 +81,7 @@ const EmbeddedPage: NetlessApp<Attributes, void, AppOptions> = {
     container.classList.add("netless-app-embedded-page");
 
     const iframe = document.createElement("iframe");
+    appOptions.setupIframe && appOptions.setupIframe(iframe);
     container.appendChild(iframe);
 
     box.mountStyles(styles);
@@ -94,7 +96,7 @@ const EmbeddedPage: NetlessApp<Attributes, void, AppOptions> = {
         userPayload: toJSON(payload),
       }));
 
-    const safeListenPropsUpdated = <T>(
+    const safeListenPropsUpdated = <T extends Object>(
       getProps: () => T,
       callback: AkkoObjectUpdatedListener<T>
     ) => {
@@ -222,11 +224,11 @@ const EmbeddedPage: NetlessApp<Attributes, void, AppOptions> = {
         storeSideEffect.add(
           () =>
             safeListenPropsUpdated(
-              () => attrs.store[storeId],
+              () => (attrs.store as any)[storeId],
               actions => {
                 postMessage({
                   NEAType: "StateChanged",
-                  payload: { storeId, actions: toJSON(actions) },
+                  payload: { storeId, actions: toJSON<any>(actions) },
                 });
               }
             ),
