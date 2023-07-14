@@ -445,7 +445,7 @@ export class StaticDocsViewer {
   };
 
   private async getBase64FromUrl(url: string): Promise<string> {
-    const data = await fetch(url);
+    const data = await fetch(this._invalidate(url));
     const blob = await data.blob();
     return new Promise(resolve => {
       const reader = new FileReader();
@@ -455,6 +455,16 @@ export class StaticDocsViewer {
         resolve(base64data);
       };
     });
+  }
+
+  private _invalidate(url: string): string {
+    try {
+      const a = new URL(url);
+      a.searchParams.set("t", Date.now().toString());
+      return a.toString();
+    } catch {
+      return url;
+    }
   }
 
   private reportProgress(progress: number, result: { pdf: ArrayBuffer; title: string } | null) {
