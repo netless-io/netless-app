@@ -483,7 +483,7 @@ export class StaticDocsViewer {
       this.reportProgress(100, null);
       return;
     }
-    const scenePath = `${this.baseScenePath}/1`;
+    const scenePath = this.whiteboardView.focusScenePath || `${this.baseScenePath}/1`;
     const firstPage = this.pages[0];
     const { jsPDF } = await import("jspdf");
     const pdf = new jsPDF({
