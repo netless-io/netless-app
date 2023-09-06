@@ -33,6 +33,15 @@ export interface AppletObject {
   startSaveCallback(title: string, visibility: string, callbackAction: string): void;
   initCAS(): void;
   setErrorDialogsActive(flag: boolean): void;
+  setCoordSystem(
+    xmin: number,
+    xmax: number,
+    ymin: number,
+    ymax: number,
+    zmin?: number,
+    zmax?: number,
+    yVertical?: boolean
+  ): void;
   reset(): void;
   refreshViews(): void;
   setVisible(objName: string, visible: boolean): void;
@@ -181,6 +190,8 @@ export interface AppletObject {
   getScreenReaderOutput(text: string): string;
   getEditorState(): string;
   setEditorState(state: string, label: string): void;
+  getGraphicsOptions(viewId: number): GraphicsOptions;
+  setGraphicsOptions(viewId: number, options: string | RecursivePartial<GraphicsOptions>): void;
   translate(arg1: string, callback: (data: string) => void): string;
   exportConstruction(flags: string[]): string;
   updateConstruction(): void;
@@ -239,6 +250,38 @@ export interface AppletObject {
   lockTextElement(label: string): void;
   unlockTextElement(label: string): void;
 }
+
+export type AxisConfiguration = {
+  label: string | null;
+  unitLabel: string | null;
+  positiveAxis: boolean;
+  showNumbers: boolean;
+  tickStyle: number;
+  visible: boolean;
+};
+
+export type AxesConfiguration = {
+  x: AxisConfiguration;
+  y: AxisConfiguration;
+  z: AxisConfiguration;
+};
+
+export type GraphicsOptions = {
+  axesColor: string;
+  bgColor: string;
+  gridColor: string;
+  axes: AxesConfiguration;
+  grid: boolean;
+  gridDistance: { x: number | null; y: number | null };
+  gridType: number;
+  pointCapturing: number;
+  rightAngleStyle: number;
+  rulerType: number;
+};
+
+type RecursivePartial<T> = {
+  [P in keyof T]?: RecursivePartial<T[P]>;
+};
 
 /**
  * @link https://wiki.geogebra.org/en/Reference:GeoGebra_Apps_API#Client_Events
