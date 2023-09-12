@@ -262,7 +262,7 @@ export class SlideController {
       interactive: true,
       mode: "interactive",
       controller: logger.enable,
-      enableGlobalClick: true,
+      enableGlobalClick: options.enableGlobalClick ?? true,
       renderOptions: {
         minFPS: options.minFPS || 25,
         maxFPS: options.maxFPS || 30,

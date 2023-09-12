@@ -43,6 +43,7 @@ export interface AppOptions
     | "navigatorDelegate"
     | "fixedFrameSize"
     | "logger"
+    | "enableGlobalClick"
   > {
   /** show debug controller */
   debug?: boolean;
