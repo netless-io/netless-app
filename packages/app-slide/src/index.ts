@@ -59,7 +59,7 @@ export interface AppOptions
   autoFPS?: boolean;
   /** whether to re-scale automatically @default true */
   autoResolution?: boolean;
-  /** 1~4, default: 3 */
+  /** 0~4, default: 3 */
   maxResolutionLevel?: number;
   /** use canvas2d mode, downside: some 3d effects are lost */
   forceCanvas?: boolean;
