@@ -12,6 +12,14 @@
   overflow: hidden;
 }
 
+// the default H1...H6 font-size was set to 2em...0.67em, see: https://github.com/quilljs/quill/blob/e33f352b9ede51759cb3d616835d1e1e80694251/assets/base.styl#L119
+// and then the parent container .ql-container default font-size is 13px,
+// that resulted in the final rendering of H1 at only 26px.
+// So, we can set the font-size of parent element to 16px, making H1 32px.
+.netless-app-quill-editor {
+  font-size: 16px;
+}
+
 .netless-app-quill-container {
   flex: 1;
 }
