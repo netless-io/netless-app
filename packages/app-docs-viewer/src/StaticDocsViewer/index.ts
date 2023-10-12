@@ -339,6 +339,13 @@ export class StaticDocsViewer {
       return () => this.whiteboardView.callbacks.off("onCameraUpdated", handleCameraUpdate);
     });
 
+    // Handle drag event (hand tool).
+    this.sideEffect.add(() => {
+      const { updateUserScroll } = this;
+      this.whiteboardView.callbacks.on("onCameraUpdatedByDevice", updateUserScroll);
+      return () => this.whiteboardView.callbacks.off("onCameraUpdatedByDevice", updateUserScroll);
+    });
+
     this.sideEffect.add(() => {
       const handleSizeUpdate = ({ width: wbWidth, height: wbHeight }: Size): void => {
         if (wbWidth <= 0 || wbHeight <= 0) {
