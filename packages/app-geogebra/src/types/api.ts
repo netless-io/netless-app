@@ -96,7 +96,7 @@ export interface AppletObject {
   getXcoord(objName: string): number;
   getYcoord(objName: string): number;
   getZcoord(objName: string): number;
-  setCoords(objName: string, x: number, y: number, z: number): void;
+  setCoords(objName: string, x: number, y: number, z?: number): void;
   getValue(objName: string): number;
   getVersion(): string;
   getScreenshotBase64(callback: (data: string) => void, scale?: number): void;
