@@ -146,6 +146,7 @@ export class SlideDocsViewer {
 
     this.slideController = this.mountSlideController({
       anchor: this.$slide,
+      onRenderStart: this.onRenderStart,
       onRenderEnd: this.onRenderEnd,
       onTransitionStart: this.viewer.setPlaying,
       onTransitionEnd: this.viewer.setPaused,
@@ -174,8 +175,26 @@ export class SlideDocsViewer {
     logger.warn("[Slide] render error", error);
   };
 
+  protected onRenderStart = () => {
+    this.$whiteboardView.classList.add(this.wrapClassName("wb-view-hidden"));
+    this.viewer.setPlaying();
+  };
+
   protected onRenderEnd = () => {
+    // 1. There's no render end event on initial render.
+    // 2. The end event is fired before the page changed event.
+    // So in this callback we will do nothing and we do all "end" works in onPageChanged.
+  };
+
+  public onPageChanged = () => {
+    clearTimeout(this._onPageChangedTimer);
+    this._onPageChangedTimer = setTimeout(this._onPageChanged, 200);
+  };
+
+  private _onPageChangedTimer = 0;
+  private _onPageChanged = () => {
     this.$overlay.style.opacity = "";
+    this.$whiteboardView.classList.remove(this.wrapClassName("wb-view-hidden"));
   };
 
   protected refreshPages = () => {

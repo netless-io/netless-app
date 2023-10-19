@@ -31,6 +31,7 @@ export const EmptyAttributes: Attributes = {
 export interface SlideControllerOptions {
   context: AppContext<Attributes, MagixEvents, AppOptions>;
   anchor: HTMLDivElement;
+  onRenderStart: () => void;
   onRenderEnd: () => void;
   onPageChanged: (page: number) => void;
   onTransitionStart: () => void;
@@ -54,6 +55,7 @@ export class SlideController {
   private readonly player?: Player;
   private readonly sideEffect = new SideEffectManager();
 
+  private readonly onRenderStart: SlideControllerOptions["onRenderStart"];
   private readonly onPageChanged: SlideControllerOptions["onPageChanged"];
   private readonly onTransitionStart: SlideControllerOptions["onTransitionStart"];
   private readonly onTransitionEnd: SlideControllerOptions["onTransitionEnd"];
@@ -67,6 +69,7 @@ export class SlideController {
   public constructor({
     context,
     anchor,
+    onRenderStart,
     onPageChanged,
     onTransitionStart,
     onTransitionEnd,
@@ -74,6 +77,7 @@ export class SlideController {
     onRenderError,
     showRenderError,
   }: SlideControllerOptions) {
+    this.onRenderStart = onRenderStart
     this.onPageChanged = onPageChanged;
     this.onTransitionStart = onTransitionStart;
     this.onTransitionEnd = onTransitionEnd;
@@ -165,8 +169,8 @@ export class SlideController {
       })
     );
 
+    slide.on(SLIDE_EVENTS.renderStart, this.onRenderStart);
     slide.on(SLIDE_EVENTS.slideChange, this.onPageChanged);
-    slide.on(SLIDE_EVENTS.renderStart, this.onTransitionStart);
     slide.on(SLIDE_EVENTS.renderEnd, this.onTransitionEnd);
     slide.on(SLIDE_EVENTS.mainSeqStepStart, this.onTransitionStart);
     slide.on(SLIDE_EVENTS.mainSeqStepEnd, this.onTransitionEnd);

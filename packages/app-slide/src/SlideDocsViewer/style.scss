@@ -8,6 +8,11 @@ $namespace: "netless-app-slide";
   height: 100%;
   z-index: 100;
   overflow: hidden;
+  transition: opacity 0.2s;
+}
+
+.#{$namespace}-wb-view-hidden {
+  opacity: 0;
 }
 
 .#{$namespace}-overlay {

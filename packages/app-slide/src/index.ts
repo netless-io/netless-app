@@ -131,6 +131,8 @@ const SlideApp: NetlessApp<Attributes, MagixEvents, AppOptions, AppResult> = {
         }
         log("[Slide] page to", page, synced ? "(synced)" : "");
         docsViewer.viewer.setPageIndex(page - 1);
+        docsViewer.viewer.setPaused();
+        docsViewer.onPageChanged();
       }
     };
 
