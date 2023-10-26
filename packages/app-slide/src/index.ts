@@ -24,6 +24,7 @@ export const version = __APP_VERSION__;
 
 const SlideApp: NetlessApp<Attributes, MagixEvents, AppOptions, void> = {
   kind: "Slide",
+  config: { enableShadowDOM: false },
   setup(context) {
     console.log("[Slide] setup @ " + __APP_VERSION__ + " (" + context.appId + ")");
 

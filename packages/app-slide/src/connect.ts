@@ -3,7 +3,7 @@ import type { SideEffectManager } from "side-effect-manager";
 import type { SlideViewer } from "./SlideViewer";
 import type { Attributes } from "./typings";
 
-import { get } from "./utils";
+import { get, wrap_class } from "./utils";
 
 export interface ConnectParams {
   context: AppContext;
@@ -24,28 +24,21 @@ export function connect({ context, storage, viewer, sideEffect, logger }: Connec
     whiteboard = context.createWhiteBoardView({ size: slideCount });
     whiteboard.setBaseRect({ width, height });
 
-    viewer.setSlideTitle(context.box.title);
-    viewer.attachWhiteSnapshot(
-      (index: number, canvas: HTMLCanvasElement, ctx: CanvasRenderingContext2D) => {
-        if (!whiteboard) {
-          return null;
-        }
-        const scenePath = whiteboard.pageState.pages[index - 1];
-        canvas.width = whiteboard.view.size.width;
-        canvas.height = whiteboard.view.size.height;
-        whiteboard.view.screenshotToCanvas(
-          ctx,
-          scenePath,
-          whiteboard.view.size.width,
-          whiteboard.view.size.height,
-          {
-            centerX: 0,
-            centerY: 0,
-            scale: whiteboard.view.camera.scale,
-          }
-        );
+    viewer._slideTitle = context.box.title;
+    viewer._getWhiteSnapshot = (
+      index: number,
+      canvas: HTMLCanvasElement,
+      ctx: CanvasRenderingContext2D
+    ) => {
+      if (!whiteboard) {
+        return null;
       }
-    );
+      const scenePath = whiteboard.pageState.pages[index - 1];
+      const { width, height } = whiteboard.view.size;
+      canvas.width = width;
+      canvas.height = height;
+      whiteboard.view.screenshotToCanvas(ctx, scenePath, width, height, whiteboard.view.camera);
+    };
 
     kick_start();
   });
@@ -120,12 +113,24 @@ export function connect({ context, storage, viewer, sideEffect, logger }: Connec
   });
 
   // handle ui events
+  function disable_whiteboard() {
+    if (whiteboard && whiteboard.view.divElement) {
+      whiteboard.view.divElement.classList.add(wrap_class("wb-view-hidden"));
+    }
+  }
+
+  function enable_whiteboard() {
+    if (whiteboard && whiteboard.view.divElement) {
+      whiteboard.view.divElement.classList.remove(wrap_class("wb-view-hidden"));
+    }
+  }
+
   viewer.setReadonly(!context.isWritable);
-  sideEffect.push(
-    context.emitter.on("writableChange", w => {
-      viewer.setReadonly(!w);
-    })
-  );
+  sideEffect.push([
+    context.emitter.on("writableChange", () => viewer.setReadonly(!context.isWritable)),
+    viewer.events.on("renderStart", disable_whiteboard),
+    viewer.events.on("renderEnd", enable_whiteboard),
+  ]);
 
   const isEditable = (el: EventTarget | null) => {
     if (!el) return false;
@@ -134,6 +139,7 @@ export function connect({ context, storage, viewer, sideEffect, logger }: Connec
   };
 
   sideEffect.addEventListener(window, "keydown", ev => {
+    if (!ev || (ev.target as HTMLElement).className === "telebox-quarantine-outer") return;
     if (context.box.focus && !context.box.readonly && !isEditable(ev.target)) {
       if (ev.key === "ArrowUp" || ev.key === "ArrowLeft") {
         viewer.slide.prevStep();

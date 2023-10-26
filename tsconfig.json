@@ -1,5 +1,4 @@
 {
-  "extends": "@tsconfig/svelte/tsconfig.json",
   "compilerOptions": {
     "jsx": "react",
     "noEmit": true,
@@ -7,9 +6,9 @@
     "isolatedModules": true,
     "noFallthroughCasesInSwitch": true,
     "forceConsistentCasingInFileNames": true,
-    // "exactOptionalPropertyTypes": true,
     "noUnusedParameters": true,
     "noImplicitOverride": true,
+    "target": "ESNext",
     "module": "ESNext",
     "lib": ["DOM", "ESNext"],
     "types": ["vite/client", "svelte", "typings"],

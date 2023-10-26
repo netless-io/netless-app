@@ -6,7 +6,7 @@ import { SideEffectManager } from "side-effect-manager";
 import { Remitter } from "remitter";
 
 import { DefaultUrl } from "../constants";
-import { append, block, hc } from "../utils";
+import { append, block, hc, noop } from "../utils";
 import { fetch_slide_info, make_prefix, on_visibility_change } from "./utils";
 
 import styles from "../style.scss?inline";
@@ -31,6 +31,8 @@ export interface SlideViewerEventData {
   unfreeze: void;
   renderError: { error: Error; index: number };
   prepareError: Error;
+  renderStart: void;
+  renderEnd: void;
 }
 
 export class SlideViewer {
@@ -49,10 +51,11 @@ export class SlideViewer {
 
   readonly slide: Slide;
 
-  private _getWhiteSnapshot:
+  _slideTitle = "";
+  _getWhiteSnapshot:
     | ((index: number, canvas: HTMLCanvasElement, ctx: CanvasRenderingContext2D) => void)
     | null = null;
-  private _slideTitle = "";
+
   private readonly _readyPromise: Promise<void>;
   private readonly _infoPromise: Promise<SlideViewerInfoResponse>;
   private _ready = false;
@@ -146,21 +149,29 @@ export class SlideViewer {
     });
     this.slide.setResource(options.taskId, options.url || DefaultUrl);
 
+    this.slide.on("renderStart", () => {
+      if (this._destroyed) return;
+      this.events.emit("renderStart");
+    });
+
     this.slide.on("slideChange", page => {
       if (this._destroyed) return;
       this.setPage(page);
+      this.$overlay.style.opacity = "";
+
+      // renderStart -> renderEnd -> slideChange
+      // So we just treat `slideChange` as `renderEnd`
+      this.events.emit("renderEnd");
     });
 
-    this.slide.on("renderEnd", () => {
+    // TODO: export `once()` in the slide package.
+    (this.slide as any).once("renderEnd", () => {
       // ready = first render end
       if (!this._ready) {
         setTimeout(() => {
           this._ready = true;
           resolveReady();
         }, 1000);
-      } else {
-        // otherwise, clear overlay
-        this.$overlay.style.opacity = "";
       }
     });
 
@@ -184,16 +195,6 @@ export class SlideViewer {
 
   prepare(callback: (response: SlideViewerInfoResponse) => void) {
     return this._infoPromise.then(callback);
-  }
-
-  attachWhiteSnapshot(
-    snapshot: (index: number, canvas: HTMLCanvasElement, ctx: CanvasRenderingContext2D) => void
-  ) {
-    this._getWhiteSnapshot = snapshot;
-  }
-
-  setSlideTitle(title: string) {
-    this._slideTitle = title;
   }
 
   ready(callback: () => void) {

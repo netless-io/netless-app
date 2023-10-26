@@ -111,6 +111,8 @@ $namespace: "netless-app-slide";
   left: 0;
   width: 100%;
   height: 100%;
+  padding: 10px;
+  box-sizing: border-box;
   background: rgba(255, 0, 0, 0.25);
   transition: opacity 0.3s;
   opacity: 0;
@@ -219,7 +221,6 @@ $namespace: "netless-app-slide";
   font-size: 13px;
   line-height: 1;
   font-weight: normal;
-  font-family: inherit;
   border-radius: 2px;
   color: currentColor;
   font-family: system-ui, -apple-system, "Segoe UI", "Roboto", "Ubuntu", "Cantarell", "Noto Sans",
@@ -265,6 +266,10 @@ $namespace: "netless-app-slide";
   &.#{$namespace}-float-footer {
     display: none;
   }
+}
+
+.#{$namespace}-wb-view-hidden {
+  display: none;
 }
 
 .telebox-color-scheme-dark {
