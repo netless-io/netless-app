@@ -6,7 +6,7 @@ import { SideEffectManager } from "side-effect-manager";
 import { Remitter } from "remitter";
 
 import { DefaultUrl } from "../constants";
-import { append, block, hc, noop } from "../utils";
+import { append, block, hc } from "../utils";
 import { fetch_slide_info, make_prefix, on_visibility_change } from "./utils";
 
 import styles from "../style.scss?inline";
@@ -165,6 +165,7 @@ export class SlideViewer {
     });
 
     // TODO: export `once()` in the slide package.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (this.slide as any).once("renderEnd", () => {
       // ready = first render end
       if (!this._ready) {
