@@ -1,1 +1,0 @@
-const i={kind:"Whiteboard",setup(e){e.box.mountStage(document.createElement("div"));const t=e.createWhiteBoardView();return e.isAddApp&&t.setBaseRect({width:1280,height:720}),t}};export{i as default};
