@@ -49,6 +49,19 @@ const options: PlaygroundConfigs<Attributes> = [
     },
     attributes: { src, displaySceneDir: `/h5/${title}` },
   })),
+  {
+    kind: "IframeBridge",
+    src: () => import("./src"),
+    options: {
+      title: "Custom",
+    },
+    getAttributes() {
+      const result = { src: "" };
+      result.src = window.prompt("src?", "https://example.org") || "";
+      if (!result.src) return null;
+      return result;
+    },
+  },
 ];
 
 export default options;
