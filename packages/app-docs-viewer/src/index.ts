@@ -96,6 +96,15 @@ function setupStaticDocsViewer(
     appId: context.appId,
   }).mount();
 
+  docsViewer.viewer.onPageIndexChanged = (index) => {
+    context.dispatchAppEvent("pageStateChange", { index, length: pages.length });
+  };
+
+  context.dispatchAppEvent("pageStateChange", {
+    index: docsViewer.viewer.pageIndex,
+    length: pages.length,
+  });
+
   if (import.meta.env.DEV) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (window as any).docsViewer = docsViewer;
@@ -129,6 +138,15 @@ function setupDynamicDocsViewer(
     box,
     pages,
   }).mount();
+
+  docsViewer.viewer.onPageIndexChanged = (index) => {
+    context.dispatchAppEvent("pageStateChange", { index, length: pages.length });
+  };
+
+  context.dispatchAppEvent("pageStateChange", {
+    index: docsViewer.getPageIndex(),
+    length: pages.length,
+  });
 
   context.mountView(docsViewer.$whiteboardView);
 

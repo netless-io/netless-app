@@ -34,6 +34,7 @@ export class DocsViewer {
     this.pages = pages;
     this.onNewPageIndex = onNewPageIndex;
     this.onPlay = onPlay;
+    this.onPageIndexChanged = () => void 0;
 
     this.render();
   }
@@ -51,6 +52,7 @@ export class DocsViewer {
   public $pageNumberInput!: HTMLInputElement;
 
   public pageIndex = 0;
+  public onPageIndexChanged: (index: number) => void;
 
   public mount(): void {
     this.box.mountContent(this.$content);
@@ -91,6 +93,7 @@ export class DocsViewer {
     if (!Number.isNaN(pageIndex)) {
       this.pageIndex = pageIndex;
       this.$pageNumberInput.value = String(pageIndex + 1);
+      this.onPageIndexChanged(pageIndex);
     }
   }
 
