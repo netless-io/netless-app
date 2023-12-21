@@ -1,4 +1,5 @@
 import type { NetlessApp } from "@netless/window-manager";
+import type { ISlideConfig } from "@netless/slide";
 import type { SlideViewerOptions } from "./SlideViewer";
 import type { AddHooks, AppOptions, Attributes, MagixEvents, SlideState } from "./typings";
 
@@ -49,6 +50,7 @@ const SlideApp: NetlessApp<Attributes, MagixEvents, AppOptions, void> = {
       enableGlobalClick: true,
       timestamp: make_timestamp(context),
       logger: appOptions.logger || logger,
+      whiteTracker: (context.displayer as unknown as { tracker: ISlideConfig["whiteTracker"] }).tracker,
       renderOptions: {
         minFPS: renderOptions.minFPS || 25,
         maxFPS: renderOptions.maxFPS || 30,

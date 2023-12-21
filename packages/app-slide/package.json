@@ -1,6 +1,6 @@
 {
   "name": "@netless/app-slide",
-  "version": "0.3.0-canary.20",
+  "version": "0.3.0-canary.21",
   "main": "dist/main.js",
   "module": "dist/main.mjs",
   "types": "dist/index.d.ts",
@@ -16,15 +16,15 @@
     "README-zh.md"
   ],
   "dependencies": {
-    "@netless/slide": "^1.1.6",
+    "@netless/slide": "^1.2.0",
     "jspdf": "2.5.1"
   },
   "devDependencies": {
-    "@types/color-string": "^1.5.2",
+    "@types/color-string": "^1.5.5",
     "color-string": "^1.9.1",
-    "remitter": "^0.2.9",
-    "side-effect-manager": "^1.2.1",
+    "remitter": "^0.2.17",
+    "side-effect-manager": "^1.2.2",
     "value-enhancer": "^1.3.2",
-    "vanilla-lazyload": "^17.8.3"
+    "vanilla-lazyload": "^17.8.5"
   }
 }

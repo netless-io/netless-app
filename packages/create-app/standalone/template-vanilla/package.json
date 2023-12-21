@@ -16,6 +16,6 @@
   "devDependencies": {
     "@netless/window-manager": "^1.0.0-canary.69",
     "vite": "^4.0.3",
-    "white-web-sdk": "2.16.40"
+    "white-web-sdk": "2.16.48"
   }
 }
