@@ -29,7 +29,7 @@
     "typescript": "^4.7.3",
     "typings": "workspace:*",
     "vite": "^2.9.10",
-    "white-web-sdk": "2.16.37"
+    "white-web-sdk": "2.16.48"
   },
   "scripts": {
     "create-app": "node ./packages/create-app",

@@ -9,7 +9,7 @@
 // 5. pages information are loaded dynamically by the slide package
 
 import type { AppContext, Player, Room, Displayer } from "@netless/window-manager";
-import type { SyncEvent } from "@netless/slide";
+import type { ISlideConfig, SyncEvent } from "@netless/slide";
 import type { Attributes, MagixEvents, MagixPayload, SlideState } from "../typings";
 import type { AppOptions } from "..";
 
@@ -18,6 +18,7 @@ import { Slide, SLIDE_EVENTS } from "@netless/slide";
 import { clamp } from "../utils/helpers";
 import { cachedGetBgColor } from "../utils/bgcolor";
 import { logger, log, verbose, setRoomLogger } from "../utils/logger";
+import { getRoomTracker } from "../utils/tracker";
 export { syncSceneWithSlide, createDocsViewerPages } from "./helpers";
 
 export const DefaultUrl = "https://convertcdn.netless.link/dynamicConvert";
@@ -89,7 +90,9 @@ export class SlideController {
     this.room = context.getRoom();
     this.player = this.room ? undefined : (context.getDisplayer() as Player);
     setRoomLogger((this.room || this.player) as Displayer);
-    this.slide = this.createSlide(anchor);
+    this.slide = this.createSlide(anchor, {
+      whiteTracker: getRoomTracker(context.getDisplayer()),
+    });
 
     // the adder does not need to sync state
     this.syncStateOnceFlag = !this.context.isAddApp;
@@ -259,7 +262,7 @@ export class SlideController {
     return this.slide.slideState.currentSlideIndex;
   }
 
-  private createSlide(anchor: HTMLDivElement) {
+  private createSlide(anchor: HTMLDivElement, defaults: Partial<ISlideConfig> = {}) {
     const options = this.context.getAppOptions() || {};
     const slide = new Slide({
       anchor,
@@ -286,6 +289,7 @@ export class SlideController {
       rtcAudio: options.rtcAudio,
       useLocalCache: options.useLocalCache,
       logger: options.logger,
+      whiteTracker: defaults.whiteTracker,
       timestamp: this.timestamp,
     });
     if (import.meta.env.DEV) {
