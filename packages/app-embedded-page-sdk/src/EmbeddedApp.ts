@@ -21,19 +21,19 @@ import type { MaybeRefValue } from "./utils";
 import { has } from "./utils";
 import { isDiffOne, isObj } from "./utils";
 
-export type PostFromSDKMessage<TState = unknown, TMessage = unknown> = <
+export type PostFromSDKMessage<TState extends object = DefaultState, TMessage = unknown> = <
   TType extends FromSDKMessageKey = FromSDKMessageKey,
   S = TState
 >(
   message: FromSDKMessage<TType, { [K in keyof S]: MaybeRefValue<S[K]> }, TMessage>
 ) => void;
 
-export type AddToSDKMessageListener<TState = unknown, TMessage = unknown> = (
+export type AddToSDKMessageListener<TState extends object = DefaultState, TMessage = unknown> = (
   listener: (message: ToSDKMessage<ToSDKMessageKey, TState, TMessage>) => void,
   options?: boolean | AddEventListenerOptions
 ) => () => void;
 
-export class EmbeddedApp<TState = DefaultState, TMessage = unknown> {
+export class EmbeddedApp<TState extends object = DefaultState, TMessage = unknown> {
   public readonly appId: string;
   public readonly debug: boolean;
   private _logger: Logger;

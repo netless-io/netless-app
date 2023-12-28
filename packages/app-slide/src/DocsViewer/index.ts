@@ -20,13 +20,15 @@ export interface DocsViewerConfig {
   onNewPageIndex: (index: number) => void;
   onPlay?: () => void;
   urlInterrupter?: (url: string) => Promise<string>;
+  onPagesReady?: (pages: DocsViewerPage[]) => void;
 }
 
 export class DocsViewer {
-  public constructor({ readonly, onNewPageIndex, onPlay, urlInterrupter }: DocsViewerConfig) {
+  public constructor({ readonly, onNewPageIndex, onPlay, onPagesReady, urlInterrupter }: DocsViewerConfig) {
     this.readonly = readonly;
     this.onNewPageIndex = onNewPageIndex;
     this.onPlay = onPlay;
+    this.onPagesReady = onPagesReady;
     this.urlInterrupter = urlInterrupter || (url => url);
 
     this.render();
@@ -35,6 +37,7 @@ export class DocsViewer {
   protected readonly: boolean;
   protected onNewPageIndex: (index: number) => void;
   protected onPlay?: () => void;
+  protected onPagesReady?: (pages: DocsViewerPage[]) => void
   protected urlInterrupter: (url: string) => Promise<string> | string;
 
   private _pages: DocsViewerPage[] = [];
@@ -43,6 +46,9 @@ export class DocsViewer {
     this._pages = value;
     this.refreshPreview().then(this.refreshBtnSidebar.bind(this));
     this.refreshTotalPage();
+    if (this.onPagesReady) {
+      this.onPagesReady(value);
+    }
   }
 
   public get pages() {

@@ -133,6 +133,10 @@ const SlideApp: NetlessApp<Attributes, MagixEvents, AppOptions, AppResult> = {
         docsViewer.viewer.setPageIndex(page - 1);
         docsViewer.viewer.setPaused();
         docsViewer.onPageChanged();
+        const length = docsViewer.viewer.pages.length;
+        if (length > 0) {
+          context.dispatchAppEvent("pageStateChange", { index: page - 1, length });
+        }
       }
     };
 
@@ -174,6 +178,10 @@ const SlideApp: NetlessApp<Attributes, MagixEvents, AppOptions, AppResult> = {
       baseScenePath,
       appId: context.appId,
       urlInterrupter: context.getAppOptions()?.urlInterrupter,
+      onPagesReady: ({ length }) => {
+        const index = docsViewer?.viewer.pageIndex || 0;
+        context.dispatchAppEvent("pageStateChange", { index, length });
+      }
     });
 
     if (import.meta.env.DEV) {

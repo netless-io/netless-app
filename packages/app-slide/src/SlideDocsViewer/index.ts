@@ -3,7 +3,7 @@ import type { SlideController, SlideControllerOptions } from "../SlideController
 
 import { SideEffectManager } from "side-effect-manager";
 import { createDocsViewerPages } from "../SlideController";
-import { DocsViewer } from "../DocsViewer";
+import { DocsViewer, DocsViewerPage } from "../DocsViewer";
 import { logger } from "../utils/logger";
 import { isEditable } from "../utils/helpers";
 
@@ -21,6 +21,7 @@ export interface SlideDocsViewerConfig {
   baseScenePath: string;
   appId: string;
   urlInterrupter?: (url: string) => Promise<string>;
+  onPagesReady?: (pages: DocsViewerPage[]) => void;
 }
 
 export interface SavePdfConfig {
@@ -48,6 +49,7 @@ export class SlideDocsViewer {
     baseScenePath,
     appId,
     urlInterrupter,
+    onPagesReady,
   }: SlideDocsViewerConfig) {
     this.box = box;
     this.whiteboardView = view;
@@ -60,6 +62,7 @@ export class SlideDocsViewer {
       onNewPageIndex: this.onNewPageIndex,
       onPlay: this.onPlay,
       urlInterrupter,
+      onPagesReady,
     });
 
     this.sideEffect.add(() => {
