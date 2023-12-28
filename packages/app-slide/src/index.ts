@@ -42,6 +42,7 @@ const SlideApp: NetlessApp<Attributes, MagixEvents, AppOptions, void> = {
     const renderOptions = appOptions.renderOptions || {};
 
     const sideEffect = new SideEffectManager();
+    const hasTracker = context.displayer as unknown as { tracker: ISlideConfig["whiteTracker"] };
 
     // Create UI
     const viewer = new SlideViewer({
@@ -50,7 +51,7 @@ const SlideApp: NetlessApp<Attributes, MagixEvents, AppOptions, void> = {
       enableGlobalClick: true,
       timestamp: make_timestamp(context),
       logger: appOptions.logger || logger,
-      whiteTracker: (context.displayer as unknown as { tracker: ISlideConfig["whiteTracker"] }).tracker,
+      whiteTracker: hasTracker.tracker,
       renderOptions: {
         minFPS: renderOptions.minFPS || 25,
         maxFPS: renderOptions.maxFPS || 30,
