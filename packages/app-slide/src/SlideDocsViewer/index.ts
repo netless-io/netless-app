@@ -9,6 +9,10 @@ import { isEditable } from "../utils/helpers";
 
 export const ClickThroughAppliances = new Set(["clicker"]);
 
+const noop = function noop() {
+  // do nothing
+};
+
 export type MountSlideOptions = Omit<SlideControllerOptions, "context" | "onPageChanged"> & {
   onReady: () => void;
 };
@@ -22,6 +26,7 @@ export interface SlideDocsViewerConfig {
   appId: string;
   urlInterrupter?: (url: string) => Promise<string>;
   onPagesReady?: (pages: DocsViewerPage[]) => void;
+  onNavigate?: (index: number, origin?: string) => void;
 }
 
 export interface SavePdfConfig {
@@ -37,6 +42,7 @@ export class SlideDocsViewer {
   protected readonly whiteboardView: SlideDocsViewerConfig["view"];
   protected readonly mountSlideController: SlideDocsViewerConfig["mountSlideController"];
   protected readonly mountWhiteboard: SlideDocsViewerConfig["mountWhiteboard"];
+  protected readonly onNavigate: (index: number, origin?: string) => void;
   private readonly baseScenePath: string;
   private readonly appId: string;
   private isViewMounted = false;
@@ -50,11 +56,13 @@ export class SlideDocsViewer {
     appId,
     urlInterrupter,
     onPagesReady,
+    onNavigate,
   }: SlideDocsViewerConfig) {
     this.box = box;
     this.whiteboardView = view;
     this.mountSlideController = mountSlideController;
     this.mountWhiteboard = mountWhiteboard;
+    this.onNavigate = onNavigate || noop;
     this.baseScenePath = baseScenePath;
     this.appId = appId;
     this.viewer = new DocsViewer({
@@ -101,11 +109,13 @@ export class SlideDocsViewer {
           case "ArrowUp":
           case "ArrowLeft": {
             this.slideController.slide.prevStep();
+            this.onNavigate(this.slideController.page, "keydown");
             break;
           }
           case "ArrowRight":
           case "ArrowDown": {
             this.slideController.slide.nextStep();
+            this.onNavigate(this.slideController.page, "keydown");
             break;
           }
           default: {
@@ -154,6 +164,7 @@ export class SlideDocsViewer {
       onTransitionStart: this.viewer.setPlaying,
       onTransitionEnd: this.viewer.setPaused,
       onReady: this.refreshPages,
+      onNavigate: this.onNavigate,
       onError: this.onError,
     });
 
@@ -271,9 +282,9 @@ export class SlideDocsViewer {
     }
   };
 
-  protected onNewPageIndex = (index: number) => {
+  protected onNewPageIndex = (index: number, origin?: string) => {
     if (this.slideController) {
-      this.slideController.jumpToPage(index + 1);
+      this.slideController.jumpToPage(index + 1, origin);
     }
   };
 

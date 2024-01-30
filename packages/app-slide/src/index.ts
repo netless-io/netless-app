@@ -147,6 +147,7 @@ const SlideApp: NetlessApp<Attributes, MagixEvents, AppOptions, AppResult> = {
         context,
         ...options,
         onPageChanged,
+        onNavigate: options.onNavigate,
         onRenderError: appOptions.onRenderError,
         showRenderError: appOptions.showRenderError,
       });
@@ -181,6 +182,9 @@ const SlideApp: NetlessApp<Attributes, MagixEvents, AppOptions, AppResult> = {
       onPagesReady: ({ length }) => {
         const index = docsViewer?.viewer.pageIndex || 0;
         context.dispatchAppEvent("pageStateChange", { index, length });
+      },
+      onNavigate: (page, origin) => {
+        log("[Slide] user navigate to", page, origin ? `(${origin})` : "");
       },
     });
 

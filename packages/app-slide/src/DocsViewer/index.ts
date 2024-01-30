@@ -17,7 +17,7 @@ export interface DocsViewerPage {
 
 export interface DocsViewerConfig {
   readonly: boolean;
-  onNewPageIndex: (index: number) => void;
+  onNewPageIndex: (index: number, origin?: string) => void;
   onPlay?: () => void;
   urlInterrupter?: (url: string) => Promise<string>;
   onPagesReady?: (pages: DocsViewerPage[]) => void;
@@ -41,7 +41,7 @@ export class DocsViewer {
   }
 
   protected readonly: boolean;
-  protected onNewPageIndex: (index: number) => void;
+  protected onNewPageIndex: (index: number, origin?: string) => void;
   protected onPlay?: () => void;
   protected onPagesReady?: (pages: DocsViewerPage[]) => void;
   protected urlInterrupter: (url: string) => Promise<string> | string;
@@ -153,7 +153,7 @@ export class DocsViewer {
           ev.preventDefault();
           ev.stopPropagation();
           ev.stopImmediatePropagation();
-          this.onNewPageIndex(Number(pageIndex));
+          this.onNewPageIndex(Number(pageIndex), "preview");
           this.togglePreview(false);
         }
       });
@@ -276,7 +276,7 @@ export class DocsViewer {
         if (this.readonly) {
           return;
         }
-        this.onNewPageIndex(this.pageIndex - 1);
+        this.onNewPageIndex(this.pageIndex - 1, "navigation");
       });
       $pageJumps.appendChild($btnPageBack);
 
@@ -305,7 +305,7 @@ export class DocsViewer {
         if (this.readonly) {
           return;
         }
-        this.onNewPageIndex(this.pageIndex + 1);
+        this.onNewPageIndex(this.pageIndex + 1, "navigation");
       });
       $pageJumps.appendChild($btnPageNext);
 
@@ -327,7 +327,7 @@ export class DocsViewer {
           return;
         }
         if ($pageNumberInput.value) {
-          this.onNewPageIndex(Number($pageNumberInput.value) - 1);
+          this.onNewPageIndex(Number($pageNumberInput.value) - 1, "input");
         }
       });
 

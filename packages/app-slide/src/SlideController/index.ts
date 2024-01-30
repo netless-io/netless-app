@@ -39,8 +39,13 @@ export interface SlideControllerOptions {
   onTransitionEnd: () => void;
   onError: (args: { error: Error; index: number }) => void;
   onRenderError?: (error: Error, pageIndex: number) => void;
+  onNavigate?: (index: number, origin?: string) => void;
   showRenderError?: boolean;
 }
+
+const noop = function noop() {
+  // do nothing
+};
 
 type MagixEventListener = Parameters<
   AppContext<Attributes, MagixEvents>["addMagixEventListener"]
@@ -51,6 +56,7 @@ export class SlideController {
   public readonly slide: Slide;
   public readonly showRenderError: boolean;
   public readonly onRenderError?: (error: Error, pageIndex: number) => void;
+  public readonly onNavigate: (index: number, origin?: string) => void;
 
   private readonly room?: Room;
   private readonly player?: Player;
@@ -74,6 +80,7 @@ export class SlideController {
     onPageChanged,
     onTransitionStart,
     onTransitionEnd,
+    onNavigate,
     onError,
     onRenderError,
     showRenderError,
@@ -82,6 +89,7 @@ export class SlideController {
     this.onPageChanged = onPageChanged;
     this.onTransitionStart = onTransitionStart;
     this.onTransitionEnd = onTransitionEnd;
+    this.onNavigate = onNavigate || noop;
     this.onError = onError;
     this.onRenderError = onRenderError;
     this.showRenderError = showRenderError ?? true;
@@ -116,9 +124,16 @@ export class SlideController {
     };
   });
 
-  public jumpToPage(page: number) {
+  // origin = why it happens
+  // - undefined: via fastboard dispatchDocsEvent()
+  // - input: via bottom-right page number input box
+  // - preview: via the left preview menu's item
+  // - navigation: via the footer's back/next button
+  // - keydown: via global arrow left/right keydown
+  public jumpToPage(page: number, origin?: string) {
     if (this.ready) {
       page = clamp(page, 1, this.pageCount);
+      this.onNavigate(page, origin);
       this.slide.renderSlide(page);
     }
   }
