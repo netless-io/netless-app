@@ -259,8 +259,7 @@ export class SlideController {
       setTimeout(this.pollReadyState, 500);
     } else {
       this.pollCount = 0;
-      log("[Slide] renderSlide 1 (retry after timeout)");
-      this.slide.renderSlide(1);
+      log("[Slide] init timeout");
     }
   };
 
