@@ -34,9 +34,10 @@ let singleApp: EmbeddedApp<any, any> | undefined;
  *   app.ensureState({ count: 0 })
  * });
  */
-export function createEmbeddedApp<TState extends object = DefaultState, TMessage = unknown>(): Promise<
-  EmbeddedApp<TState | Record<string, unknown>, TMessage>
->;
+export function createEmbeddedApp<
+  TState extends object = DefaultState,
+  TMessage = unknown
+>(): Promise<EmbeddedApp<TState | Record<string, unknown>, TMessage>>;
 export function createEmbeddedApp<TState extends object = DefaultState, TMessage = unknown>(
   config: EmbeddedAppConfigWithState<TState, TMessage>
 ): Promise<EmbeddedApp<TState, TMessage>>;

@@ -96,7 +96,7 @@ function setupStaticDocsViewer(
     appId: context.appId,
   }).mount();
 
-  docsViewer.viewer.onPageIndexChanged = (index) => {
+  docsViewer.viewer.onPageIndexChanged = index => {
     context.dispatchAppEvent("pageStateChange", { index, length: pages.length });
   };
 
@@ -139,7 +139,7 @@ function setupDynamicDocsViewer(
     pages,
   }).mount();
 
-  docsViewer.viewer.onPageIndexChanged = (index) => {
+  docsViewer.viewer.onPageIndexChanged = index => {
     context.dispatchAppEvent("pageStateChange", { index, length: pages.length });
   };
 

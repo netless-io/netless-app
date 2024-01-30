@@ -22,6 +22,7 @@ import type {
   CameraState,
   PostToSDKMessage,
   AddFromSDKMessageListener,
+  ToSDKMessagePayloads,
 } from "./types";
 
 export * from "./types";
@@ -32,7 +33,7 @@ export type Attributes = {
   page: string;
 };
 
-export interface AppOptions<TState extends Object = DefaultState, TMessage = unknown> {
+export interface AppOptions<TState extends {} = DefaultState, TMessage = unknown> {
   debug?: boolean;
   postMessage?: PostToSDKMessage<TState, TMessage>;
   addMessageListener?: AddFromSDKMessageListener<TState, TMessage>;
@@ -96,7 +97,7 @@ const EmbeddedPage: NetlessApp<Attributes, void, AppOptions> = {
         userPayload: toJSON(payload),
       }));
 
-    const safeListenPropsUpdated = <T extends Object>(
+    const safeListenPropsUpdated = <T extends {}>(
       getProps: () => T,
       callback: AkkoObjectUpdatedListener<T>
     ) => {
@@ -224,11 +225,14 @@ const EmbeddedPage: NetlessApp<Attributes, void, AppOptions> = {
         storeSideEffect.add(
           () =>
             safeListenPropsUpdated(
-              () => (attrs.store as any)[storeId],
+              () => (attrs.store as { [key: string]: {} })[storeId],
               actions => {
                 postMessage({
                   NEAType: "StateChanged",
-                  payload: { storeId, actions: toJSON<any>(actions) },
+                  payload: {
+                    storeId,
+                    actions: toJSON(actions) as ToSDKMessagePayloads["StateChanged"]["actions"],
+                  },
                 });
               }
             ),

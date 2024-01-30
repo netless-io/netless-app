@@ -78,7 +78,7 @@ export class SlideController {
     onRenderError,
     showRenderError,
   }: SlideControllerOptions) {
-    this.onRenderStart = onRenderStart
+    this.onRenderStart = onRenderStart;
     this.onPageChanged = onPageChanged;
     this.onTransitionStart = onTransitionStart;
     this.onTransitionEnd = onTransitionEnd;

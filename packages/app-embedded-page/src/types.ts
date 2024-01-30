@@ -21,7 +21,7 @@ export interface RoomMember {
 }
 
 // me --> iframe
-export interface ToSDKMessagePayloads<TState extends Object = DefaultState, TMagix = unknown> {
+export interface ToSDKMessagePayloads<TState extends {} = DefaultState, TMagix = unknown> {
   Init: InitData<TState>;
   StateChanged: {
     storeId: string;
@@ -38,7 +38,7 @@ export type ToSDKMessageKey = keyof ToSDKMessagePayloads;
 
 export type ToSDKMessage<
   TKey extends ToSDKMessageKey = ToSDKMessageKey,
-  TState extends Object = DefaultState,
+  TState extends {} = DefaultState,
   TMagix = unknown
 > = TransformMessage<TKey, ToSDKMessagePayloads<TState, TMagix>>;
 
@@ -83,9 +83,9 @@ export interface InitData<TState = DefaultState> {
   mainStoreId: string;
 }
 
-export type PostToSDKMessage<TState extends Object = any, TMessage = unknown> = <
+export type PostToSDKMessage<TState extends {} = {}, TMessage = unknown> = <
   TType extends ToSDKMessageKey = ToSDKMessageKey,
-  S extends Object = TState
+  S extends {} = TState
 >(
   message: ToSDKMessage<TType, S, TMessage>
 ) => void;

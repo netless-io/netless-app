@@ -3,23 +3,25 @@ import dts from "rollup-plugin-dts";
 import ts from "typescript";
 import fs from "fs";
 
-const { peerDependencies } = JSON.parse(fs.readFileSync(new URL("../package.json", import.meta.url), "utf-8"));
+const { peerDependencies } = JSON.parse(
+  fs.readFileSync(new URL("../package.json", import.meta.url), "utf-8")
+);
 const compilerOptions = {
-  "noEmit": true,
-  "strict": true,
-  "isolatedModules": true,
-  "noFallthroughCasesInSwitch": true,
-  "forceConsistentCasingInFileNames": true,
-  "noUnusedParameters": true,
-  "noImplicitOverride": true,
-  "module": "ESNext",
-  "lib": ["DOM", "ESNext"],
-  "types": ["vite/client", "svelte", "typings"],
-  "moduleResolution": "Node",
-  "esModuleInterop": true,
-  "resolveJsonModule": true,
-  "skipLibCheck": true
-}
+  noEmit: true,
+  strict: true,
+  isolatedModules: true,
+  noFallthroughCasesInSwitch: true,
+  forceConsistentCasingInFileNames: true,
+  noUnusedParameters: true,
+  noImplicitOverride: true,
+  module: "ESNext",
+  lib: ["DOM", "ESNext"],
+  types: ["vite/client", "svelte", "typings"],
+  moduleResolution: "Node",
+  esModuleInterop: true,
+  resolveJsonModule: true,
+  skipLibCheck: true,
+};
 
 const start = Date.now();
 
@@ -55,4 +57,6 @@ const result = await bundle.write({
   exports: "named",
 });
 
-console.log(`Built ${result.output.map(e => e.fileName).join(", ")} in ${Math.floor(Date.now() - start)}ms`);
+console.log(
+  `Built ${result.output.map(e => e.fileName).join(", ")} in ${Math.floor(Date.now() - start)}ms`
+);

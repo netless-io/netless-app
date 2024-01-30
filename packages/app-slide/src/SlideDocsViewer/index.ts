@@ -3,7 +3,7 @@ import type { SlideController, SlideControllerOptions } from "../SlideController
 
 import { SideEffectManager } from "side-effect-manager";
 import { createDocsViewerPages } from "../SlideController";
-import { DocsViewer, DocsViewerPage } from "../DocsViewer";
+import { DocsViewer, type DocsViewerPage } from "../DocsViewer";
 import { logger } from "../utils/logger";
 import { isEditable } from "../utils/helpers";
 

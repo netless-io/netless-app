@@ -181,7 +181,7 @@ const SlideApp: NetlessApp<Attributes, MagixEvents, AppOptions, AppResult> = {
       onPagesReady: ({ length }) => {
         const index = docsViewer?.viewer.pageIndex || 0;
         context.dispatchAppEvent("pageStateChange", { index, length });
-      }
+      },
     });
 
     if (import.meta.env.DEV) {

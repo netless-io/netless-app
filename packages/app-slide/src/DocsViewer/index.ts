@@ -24,7 +24,13 @@ export interface DocsViewerConfig {
 }
 
 export class DocsViewer {
-  public constructor({ readonly, onNewPageIndex, onPlay, onPagesReady, urlInterrupter }: DocsViewerConfig) {
+  public constructor({
+    readonly,
+    onNewPageIndex,
+    onPlay,
+    onPagesReady,
+    urlInterrupter,
+  }: DocsViewerConfig) {
     this.readonly = readonly;
     this.onNewPageIndex = onNewPageIndex;
     this.onPlay = onPlay;
@@ -37,7 +43,7 @@ export class DocsViewer {
   protected readonly: boolean;
   protected onNewPageIndex: (index: number) => void;
   protected onPlay?: () => void;
-  protected onPagesReady?: (pages: DocsViewerPage[]) => void
+  protected onPagesReady?: (pages: DocsViewerPage[]) => void;
   protected urlInterrupter: (url: string) => Promise<string> | string;
 
   private _pages: DocsViewerPage[] = [];
@@ -174,7 +180,7 @@ export class DocsViewer {
     }
     // Promise.all(), but no closure
     for (let i = 0, len = this.pages.length; i < len; i++) {
-      previewSRCs[i] = await previewSRCs[i]
+      previewSRCs[i] = await previewSRCs[i];
     }
 
     this.pages.forEach((page, i) => {
