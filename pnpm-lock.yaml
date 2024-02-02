@@ -240,8 +240,8 @@ importers:
   packages/app-slide:
     devDependencies:
       '@netless/slide':
-        specifier: ^1.2.1
-        version: 1.2.1
+        specifier: ^1.3.0
+        version: 1.3.0
       '@types/color-string':
         specifier: ^1.5.2
         version: 1.5.2
@@ -586,8 +586,8 @@ packages:
     resolution: {integrity: sha512-7NzsJrba0R/mq/l10SkIZQwbrNVJyPxZYrjK6xL3Ts732iWAVuS2UB0u3s6iGeUVcqV39A679yva8APWRl4M0A==}
     dev: true
 
-  /@netless/slide@1.2.1:
-    resolution: {integrity: sha512-r/ErWst3OgRVmAF7cP2ffcAcsm/OZ5lWAj+YBHORIX//UEJlrUtWAS+dHpVSWFjoc+t0ZiQ+IF0br12XTX3xRQ==}
+  /@netless/slide@1.3.0:
+    resolution: {integrity: sha512-Qf1Nd2HAtOox/hyj9i7OY8xWKkIJP2AkYSQwiEyLNPBN4lAp35nnfxKtfHWejrRvYNi+87ivNZt99wFaH7kWfQ==}
     dependencies:
       '@juggle/resize-observer': 3.4.0
       '@types/lodash': 4.14.191
@@ -2977,7 +2977,6 @@ packages:
       react: 16.14.0
       scheduler: 0.19.1
     dev: true
-    bundledDependencies: false
 
   /react-is@16.13.1:
     resolution: {integrity: sha512-24e6ynE2H+OKt4kqsOvNd8kBpV65zoxbA4BVsEOB3ARVWQki/DHzaUoC5KuON/BiccDaCCTZBuOcfZs70kR8bQ==}
@@ -2991,7 +2990,6 @@ packages:
       object-assign: 4.1.1
       prop-types: 15.8.1
     dev: true
-    bundledDependencies: false
 
   /read-pkg-up@7.0.1:
     resolution: {integrity: sha512-zK0TB7Xd6JpCLmlLmufqykGE+/TlOePD6qKClNW7hHDKFh/J7/7gCWGR7joEQEW1bKq3a3yUZSObOoWLFQ4ohg==}
