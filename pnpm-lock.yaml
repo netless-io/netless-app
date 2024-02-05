@@ -240,8 +240,8 @@ importers:
   packages/app-slide:
     devDependencies:
       '@netless/slide':
-        specifier: ^1.3.0
-        version: 1.3.0
+        specifier: ^1.3.1
+        version: 1.3.1
       '@types/color-string':
         specifier: ^1.5.2
         version: 1.5.2
@@ -586,8 +586,8 @@ packages:
     resolution: {integrity: sha512-7NzsJrba0R/mq/l10SkIZQwbrNVJyPxZYrjK6xL3Ts732iWAVuS2UB0u3s6iGeUVcqV39A679yva8APWRl4M0A==}
     dev: true
 
-  /@netless/slide@1.3.0:
-    resolution: {integrity: sha512-Qf1Nd2HAtOox/hyj9i7OY8xWKkIJP2AkYSQwiEyLNPBN4lAp35nnfxKtfHWejrRvYNi+87ivNZt99wFaH7kWfQ==}
+  /@netless/slide@1.3.1:
+    resolution: {integrity: sha512-kOGO/gZBOmVMU0PWbQ9bPUcRNk+X2AYV7SSFAec4FvAu5+sbj8o07auXb+LSyWG5hhliRrWqq3T8VG7QkUD3UA==}
     dependencies:
       '@juggle/resize-observer': 3.4.0
       '@types/lodash': 4.14.191
