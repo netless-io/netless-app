@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import type { Diff } from "@netless/app-embedded-page";
 import type { Logger } from "@netless/app-shared";
 import type { AkkoObjectUpdatedProperty } from "white-web-sdk";
@@ -5,11 +6,15 @@ import { EmbeddedPageEvent } from "../EmbeddedPageEvent";
 import type { MaybeRefValue } from "../utils";
 import { has, isObj, isRef, makeRef, plainObjectKeys } from "../utils";
 
+export interface TStateLike {
+  [key: string]: any;
+}
+
 export type StoreOnSetStatePayload<TState = unknown> = {
   [K in keyof TState]?: MaybeRefValue<TState[K]>;
 };
 
-export type StoreStateChangedPayload<TState = unknown> = ReadonlyArray<
+export type StoreStateChangedPayload<TState extends TStateLike> = ReadonlyArray<
   AkkoObjectUpdatedProperty<TState, Extract<keyof TState, string>>
 >;
 
@@ -33,7 +38,7 @@ export interface StoreConfig<TState = unknown> {
   logger?: Logger | Console;
 }
 
-export class StoreImpl<TState = unknown> implements Store<TState> {
+export class StoreImpl<TState extends TStateLike> implements Store<TState> {
   readonly id: string;
   getIsWritable: StoreConfig["getIsWritable"];
 

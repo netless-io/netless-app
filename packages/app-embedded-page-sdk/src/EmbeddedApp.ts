@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import type {
   CameraState,
   DefaultState,
@@ -15,7 +16,7 @@ import type {
 import type { Logger } from "@netless/app-shared";
 import { SideEffectManager } from "side-effect-manager";
 import { EmbeddedPageEvent } from "./EmbeddedPageEvent";
-import type { Store } from "./Store/Store";
+import type { Store, TStateLike } from "./Store/Store";
 import { StoreImpl } from "./Store/Store";
 import type { MaybeRefValue } from "./utils";
 import { has } from "./utils";
@@ -185,7 +186,7 @@ export class EmbeddedApp<TState extends object = DefaultState, TMessage = unknow
 
   private _stores = new Map<string, Store>();
 
-  connectStore<S>(storeId: string, ensureState?: S): Store<S> {
+  connectStore<S extends TStateLike>(storeId: string, ensureState?: S): Store<S> {
     let store = this._stores.get(storeId) as Store<S> | undefined;
     if (!store) {
       if (!has(this._storeRawData, storeId)) {
@@ -244,7 +245,7 @@ export class EmbeddedApp<TState extends object = DefaultState, TMessage = unknow
             const store = this._stores.get(key);
             if (store) {
               this._stores.delete(key);
-              (store as StoreImpl)._destroy();
+              (store as any)._destroy();
             }
             break;
           }

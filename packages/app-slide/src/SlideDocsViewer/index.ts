@@ -39,7 +39,7 @@ export interface SavePdfConfig {
 }
 
 export class SlideDocsViewer {
-  readonly context: AppContext<Attributes, MagixEvents, AppOptions>
+  readonly context: AppContext<Attributes, MagixEvents, AppOptions>;
   public viewer: DocsViewer;
   public slideController: SlideController | null = null;
 
@@ -209,7 +209,7 @@ export class SlideDocsViewer {
 
   public onPageChanged = () => {
     clearTimeout(this._onPageChangedTimer);
-    this._onPageChangedTimer = setTimeout(this._onPageChanged, 200);
+    this._onPageChangedTimer = setTimeout(this._onPageChanged, 200) as unknown as number;
   };
 
   private _onPageChangedTimer = 0;
@@ -313,26 +313,26 @@ export class SlideDocsViewer {
     slideWidth: number,
     slideHeight: number
   ) {
-      const camera = {
-        centerX: 0,
-        centerY: 0,
-        scale: Math.min(canvas.width / slideWidth, canvas.height / slideHeight),
-      };
-      const scenePath = `${this.baseScenePath}/${pageIndex}`;
-      // appliancePlugin is a performance optimization for whiteboard;
-      const windowManger = (this.context as any).manager.windowManger as any;
-      if (windowManger._appliancePlugin) {
-        await windowManger._appliancePlugin.screenshotToCanvasAsync(ctx, scenePath, canvas.width, canvas.height, camera);
-      } else {
-        // Render whiteboard into canvas, and it must fit the slide size.
-        this.whiteboardView.screenshotToCanvas(
-          ctx,
-          scenePath,
-          canvas.width,
-          canvas.height,
-          camera
-        );
-      }
+    const camera = {
+      centerX: 0,
+      centerY: 0,
+      scale: Math.min(canvas.width / slideWidth, canvas.height / slideHeight),
+    };
+    const scenePath = `${this.baseScenePath}/${pageIndex}`;
+    // appliancePlugin is a performance optimization for whiteboard;
+    const windowManger = (this.context as any).manager.windowManger as any;
+    if (windowManger._appliancePlugin) {
+      await windowManger._appliancePlugin.screenshotToCanvasAsync(
+        ctx,
+        scenePath,
+        canvas.width,
+        canvas.height,
+        camera
+      );
+    } else {
+      // Render whiteboard into canvas, and it must fit the slide size.
+      this.whiteboardView.screenshotToCanvas(ctx, scenePath, canvas.width, canvas.height, camera);
+    }
   }
 
   private reportProgress(progress: number, result: { pdf: ArrayBuffer; title: string } | null) {

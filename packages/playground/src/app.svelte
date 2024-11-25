@@ -38,10 +38,10 @@
     phase === "prepare"
       ? "Preparing..."
       : phase === "404"
-      ? "404 Room Not Found."
-      : phase === "join-room"
-      ? "Joining Room..."
-      : "Loading...";
+        ? "404 Room Not Found."
+        : phase === "join-room"
+          ? "Joining Room..."
+          : "Loading...";
 
   onMount(async () => {
     matchDark.addEventListener("change", ev => {
@@ -155,6 +155,7 @@
   }
 </script>
 
+/** eslint-disable a11y-click-events-have-key-events */
 <svelte:window on:keydown={keydown} on:keyup={keyup} />
 
 {#if phase !== "main"}
@@ -163,6 +164,7 @@
   </div>
 {:else}
   <div class="two-side">
+    <!-- svelte-ignore a11y-click-events-have-key-events -->
     <div id="actions" class="app-list" on:click={openApp}>
       {#each apps as { kind, configs, url } (kind)}
         <h2 class="app-list-kind">
@@ -180,6 +182,7 @@
       {/each}
     </div>
     <div class="right-side">
+      <!-- svelte-ignore a11y-click-events-have-key-events -->
       <div class="nav-bar" on:click={changeTool}>
         <div class="nav-bar-tools-cursor-hider">
           <div class="nav-bar-tools">
@@ -241,7 +244,9 @@
     background-color: #0074d9;
     padding: 1em;
     border-radius: 4px;
-    box-shadow: 0 4px 5px 0 rgba(0, 0, 0, 0.14), 0 1px 10px 0 rgba(0, 0, 0, 0.12),
+    box-shadow:
+      0 4px 5px 0 rgba(0, 0, 0, 0.14),
+      0 1px 10px 0 rgba(0, 0, 0, 0.12),
       0 2px 4px -1px rgba(0, 0, 0, 0.2);
     z-index: 9999;
     font-family: Arial, sans-serif;

@@ -25,7 +25,7 @@ export interface MagixEventPayloads {
 
 export interface TalkativeOptions {
   debug?: boolean;
-  onLocalMessage?: (appId:string, event: Record<string, unknown>) => void;
+  onLocalMessage?: (appId: string, event: Record<string, unknown>) => void;
 }
 
 const Talkative: NetlessApp<TalkativeAttributes, MagixEventPayloads, TalkativeOptions> = {
@@ -41,7 +41,7 @@ const Talkative: NetlessApp<TalkativeAttributes, MagixEventPayloads, TalkativeOp
     const ClickThroughAppliances = new Set(["clicker", "hand"]);
 
     // const debug = (context.getAppOptions() || {}).debug;
-    const {onLocalMessage, debug} = (context.getAppOptions() || {}) as TalkativeOptions;
+    const { onLocalMessage, debug } = (context.getAppOptions() || {}) as TalkativeOptions;
     const logger = new Logger("Talkative", debug);
     const { uid, userId, nickName } = getUserPayload(context);
     const sideEffect = new SideEffectManager();
@@ -115,7 +115,7 @@ const Talkative: NetlessApp<TalkativeAttributes, MagixEventPayloads, TalkativeOp
 
     if (room) {
       sideEffect.add(() => {
-        const onRoomStateChanged = (e: { memberState: { currentApplianceName: string; }; }) => {
+        const onRoomStateChanged = (e: { memberState: { currentApplianceName: string } }) => {
           if (e.memberState) {
             toggleClickThrough(shouldClickThrough(e.memberState.currentApplianceName));
           }
@@ -162,7 +162,7 @@ const Talkative: NetlessApp<TalkativeAttributes, MagixEventPayloads, TalkativeOp
           observer.observe(renderer.$content);
           return () => observer.disconnect();
         });
-  
+
         toggleClickThrough = (enable?: boolean) => {
           viewBox.style.pointerEvents = enable ? "none" : "auto";
         };

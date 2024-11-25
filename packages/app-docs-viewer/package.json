@@ -28,7 +28,7 @@
   },
   "devDependencies": {
     "jspdf": "2.5.1",
-    "@netless/app-shared": "0.1.2",
+    "@netless/app-shared": "workspace:*",
     "side-effect-manager": "^1.1.0"
   },
   "peerDependencies": {

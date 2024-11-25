@@ -18,7 +18,7 @@ const ResizeObserver = window.ResizeObserver || Polyfill;
 const RATIO_BASE_CONTAINER_HEIGHT = 640;
 
 export interface StaticDocsViewerConfig {
-  context: AppContext<NetlessAppStaticDocsViewerAttributes>,
+  context: AppContext<NetlessAppStaticDocsViewerAttributes>;
   whiteboardView: View;
   readonly: boolean;
   box: ReadonlyTeleBox;
@@ -526,11 +526,17 @@ export class StaticDocsViewer {
         centerX: width / 2,
         centerY: height / 2 + index * height,
         scale: 1,
-      }
+      };
       // appliancePlugin is a performance optimization for whiteboard;
-      const windowManger = (this.context as any).manager.windowManger as any
+      const windowManger = (this.context as any).manager.windowManger as any;
       if (windowManger._appliancePlugin) {
-        await windowManger._appliancePlugin.screenshotToCanvasAsync(whiteCtx, scenePath, width, height, camera);
+        await windowManger._appliancePlugin.screenshotToCanvasAsync(
+          whiteCtx,
+          scenePath,
+          width,
+          height,
+          camera
+        );
       } else {
         this.whiteboardView.screenshotToCanvas(whiteCtx, scenePath, width, height, camera);
       }

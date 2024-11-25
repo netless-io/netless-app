@@ -379,7 +379,7 @@ export class SlideController {
       const currentSlideIndex = this.context.storage.state.state?.currentSlideIndex;
       if (currentSlideIndex) {
         log("[Slide] sync storage", currentSlideIndex);
-        this.slide.setSlideState({currentSlideIndex});
+        this.slide.setSlideState({ currentSlideIndex });
       }
     } else {
       this._toFreeze = -1;

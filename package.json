@@ -21,13 +21,15 @@
     "prettier": "^2.6.2",
     "prettier-plugin-svelte": "^2.7.0",
     "rimraf": "^3.0.2",
+    "rollup": "^4.27.4",
+    "rollup-plugin-dts": "^6.1.1",
     "rollup-plugin-peer-deps-external": "^2.2.4",
     "sass": "^1.52.2",
     "svelte": "^3.48.0",
     "typescript": "^4.7.3",
     "typings": "workspace:*",
     "vite": "^2.9.10",
-    "white-web-sdk": "2.16.24"
+    "white-web-sdk": "2.16.52"
   },
   "scripts": {
     "create-app": "node ./packages/create-app",
@@ -40,6 +42,7 @@
     "dev": "pnpm -F playground dev"
   },
   "overrides": {
-    "@netless/window-manager": "0.4.75"
+    "@netless/window-manager": "0.4.75",
+    "white-web-sdk": "2.16.52"
   }
 }

@@ -9,7 +9,7 @@ export interface ConnectParams {
   postMessage: (message: string) => void;
   onRatioChanged: (ratio: number) => void;
   isSentBySelf: (source: MessageEventSource | null) => boolean;
-  onLocalMessage?:(appId: string, event: Record<string, unknown>) => void;
+  onLocalMessage?: (appId: string, event: Record<string, unknown>) => void;
 }
 
 export function connect({ context, logger, ...callbacks }: ConnectParams): () => void {
@@ -38,7 +38,7 @@ export function connect({ context, logger, ...callbacks }: ConnectParams): () =>
     },
     onLocalMessage(event: Record<string, unknown>) {
       if (context.getIsWritable()) {
-        callbacks?.onLocalMessage&& callbacks.onLocalMessage(context.appId, event);
+        callbacks?.onLocalMessage && callbacks.onLocalMessage(context.appId, event);
       }
     },
 
