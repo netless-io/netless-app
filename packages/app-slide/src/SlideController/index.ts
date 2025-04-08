@@ -120,11 +120,11 @@ export class SlideController {
   }
 
   public ready = false;
-  private resolveReady!: () => void;
+  private resolveReady!: (index: number) => void;
   public readonly readyPromise = new Promise<void>(resolve => {
-    this.resolveReady = () => {
+    this.resolveReady = (slideIndex) => {
       if (this.ready) {
-        log("[Slide] render end");
+        log("[Slide] render end", slideIndex);
       } else {
         setTimeout(() => {
           this.ready = true;
@@ -370,16 +370,20 @@ export class SlideController {
     if (!this.visible) return;
     this.isFrozen = false;
     if (this.ready) {
+      let isNeedSyncState = false;
       log("[Slide] unfreeze", this.context.appId);
-      if (this.invisibleBehavior === "frozen") {
+      if (this.invisibleBehavior === "frozen" && !this.slide.view) {
         this.slide.release();
+        isNeedSyncState = true;
       } else {
         this.slide.resume();
       }
-      const currentSlideIndex = this.context.storage.state.state?.currentSlideIndex;
-      if (currentSlideIndex) {
-        log("[Slide] sync storage", currentSlideIndex);
-        this.slide.setSlideState({ currentSlideIndex });
+      if (isNeedSyncState) {
+        const currentSlideIndex = this.context.storage.state.state?.currentSlideIndex;
+        if (currentSlideIndex) {
+          log("[Slide] sync storage", currentSlideIndex);
+          this.slide.setSlideState({ currentSlideIndex });
+        }
       }
     } else {
       this._toFreeze = -1;
