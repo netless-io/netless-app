@@ -379,10 +379,10 @@ export class SlideController {
         this.slide.resume();
       }
       if (isNeedSyncState) {
-        const currentSlideIndex = this.context.storage.state.state?.currentSlideIndex;
-        if (currentSlideIndex) {
-          log("[Slide] sync storage", currentSlideIndex);
-          this.slide.setSlideState({ currentSlideIndex });
+        const state = this.context.storage.state.state;
+        if (state) {
+          log("[Slide] sync storage", JSON.stringify(state));
+          this.slide.setSlideState(state);
         }
       }
     } else {
