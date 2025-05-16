@@ -242,8 +242,8 @@ importers:
   packages/app-slide:
     devDependencies:
       '@netless/slide':
-        specifier: ^1.4.21
-        version: 1.4.21
+        specifier: 1.4.31-alpha.0
+        version: 1.4.31-alpha.0
       '@types/color-string':
         specifier: ^1.5.2
         version: 1.5.5
@@ -481,8 +481,8 @@ packages:
   '@netless/canvas-polyfill@0.0.4':
     resolution: {integrity: sha512-7NzsJrba0R/mq/l10SkIZQwbrNVJyPxZYrjK6xL3Ts732iWAVuS2UB0u3s6iGeUVcqV39A679yva8APWRl4M0A==}
 
-  '@netless/slide@1.4.21':
-    resolution: {integrity: sha512-jPO/W5/a36RA5xQqLM7pv7UaFQILgvy7pWFVPxGhOxTUY8GVN4ftZV9sYYjy2zS2RBgM9uAio0u6/KWvPGGAHg==}
+  '@netless/slide@1.4.31-alpha.0':
+    resolution: {integrity: sha512-N475d3+WMh5tDAWgFu6r7ccETl0Ne29ZnrvHJYddUXbj99WSTnxMPRQ8T1QmkUkCaj8QYm5QRaVLoNk7afhNaQ==}
 
   '@netless/telebox-insider@0.2.28':
     resolution: {integrity: sha512-UJDCm/f7yjiIaWqbS20LDXfAG6RUxsXSktPDzmEr51MgsevpQ3u241hVlyOpKAXSeTR6B3ioRAKcgflOw5JvTQ==}
@@ -2555,7 +2555,7 @@ snapshots:
 
   '@netless/canvas-polyfill@0.0.4': {}
 
-  '@netless/slide@1.4.21':
+  '@netless/slide@1.4.31-alpha.0':
     dependencies:
       '@juggle/resize-observer': 3.4.0
       '@types/lodash': 4.17.13
