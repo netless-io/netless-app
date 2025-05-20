@@ -76,6 +76,32 @@ const Plyr: NetlessApp<Attributes> = {
         // console.warn("[Plyr] destroy failed", err);
       }
     });
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    if ((window as any).__pcmProxy) {
+      let currentApp = app;
+      const handleVisibilityChange = () => {
+        if (document.visibilityState === "hidden") {
+          console.log("[Plyr] destroy app for pcm proxy.");
+          while (box.$content.firstChild) {
+            box.$content.removeChild(box.$content.firstChild);
+          }
+          currentApp.$destroy();
+        } else {
+          console.log("[Plyr] recreate app for pcm proxy.");
+          currentApp = new Player({
+            target: box.$content,
+            props: { storage: context.storage, sync },
+          });
+        }
+      };
+
+      document.addEventListener("visibilitychange", handleVisibilityChange);
+      context.emitter.on("destroy", () => {
+        currentApp.$destroy();
+        document.removeEventListener("visibilitychange", handleVisibilityChange);
+      });
+    }
   },
 };
 

@@ -19,9 +19,22 @@
 
   let player_element: HTMLAudioElement | HTMLVideoElement | HTMLDivElement | undefined;
   let player: Plyr | undefined;
+  let pcmAudioSource: MediaElementAudioSourceNode | undefined;
+
+  const connectToPcmProxyIfPossible = (element: HTMLElement) => {
+    const pcmProxy = (window as any).__pcmProxy;
+    if (pcmProxy) {
+      if (element instanceof HTMLVideoElement || element instanceof HTMLAudioElement) {
+        console.log("[Plyr] connect pcm");
+        pcmAudioSource = pcmProxy.connect?.(element);
+      }
+    }
+  };
 
   onMount(async () => {
     if (player_element) {
+      connectToPcmProxyIfPossible(player_element);
+
       if (useHLS && cannotPlayHLSNatively(player_element)) {
         const hls = await loadHLS();
         hls.loadSource(src);
@@ -34,6 +47,14 @@
         youtube: { autoplay: true },
       });
       sync.player = player;
+
+      (window as any).__plyr = player;
+      if (!pcmAudioSource) {
+        const media = (player as any).media;
+        if (media) {
+          connectToPcmProxyIfPossible(media);
+        }
+      }
     }
   });
 
@@ -41,6 +62,7 @@
     try {
       sync.dispose();
       player?.destroy();
+      pcmAudioSource?.disconnect();
     } catch (e) {
       console.warn("[Plyr] destroy plyr error", e);
     }
