@@ -51,6 +51,7 @@ export class SlideDocsViewer {
   private readonly baseScenePath: string;
   private readonly appId: string;
   private isViewMounted = false;
+  private justSildeReadonly = false;
 
   public constructor({
     context,
@@ -106,11 +107,19 @@ export class SlideDocsViewer {
   public $whiteboardView!: HTMLDivElement;
   public $overlay!: HTMLDivElement;
 
+  public setJustSildeReadonly(justSildeReadonly: boolean) {
+    this.justSildeReadonly = justSildeReadonly;
+    this.slideController?.slide.setInteractive(!this.justSildeReadonly);
+  }
+
   public render() {
     this.viewer.$content.appendChild(this.renderSlideContainer());
     this.viewer.$content.appendChild(this.renderWhiteboardView());
     this.viewer.$content.appendChild(this.renderOverlay());
     this.sideEffect.addEventListener(window, "keydown", ev => {
+      if (this.justSildeReadonly) {
+        return;
+      }
       if (this.box.focus && this.slideController && !isEditable(ev.target)) {
         switch (ev.key) {
           case "ArrowUp":

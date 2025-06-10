@@ -71,6 +71,8 @@ export interface AppOptions
   showRenderError?: boolean;
   /** Specify the behavior after hiding the slide; Freeze will destroy the slide and replace it with a snapshot, while Pause simply pauses the slide @default: 'frozen' */
   invisibleBehavior?: "frozen" | "pause";
+  /** just readonly, no operate silder */
+  justSildeReadonly?: true;
 }
 
 export interface ILogger {
@@ -89,6 +91,7 @@ export interface AppResult {
   nextPage: () => boolean;
   prevPage: () => boolean;
   jumpToPage: (page: number) => boolean;
+  setSildeReadonly: (bol: boolean) => void;
 }
 
 const SlideApp: NetlessApp<Attributes, MagixEvents, AppOptions, AppResult> = {
@@ -192,6 +195,10 @@ const SlideApp: NetlessApp<Attributes, MagixEvents, AppOptions, AppResult> = {
       },
     });
 
+    if (context.getAppOptions()?.justSildeReadonly) {
+      docsViewer?.setJustSildeReadonly(true);
+    }
+
     if (import.meta.env.DEV) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (window as any).slideDoc = docsViewer;
@@ -233,6 +240,9 @@ const SlideApp: NetlessApp<Attributes, MagixEvents, AppOptions, AppResult> = {
     docsViewer.mount();
 
     return {
+      setSildeReadonly: (bol: boolean) => {
+        docsViewer?.setJustSildeReadonly(bol);
+      },
       viewer: () => {
         return docsViewer;
       },
