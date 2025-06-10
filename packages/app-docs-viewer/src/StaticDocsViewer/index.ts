@@ -139,6 +139,11 @@ export class StaticDocsViewer {
 
   public $whiteboardView!: HTMLDivElement;
 
+  private docsViewReadonly = false;
+  public setDocsViewReadonly(isReadonly: boolean) {
+    this.docsViewReadonly = isReadonly;
+  }
+
   public mount(): this {
     this.viewer.mount();
 
@@ -392,6 +397,9 @@ export class StaticDocsViewer {
       "keyup",
       ev => {
         if (this.readonly || !this.box.focus || this.box.minimized || isEditable(ev.target)) {
+          return;
+        }
+        if (this.docsViewReadonly) {
           return;
         }
         let newPageScrollTop: number | null = null;

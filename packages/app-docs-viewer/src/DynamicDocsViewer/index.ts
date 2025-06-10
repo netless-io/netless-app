@@ -66,6 +66,11 @@ export class DynamicDocsViewer {
   public $mask!: HTMLElement;
   public $whiteboardView!: HTMLDivElement;
 
+  private docsViewReadonly = false;
+  public setDocsViewReadonly(isReadonly: boolean) {
+    this.docsViewReadonly = isReadonly;
+  }
+
   public mount(): this {
     this.viewer.mount();
 
@@ -142,6 +147,9 @@ export class DynamicDocsViewer {
     this.viewer.$content.appendChild(this.renderMask());
     this.viewer.$content.appendChild(this.renderWhiteboardView());
     this.sideEffect.addEventListener(window, "keydown", ev => {
+      if (this.docsViewReadonly) {
+        return;
+      }
       if (this.box.focus && !isEditable(ev.target)) {
         switch (ev.key) {
           case "ArrowUp":

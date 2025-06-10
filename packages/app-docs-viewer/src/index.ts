@@ -14,15 +14,26 @@ export interface NetlessAppStaticDocsViewerAttributes {
   pageScrollTop?: number;
 }
 
+export interface NetlessAppDocsViewerOptions {
+  /** justDocsViewReadonly is used to set the docs view readonly, it will be used in the docs view, and the docs view will be readonly when the app is initialized */
+  justDocsViewReadonly?: true;
+}
+
 export interface NetlessAppDynamicDocsViewerAttributes {}
 
+export interface AppResult {
+  setDocsViewReadonly: (bol: boolean) => void;
+}
+
 const NetlessAppDocsViewer: NetlessApp<
-  NetlessAppStaticDocsViewerAttributes | NetlessAppDynamicDocsViewerAttributes
+  NetlessAppStaticDocsViewerAttributes | NetlessAppDynamicDocsViewerAttributes,
+  unknown,
+  NetlessAppDocsViewerOptions,
+  AppResult
 > = {
   kind,
   setup(context) {
     const box = context.getBox();
-
     const scenes = context.getScenes();
     if (!scenes) {
       throw new Error("[Docs Viewer]: scenes not found.");
@@ -52,21 +63,34 @@ const NetlessAppDocsViewer: NetlessApp<
 
     box.mountStyles(styles);
 
+    let docsViewer: StaticDocsViewer | DynamicDocsViewer | null = null;
+
     if (pages[0].src.startsWith("ppt")) {
-      setupDynamicDocsViewer(
+      docsViewer = setupDynamicDocsViewer(
         context as AppContext<NetlessAppDynamicDocsViewerAttributes>,
         whiteboardView,
         box,
         pages
       );
     } else {
-      setupStaticDocsViewer(
+      docsViewer = setupStaticDocsViewer(
         context as AppContext<NetlessAppStaticDocsViewerAttributes>,
         whiteboardView,
         box,
         pages
       );
     }
+    const appOptions = context.getAppOptions() || {};
+
+    if (appOptions.justDocsViewReadonly) {
+      docsViewer.setDocsViewReadonly(true);
+    }
+
+    return {
+      setDocsViewReadonly: (bol: boolean) => {
+        docsViewer?.setDocsViewReadonly(bol);
+      },
+    };
   },
 };
 
@@ -77,7 +101,7 @@ function setupStaticDocsViewer(
   whiteboardView: View,
   box: ReadonlyTeleBox,
   pages: DocsViewerPage[]
-): void {
+): StaticDocsViewer {
   whiteboardView.disableCameraTransform = !context.getIsWritable();
 
   const docsViewer = new StaticDocsViewer({
@@ -123,6 +147,7 @@ function setupStaticDocsViewer(
     docsViewer.setReadonly(!isWritable);
     whiteboardView.disableCameraTransform = !isWritable;
   });
+  return docsViewer;
 }
 
 function setupDynamicDocsViewer(
@@ -130,7 +155,7 @@ function setupDynamicDocsViewer(
   whiteboardView: View,
   box: ReadonlyTeleBox,
   pages: DocsViewerPage[]
-): void {
+): DynamicDocsViewer {
   whiteboardView.disableCameraTransform = true;
 
   const docsViewer = new DynamicDocsViewer({
@@ -174,4 +199,5 @@ function setupDynamicDocsViewer(
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (window as any).docsViewer = docsViewer;
   }
+  return docsViewer;
 }

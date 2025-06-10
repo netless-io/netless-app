@@ -122,7 +122,7 @@ export class SlideController {
   public ready = false;
   private resolveReady!: (index: number) => void;
   public readonly readyPromise = new Promise<void>(resolve => {
-    this.resolveReady = (slideIndex) => {
+    this.resolveReady = slideIndex => {
       if (this.ready) {
         log("[Slide] render end", slideIndex);
       } else {
