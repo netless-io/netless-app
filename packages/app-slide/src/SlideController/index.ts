@@ -321,6 +321,7 @@ export class SlideController {
       whiteTracker: defaults.whiteTracker,
       timestamp: this.timestamp,
       skipActionWhenFrozen: true,
+      customLinks: options.customLinks,
     });
     if (import.meta.env.DEV) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
