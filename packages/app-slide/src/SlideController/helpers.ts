@@ -31,8 +31,8 @@ export function syncSceneWithSlide(
   if (!(page > 0) || !context.getIsWritable()) return;
 
   const scenePath = [baseScenePath, page].join("/");
-
-  if (room.scenePathType(scenePath) !== ("page" as ScenePathType.Page)) {
+  // 只有打开ppt用户，并且场景路径不是页面(未被其它用户创建出页面)，则需要同步场景
+  if (context.isAddApp && room.scenePathType(scenePath) !== ("page" as ScenePathType.Page)) {
     room.removeScenes(baseScenePath);
     const count = slide.slideCount;
     const scenes: { name: string }[] = [];
@@ -47,7 +47,10 @@ export function syncSceneWithSlide(
     currentScenePath = context.getView()?.focusScenePath || "";
   }
 
-  if (currentScenePath !== scenePath) {
+  if (
+    currentScenePath !== scenePath &&
+    room.scenePathType(scenePath) === ("page" as ScenePathType.Page)
+  ) {
     context.setScenePath(scenePath);
   }
 }
