@@ -44,7 +44,6 @@ export interface AppOptions
     | "fixedFrameSize"
     | "logger"
     | "enableGlobalClick"
-    | "customLinks"
   > {
   /** show debug controller */
   debug?: boolean;

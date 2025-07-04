@@ -29,6 +29,7 @@ export const EmptyAttributes: Attributes = {
   state: null,
   resourceList: [],
   previewList: [],
+  customLinks: [],
 };
 
 export interface SlideControllerOptions {
@@ -293,6 +294,7 @@ export class SlideController {
 
   private createSlide(anchor: HTMLDivElement, defaults: Partial<ISlideConfig> = {}) {
     const options = this.context.getAppOptions() || {};
+    const attribute = this.context.storage.state;
     const slide = new Slide({
       anchor,
       interactive: true,
@@ -321,7 +323,7 @@ export class SlideController {
       whiteTracker: defaults.whiteTracker,
       timestamp: this.timestamp,
       skipActionWhenFrozen: true,
-      customLinks: options.customLinks,
+      customLinks: attribute.customLinks,
     });
     if (import.meta.env.DEV) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
