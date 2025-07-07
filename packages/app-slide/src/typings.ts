@@ -1,4 +1,4 @@
-import type { Slide, SLIDE_EVENTS, SyncEvent } from "@netless/slide";
+import type { CustomLink, Slide, SLIDE_EVENTS, SyncEvent } from "@netless/slide";
 
 export type SlideState = Slide["slideState"];
 
@@ -11,6 +11,7 @@ export interface Attributes {
   state: SlideState | null;
   resourceList: string[];
   previewList: string[];
+  customLinks: CustomLink[];
 }
 
 export type MagixPayload = {
