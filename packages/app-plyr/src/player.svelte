@@ -14,7 +14,7 @@
   const type = storage.state.provider
     ? undefined
     : storage.state.type || guessTypeFromSrc(storage.state.src);
-  const { src, poster } = storage.state;
+  const { src, poster, iconUrl } = storage.state;
   const useHLS = hlsTypes.includes(String(type).toLowerCase());
 
   let player_element: HTMLAudioElement | HTMLVideoElement | HTMLDivElement | undefined;
@@ -40,12 +40,16 @@
         hls.loadSource(src);
         hls.attachMedia(player_element);
       }
-      player = new Plyr(player_element, {
+      const options: Plyr.Options = {
         fullscreen: { enabled: false },
         controls: ["play", "progress", "current-time", "mute", "volume"],
         clickToPlay: false,
         youtube: { autoplay: true },
-      });
+      };
+      if (iconUrl) {
+        options.iconUrl = iconUrl;
+      }
+      player = new Plyr(player_element, options);
       sync.player = player;
 
       (window as any).__plyr = player;
