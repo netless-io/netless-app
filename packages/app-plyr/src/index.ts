@@ -19,6 +19,7 @@ export interface Attributes {
 
   provider?: "youtube" | "vimeo";
   owner?: string;
+  iconUrl?: string;
 }
 
 const DefaultAttributes: Pick<Attributes, "volume" | "paused" | "muted" | "currentTime"> = {
