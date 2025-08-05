@@ -44,6 +44,7 @@ export interface AppOptions
     | "fixedFrameSize"
     | "logger"
     | "enableGlobalClick"
+    | "skipActionWhenFrozen"
   > {
   /** show debug controller */
   debug?: boolean;
