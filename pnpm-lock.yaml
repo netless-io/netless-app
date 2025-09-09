@@ -4,7 +4,7 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
-pnpmfileChecksum: 57lluw37yw7bx3fmugcz6kik7e
+pnpmfileChecksum: sha256-WHtwYTuq7I/Nfl+cN+U5Z3FFCpkTIF+I4XEuWE50Bcw=
 
 importers:
 
@@ -242,8 +242,8 @@ importers:
   packages/app-slide:
     devDependencies:
       '@netless/slide':
-        specifier: 1.4.37
-        version: 1.4.37
+        specifier: 1.4.38
+        version: 1.4.38
       '@types/color-string':
         specifier: ^1.5.2
         version: 1.5.5
@@ -481,8 +481,8 @@ packages:
   '@netless/canvas-polyfill@0.0.4':
     resolution: {integrity: sha512-7NzsJrba0R/mq/l10SkIZQwbrNVJyPxZYrjK6xL3Ts732iWAVuS2UB0u3s6iGeUVcqV39A679yva8APWRl4M0A==}
 
-  '@netless/slide@1.4.37':
-    resolution: {integrity: sha512-BYby39VYloQewBV/eQs9eq5g2TL+dMiIrkQXxs5cQmPFRSofB3WTQX0JhMt8wxxSYUBh8hvCHmfHMAs/ZsvIfw==}
+  '@netless/slide@1.4.38':
+    resolution: {integrity: sha512-rL3jaE9KA5xmpMqP1ELxFMwKwnUhIsYaj+n3RXQoBFSuovZiymV8ioMHt8A3xQMkvid0miBq6Qb5/B9K62DZeA==}
 
   '@netless/telebox-insider@0.2.28':
     resolution: {integrity: sha512-UJDCm/f7yjiIaWqbS20LDXfAG6RUxsXSktPDzmEr51MgsevpQ3u241hVlyOpKAXSeTR6B3ioRAKcgflOw5JvTQ==}
@@ -2555,7 +2555,7 @@ snapshots:
 
   '@netless/canvas-polyfill@0.0.4': {}
 
-  '@netless/slide@1.4.37':
+  '@netless/slide@1.4.38':
     dependencies:
       '@juggle/resize-observer': 3.4.0
       '@types/lodash': 4.17.13
