@@ -322,8 +322,8 @@ export class SlideController {
       logger: options.logger,
       whiteTracker: defaults.whiteTracker,
       timestamp: this.timestamp,
-      skipActionWhenFrozen: true,
       customLinks: attribute.customLinks,
+      skipActionWhenFrozen: options.skipActionWhenFrozen ?? true,
     });
     if (import.meta.env.DEV) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -376,7 +376,7 @@ export class SlideController {
     if (this.ready) {
       let isNeedSyncState = false;
       log("[Slide] unfreeze", this.context.appId);
-      if (this.invisibleBehavior === "frozen" && !this.slide.view) {
+      if (this.invisibleBehavior === "frozen") {
         this.slide.release();
         isNeedSyncState = true;
       } else {
