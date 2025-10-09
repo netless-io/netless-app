@@ -38,6 +38,24 @@ const options: PlaygroundConfigs<
     kind,
     src: () => import("./src"),
     options: {
+      scenePath: `/${kind}/Transparent`,
+      title: "Transparent Static PDF",
+      scenes: [
+        {
+          name: "1",
+          ppt: {
+            height: 735,
+            src: "https://white-cover.oss-cn-hangzhou.aliyuncs.com/flat/staticConvert/49e8da7c62d2497fa85791ff1a4849c1/1.png",
+            width: 1031,
+          },
+        }
+      ],
+    },
+  },
+  {
+    kind,
+    src: () => import("./src"),
+    options: {
       scenePath: `/${kind}/2`,
       title: "Dynamic PPT",
       scenes: [
