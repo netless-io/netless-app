@@ -12,6 +12,8 @@ const options: PlaygroundConfigs<Attributes> = [
     attributes: {
       src: "https://flat-storage.oss-accelerate.aliyuncs.com/cloud-storage/2022-03/28/e35a6676-aa5d-4a61-8f17-87e626b7d1b7/e35a6676-aa5d-4a61-8f17-87e626b7d1b7.mp4",
       type: "video/mp4",
+      useNewPlayer: true,
+      paused: false,
     },
   },
   {

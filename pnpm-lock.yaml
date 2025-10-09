@@ -4,7 +4,7 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
-pnpmfileChecksum: sha256-WHtwYTuq7I/Nfl+cN+U5Z3FFCpkTIF+I4XEuWE50Bcw=
+pnpmfileChecksum: 57lluw37yw7bx3fmugcz6kik7e
 
 importers:
 
@@ -219,9 +219,15 @@ importers:
 
   packages/app-plyr:
     devDependencies:
+      '@types/lodash':
+        specifier: ^4.17.20
+        version: 4.17.20
       hls.js:
         specifier: ^1.1.4
         version: 1.5.17
+      lodash:
+        specifier: ^4.17.21
+        version: 4.17.21
       plyr:
         specifier: ^3.7.2
         version: 3.7.8
@@ -686,6 +692,9 @@ packages:
 
   '@types/lodash@4.17.13':
     resolution: {integrity: sha512-lfx+dftrEZcdBPczf9d0Qv0x+j/rfNCMuC6OcfXmO8gkfeNAY88PgKUbvG56whcN23gc27yenwF6oJZXGFpYxg==}
+
+  '@types/lodash@4.17.20':
+    resolution: {integrity: sha512-H3MHACvFUEiujabxhaI/ImO6gUrd8oOurg7LQtS7mbwIXA/cUqWrvBsaeJ23aZEPk1TAYkurjfMbSELfoCXlGA==}
 
   '@types/long@4.0.2':
     resolution: {integrity: sha512-MqTGEo5bj5t157U6fA/BiDynNkn0YknVdh48CMPkTSpFTVmvao5UQmm7uEF6xBEo7qIMAlY/JSleYaE6VOdpaA==}
@@ -2739,6 +2748,8 @@ snapshots:
   '@types/json-schema@7.0.15': {}
 
   '@types/lodash@4.17.13': {}
+
+  '@types/lodash@4.17.20': {}
 
   '@types/long@4.0.2': {}
 

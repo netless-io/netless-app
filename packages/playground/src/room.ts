@@ -78,6 +78,7 @@ export async function joinRoom(info: RoomInfo): Promise<Room> {
       nickName: faker.name.firstName(),
     },
   });
+  room.syncMode = true;
   window.room = room;
   if (QueryVersion !== 2) {
     clearQueryString();
