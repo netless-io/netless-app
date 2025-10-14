@@ -528,7 +528,7 @@ export class StaticDocsViewer {
       img.src = pdfPageSrc;
       await new Promise(resolve => (img.onload = resolve));
       whiteCtx.drawImage(img, 0, 0);
-      const pdfPageBase64 = whiteSnapshotCanvas.toDataURL("image/jpeg", 0.6);
+      const pdfPageBase64 = whiteSnapshotCanvas.toDataURL("image/png");
       whiteCtx.clearRect(0, 0, width, height);
       const camera = {
         centerX: width / 2,
@@ -549,7 +549,7 @@ export class StaticDocsViewer {
         this.whiteboardView.screenshotToCanvas(whiteCtx, scenePath, width, height, camera);
       }
       const snapshot = whiteSnapshotCanvas.toDataURL("image/png");
-      pdf.addImage(pdfPageBase64, "JPEG", 0, 0, width, height, "", "FAST");
+      pdf.addImage(pdfPageBase64, "PNG", 0, 0, width, height, "", "FAST");
       pdf.addImage(snapshot, "PNG", 0, 0, width, height, "", "FAST");
 
       whiteCtx.clearRect(0, 0, width, height);
