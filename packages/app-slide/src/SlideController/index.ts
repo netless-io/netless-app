@@ -62,22 +62,22 @@ export class SlideController {
   public readonly onRenderError?: (error: Error, pageIndex: number) => void;
   public readonly onNavigate: (index: number, origin?: string) => void;
 
-  private readonly room?: Room;
-  private readonly player?: Player;
-  private readonly sideEffect = new SideEffectManager();
+  protected readonly room?: Room;
+  protected readonly player?: Player;
+  protected readonly sideEffect = new SideEffectManager();
 
-  private readonly onRenderStart: SlideControllerOptions["onRenderStart"];
-  private readonly onPageChanged: SlideControllerOptions["onPageChanged"];
-  private readonly onTransitionStart: SlideControllerOptions["onTransitionStart"];
-  private readonly onTransitionEnd: SlideControllerOptions["onTransitionEnd"];
-  private readonly onError: SlideControllerOptions["onError"];
+  protected readonly onRenderStart: SlideControllerOptions["onRenderStart"];
+  protected readonly onPageChanged: SlideControllerOptions["onPageChanged"];
+  protected readonly onTransitionStart: SlideControllerOptions["onTransitionStart"];
+  protected readonly onTransitionEnd: SlideControllerOptions["onTransitionEnd"];
+  protected readonly onError: SlideControllerOptions["onError"];
 
-  private syncStateOnceFlag: boolean;
+  protected syncStateOnceFlag: boolean;
 
-  private visible: boolean;
-  private savedIsFrozen: boolean;
+  protected visible: boolean;
+  protected savedIsFrozen: boolean;
 
-  private invisibleBehavior: "frozen" | "pause";
+  protected invisibleBehavior: "frozen" | "pause";
 
   // 签名后的预览图
   public previewList: string[] = [];
@@ -121,7 +121,7 @@ export class SlideController {
   }
 
   public ready = false;
-  private resolveReady!: (index: number) => void;
+  protected resolveReady!: (index: number) => void;
   public readonly readyPromise = new Promise<void>(resolve => {
     this.resolveReady = slideIndex => {
       if (this.ready) {
@@ -149,12 +149,12 @@ export class SlideController {
     }
   }
 
-  private initialize() {
+  protected initialize() {
     this.registerEventListeners();
     this.kickStart();
   }
 
-  private kickStart() {
+  protected kickStart() {
     const { context, slide } = this;
     if (context.getIsWritable()) {
       context.storage.ensureState(EmptyAttributes);
@@ -182,7 +182,7 @@ export class SlideController {
     this.pollReadyState();
   }
 
-  private registerEventListeners() {
+  protected registerEventListeners() {
     const { context, slide } = this;
 
     // it is possible that we miss the first `renderSlide(1)` event
@@ -220,7 +220,7 @@ export class SlideController {
     });
   }
 
-  private onSyncDispatch = (event: SyncEvent) => {
+  protected onSyncDispatch = (event: SyncEvent) => {
     if (this.context.getIsWritable() && this.room) {
       const payload: MagixPayload = {
         type: SLIDE_EVENTS.syncDispatch,
@@ -231,7 +231,7 @@ export class SlideController {
     }
   };
 
-  private magixEventListener: MagixEventListener = ev => {
+  protected magixEventListener: MagixEventListener = ev => {
     const { type, payload } = ev.payload;
     if (type === SLIDE_EVENTS.syncDispatch) {
       this.syncStateOnce();
@@ -240,7 +240,7 @@ export class SlideController {
     }
   };
 
-  private syncStateOnce() {
+  protected syncStateOnce() {
     // sync state before the first event, so that they can be in the correct order
     if (this.syncStateOnceFlag) {
       if (this.context.getIsWritable()) {
@@ -255,15 +255,15 @@ export class SlideController {
     }
   }
 
-  private onStateChange = (state: SlideState) => {
+  protected onStateChange = (state: SlideState) => {
     if (this.context.getIsWritable()) {
       verbose("[Slide] state change", JSON.stringify(state, null, 2));
       this.context.storage.setState({ state });
     }
   };
 
-  private pollCount = 0;
-  private pollReadyState = () => {
+  protected pollCount = 0;
+  protected pollReadyState = () => {
     if (this.ready) {
       if (this._toFreeze === 1) {
         this.freeze();
@@ -281,7 +281,7 @@ export class SlideController {
 
   // cache `slideCount`, because once the slide is frozen,
   // the `slideCount` will be 0
-  private _pageCount = 0;
+  protected _pageCount = 0;
   public get pageCount() {
     if (this._pageCount > 0) return this._pageCount;
     this._pageCount = this.slide.slideCount;
@@ -292,7 +292,7 @@ export class SlideController {
     return this.slide.slideState.currentSlideIndex;
   }
 
-  private createSlide(anchor: HTMLDivElement, defaults: Partial<ISlideConfig> = {}) {
+  protected createSlide(anchor: HTMLDivElement, defaults: Partial<ISlideConfig> = {}) {
     const options = this.context.getAppOptions() || {};
     const attribute = this.context.storage.state;
     const slide = new Slide({
@@ -332,7 +332,7 @@ export class SlideController {
     return slide;
   }
 
-  private destroyed = false;
+  protected destroyed = false;
 
   public destroy() {
     this.sideEffect.flushAll();
@@ -354,7 +354,7 @@ export class SlideController {
   };
 
   public isFrozen = false;
-  private _toFreeze: -1 | 0 | 1 = 0; // -1: unfreeze, 0: no change, 1: freeze
+  protected _toFreeze: -1 | 0 | 1 = 0; // -1: unfreeze, 0: no change, 1: freeze
 
   public freeze = () => {
     this.isFrozen = true;
@@ -394,7 +394,7 @@ export class SlideController {
     }
   };
 
-  private onVisibilityChange = async () => {
+  protected onVisibilityChange = async () => {
     if (!(this.visible = document.visibilityState === "visible")) {
       this.savedIsFrozen = this.isFrozen;
       log("[Slide] freeze because tab becomes invisible");

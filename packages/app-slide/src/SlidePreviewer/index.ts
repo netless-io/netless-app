@@ -48,12 +48,12 @@ export class SlidePreviewer {
 
   public $slide!: HTMLDivElement;
 
-  private previewList: string[] = [];
+  protected previewList: string[] = [];
 
-  private readonly sideEffect = new SideEffectManager();
+  protected readonly sideEffect = new SideEffectManager();
 
   public ready = false;
-  private resolveReady!: () => void;
+  protected resolveReady!: () => void;
   public readonly readyPromise = new Promise<void>(resolve => {
     this.resolveReady = () => {
       this.ready = true;
@@ -94,7 +94,7 @@ export class SlidePreviewer {
     );
   }
 
-  private hotkeyListener = (ev: KeyboardEvent) => {
+  protected hotkeyListener = (ev: KeyboardEvent) => {
     if (this.slide) {
       switch (ev.key) {
         case "ArrowUp":
@@ -183,7 +183,7 @@ export class SlidePreviewer {
     console.warn("[Slide] render error", error);
   };
 
-  private destroyed = false;
+  protected destroyed = false;
   public destroy() {
     this.sideEffect.flushAll();
     if (this.slide && !this.destroyed) {
