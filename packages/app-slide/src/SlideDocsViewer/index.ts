@@ -48,10 +48,10 @@ export class SlideDocsViewer {
   protected readonly mountSlideController: SlideDocsViewerConfig["mountSlideController"];
   protected readonly mountWhiteboard: SlideDocsViewerConfig["mountWhiteboard"];
   protected readonly onNavigate: (index: number, origin?: string) => void;
-  private readonly baseScenePath: string;
-  private readonly appId: string;
-  private isViewMounted = false;
-  private justSildeReadonly = false;
+  protected readonly baseScenePath: string;
+  protected readonly appId: string;
+  protected isViewMounted = false;
+  protected justSildeReadonly = false;
 
   public constructor({
     context,
@@ -221,8 +221,8 @@ export class SlideDocsViewer {
     this._onPageChangedTimer = setTimeout(this._onPageChanged, 200) as unknown as number;
   };
 
-  private _onPageChangedTimer = 0;
-  private _onPageChanged = () => {
+  protected _onPageChangedTimer = 0;
+  protected _onPageChanged = () => {
     this.$overlay.style.opacity = "";
     this.$whiteboardView.classList.remove(this.wrapClassName("wb-view-hidden"));
   };
@@ -315,7 +315,7 @@ export class SlideDocsViewer {
 
   protected namespace = "netless-app-slide";
 
-  private async getWhiteSnapshot(
+  protected async getWhiteSnapshot(
     pageIndex: number,
     canvas: HTMLCanvasElement,
     ctx: CanvasRenderingContext2D,
@@ -344,7 +344,7 @@ export class SlideDocsViewer {
     }
   }
 
-  private reportProgress(progress: number, result: { pdf: ArrayBuffer; title: string } | null) {
+  protected reportProgress(progress: number, result: { pdf: ArrayBuffer; title: string } | null) {
     window.postMessage({
       type: "@netless/_result_save_pdf_",
       appId: this.appId,
@@ -353,7 +353,7 @@ export class SlideDocsViewer {
     });
   }
 
-  private toPdf = async () => {
+  protected toPdf = async () => {
     if (!this.slideController) {
       this.reportProgress(100, null);
       return;
