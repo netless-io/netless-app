@@ -5,6 +5,7 @@ import type { SlideController, SlideControllerOptions } from "../SlideController
 import { SideEffectManager } from "side-effect-manager";
 import { createDocsViewerPages } from "../SlideController";
 import { DocsViewer, type DocsViewerPage } from "../DocsViewer";
+import { ResizableContainer } from "../DocsViewer/ResizableContainer";
 import { logger } from "../utils/logger";
 import { isEditable } from "../utils/helpers";
 import type { Attributes, MagixEvents } from "../typings";
@@ -106,6 +107,7 @@ export class SlideDocsViewer {
   public $slide!: HTMLDivElement;
   public $whiteboardView!: HTMLDivElement;
   public $overlay!: HTMLDivElement;
+  public resizableContainer!: ResizableContainer;
 
   public setJustSildeReadonly(justSildeReadonly: boolean) {
     this.justSildeReadonly = justSildeReadonly;
@@ -113,9 +115,21 @@ export class SlideDocsViewer {
   }
 
   public render() {
-    this.viewer.$content.appendChild(this.renderSlideContainer());
-    this.viewer.$content.appendChild(this.renderWhiteboardView());
-    this.viewer.$content.appendChild(this.renderOverlay());
+    // 创建 ResizableContainer 来管理 slide 和 whiteboardView
+    if (!this.resizableContainer) {
+      this.resizableContainer = new ResizableContainer(this.viewer.$content);
+    }
+
+    // 创建元素
+    this.renderSlideContainer();
+    this.renderWhiteboardView();
+    this.renderOverlay();
+
+    // 分别添加 slide 和 whiteboardView 到 ResizableContainer
+    this.resizableContainer.addSlideContainer(this.$slide);
+    this.resizableContainer.addWhiteboardContainer(this.$whiteboardView);
+    // overlay 不参与缩放和拖动，直接添加到父容器
+    this.viewer.$content.appendChild(this.$overlay);
     this.sideEffect.addEventListener(window, "keydown", ev => {
       if (this.justSildeReadonly) {
         return;
@@ -434,4 +448,9 @@ export class SlideDocsViewer {
     const title = this.box.title;
     this.reportProgress(100, { pdf: dataUrl, title });
   };
+
+  public destroy() {
+    this.resizableContainer?.destroy();
+    this.sideEffect.flushAll();
+  }
 }
