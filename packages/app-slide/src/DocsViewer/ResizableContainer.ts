@@ -27,6 +27,7 @@ export class ResizableContainer {
   private containerRect: DOMRect | null = null;
   private slideContainer: HTMLDivElement | null = null;
   private whiteboardContainer: HTMLDivElement | null = null;
+  private whiteboardView: any; // View instance for camera operations
 
   constructor(parent: HTMLElement) {
     this.parent = parent;
@@ -116,8 +117,13 @@ export class ResizableContainer {
         e.touches[1].clientY - e.touches[0].clientY
       );
 
-      const scaleDelta = currentDistance / this.initialTouchDistance;
-      const newScale = Math.max(0.5, Math.min(3, this.initialScale * scaleDelta)); // 限制缩放范围 0.5x - 3x
+      // 使用更温和的缩放计算，避免跳跃感
+      const distanceRatio = currentDistance / this.initialTouchDistance;
+
+      // 对缩放比例应用平滑函数，让缩放更线性且更慢
+      const smoothScale = Math.pow(distanceRatio, 0.6); // 指数平滑，0.6让缩放更慢
+
+      const newScale = Math.max(0.5, Math.min(2, this.initialScale * smoothScale)); // 限制缩放范围 0.5x - 2x
 
       // 计算双指中心点作为缩放中心
       const centerX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
@@ -159,17 +165,13 @@ export class ResizableContainer {
     if (e.ctrlKey || e.metaKey) {
       e.preventDefault();
 
-      const scaleDelta = e.deltaY > 0 ? 0.9 : 1.1;
-      const newScale = Math.max(0.5, Math.min(3, this.scale * scaleDelta));
+      // 使用更温和的缩放增量，允许连续缩放
+      const scaleStep = 0.01; // 每次滚动 1% 的变化，更慢的缩放速度
+      const scaleDelta = e.deltaY > 0 ? (1 - scaleStep) : (1 + scaleStep);
+      const newScale = Math.max(0.5, Math.min(2, this.scale * scaleDelta));
 
       // 使用鼠标位置作为缩放中心
       this.updateScale(e.clientX, e.clientY, newScale);
-
-      // 延迟重置缩放状态，避免连续滚动时重复记录初始尺寸
-      clearTimeout(this.scaleTimeout);
-      this.scaleTimeout = setTimeout(() => {
-        this.isScaling = false;
-      }, 150) as unknown as number;
     }
     // Shift + 滚轮进行拖动
     else if (e.shiftKey && !this.isWheelDragging) {
@@ -214,33 +216,50 @@ export class ResizableContainer {
     // 计算缩放比例
     const scaleFactor = newScale / this.scale;
 
-    // 两个容器现在都使用相同的缩放方式，统一计算
-    // 计算当前容器在屏幕上的实际位置（考虑缩放补偿）
-    const currentScreenX = this.slideTranslateX / this.scale; // slide 和 whiteboard 位置相同
-    const currentScreenY = this.slideTranslateY / this.scale;
+    // === Slide 容器计算（使用 transform scale） ===
+    // 计算当前 slide 在屏幕上的实际位置（考虑缩放补偿）
+    const currentSlideScreenX = this.slideTranslateX / this.scale;
+    const currentSlideScreenY = this.slideTranslateY / this.scale;
 
-    // 计算鼠标相对于内容的位置
-    const mouseRelativeToContentX = relativeX - currentScreenX;
-    const mouseRelativeToContentY = relativeY - currentScreenY;
+    // 计算鼠标相对于 slide 内容的位置
+    const mouseRelativeToSlideX = relativeX - currentSlideScreenX;
+    const mouseRelativeToSlideY = relativeY - currentSlideScreenY;
 
-    // 计算缩放后，鼠标在新的内容坐标系中的位置
-    const newMouseRelativeToContentX = mouseRelativeToContentX * scaleFactor;
-    const newMouseRelativeToContentY = mouseRelativeToContentY * scaleFactor;
+    // 计算缩放后，鼠标在新的 slide 坐标系中的位置
+    const newMouseRelativeToSlideX = mouseRelativeToSlideX * scaleFactor;
+    const newMouseRelativeToSlideY = mouseRelativeToSlideY * scaleFactor;
 
     // 计算需要调整的位移，使鼠标位置对应的点保持在鼠标下
-    const requiredScreenX = relativeX - newMouseRelativeToContentX;
-    const requiredScreenY = relativeY - newMouseRelativeToContentY;
+    const requiredSlideScreenX = relativeX - newMouseRelativeToSlideX;
+    const requiredSlideScreenY = relativeY - newMouseRelativeToSlideY;
 
-    // 计算新的逻辑位置（考虑缩放补偿的逆运算）
-    const newTranslateX = requiredScreenX * newScale;
-    const newTranslateY = requiredScreenY * newScale;
+    // 计算新的 slide 逻辑位置（考虑缩放补偿的逆运算）
+    const newSlideTranslateX = requiredSlideScreenX * newScale;
+    const newSlideTranslateY = requiredSlideScreenY * newScale;
 
-    // 更新状态（两个容器使用相同的位置）
+    // === Whiteboard 容器计算（使用 width/height） ===
+    // 计算当前 whiteboard 在屏幕上的位置（直接使用位移，无缩放补偿）
+    const currentWhiteboardScreenX = this.whiteboardTranslateX;
+    const currentWhiteboardScreenY = this.whiteboardTranslateY;
+
+    // 计算鼠标相对于 whiteboard 内容的位置
+    const mouseRelativeToWhiteboardX = relativeX - currentWhiteboardScreenX;
+    const mouseRelativeToWhiteboardY = relativeY - currentWhiteboardScreenY;
+
+    // 计算缩放后，鼠标在新的 whiteboard 坐标系中的位置
+    const newMouseRelativeToWhiteboardX = mouseRelativeToWhiteboardX * scaleFactor;
+    const newMouseRelativeToWhiteboardY = mouseRelativeToWhiteboardY * scaleFactor;
+
+    // 计算需要调整的位移，使鼠标位置对应的点保持在鼠标下
+    const newWhiteboardTranslateX = relativeX - newMouseRelativeToWhiteboardX;
+    const newWhiteboardTranslateY = relativeY - newMouseRelativeToWhiteboardY;
+
+    // 更新状态
     this.scale = newScale;
-    this.slideTranslateX = newTranslateX;
-    this.slideTranslateY = newTranslateY;
-    this.whiteboardTranslateX = newTranslateX;
-    this.whiteboardTranslateY = newTranslateY;
+    this.slideTranslateX = newSlideTranslateX;
+    this.slideTranslateY = newSlideTranslateY;
+    this.whiteboardTranslateX = newWhiteboardTranslateX;
+    this.whiteboardTranslateY = newWhiteboardTranslateY;
 
     // 分别更新两个容器
     this.updateContainers();
@@ -255,12 +274,35 @@ export class ResizableContainer {
       this.slideContainer.style.transform = `translate(${adjustedSlideX}px, ${adjustedSlideY}px) scale(${this.scale})`;
     }
 
-    // Whiteboard container 也使用 transform scale + translate
+    // Whiteboard container 使用 width/height 缩放 + translate
     if (this.whiteboardContainer) {
-      // 同样使用缩放补偿，保持与 slide 一致的逻辑
-      const adjustedWhiteboardX = this.whiteboardTranslateX / this.scale;
-      const adjustedWhiteboardY = this.whiteboardTranslateY / this.scale;
-      this.whiteboardContainer.style.transform = `translate(${adjustedWhiteboardX}px, ${adjustedWhiteboardY}px) scale(${this.scale})`;
+      // 获取 slide 容器的实际尺寸作为参考基准
+      let slideWidth = 800; // 默认尺寸
+      let slideHeight = 600;
+
+      if (this.slideContainer) {
+        const slideRect = this.slideContainer.getBoundingClientRect();
+        slideWidth = slideRect.width || slideWidth;
+        slideHeight = slideRect.height || slideHeight;
+      }
+
+      // whiteboard 的尺寸应该与 slide 容器在缩放后的实际像素尺寸一致
+      // slide 容器使用了 transform scale，所以实际显示的像素尺寸是初始尺寸 * scale
+      const targetWidth = slideWidth;
+      const targetHeight = slideHeight;
+
+      // 设置 whiteboard 的尺寸，让它与 slide 的视觉尺寸一致
+      this.whiteboardContainer.style.width = `${targetWidth}px`;
+      this.whiteboardContainer.style.height = `${targetHeight}px`;
+
+      // 因为 whiteboard 容器使用 width/height 缩放，而 slide 使用 transform scale
+      // 我们需要调整 whiteboard 的位移来保持与 slide 的视觉重叠
+      // slide 的实际视觉位置：translate(slideTranslateX/scale, slideTranslateY/scale)
+      const slideVisualX = this.slideTranslateX / this.scale;
+      const slideVisualY = this.slideTranslateY / this.scale;
+
+      // whiteboard 直接使用位移，不需要缩放补偿
+      this.whiteboardContainer.style.transform = `translate(${slideVisualX}px, ${slideVisualY}px)`;
     }
   }
 
@@ -273,6 +315,10 @@ export class ResizableContainer {
     this.slideContainer = $slideContainer;
     this.slideContainer.style.transformOrigin = 'top left';
     this.container.appendChild(this.slideContainer);
+  }
+
+  public setWhiteboardView(whiteboardView: any): void {
+    this.whiteboardView = whiteboardView;
   }
 
   public addWhiteboardContainer($whiteboardContainer: HTMLDivElement): void {
