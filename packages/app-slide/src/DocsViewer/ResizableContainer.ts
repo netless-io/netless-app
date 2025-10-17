@@ -4,6 +4,9 @@ export class ResizableContainer {
   private parent: HTMLElement;
   private isDragging: boolean = false;
   private isScaling: boolean = false;
+  private isMoveDragging: boolean = false;
+  private isCommandOrCtrlPressed: boolean = false;
+  private isMPressed: boolean = false;
   private translateX: number = 0;
   private translateY: number = 0;
   private scale: number = 1;
@@ -55,16 +58,17 @@ export class ResizableContainer {
 
 
   private setupEventListeners(): void {
-    // 触摸事件 - 用于拖动和缩放，监听在父元素上
-    this.parent.addEventListener('touchstart', this.handleTouchStart.bind(this), { passive: false });
-    document.addEventListener('touchmove', this.handleTouchMove.bind(this), { passive: false });
-    document.addEventListener('touchend', this.handleTouchEnd.bind(this));
-
     // 鼠标滚轮事件用于拖动和缩放，监听在父元素上
     this.parent.addEventListener('wheel', this.handleWheel.bind(this), { passive: false });
 
-    // 监听键盘事件来停止滚轮拖动
+    // 监听键盘事件
+    document.addEventListener('keydown', this.handleKeydown.bind(this));
     document.addEventListener('keyup', this.handleKeyup.bind(this));
+
+    // 监听鼠标事件（用于拖动）
+    this.container.addEventListener('mousedown', this.handleMouseDown.bind(this));
+    document.addEventListener('mousemove', this.handleMouseMove.bind(this));
+    document.addEventListener('mouseup', this.handleMouseUp.bind(this));
   }
 
   private setupParentResizeObserver(): void {
@@ -88,26 +92,87 @@ export class ResizableContainer {
   }
 
   private handleTouchStart(e: TouchEvent): void {
-    if (e.touches.length === 2) {
-      // 双指触摸 - 开始缩放
-      e.preventDefault();
-      this.isScaling = true;
+    // 检查触摸事件是否发生在我们的容器内或其子元素
+    if (e.touches.length > 0) {
+      const touch = e.touches[0];
+      const targetElement = document.elementFromPoint(touch.clientX, touch.clientY);
+      if (!this.container.contains(targetElement)) {
+        return;
+      }
+    }
 
-      // 计算初始双指距离
-      this.initialTouchDistance = Math.hypot(
+    console.log('[ResizableContainer] handleTouchStart', {
+      touchesLength: e.touches.length,
+      isScaling: this.isScaling,
+      isMoveDragging: this.isMoveDragging,
+      scale: this.scale,
+      target: e.target
+    });
+
+    if (e.touches.length === 2) {
+      // 双指触摸 - 需要判断是缩放还是拖动
+      e.preventDefault();
+
+      // 计算当前双指距离
+      const currentDistance = Math.hypot(
         e.touches[1].clientX - e.touches[0].clientX,
         e.touches[1].clientY - e.touches[0].clientY
       );
 
-      // 记录当前缩放比例
-      this.initialScale = this.scale;
+      // 如果已经处于缩放状态，检查是否要切换到拖动
+      if (this.isScaling || this.isMoveDragging) {
+        // 检查距离变化来判断操作类型
+        const distanceChange = Math.abs(currentDistance - this.initialTouchDistance);
+
+        if (this.isScaling && distanceChange < 10) {
+          // 从缩放切换到拖动
+          this.isScaling = false;
+          this.isMoveDragging = true;
+          // 计算双指中心点作为拖动起始位置
+          this.dragStartX = (e.touches[0].clientX + e.touches[1].clientX) / 2 - this.slideTranslateX;
+          this.dragStartY = (e.touches[0].clientY + e.touches[1].clientY) / 2 - this.slideTranslateY;
+        } else if (this.isMoveDragging && distanceChange > 10) {
+          // 从拖动切换到缩放
+          this.isMoveDragging = false;
+          this.isScaling = true;
+          this.initialTouchDistance = currentDistance;
+          this.initialScale = this.scale;
+        }
+      } else {
+        // 初始状态，根据当前缩放状态决定默认操作
+        if (this.scale > 1.2) {
+          // 已经放大，优先考虑拖动
+          this.isMoveDragging = true;
+          this.initialTouchDistance = currentDistance;
+          // 计算双指中心点作为拖动起始位置
+          this.dragStartX = (e.touches[0].clientX + e.touches[1].clientX) / 2 - this.slideTranslateX;
+          this.dragStartY = (e.touches[0].clientY + e.touches[1].clientY) / 2 - this.slideTranslateY;
+        } else {
+          // 没有放大或放大程度较低，优先考虑缩放
+          this.isScaling = true;
+          this.initialTouchDistance = currentDistance;
+          this.initialScale = this.scale;
+        }
+      }
     } else if (e.touches.length === 1) {
-      // 单指触摸 - 准备拖动
-      // 注意：这里不开始拖动，等移动时再判断
+      // 单指触摸 - 如果当前不是在移动状态，可能是开始拖动
+      if (!this.isMoveDragging && !this.isScaling && this.scale > 1) {
+        this.isMoveDragging = true;
+        this.dragStartX = e.touches[0].clientX - this.slideTranslateX;
+        this.dragStartY = e.touches[0].clientY - this.slideTranslateY;
+      }
     }
   }
 
   private handleTouchMove(e: TouchEvent): void {
+    if (e.touches.length === 2) {
+      console.log('[ResizableContainer] handleTouchMove', {
+        touchesLength: e.touches.length,
+        isScaling: this.isScaling,
+        isMoveDragging: this.isMoveDragging
+      });
+    }
+
     if (e.touches.length === 2 && this.isScaling) {
       // 双指缩放
       e.preventDefault();
@@ -123,15 +188,35 @@ export class ResizableContainer {
       // 对缩放比例应用平滑函数，让缩放更线性且更慢
       const smoothScale = Math.pow(distanceRatio, 0.6); // 指数平滑，0.6让缩放更慢
 
-      const newScale = Math.max(0.5, Math.min(2, this.initialScale * smoothScale)); // 限制缩放范围 0.5x - 2x
+      const newScale = Math.max(0.1, Math.min(2, this.initialScale * smoothScale)); // 限制缩放范围 0.1x - 2.0x
 
       // 计算双指中心点作为缩放中心
       const centerX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
       const centerY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
 
       this.updateScale(centerX, centerY, newScale);
+    } else if (e.touches.length === 2 && this.isMoveDragging) {
+      // 双指拖动移动
+      e.preventDefault();
+
+      // 计算双指中心点作为拖动位置
+      const centerX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
+      const centerY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
+
+      if (!this.isDragging) {
+        this.isDragging = true;
+        this.dragStartX = centerX - this.slideTranslateX;
+        this.dragStartY = centerY - this.slideTranslateY;
+      }
+
+      this.slideTranslateX = centerX - this.dragStartX;
+      this.slideTranslateY = centerY - this.dragStartY;
+      this.whiteboardTranslateX = this.slideTranslateX;
+      this.whiteboardTranslateY = this.slideTranslateY;
+
+      this.updateContainers();
     } else if (e.touches.length === 1 && !this.isScaling) {
-      // 单指拖动
+      // 单指拖动（任何缩放级别都允许）
       e.preventDefault();
 
       if (!this.isDragging) {
@@ -154,35 +239,44 @@ export class ResizableContainer {
       // 所有手指都离开了屏幕
       this.isDragging = false;
       this.isScaling = false;
-    } else if (e.touches.length === 1 && this.isScaling) {
-      // 从双指变为单指，停止缩放
-      this.isScaling = false;
+      this.isMoveDragging = false;
+      this.initialTouchDistance = 0;
+    } else if (e.touches.length === 1) {
+      // 从双指变为单指，停止缩放或拖动
+      if (this.isScaling || this.isMoveDragging) {
+        this.isScaling = false;
+        this.isMoveDragging = false;
+        // 如果变成单指，可以继续单指拖动
+        this.isMoveDragging = true;
+        this.dragStartX = e.touches[0].clientX - this.slideTranslateX;
+        this.dragStartY = e.touches[0].clientY - this.slideTranslateY;
+      }
     }
   }
 
   private handleWheel(e: WheelEvent): void {
-    // Ctrl/Cmd + 滚轮进行缩放
+
+    // Ctrl/Cmd + 滚轮进行缩放（0.1 - 2.0 范围）
     if (e.ctrlKey || e.metaKey) {
       e.preventDefault();
 
       // 使用更温和的缩放增量，允许连续缩放
       const scaleStep = 0.01; // 每次滚动 1% 的变化，更慢的缩放速度
       const scaleDelta = e.deltaY > 0 ? (1 - scaleStep) : (1 + scaleStep);
-      const newScale = Math.max(0.5, Math.min(2, this.scale * scaleDelta));
+      const newScale = Math.max(0.1, Math.min(2, this.scale * scaleDelta)); // 限制缩放范围 0.1x - 2.0x
 
       // 使用鼠标位置作为缩放中心
       this.updateScale(e.clientX, e.clientY, newScale);
     }
-    // Shift + 滚轮进行拖动
-    else if (e.shiftKey && !this.isWheelDragging) {
+    // Mac 触摸板双指拖拽 或 Shift + 滚轮进行拖动（任何缩放级别都可以移动）
+    else if ((e.deltaX !== 0 || e.deltaY !== 0) || e.shiftKey) {
       e.preventDefault();
-      this.isWheelDragging = true;
-      this.wheelDeltaX = 0;
-      this.wheelDeltaY = 0;
-    }
 
-    if (this.isWheelDragging && e.shiftKey) {
-      e.preventDefault();
+      if (!this.isWheelDragging) {
+        this.isWheelDragging = true;
+        this.wheelDeltaX = 0;
+        this.wheelDeltaY = 0;
+      }
 
       this.wheelDeltaX += e.deltaX;
       this.wheelDeltaY += e.deltaY;
@@ -199,9 +293,67 @@ export class ResizableContainer {
     }
   }
 
+  private handleKeydown(e: KeyboardEvent): void {
+    if (e.key === 'Meta' || e.key === 'Control') {
+      this.isCommandOrCtrlPressed = true;
+    }
+    if (e.key === 'm' || e.key === 'M') {
+      this.isMPressed = true;
+    }
+  }
+
+  private calculateMovementBounds() {
+    // 获取容器的尺寸
+    const containerRect = this.container.getBoundingClientRect();
+    const containerWidth = containerRect.width;
+    const containerHeight = containerRect.height;
+
+    // 获取 slide 容器的实际显示尺寸（已缩放）
+    let actualContentWidth = 800; // 默认尺寸
+    let actualContentHeight = 600;
+
+    if (this.slideContainer) {
+      const slideRect = this.slideContainer.getBoundingClientRect();
+      actualContentWidth = slideRect.width || actualContentWidth;
+      actualContentHeight = slideRect.height || actualContentHeight;
+    }
+
+    // 计算边界限制
+    // 由于我们在 updateContainers 中使用了 adjustedSlideX = slideTranslateX / scale
+    // 所以存储的 slideTranslateX 需要除以 scale 才是实际的 CSS transform 值
+
+    // 实际 CSS transform X 的边界
+    const maxCssX = 0; // 不允许 CSS transform X > 0（防止左边空白）
+    const minCssX = containerWidth - actualContentWidth; // 允许向左移动的最大距离
+
+    // 转换为存储的 slideTranslateX 边界（需要乘以 scale）
+    const maxX = maxCssX * this.scale; // 0
+    const minX = minCssX * this.scale;
+
+    const maxCssY = 0; // 不允许 CSS transform Y > 0（防止上边空白）
+    const minCssY = containerHeight - actualContentHeight; // 允许向上移动的最大距离
+
+    const maxY = maxCssY * this.scale; // 0
+    const minY = minCssY * this.scale;
+
+    
+    return {
+      minX,
+      maxX,
+      minY,
+      maxY
+    };
+  }
+
   private handleKeyup(e: KeyboardEvent): void {
     if (e.key === 'Shift') {
       this.isWheelDragging = false;
+    }
+    if (e.key === 'Meta' || e.key === 'Control') {
+      this.isCommandOrCtrlPressed = false;
+    }
+    if (e.key === 'm' || e.key === 'M') {
+      this.isMPressed = false;
     }
   }
 
@@ -354,7 +506,10 @@ export class ResizableContainer {
     this.scale = 1;
     this.isDragging = false;
     this.isScaling = false;
+    this.isMoveDragging = false;
     this.isWheelDragging = false;
+    this.isCommandOrCtrlPressed = false;
+    this.isMPressed = false;
 
     // 清理超时
     if (this.scaleTimeout) {
@@ -364,6 +519,37 @@ export class ResizableContainer {
 
     // 重置两个容器
     this.updateContainers();
+  }
+
+  private handleMouseDown(e: MouseEvent): void {
+    // 检查是否按下了 cmd/ctrl + m 键（任何缩放级别都可以移动）
+    if (this.isCommandOrCtrlPressed && this.isMPressed) {
+      e.preventDefault();
+      this.isDragging = true;
+      this.dragStartX = e.clientX - this.slideTranslateX;
+      this.dragStartY = e.clientY - this.slideTranslateY;
+      this.container.style.cursor = 'grabbing';
+    }
+  }
+
+  private handleMouseMove(e: MouseEvent): void {
+    if (this.isDragging && this.isCommandOrCtrlPressed && this.isMPressed) {
+      e.preventDefault();
+
+      this.slideTranslateX = e.clientX - this.dragStartX;
+      this.slideTranslateY = e.clientY - this.dragStartY;
+      this.whiteboardTranslateX = this.slideTranslateX;
+      this.whiteboardTranslateY = this.slideTranslateY;
+
+      this.updateContainers();
+    }
+  }
+
+  private handleMouseUp(e: MouseEvent): void {
+    if (this.isDragging && this.isCommandOrCtrlPressed && this.isMPressed) {
+      this.isDragging = false;
+      this.container.style.cursor = 'grab';
+    }
   }
 
   public destroy(): void {
@@ -377,11 +563,12 @@ export class ResizableContainer {
     }
 
     // 清理所有事件监听器
-    this.parent.removeEventListener('touchstart', this.handleTouchStart);
-    document.removeEventListener('touchmove', this.handleTouchMove);
-    document.removeEventListener('touchend', this.handleTouchEnd);
     this.parent.removeEventListener('wheel', this.handleWheel);
+    document.removeEventListener('keydown', this.handleKeydown);
     document.removeEventListener('keyup', this.handleKeyup);
+    this.container.removeEventListener('mousedown', this.handleMouseDown);
+    document.removeEventListener('mousemove', this.handleMouseMove);
+    document.removeEventListener('mouseup', this.handleMouseUp);
   }
 
 }
