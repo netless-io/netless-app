@@ -22,13 +22,13 @@ export type { PreviewParams } from "./SlidePreviewer";
 export { SlidePreviewer, default as previewSlide } from "./SlidePreviewer";
 
 export type { Attributes, AddHooks, FreezableSlide };
-export { Slide, SlideController, SlideDocsViewer };
+export { Slide, SlideController, SlideDocsViewer, syncSceneWithSlide, SideEffectManager };
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const usePlugin: (plugin: any) => any = /* @__PURE__ */ Slide.usePlugin.bind(Slide);
 
 export const version = __APP_VERSION__;
 
-export { DefaultUrl, apps, FreezerLength, addHooks };
+export { DefaultUrl, apps, FreezerLength, addHooks, useFreezer, log, logger  };
 
 export { setFreezerLength, getFreezerLength, onCreated, onDestroyed } from "./utils/freezer";
 
