@@ -22,7 +22,7 @@ export type { PreviewParams } from "./SlidePreviewer";
 export { SlidePreviewer, default as previewSlide } from "./SlidePreviewer";
 
 export type { Attributes, AddHooks, FreezableSlide };
-export { Slide };
+export { Slide, SlideController, SlideDocsViewer };
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const usePlugin: (plugin: any) => any = /* @__PURE__ */ Slide.usePlugin.bind(Slide);
 
