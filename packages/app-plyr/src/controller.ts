@@ -409,6 +409,7 @@ export class Controller {
     this.connectToPcmProxyIfPossible(this.playerContainer);
     const useHLS = hlsTypes.includes(String(_type).toLowerCase());
     this.cancleCalibrationProgressTime();
+    const isAutoPlay = !paused;
     if (this.playerContainer) {
       if (useHLS && cannotPlayHLSNatively(this.playerContainer)) {
         const hls = await loadHLS();
@@ -420,10 +421,10 @@ export class Controller {
         controls: ['play', 'progress', 'current-time', 'mute', 'volume'],
         clickToPlay: false,
         youtube: { 
-          autoplay: !paused, 
+          autoplay: isAutoPlay, 
         },
         hideControls: false,
-        autoplay: !paused,
+        autoplay: isAutoPlay,
         volume: this.volumeData,
         muted: this.mutedData,
       });
@@ -479,8 +480,12 @@ export class Controller {
         this.player.on('play', () => {
           if (this.player) {
             const playPermission = this.hasPermission('play');
-            if (playPermission === 'sync' && this.forceSyncOperation.has('play')) {
-              this.willActiveUpdatePlayTimeState();
+            if (playPermission === 'sync') {
+              if (this.forceSyncOperation.has('play')) {
+                this.willActiveUpdatePlayTimeState();
+              } else if (isAutoPlay && !this.player.paused && !this.playTimeState) {
+                this.willActiveUpdatePlayTimeState();
+              }
             }
             this.forceSyncOperation.delete('play');
             // this.context.emitter.emit('playerStatusChange', 'play');

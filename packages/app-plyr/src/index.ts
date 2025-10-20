@@ -67,31 +67,31 @@ const Plyr: NetlessApp<Attributes, any, any, AppResult> = {
       box.$content.appendChild(controller.playerContainer);
       controller.mountPlayer().then(() => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      if ((window as any).__pcmProxy) {
-        let currentApp = controller;
-        const handleVisibilityChange = () => {
-          if (document.visibilityState === "hidden") {
-            console.log("[Plyr] destroy app for pcm proxy.");
-            while (box.$content.firstChild) {
-              box.$content.removeChild(box.$content.firstChild);
-            }
-            currentApp.destroy();
-          } else {
-            console.log("[Plyr] recreate app for pcm proxy.");
-            controller.mountPlayer();
-          }
-        };
+      // if ((window as any).__pcmProxy) {
+      //   let currentApp = controller;
+      //   const handleVisibilityChange = () => {
+      //     if (document.visibilityState === "hidden") {
+      //       console.log("[Plyr] destroy app for pcm proxy.");
+      //       while (box.$content.firstChild) {
+      //         box.$content.removeChild(box.$content.firstChild);
+      //       }
+      //       currentApp.destroy();
+      //     } else {
+      //       console.log("[Plyr] recreate app for pcm proxy.");
+      //       controller.mountPlayer();
+      //     }
+      //   };
 
-        document.addEventListener("visibilitychange", handleVisibilityChange);
-        context.emitter.on("destroy", () => {
-          currentApp.destroy();
-          document.removeEventListener("visibilitychange", handleVisibilityChange);
-        });
-      } else {
+      //   document.addEventListener("visibilitychange", handleVisibilityChange);
+      //   context.emitter.on("destroy", () => {
+      //     currentApp.destroy();
+      //     document.removeEventListener("visibilitychange", handleVisibilityChange);
+      //   });
+      // } else {
         context.emitter.on("destroy", () => {
           controller.destroy();
         });
-      }
+      // }
       });
       return {
         controller
