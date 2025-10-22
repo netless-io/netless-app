@@ -12,6 +12,9 @@ export interface Attributes {
   resourceList: string[];
   previewList: string[];
   customLinks: CustomLink[];
+  slideScale: number;
+  translateX: number;
+  translateY: number;
 }
 
 export type MagixPayload = {

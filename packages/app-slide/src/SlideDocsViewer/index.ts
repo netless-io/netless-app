@@ -30,6 +30,7 @@ export interface SlideDocsViewerConfig {
   baseScenePath: string;
   appId: string;
   urlInterrupter?: (url: string) => Promise<string>;
+  enableScale?: boolean;
   onPagesReady?: (pages: DocsViewerPage[]) => void;
   onNavigate?: (index: number, origin?: string) => void;
 }
@@ -53,6 +54,7 @@ export class SlideDocsViewer {
   protected readonly appId: string;
   protected isViewMounted = false;
   protected justSildeReadonly = false;
+  private enableScale: boolean;
 
   public constructor({
     context,
@@ -63,6 +65,7 @@ export class SlideDocsViewer {
     baseScenePath,
     appId,
     urlInterrupter,
+    enableScale,
     onPagesReady,
     onNavigate,
   }: SlideDocsViewerConfig) {
@@ -73,6 +76,7 @@ export class SlideDocsViewer {
     this.mountWhiteboard = mountWhiteboard;
     this.onNavigate = onNavigate || noop;
     this.baseScenePath = baseScenePath;
+    this.enableScale = enableScale ?? false;
     this.appId = appId;
     this.viewer = new DocsViewer({
       readonly: box.readonly,
@@ -105,31 +109,48 @@ export class SlideDocsViewer {
 
     // 在 render() 之后设置监听器，确保 ResizableContainer 已经创建
     this.sideEffect.add(() => {
-      window["__resizableContainer__"] = this.resizableContainer; // for debug
       const applyScale = (scale: number) => {
         if (this.resizableContainer) {
-          try {
-            this.resizableContainer.scaleContainer(scale);
-          } catch (error) {
-            console.error('[SlideDocsViewer] Failed to apply scale:', error);
-          }
-        } else {
-          console.warn('[SlideDocsViewer] ResizableContainer or scale method not available');
+          this.resizableContainer.scaleContainer(scale);
         }
       };
 
+      // 记录初始状态
+      console.log('[SlideDocsViewer] Initial storage state:', this.context.storage.state);
+      console.log('[SlideDocsViewer] Initial slideScale:', this.context.storage.state.slideScale);
+
       // 应用初始的 slideScale 值（现在 ResizableContainer 应该已经创建）
       if (this.context.storage.state.slideScale !== undefined) {
+        console.log('[SlideDocsViewer] Applying initial slideScale:', this.context.storage.state.slideScale);
         applyScale(this.context.storage.state.slideScale);
+      } else {
+        console.log('[SlideDocsViewer] No initial slideScale found');
       }
 
       const handler: StorageStateChangedListener<Attributes> = (diff) => {
         if (diff.slideScale !== undefined) {
-          applyScale(diff.slideScale);
+          // slideScale 是一个包含 newValue 和 oldValue 的对象
+          const newScale = diff.slideScale.newValue;
+          applyScale(newScale ?? 1);
+        }
+        if (diff.translateX !== undefined || diff.translateY !== undefined) {
+          const currentTranslate = this.resizableContainer.getTranslate();
+          const translateX = diff.translateX ? (diff.translateX.newValue ?? 0.5) : currentTranslate.x;
+          const translateY = diff.translateY ? (diff.translateY.newValue ?? 0.5) : currentTranslate.y;
+          if (this.resizableContainer) {
+            this.resizableContainer.handleNormalizeTranslate(translateX, translateY, {
+              triggerScrollBar: true,
+              triggerSync: false,
+            });
+          }
         }
       };
+
+      console.log('[SlideDocsViewer] Adding storage state listener');
       this.context.storage.onStateChanged.addListener(handler);
+
       return () => {
+        console.log('[SlideDocsViewer] Removing storage state listener');
         this.context.storage.onStateChanged.removeListener(handler);
       };
     });
@@ -148,7 +169,7 @@ export class SlideDocsViewer {
   public render() {
     // 创建 ResizableContainer 来管理 slide 和 whiteboardView
     if (!this.resizableContainer) {
-      this.resizableContainer = new ResizableContainer(this.viewer.$content);
+      this.resizableContainer = new ResizableContainer(this.viewer.$content, this.context, this.enableScale);
     }
 
     // 创建元素
@@ -157,13 +178,8 @@ export class SlideDocsViewer {
     this.renderOverlay();
 
     // 分别添加 slide 和 whiteboardView 到 ResizableContainer
-    this.resizableContainer.addSlideContainer(this.$slide, () => {
-      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-      // @ts-ignore
-      this.slideController?.slide._resizeView();
-    });
+    this.resizableContainer.addSlideContainer(this.$slide);
     this.resizableContainer.addWhiteboardContainer(this.$whiteboardView);
-    // overlay 不参与缩放和拖动，直接添加到父容器
     this.viewer.$content.appendChild(this.$overlay);
     this.sideEffect.addEventListener(window, "keydown", ev => {
       if (this.justSildeReadonly) {
@@ -233,6 +249,7 @@ export class SlideDocsViewer {
       onError: this.onError,
     });
 
+    this.resizableContainer.setSlideObject(this.slideController.slide);
     this.scaleDocsToFit();
     this.sideEffect.add(() => {
       this.whiteboardView.callbacks.on("onSizeUpdated", this.scaleDocsToFit);
@@ -297,6 +314,7 @@ export class SlideDocsViewer {
       this.slideController = null;
     }
     this.viewer.unmount();
+    this.resizableContainer.destroy();
     return this;
   }
 
@@ -483,9 +501,4 @@ export class SlideDocsViewer {
     const title = this.box.title;
     this.reportProgress(100, { pdf: dataUrl, title });
   };
-
-  public destroy() {
-    this.resizableContainer?.destroy();
-    this.sideEffect.flushAll();
-  }
 }

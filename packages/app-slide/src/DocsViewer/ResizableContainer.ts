@@ -1,286 +1,193 @@
+import {Slide} from "@netless/slide";
+import {ScrollBar} from "./ScrollBar";
+import type {AppContext} from "@netless/window-manager";
+import type {Attributes, MagixEvents} from "../typings";
+import type {AppOptions} from "../index";
+
 export class ResizableContainer {
 
+  private root: HTMLDivElement;
   public container: HTMLDivElement;
+  private scrollContainer: HTMLDivElement;
+  public onScaleChanged: ((scale: number) => void) | null = null;
+
   private parent: HTMLElement;
-  private scale: number = 1;
-  private slideTranslateX: number = 0;
-  private slideTranslateY: number = 0;
-  private whiteboardTranslateX: number = 0;
-  private whiteboardTranslateY: number = 0;
-  private resizeObserver: ResizeObserver;
-  private slideContainer: HTMLDivElement | null = null;
   private whiteboardContainer: HTMLDivElement | null = null;
-  private slideLayout: () => void = () => {
-    //ignore
-  };
+  private slide: Slide | null = null;
+  private scale = 1;
+  private resizeObserver: ResizeObserver | null = null;
+  private slideWidth = 1;
+  private slideHeight = 1;
+  private scrollBar: ScrollBar;
+  private context: AppContext<Attributes, MagixEvents, AppOptions>;
 
-  constructor(parent: HTMLElement) {
+  // 每次 scale 后, 重置为居中
+  private translateX = 0.5;
+  private translateY = 0.5;
+
+  private lastTriggerTime = 0;
+  private enableResize: boolean;
+
+  constructor(
+    parent: HTMLElement,
+    context: AppContext<Attributes, MagixEvents, AppOptions>,
+    enableResize: boolean
+  ) {
+    this.enableResize = enableResize || true;
     this.parent = parent;
+    this.context = context;
+    this.root = document.createElement('div');
+    this.root.style.width = '100%';
+    this.root.style.height = '100%';
+    this.root.style.overflow = 'hidden';
+    this.parent.appendChild(this.root);
+    this.scrollContainer = document.createElement('div');
+    this.scrollContainer.setAttribute("data-resizable-scroll", "true");
+    this.scrollContainer.style.width = '100%';
+    this.scrollContainer.style.height = '100%';
+    this.scrollContainer.style.position = 'relative';
+    this.scrollContainer.style.overflow = 'hidden';
     this.container = document.createElement('div');
-    this.setupContainer();
-    this.setupParentResizeObserver();
-  }
+    this.container.style.position = 'relative';
+    this.container.setAttribute("data-resizable-container", "true");
+    this.scrollContainer.appendChild(this.container);
+    this.root.appendChild(this.scrollContainer);
 
-  private setupContainer(): void {
-    this.container.style.cssText = `
-      position: relative;
-      width: 100%;
-      height: 100%;
-      overflow: hidden;
-      user-select: none;
-      touch-action: none;
-      transform-origin: center center;
-    `;
-    this.container.setAttribute('data-resizable-container', 'true');
-    this.parent.appendChild(this.container);
-  }
+    // 初始化滚动条
+    this.scrollBar = new ScrollBar(this.root, this);
 
-  private setupParentResizeObserver(): void {
-    this.resizeObserver = new ResizeObserver((entries) => {
-      for (let entry of entries) {
-        if (entry.target === this.parent) {
-          this.updateContainers();
-        }
-      }
+    this.resizeObserver = new ResizeObserver(() => {
+      this.updateResizableContainer();
     });
-    this.resizeObserver.observe(this.parent);
+    this.resizeObserver.observe(this.scrollContainer);
   }
 
-
-  /**
-   * 缩放到指定比例并更新容器显示
-   * @param to 目标缩放比例
-   * @param centerX 缩放中心的 X 坐标（可选，默认为容器中心）
-   * @param centerY 缩放中心的 Y 坐标（可选，默认为容器中心）
-   */
-  public scaleContainer(to: number, centerX?: number, centerY?: number): void {
-    const newScale = Math.max(0.1, Math.min(4, to)); // 限制缩放范围 0.1x - 4.0x
-
-    if (newScale === this.scale) {
-      return; // 如果缩放比例没有变化，直接返回
-    }
-
-    // 记录缩放前的容器位置和尺寸
-    const containerRect = this.container.getBoundingClientRect();
-
-    // 如果没有提供缩放中心，使用容器中心
-    const relativeX = centerX !== undefined ? centerX - containerRect.left : containerRect.width / 2;
-    const relativeY = centerY !== undefined ? centerY - containerRect.top : containerRect.height / 2;
-
-    // 计算缩放比例
-    const scaleFactor = newScale / this.scale;
-
-    // === Slide 容器计算（使用 transform scale） ===
-    let newSlideTranslateX: number;
-    let newSlideTranslateY: number;
-
-    if (newScale === 1) {
-      // 当缩放为 1 时，slide 回到原点
-      newSlideTranslateX = 0;
-      newSlideTranslateY = 0;
-    } else {
-      // 计算当前 slide 在屏幕上的实际位置（考虑缩放补偿）
-      const currentSlideScreenX = this.slideTranslateX / this.scale;
-      const currentSlideScreenY = this.slideTranslateY / this.scale;
-
-      // 计算缩放中心相对于 slide 内容的位置
-      const centerRelativeToSlideX = relativeX - currentSlideScreenX;
-      const centerRelativeToSlideY = relativeY - currentSlideScreenY;
-
-      // 计算缩放后，缩放中心在新的 slide 坐标系中的位置
-      const newCenterRelativeToSlideX = centerRelativeToSlideX * scaleFactor;
-      const newCenterRelativeToSlideY = centerRelativeToSlideY * scaleFactor;
-
-      // 计算需要调整的位移，使缩放中心对应的点保持在原位置
-      const requiredSlideScreenX = relativeX - newCenterRelativeToSlideX;
-      const requiredSlideScreenY = relativeY - newCenterRelativeToSlideY;
-
-      // 计算新的 slide 逻辑位置（考虑缩放补偿的逆运算）
-      newSlideTranslateX = requiredSlideScreenX * newScale;
-      newSlideTranslateY = requiredSlideScreenY * newScale;
-    }
-
-    // === 更新状态：Slide 和 Whiteboard 联动处理 ===
-    this.scale = newScale;
-    this.slideTranslateX = newSlideTranslateX;
-    this.slideTranslateY = newSlideTranslateY;
-    // whiteboardTranslateX 和 whiteboardTranslateY 根据居中逻辑计算
-
-    // === 直接更新容器显示（合并 updateContainers 逻辑） ===
-
-    // 更新 Slide container 使用 transform scale + translate
-    if (this.slideContainer) {
-      // 对于 transform scale，位移需要除以缩放比例来补偿缩放对位移的影响
-      const adjustedSlideX = this.slideTranslateX / this.scale;
-      const adjustedSlideY = this.slideTranslateY / this.scale;
-      this.slideContainer.style.transform = `translate(${adjustedSlideX}px, ${adjustedSlideY}px) scale(${this.scale})`;
-
-      // 手动触发 slide 内部的 ResizeObserver，因为 transform 不会自动触发
-      this.triggerSlideResizeObserver();
-    }
-
-    // 更新 Whiteboard container 使用 width/height 缩放 + 居中逻辑
-    if (this.whiteboardContainer) {
-      // 获取 parent 容器的 bounding rect
-      const parentRect = this.parent.getBoundingClientRect();
-
-      // whiteboard 的尺寸应该等于 parent bounding rect 的尺寸乘以 scale
-      const targetWidth = parentRect.width * this.scale;
-      const targetHeight = parentRect.height * this.scale;
-
-      // 设置 whiteboard 的尺寸
-      this.whiteboardContainer.style.width = `${targetWidth}px`;
-      this.whiteboardContainer.style.height = `${targetHeight}px`;
-
-      // 白板居中逻辑：计算居中位置 = (parent尺寸 - scaled白板尺寸) / 2
-      const centerX = (parentRect.width - targetWidth) / 2;
-      const centerY = (parentRect.height - targetHeight) / 2;
-
-      // 设置 whiteboard 居中
-      this.whiteboardContainer.style.transform = `translate(${centerX}px, ${centerY}px)`;
-
-      // 更新 whiteboardTranslateX 和 whiteboardTranslateY 为居中位置
-      this.whiteboardTranslateX = centerX;
-      this.whiteboardTranslateY = centerY;
-    }
+  public getTranslate(): {x: number, y: number} {
+    return { x: this.translateX, y: this.translateY };
   }
 
-  /**
-   * 更新容器显示（不计算新的缩放值，只应用当前状态）
-   */
-  private updateContainers(): void {
-    // 更新 Slide container 使用 transform scale + translate
-    if (this.slideContainer) {
-      // 对于 transform scale，位移需要除以缩放比例来补偿缩放对位移的影响
-      const adjustedSlideX = this.slideTranslateX / this.scale;
-      const adjustedSlideY = this.slideTranslateY / this.scale;
-      this.slideContainer.style.transform = `translate(${adjustedSlideX}px, ${adjustedSlideY}px) scale(${this.scale})`;
-
-      // 手动触发 slide 内部的 ResizeObserver，因为 transform 不会自动触发
-      this.triggerSlideResizeObserver();
-    }
-
-    // 更新 Whiteboard container 使用 width/height 缩放 + 居中逻辑
-    if (this.whiteboardContainer) {
-      // 获取 parent 容器的 bounding rect
-      const parentRect = this.parent.getBoundingClientRect();
-
-      // whiteboard 的尺寸应该等于 parent bounding rect 的尺寸乘以 scale
-      const targetWidth = parentRect.width * this.scale;
-      const targetHeight = parentRect.height * this.scale;
-
-      // 设置 whiteboard 的尺寸
-      this.whiteboardContainer.style.width = `${targetWidth}px`;
-      this.whiteboardContainer.style.height = `${targetHeight}px`;
-
-      // 白板居中逻辑：计算居中位置 = (parent尺寸 - scaled白板尺寸) / 2
-      const centerX = (parentRect.width - targetWidth) / 2;
-      const centerY = (parentRect.height - targetHeight) / 2;
-
-      // 设置 whiteboard 居中
-      this.whiteboardContainer.style.transform = `translate(${centerX}px, ${centerY}px)`;
-
-      // 更新 whiteboardTranslateX 和 whiteboardTranslateY 为居中位置
-      this.whiteboardTranslateX = centerX;
-      this.whiteboardTranslateY = centerY;
-    }
-  }
-
-  /**
-   * 手动触发 slide 内部的 ResizeObserver
-   * 因为 transform scale 不会自动触发 ResizeObserver
-   */
-  private triggerSlideResizeObserver(): void {
-    if (!this.slideContainer) return;
-
-    // 先设置 CSS width 为 100% + 1px
-    this.slideContainer.style.width = 'calc(100% + 1px)';
-    this.slideContainer.style.height = 'calc(100% + 1px)';
-
-    // 然后用 setTimeout 修改回来
-    setTimeout(() => {
-      if (this.slideContainer) {
-        // 恢复原始尺寸
-        this.slideContainer.style.width = "100%";
-        this.slideContainer.style.height = "100%";
-      }
-      this.slideLayout();
-    }, 50); // 使用 0ms setTimeout，在下一个事件循环中执行
-  }
-
-  /**
-   * 获取当前缩放比例
-   */
   public getScale(): number {
     return this.scale;
   }
 
-  /**
-   * 设置 slide 容器的位移（whiteboard 会自动居中）
-   * @param x X 轴位移
-   * @param y Y 轴位移
-   */
-  public setTranslation(x: number, y: number): void {
-    this.slideTranslateX = x;
-    this.slideTranslateY = y;
-    // whiteboardTranslateX 和 whiteboardTranslateY 会在 updateContainers 中根据居中逻辑重新计算
-    this.updateContainers();
-  }
-
-  /**
-   * 获取当前位移
-   */
-  public getTranslation(): { x: number; y: number } {
-    return {
-      x: this.slideTranslateX,
-      y: this.slideTranslateY
-    };
-  }
-
-  public addSlideContainer($slideContainer: HTMLDivElement, slideLayout: () => void): void {
-    this.slideContainer = $slideContainer;
-    this.slideContainer.style.transformOrigin = 'top left';
-    this.slideLayout = slideLayout;
-    this.container.appendChild(this.slideContainer);
-  }
-
-  public addWhiteboardContainer($whiteboardContainer: HTMLDivElement): void {
-    this.whiteboardContainer = $whiteboardContainer;
-
-    // 统一使用 top-left 作为 transform origin
-    this.whiteboardContainer.style.transformOrigin = 'top left';
-
-    this.container.appendChild(this.whiteboardContainer);
-  }
-
-  public removeSlideContainer(): void {
-    if (this.slideContainer) {
-      this.container.removeChild(this.slideContainer);
-      this.slideContainer = null;
+  private renderScrollBar(width: number, overflowWidth: number, height: number, overflowHeight: number): void {
+    if (this.scrollBar) {
+      this.scrollBar.render(width, height, overflowWidth, overflowHeight);
     }
   }
 
-  public removeWhiteboardContainer(): void {
+  public setSlideObject(slide: Slide) {
+    this.slide = slide;
+    this.slide.on("renderEnd", this.updateSlideSize);
+  }
+
+  private updateSlideSize = () => {
+    if (this.slide) {
+      let updateContainer = false;
+      if (this.slideWidth !== this.slide.width || this.slideHeight !== this.slide.height) {
+        this.slideWidth = this.slide.width;
+        this.slideHeight = this.slide.height;
+        updateContainer = true;
+      }
+      if (updateContainer) {
+        this.updateResizableContainer();
+      }
+    }
+  };
+
+  public updateResizableContainer() {
+    if (Date.now() - this.lastTriggerTime < 50) {
+      return;
+    }
+    this.lastTriggerTime = Date.now();
+    const parentBounds = this.scrollContainer.getBoundingClientRect();
+    this.container.style.width = `${parentBounds.width * this.scale}px`;
+    this.container.style.height = `${parentBounds.height * this.scale}px`;
+
     if (this.whiteboardContainer) {
-      this.container.removeChild(this.whiteboardContainer);
-      this.whiteboardContainer = null;
+      const whiteboardBounds = this.whiteboardContainer.getBoundingClientRect();
+      if (whiteboardBounds.width / whiteboardBounds.height > this.slideWidth / this.slideHeight) {
+        // 裁剪两边
+        const renderWidth = (whiteboardBounds.height * this.slideWidth / this.slideHeight);
+        const padding = (whiteboardBounds.width - renderWidth) / 2;
+        this.whiteboardContainer.style.clipPath = `inset(0px ${padding}px 0px ${padding}px)`;
+      } else if (whiteboardBounds.width / whiteboardBounds.height < this.slideWidth / this.slideHeight) {
+        // 裁剪上下
+        const renderHeight = (whiteboardBounds.width * this.slideHeight / this.slideWidth);
+        const padding = (whiteboardBounds.height - renderHeight) / 2;
+        this.whiteboardContainer.style.clipPath = `inset(${padding}px 0px ${padding}px 0px)`;
+      }
+    }
+
+    this.translateX = 0.5;
+    this.translateY = 0.5;
+
+    this.renderScrollBar(parentBounds.width, parentBounds.width * this.scale, parentBounds.height, parentBounds.height * this.scale);
+    this.handleNormalizeTranslate(this.translateX, this.translateY, {
+      triggerScrollBar: true,
+      triggerSync: true,
+    });
+  }
+
+  // x, y 范围 0 ~ 1
+  public handleNormalizeTranslate(x: number, y: number, options: {
+    triggerScrollBar: boolean,
+    triggerSync: boolean,
+  }) {
+    if (Math.abs(x - this.translateX) < 0.001 && Math.abs(y - this.translateY) < 0.001 && !options.triggerSync) {
+      return;
+    }
+    const parentBounds = this.scrollContainer.getBoundingClientRect();
+    const selfBounds = this.container.getBoundingClientRect();
+    const translateX = -x * (selfBounds.width - parentBounds.width);
+    const translateY = -y * (selfBounds.height - parentBounds.height);
+    this.translateX = x;
+    this.translateY = y;
+    this.container.style.transform = `translate(${translateX}px, ${translateY}px)`;
+    if (options.triggerScrollBar) {
+      this.scrollBar.handleNormalizeTranslate(x, y);
+    }
+    if (options.triggerSync) {
+      this.context.storage.setState({ translateX: this.translateX, translateY: this.translateY });
     }
   }
 
-  public reset(): void {
-    this.slideTranslateX = 0;
-    this.slideTranslateY = 0;
-    this.whiteboardTranslateX = 0;
-    this.whiteboardTranslateY = 0;
-    this.scale = 1;
+  public scaleContainer(applyScale: number) {
+    if (Math.abs(this.scale - applyScale) < 0.001) {
+      return;
+    }
+    if (applyScale > 1.0) {
+      this.scrollContainer.style.width = 'calc(100% - 6px)';
+      this.scrollContainer.style.height = 'calc(100% - 6px)';
+    } else {
+      this.scrollContainer.style.width = '100%';
+      this.scrollContainer.style.height = '100%';
+    }
+    applyScale = this.enableResize ? applyScale : 1;
+    if (this.onScaleChanged && this.enableResize) {
+      this.onScaleChanged(applyScale);
+    }
+    this.scale = applyScale;
+    setTimeout(() => {
+      this.updateResizableContainer();
+    });
+  }
 
-    // 重置两个容器
-    this.updateContainers();
+  public addSlideContainer(slideContainer: HTMLDivElement) {
+    this.container.appendChild(slideContainer);
+  }
+
+  public addWhiteboardContainer(whiteboardContainer: HTMLDivElement) {
+    this.container.appendChild(whiteboardContainer);
+    this.whiteboardContainer = whiteboardContainer;
+  }
+
+  public getCurrentScale(): number {
+    return this.scale;
   }
 
   public destroy(): void {
     this.resizeObserver?.disconnect();
-    this.container.remove();
+    this.scrollBar?.destroy();
   }
-
 }

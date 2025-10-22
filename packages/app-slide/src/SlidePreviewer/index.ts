@@ -1,7 +1,6 @@
 import { SideEffectManager } from "side-effect-manager";
 import { Slide, SLIDE_EVENTS } from "@netless/slide";
 import { DocsViewer } from "../DocsViewer";
-import { ResizableContainer } from "../DocsViewer/ResizableContainer";
 import { createDocsViewerPages, DefaultUrl } from "../SlideController";
 import { cachedGetBgColor } from "../utils/bgcolor";
 import { clamp } from "../utils/helpers";
@@ -48,7 +47,6 @@ export class SlidePreviewer {
   public debug = import.meta.env.DEV;
 
   public $slide!: HTMLDivElement;
-  public resizableContainer!: ResizableContainer;
 
   protected previewList: string[] = [];
 
@@ -118,20 +116,7 @@ export class SlidePreviewer {
 
   public mount(taskId: string, url: string, resourceList: string[], previewList: string[] = []) {
     this.target.appendChild(this.renderStyle());
-
-    // 创建 ResizableContainer 来管理 slide 和 content
-    if (!this.resizableContainer) {
-      this.resizableContainer = new ResizableContainer(this.target);
-    }
-
-    // 创建 slide 元素并添加到 ResizableContainer
-    this.renderSlideContainer();
-
-    // 分别添加 slide 和 content 到 ResizableContainer
-    this.resizableContainer.addSlideContainer(this.$slide);
-    this.resizableContainer.addWhiteboardContainer(this.viewer.$content);
-
-    // footer 不参与缩放和拖动，直接添加到目标容器
+    this.target.appendChild(this.viewer.$content);
     this.target.appendChild(this.viewer.$footer);
 
     this.slide = new Slide({
@@ -246,9 +231,4 @@ export class SlidePreviewer {
   }
 
   protected namespace = "netless-app-slide";
-
-  public destroy() {
-    this.resizableContainer?.destroy();
-    this.sideEffect.flushAll();
-  }
 }
