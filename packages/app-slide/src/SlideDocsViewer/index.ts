@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import type { ReadonlyTeleBox, AnimationMode, View, AppContext } from "@netless/window-manager";
+import type { ReadonlyTeleBox, AnimationMode, View, AppContext, StorageStateChangedListener } from "@netless/window-manager";
 import type { SlideController, SlideControllerOptions } from "../SlideController";
 
 import { SideEffectManager } from "side-effect-manager";
@@ -102,6 +102,37 @@ export class SlideDocsViewer {
     });
 
     this.render();
+
+    // 在 render() 之后设置监听器，确保 ResizableContainer 已经创建
+    this.sideEffect.add(() => {
+      window["__resizableContainer__"] = this.resizableContainer; // for debug
+      const applyScale = (scale: number) => {
+        if (this.resizableContainer) {
+          try {
+            this.resizableContainer.scaleContainer(scale);
+          } catch (error) {
+            console.error('[SlideDocsViewer] Failed to apply scale:', error);
+          }
+        } else {
+          console.warn('[SlideDocsViewer] ResizableContainer or scale method not available');
+        }
+      };
+
+      // 应用初始的 slideScale 值（现在 ResizableContainer 应该已经创建）
+      if (this.context.storage.state.slideScale !== undefined) {
+        applyScale(this.context.storage.state.slideScale);
+      }
+
+      const handler: StorageStateChangedListener<Attributes> = (diff) => {
+        if (diff.slideScale !== undefined) {
+          applyScale(diff.slideScale);
+        }
+      };
+      this.context.storage.onStateChanged.addListener(handler);
+      return () => {
+        this.context.storage.onStateChanged.removeListener(handler);
+      };
+    });
   }
 
   public $slide!: HTMLDivElement;
@@ -126,7 +157,11 @@ export class SlideDocsViewer {
     this.renderOverlay();
 
     // 分别添加 slide 和 whiteboardView 到 ResizableContainer
-    this.resizableContainer.addSlideContainer(this.$slide);
+    this.resizableContainer.addSlideContainer(this.$slide, () => {
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore
+      this.slideController?.slide._resizeView();
+    });
     this.resizableContainer.addWhiteboardContainer(this.$whiteboardView);
     // overlay 不参与缩放和拖动，直接添加到父容器
     this.viewer.$content.appendChild(this.$overlay);
