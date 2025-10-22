@@ -20,6 +20,7 @@ import styles from "./style.scss?inline";
 
 export type { PreviewParams } from "./SlidePreviewer";
 export { SlidePreviewer, default as previewSlide } from "./SlidePreviewer";
+export { DocsViewer } from "./DocsViewer";
 
 export type { Attributes, AddHooks, FreezableSlide };
 export { Slide, SlideController, SlideDocsViewer, syncSceneWithSlide, SideEffectManager };
