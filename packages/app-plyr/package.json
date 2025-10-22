@@ -1,6 +1,6 @@
 {
   "name": "@netless/app-plyr",
-  "version": "0.2.6-beta.4",
+  "version": "0.2.6-beta.6",
   "description": "Netless App Media Player, based on plyr.io.",
   "repository": "netless-io/netless-app",
   "license": "MIT",
@@ -22,8 +22,8 @@
   },
   "devDependencies": {
     "@types/lodash": "^4.17.20",
-    "hls.js": "^1.1.4",
     "lodash": "^4.17.21",
+    "hls.js": "^1.1.4",
     "plyr": "^3.7.2",
     "prepend-http": "^4.0.0"
   }

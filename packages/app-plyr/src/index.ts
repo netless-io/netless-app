@@ -4,6 +4,9 @@ import { Sync } from "./sync";
 import styles from "./style.scss?inline";
 import { Controller, PlayTimeState } from "./controller";
 
+export { Controller } from "./controller";
+export type { PlayTimeState } from "./controller";
+
 export interface Attributes {
   /** can only set once */
   src: string;
