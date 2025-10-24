@@ -55,12 +55,13 @@ type MagixEventListener = Parameters<
   AppContext<Attributes, MagixEvents>["addMagixEventListener"]
 >[1];
 
-export class SlideController {
+
+export class SlideControllerBase {
   public readonly context: SlideControllerOptions["context"];
-  public readonly slide: Slide;
+  public slide!: Slide;
   public readonly showRenderError: boolean;
   public readonly onRenderError?: (error: Error, pageIndex: number) => void;
-  public readonly onNavigate: (index: number, origin?: string) => void;
+  public readonly onNavigate!: (index: number, origin?: string) => void;
 
   protected readonly room?: Room;
   protected readonly player?: Player;
@@ -82,19 +83,8 @@ export class SlideController {
   // 签名后的预览图
   public previewList: string[] = [];
 
-  public constructor({
-    context,
-    anchor,
-    onRenderStart,
-    onPageChanged,
-    onTransitionStart,
-    onTransitionEnd,
-    onNavigate,
-    onError,
-    onRenderError,
-    showRenderError,
-    invisibleBehavior,
-  }: SlideControllerOptions) {
+  public constructor(props: SlideControllerOptions) {
+    const { context, onRenderStart, onPageChanged, onTransitionStart, onTransitionEnd, onNavigate, onError, onRenderError, showRenderError, invisibleBehavior } = props;
     this.invisibleBehavior = invisibleBehavior ?? "frozen";
     this.onRenderStart = onRenderStart;
     this.onPageChanged = onPageChanged;
@@ -109,15 +99,15 @@ export class SlideController {
     this.room = context.getRoom();
     this.player = this.room ? undefined : (context.getDisplayer() as Player);
     setRoomLogger((this.room || this.player) as Displayer);
-    this.slide = this.createSlide(anchor, {
-      whiteTracker: getRoomTracker(context.getDisplayer()),
-    });
+    // this.slide = this.createSlide(anchor, {
+    //   whiteTracker: getRoomTracker(context.getDisplayer()),
+    // });
 
     // the adder does not need to sync state
     this.syncStateOnceFlag = !this.context.isAddApp;
     this.visible = document.visibilityState === "visible";
     this.savedIsFrozen = false;
-    this.initialize();
+    // this.initialize();
   }
 
   public ready = false;
@@ -406,4 +396,14 @@ export class SlideController {
       }
     }
   };
+}
+
+export class SlideController extends SlideControllerBase {
+  public constructor(props: SlideControllerOptions) {
+    super(props)
+    this.slide = this.createSlide(props.anchor, {
+      whiteTracker: getRoomTracker(props.context.getDisplayer()),
+    });
+    this.initialize();
+  }
 }
