@@ -12,6 +12,7 @@ import {
   EmptyAttributes,
   syncSceneWithSlide,
   SlideController,
+  SlideControllerBase
 } from "./SlideController";
 import { SlideDocsViewer } from "./SlideDocsViewer";
 import { apps, FreezerLength, addHooks, useFreezer } from "./utils/freezer";
@@ -23,7 +24,7 @@ export { SlidePreviewer, default as previewSlide } from "./SlidePreviewer";
 export { DocsViewer } from "./DocsViewer";
 
 export type { Attributes, AddHooks, FreezableSlide };
-export { Slide, SlideController, SlideDocsViewer, syncSceneWithSlide, SideEffectManager };
+export { Slide, SlideController, SlideDocsViewer, syncSceneWithSlide, SideEffectManager, SlideControllerBase };
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const usePlugin: (plugin: any) => any = /* @__PURE__ */ Slide.usePlugin.bind(Slide);
 
