@@ -17,7 +17,7 @@ import { SideEffectManager } from "side-effect-manager";
 import { Slide, SLIDE_EVENTS } from "@netless/slide";
 import { clamp } from "../utils/helpers";
 import { cachedGetBgColor } from "../utils/bgcolor";
-import { logger, log, verbose, setRoomLogger } from "../utils/logger";
+import { log, verbose, setRoomLogger } from "../utils/logger";
 import { getRoomTracker } from "../utils/tracker";
 export { syncSceneWithSlide, createDocsViewerPages } from "./helpers";
 
@@ -30,6 +30,9 @@ export const EmptyAttributes: Attributes = {
   resourceList: [],
   previewList: [],
   customLinks: [],
+  slideScale: 1,
+  translateX: 0.5,
+  translateY: 0.5,
 };
 
 export interface SlideControllerOptions {
@@ -289,7 +292,7 @@ export class SlideControllerBase {
       anchor,
       interactive: true,
       mode: "interactive",
-      controller: logger.enable,
+      controller: false,
       enableGlobalClick: options.enableGlobalClick ?? true,
       renderOptions: {
         minFPS: options.minFPS || 25,

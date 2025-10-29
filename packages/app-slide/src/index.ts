@@ -76,6 +76,7 @@ export interface AppOptions
   invisibleBehavior?: "frozen" | "pause";
   /** just readonly, no operate silder */
   justSildeReadonly?: true;
+  enableScale?: boolean;
 }
 
 export interface ILogger {
@@ -189,6 +190,7 @@ const SlideApp: NetlessApp<Attributes, MagixEvents, AppOptions, AppResult> = {
       baseScenePath,
       appId: context.appId,
       urlInterrupter: context.getAppOptions()?.urlInterrupter,
+      enableScale: context.getAppOptions()?.enableScale ?? false,
       onPagesReady: ({ length }) => {
         const index = docsViewer?.viewer.pageIndex || 0;
         context.dispatchAppEvent("pageStateChange", { index, length });
@@ -243,6 +245,63 @@ const SlideApp: NetlessApp<Attributes, MagixEvents, AppOptions, AppResult> = {
     docsViewer.mount();
 
     return {
+      onScaleChanged: (cb: (scale: number) => void) => {
+        if (!docsViewer) {
+          return;
+        }
+        docsViewer.resizableContainer.onScaleChanged = cb;
+      },
+      scaleView: (to: number) => {
+        let applyScale = Number(to);
+        if (Number.isNaN(applyScale)) {
+          applyScale = 1;
+        }
+        if (applyScale < 1.0) {
+          applyScale = 1.0;
+        }
+        if (applyScale > 4.0) {
+          applyScale = 4.0;
+        }
+
+        context.storage.setState({ slideScale: applyScale });
+        context.storage.setState({ translateX: 0.5, translateY: 0.5 });
+        docsViewer?.resizableContainer.scaleContainer(applyScale);
+      },
+      getViewScale: () => {
+        return docsViewer?.resizableContainer.getScale();
+      },
+      translateView: (offsetX: number, offsetY: number) => {
+        if (docsViewer?.resizableContainer) {
+          const container = docsViewer.resizableContainer;
+          const parentBounds = context.getBox().$content.getBoundingClientRect();
+          const containerBounds = container.container.getBoundingClientRect();
+
+          // 计算当前的最大可滚动像素范围
+          const maxScrollX = containerBounds.width - parentBounds.width;
+          const maxScrollY = containerBounds.height - parentBounds.height;
+
+          if (maxScrollX > 0 || maxScrollY > 0) {
+            // 获取当前标准化位置 (0 ~ 1)
+            const currentX = container['translateX'] ?? 0.5;
+            const currentY = container['translateY'] ?? 0.5;
+
+            // 将像素偏移转换为标准化偏移
+            const normalizedDeltaX = maxScrollX > 0 ? offsetX / maxScrollX : 0;
+            const normalizedDeltaY = maxScrollY > 0 ? offsetY / maxScrollY : 0;
+
+            // 计算新的标准化位置
+            const newX = Math.max(0, Math.min(1, currentX + normalizedDeltaX));
+            const newY = Math.max(0, Math.min(1, currentY + normalizedDeltaY));
+
+            // 存储到 context.storage 实现跨客户端同步
+            context.storage.setState({ translateX: newX, translateY: newY });
+            container.handleNormalizeTranslate(newX, newY, {
+              triggerScrollBar: true,
+              triggerSync: false,
+            });
+          }
+        }
+      },
       setSildeReadonly: (bol: boolean) => {
         docsViewer?.setJustSildeReadonly(bol);
       },
