@@ -215,11 +215,11 @@ export class Controller {
       console.log('[app plyr] willSyncPlayerState', volume, muted, playTimeState);
       if (isNumber(volume)) {
         // this.notSyncOperation.add('volume');
-        this.player.volume = volume;
+        this.player.volume = volume as number;
       }
       if (isBoolean(muted)) {
         // this.notSyncOperation.add('muted');
-        this.player.muted = muted;
+        this.player.muted = muted as boolean;
       }
       if (playTimeState) {
         const progressTime = this.progressTime / 1000;
@@ -497,7 +497,7 @@ export class Controller {
           if (this.player) {
             const playPermission = this.hasPermission('play');
             if (playPermission === 'sync' && this.forceSyncOperation.has('play')) {
-              console.log('[app plyr] pause 0000, paused:', this.player?.paused);
+              console.log('[app plyr] pause by sync, paused:', this.player?.paused);
               this.willActiveUpdatePlayTimeState();
             }
             this.forceSyncOperation.delete('play');
