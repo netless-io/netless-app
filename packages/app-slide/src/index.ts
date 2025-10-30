@@ -96,6 +96,10 @@ export interface AppResult {
   prevPage: () => boolean;
   jumpToPage: (page: number) => boolean;
   setSildeReadonly: (bol: boolean) => void;
+  onScaleChanged: (cb: (scale: number) => void) => void;
+  scaleView: (to: number) => void;
+  getViewScale: () => number | undefined;
+  translateView: (offsetX: number, offsetY: number) => void;
 }
 
 const SlideApp: NetlessApp<Attributes, MagixEvents, AppOptions, AppResult> = {
