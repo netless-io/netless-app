@@ -26,18 +26,22 @@ export interface Attributes {
   provider?: "youtube" | "vimeo";
   owner?: string;
   iconUrl?: string;
+  syncVolume?: boolean; // 是否同步音量，默认同步
+  syncMuted?: boolean; // 是否同步静音，默认同步
 }
 
 export interface AppResult {
   controller?: Controller;
 }
 
-const DefaultAttributes: Pick<Attributes, "volume" | "paused" | "muted" | "currentTime" | "useNewPlayer"> = {
+const DefaultAttributes: Pick<Attributes, "volume" | "paused" | "muted" | "currentTime" | "useNewPlayer" | "syncVolume" | "syncMuted"> = {
   volume: 1,
   paused: true,
   muted: false,
   currentTime: 0,
   useNewPlayer: false,
+  syncVolume: true,
+  syncMuted: true,
 };
 
 const Plyr: NetlessApp<Attributes, any, any, AppResult> = {

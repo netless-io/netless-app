@@ -54,7 +54,7 @@ export class Controller {
 
   public constructor(context: AppContext<Attributes>) {
     this.context = context;
-    const { src, provider, type, paused, poster } = this.context.storage.state;
+    const { src, provider, type, poster } = this.context.storage.state;
     const _type = provider ? undefined : type || guessTypeFromSrc(src);
     this.playerContainer = this.createPlayerContainer({ src, poster, provider, type: _type });
     (window as any).plyrController = this;
@@ -143,9 +143,14 @@ export class Controller {
   get duration(): number {
     return this.player?.duration || 0;
   }
-
   private hasPermission = (_operation: PlayerOperationType):PermissionType => {
     // todo 如果客户需要更细粒度的权限控制，可以在这里添加
+    if (_operation === 'volume' && !this.context.storage.state.syncVolume) {
+      return 'local';
+    }
+    if (_operation === 'muted' && !this.context.storage.state.syncMuted) {
+      return 'local';
+    }
     if (this.context.getIsWritable()) {
       return 'sync';
     }
@@ -165,10 +170,10 @@ export class Controller {
         muted?: boolean;
         playTimeState?: PlayTimeState;
     } = {};
-    if (this.player.volume !== this.volumeData) {
+    if (this.player.volume !== this.volumeData && this.context.storage.state.syncVolume) {
       willUpdateAttr.volume = this.volumeData;
     }
-    if (this.player.muted !== this.mutedData) {
+    if (this.player.muted !== this.mutedData && this.context.storage.state.syncMuted) {
       willUpdateAttr.muted = this.mutedData;
     }
     const playTimeState = this.playTimeState;
@@ -269,7 +274,6 @@ export class Controller {
     try {
       loop++;
       await this.player.play();
-      // this.checkPlayMuted();
     } catch (error) {
       console.error('[app plyr] play error', error);
       if (this.player) {
@@ -279,57 +283,6 @@ export class Controller {
       }
     }
   }
-
-  // private checkPlayMuted = () => {
-  //   setTimeout(async () => {
-  //     if (!this.player) {
-  //       return;
-  //     }
-  //     if (this.player.muted !== this.mutedData) {
-  //       const mutedDom = this.player.elements.container?.querySelector('.plyr__volume button') as HTMLButtonElement;
-  //       // mutedDom.click();
-  //       // try {
-  //       //   const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false })
-  //       //   console.log("设备权限已获取，自动播放限制可能已解除");
-  //       //   stream.getTracks().forEach(track => track.stop());
-  //       // } catch (error) {
-  //       //   console.log("权限请求失败", error);
-  //       // }
-  //       // 在页面初始化时，尝试请求用户媒体权限
-        
-  //       // .then(function(stream) {
-  //       //   // 权限获取成功！此时浏览器的自动播放策略可能会放宽
-  //       //   console.log("设备权限已获取，自动播放限制可能已解除");
-          
-  //       //   // 注意：这里我们并不真正使用这个stream，目的是获取权限
-  //       //   // 关闭获取到的媒体轨道
-  //       //   stream.getTracks().forEach(track => track.stop());
-          
-  //       //   // 现在尝试播放你的背景音乐
-  //       //   const audio = new Audio('your-audio.mp3');
-  //       //   audio.play().catch(e => console.error("最终还是失败了:", e));
-  //       // })
-  //       // .catch(function(err) {
-  //       //   // 用户拒绝了权限请求或发生错误，自动播放依然会被阻止
-  //       //   console.log("权限请求失败", err);
-  //       //   // 此时需要降级到方案一，引导用户交互
-  //       // });
-
-  //       // mutedDom.addEventListener('pointerdown', (e)=>{
-  //       //   console.log('[app plyr] checkPlayMuted pointerdown===>', e);
-  //       // });
-  //       // mutedDom.click();
-  //       // 模拟一个pointerdown事件
-  //       // const pointerdownEvent = new PointerEvent('pointerdown', {
-  //       //   bubbles: true,
-  //       //   cancelable: true,
-  //       //   composed: true,
-  //       // });
-  //       // console.log('[app plyr] checkPlayMuted====>', mutedDom, pointerdownEvent);
-  //       // mutedDom.dispatchEvent(pointerdownEvent);
-  //     }
-  //   }, 1000);
-  // }
 
   private createYoutubeContainer(src: string, poster?: string): HTMLDivElement {
     const container = document.createElement('div');

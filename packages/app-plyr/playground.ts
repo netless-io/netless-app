@@ -14,6 +14,8 @@ const options: PlaygroundConfigs<Attributes> = [
       type: "video/mp4",
       useNewPlayer: true,
       paused: false,
+      // syncVolume: false,
+      // syncMuted: false,
     },
   },
   {
