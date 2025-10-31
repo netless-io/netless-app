@@ -18,7 +18,7 @@ export class ResizableContainer {
   private resizeObserver: ResizeObserver | null = null;
   private slideWidth = 1;
   private slideHeight = 1;
-  private scrollBar: ScrollBar;
+  private scrollBar: ScrollBar | null = null;
   private context: AppContext<Attributes, MagixEvents, AppOptions>;
 
   // 每次 scale 后, 重置为居中
@@ -33,7 +33,7 @@ export class ResizableContainer {
     context: AppContext<Attributes, MagixEvents, AppOptions>,
     enableResize: boolean
   ) {
-    this.enableResize = enableResize || true;
+    this.enableResize = enableResize;
     this.parent = parent;
     this.context = context;
     this.root = document.createElement('div');
@@ -53,8 +53,10 @@ export class ResizableContainer {
     this.scrollContainer.appendChild(this.container);
     this.root.appendChild(this.scrollContainer);
 
-    // 初始化滚动条
-    this.scrollBar = new ScrollBar(this.root, this);
+    if (this.enableResize) {
+      // 初始化滚动条
+      this.scrollBar = new ScrollBar(this.root, this);
+    }
 
     this.resizeObserver = new ResizeObserver(() => {
       this.updateResizableContainer();
@@ -104,7 +106,7 @@ export class ResizableContainer {
     this.container.style.width = `${parentBounds.width * this.scale}px`;
     this.container.style.height = `${parentBounds.height * this.scale}px`;
 
-    if (this.whiteboardContainer) {
+    if (this.whiteboardContainer && this.enableResize) {
       const whiteboardBounds = this.whiteboardContainer.getBoundingClientRect();
       if (whiteboardBounds.width / whiteboardBounds.height > this.slideWidth / this.slideHeight) {
         // 裁剪两边
@@ -145,7 +147,7 @@ export class ResizableContainer {
     this.translateY = y;
     this.container.style.transform = `translate(${translateX}px, ${translateY}px)`;
     if (options.triggerScrollBar) {
-      this.scrollBar.handleNormalizeTranslate(x, y);
+      this.scrollBar?.handleNormalizeTranslate(x, y);
     }
     if (options.triggerSync) {
       this.context.storage.setState({ translateX: this.translateX, translateY: this.translateY });
@@ -153,7 +155,7 @@ export class ResizableContainer {
   }
 
   public scaleContainer(applyScale: number) {
-    if (Math.abs(this.scale - applyScale) < 0.001) {
+    if (Math.abs(this.scale - applyScale) < 0.001 || !this.enableResize) {
       return;
     }
     if (applyScale > 1.0) {
