@@ -93,6 +93,9 @@ $namespace: $slide-namespace;
   align-items: center;
   padding: 0 16px;
   border-top: 1px solid #eeeef7;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  -user-select: none;
   color: #191919;
 }
 
