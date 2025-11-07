@@ -20,21 +20,31 @@ export interface Attributes {
   muted: boolean;
   currentTime: number;
   hostTime: number;
-  useNewPlayer: boolean;
-  playTimeState?: PlayTimeState;
-
   provider?: "youtube" | "vimeo";
   owner?: string;
   iconUrl?: string;
-  syncVolume?: boolean; // 是否同步音量，默认同步
-  syncMuted?: boolean; // 是否同步静音，默认同步
+  /** 播放时间状态 */
+  playTimeState?: PlayTimeState;
+  /** 是否使用新的同步plyr逻辑 */
+  useNewPlayer: boolean;
+  /** 是否使用自定义播控组件 */
+  useCustomControls?: boolean;
+  /** 是否同步音量数据，默认同步 */
+  syncVolume?: boolean;
+  /** 是否同步静音数据，默认同步 */
+  syncMuted?: boolean;
+  /** 自定义播控组件标题 */
+  customControlsTitle?: string;
 }
 
 export interface AppResult {
   controller?: Controller;
 }
 
-const DefaultAttributes: Pick<Attributes, "volume" | "paused" | "muted" | "currentTime" | "useNewPlayer" | "syncVolume" | "syncMuted"> = {
+const DefaultAttributes: Pick<
+  Attributes,
+  "volume" | "paused" | "muted" | "currentTime" | "useNewPlayer" | "syncVolume" | "syncMuted"
+> = {
   volume: 1,
   paused: true,
   muted: false,
@@ -52,7 +62,9 @@ const Plyr: NetlessApp<Attributes, any, any, AppResult> = {
   },
   setup(context) {
     const storage = context.storage;
-    storage.ensureState(DefaultAttributes);
+    if (context.getIsWritable()) {
+      storage.ensureState(DefaultAttributes);
+    }
 
     if (!storage.state.src) {
       context.emitter.emit("destroy", {
@@ -70,38 +82,41 @@ const Plyr: NetlessApp<Attributes, any, any, AppResult> = {
     box.mountStyles(styles);
 
     if (storage.state.useNewPlayer) {
-      let controller = new Controller(context);
+      const controller = new Controller(context);
       box.$content.appendChild(controller.playerContainer);
       controller.mountPlayer().then(() => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      // if ((window as any).__pcmProxy) {
-      //   let currentApp = controller;
-      //   const handleVisibilityChange = () => {
-      //     if (document.visibilityState === "hidden") {
-      //       console.log("[Plyr] destroy app for pcm proxy.");
-      //       while (box.$content.firstChild) {
-      //         box.$content.removeChild(box.$content.firstChild);
-      //       }
-      //       currentApp.destroy();
-      //     } else {
-      //       console.log("[Plyr] recreate app for pcm proxy.");
-      //       controller.mountPlayer();
-      //     }
-      //   };
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        // if ((window as any).__pcmProxy) {
+        //   let currentApp = controller;
+        //   const handleVisibilityChange = () => {
+        //     if (document.visibilityState === "hidden") {
+        //       console.log("[Plyr] destroy app for pcm proxy.");
+        //       while (box.$content.firstChild) {
+        //         box.$content.removeChild(box.$content.firstChild);
+        //       }
+        //       currentApp.destroy();
+        //     } else {
+        //       console.log("[Plyr] recreate app for pcm proxy.");
+        //       controller.mountPlayer();
+        //     }
+        //   };
 
-      //   document.addEventListener("visibilitychange", handleVisibilityChange);
-      //   context.emitter.on("destroy", () => {
-      //     currentApp.destroy();
-      //     document.removeEventListener("visibilitychange", handleVisibilityChange);
-      //   });
-      // } else {
+        //   document.addEventListener("visibilitychange", handleVisibilityChange);
+        //   context.emitter.on("destroy", () => {
+        //     currentApp.destroy();
+        //     document.removeEventListener("visibilitychange", handleVisibilityChange);
+        //   });
+        // } else {
+        if (controller.customControls) {
+          box.$content.appendChild(controller.customControls.ui);
+        }
         context.emitter.on("destroy", () => {
           controller.destroy();
         });
-      // }
+        // }
       });
       return {
-        controller
+        controller,
       };
     }
 

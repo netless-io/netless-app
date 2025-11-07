@@ -7,15 +7,32 @@ const options: PlaygroundConfigs<Attributes> = [
     kind: "Plyr",
     src: () => import("./src"),
     options: {
-      title: "MP4",
+      title: "MP4111",
     },
     attributes: {
       src: "https://flat-storage.oss-accelerate.aliyuncs.com/cloud-storage/2022-03/28/e35a6676-aa5d-4a61-8f17-87e626b7d1b7/e35a6676-aa5d-4a61-8f17-87e626b7d1b7.mp4",
       type: "video/mp4",
       useNewPlayer: true,
       paused: false,
-      // syncVolume: false,
-      // syncMuted: false,
+      syncVolume: false,
+      syncMuted: false,
+    },
+  },
+  {
+    kind: "Plyr",
+    src: () => import("./src"),
+    options: {
+      title: "MP4",
+    },
+    attributes: {
+      src: "https://cdn.plyr.io/static/demo/View_From_A_Blue_Moon_Trailer-576p.mp4",
+      type: "video/mp4",
+      useNewPlayer: true,
+      paused: false,
+      syncVolume: false,
+      syncMuted: false,
+      useCustomControls: true,
+      customControlsTitle: "自定义标题",
     },
   },
   {

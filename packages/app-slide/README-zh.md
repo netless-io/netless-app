@@ -46,9 +46,9 @@ manager.addApp({
       "https://convertcdn.netless.group/test/dynamicConvert/8ed5cce449874494a9ca7894b39415fb/jsonOutput/slide-3.json",
     ],
     customLinks: [
-      { pageIndex: 1, shapeId: 'slide-19', link: 'https://www.aaa.com'},
-      { pageIndex: 1, shapeId: 'slide-22', link: 'https://www.bbb.com'}
-    ]
+      { pageIndex: 1, shapeId: "slide-19", link: "https://www.aaa.com" },
+      { pageIndex: 1, shapeId: "slide-22", link: "https://www.bbb.com" },
+    ],
   } as SlideAttributes,
 });
 ```
