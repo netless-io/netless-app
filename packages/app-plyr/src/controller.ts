@@ -949,6 +949,9 @@ export class CustomPlyrControls {
   }
 
   private syncPlay = () => {
+    if (!this.controller.context.getIsWritable()) {
+      return;
+    }
     if (this.PlayButton.classList.contains("playing")) {
       this.controller.pause();
     } else {
@@ -970,10 +973,16 @@ export class CustomPlyrControls {
    * @param seekTime 播放进度, 单位秒
    */
   private syncSeek = (seekTime: number) => {
+    if (!this.controller.context.getIsWritable()) {
+      return;
+    }
     this.controller.seekTime(seekTime);
   };
 
   private eventSeek = (e: PointerEvent) => {
+    if (!this.controller.context.getIsWritable()) {
+      return;
+    }
     const offsetX = e.offsetX;
     const width = this.ProgressSliderContainer.offsetWidth;
     const progress = offsetX / width;
@@ -997,6 +1006,9 @@ export class CustomPlyrControls {
     if (e.cancelable) {
       e.preventDefault();
     }
+    if (!this.controller.context.getIsWritable()) {
+      return;
+    }
     this._isDraggingProgress = true;
     const offsetX = e.offsetX + this.ProgressSliderButton.offsetLeft;
     this.dragStartX = [e.clientX, offsetX];
@@ -1008,6 +1020,9 @@ export class CustomPlyrControls {
     e.stopPropagation();
     if (e.cancelable) {
       e.preventDefault();
+    }
+    if (!this.controller.context.getIsWritable()) {
+      return;
     }
     if (!this.dragStartX) {
       return;
@@ -1028,6 +1043,9 @@ export class CustomPlyrControls {
     e.stopPropagation();
     if (e.cancelable) {
       e.preventDefault();
+    }
+    if (!this.controller.context.getIsWritable()) {
+      return;
     }
     if (!this.dragStartX) {
       return;
