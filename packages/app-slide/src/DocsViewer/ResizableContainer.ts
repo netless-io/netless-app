@@ -25,7 +25,6 @@ export class ResizableContainer {
   private translateX = 0.5;
   private translateY = 0.5;
 
-  private lastTriggerTime = 0;
   private enableResize: boolean;
 
   constructor(
@@ -98,10 +97,6 @@ export class ResizableContainer {
   };
 
   public updateResizableContainer() {
-    if (Date.now() - this.lastTriggerTime < 50) {
-      return;
-    }
-    this.lastTriggerTime = Date.now();
     const parentBounds = this.scrollContainer.getBoundingClientRect();
     this.container.style.width = `${parentBounds.width * this.scale}px`;
     this.container.style.height = `${parentBounds.height * this.scale}px`;
