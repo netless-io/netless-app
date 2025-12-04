@@ -18,6 +18,7 @@ import { SlideDocsViewer } from "./SlideDocsViewer";
 import { apps, FreezerLength, addHooks, useFreezer } from "./utils/freezer";
 import { log, logger } from "./utils/logger";
 import styles from "./style.scss?inline";
+import { renderSceneWithSlide } from "./SlideController/helpers";
 
 export type { PreviewParams } from "./SlidePreviewer";
 export { SlidePreviewer, default as previewSlide } from "./SlidePreviewer";
@@ -133,14 +134,19 @@ const SlideApp: NetlessApp<Attributes, MagixEvents, AppOptions, AppResult> = {
     const baseScenePath = context.getInitScenePath() as string;
 
     let docsViewer: SlideDocsViewer | null = null;
-
     const onPageChanged = (page: number) => {
       const room = context.getRoom();
       if (docsViewer && docsViewer.slideController) {
         let synced = false;
-        if (room && context.getIsWritable()) {
-          syncSceneWithSlide(room, context, docsViewer.slideController.slide, baseScenePath);
-          synced = true;
+        if (room) {
+          const windowManager = context.getWindowManager();
+          if (windowManager._appliancePlugin) {
+            renderSceneWithSlide(room, context, docsViewer.slideController.slide, baseScenePath, windowManager._appliancePlugin, false);
+            synced = true;
+          } else if (context.getIsWritable()) {
+            syncSceneWithSlide(room, context, docsViewer.slideController.slide, baseScenePath);
+            synced = true;
+          }
         }
         log("[Slide] page to", page, synced ? "(synced)" : "");
         docsViewer.viewer.setPageIndex(page - 1);
@@ -171,12 +177,18 @@ const SlideApp: NetlessApp<Attributes, MagixEvents, AppOptions, AppResult> = {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (window as any).slideController = slideController;
       }
-      slideController.readyPromise.then(options.onReady).then(() => {
+      slideController.readyPromise.then(options.onReady).then(async () => {
         const room = context.getRoom();
         let synced = false;
-        if (room && context.getIsWritable()) {
-          syncSceneWithSlide(room, context, slideController.slide, baseScenePath);
-          synced = true;
+        if (room) {
+          const windowManager = context.getWindowManager();
+          if (windowManager._appliancePlugin) {
+            renderSceneWithSlide(room, context, slideController.slide, baseScenePath, windowManager._appliancePlugin, true);
+            synced = true;
+          } else if (context.getIsWritable()) {
+            syncSceneWithSlide(room, context, slideController.slide, baseScenePath);
+            synced = true;
+          }
         }
         const page = slideController.slide.slideState.currentSlideIndex;
         log("[Slide] page to", page, synced ? "(synced)" : "", "(on ready)");

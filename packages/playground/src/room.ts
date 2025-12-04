@@ -6,6 +6,13 @@ import { ApplianceNames, DeviceType, WhiteWebSdk } from "white-web-sdk";
 
 import { QueryVersion, store, type RoomInfo } from "./common";
 import { clearQueryString, createRoom, persistStore } from "./common";
+import {
+  ApplianceMultiPlugin,
+  AppliancePluginOptions,
+  UseWorkerType,
+} from "@netless/appliance-plugin";
+import fullWorkerString from "@netless/appliance-plugin/dist/fullWorker.js?raw";
+import subWorkerString from "@netless/appliance-plugin/dist/subWorker.js?raw";
 
 export const sdk = new WhiteWebSdk({
   appIdentifier: import.meta.env.VITE_APPID,
@@ -68,7 +75,7 @@ export async function joinRoom(info: RoomInfo): Promise<Room> {
   const room = await sdk.joinRoom({
     ...info,
     uid,
-    invisiblePlugins: [WindowManager],
+    invisiblePlugins: [WindowManager as any, ApplianceMultiPlugin],
     useMultiViews: true,
     disableNewPencil: false,
     disableMagixEventDispatchLimit: true,
@@ -114,22 +121,78 @@ export async function reset({
   }
 }
 
-export function init(container: HTMLElement) {
-  WindowManager.mount({
+export async function init(container: HTMLElement) {
+  const manager = await WindowManager.mount({
     room,
     container,
     chessboard: false,
     cursor: true,
     debug: true,
     prefersColorScheme: "auto",
-  }).then(async manager => {
-    window.manager = manager;
-    await manager.switchMainViewToWriter();
-    const tool = store.getItem("currentApplianceName") as ApplianceNames;
-    if (tool) {
-      manager.mainView.setMemberState({ currentApplianceName: tool });
-    }
+    supportAppliancePlugin: true,
+  })
+  const fullWorkerBlob = new Blob([fullWorkerString], {
+    type: "text/javascript",
   });
+  const fullWorkerUrl = URL.createObjectURL(fullWorkerBlob);
+  const subWorkerBlob = new Blob([subWorkerString], {
+    type: "text/javascript",
+  });
+  const subWorkerUrl = URL.createObjectURL(subWorkerBlob);
+  const pluginOptions: AppliancePluginOptions = {
+    cdn: {
+      fullWorkerUrl,
+      subWorkerUrl,
+    },
+    extras: {
+      useSimple: true,
+      // useWorker,
+      // canvasOpt: {
+      //   contextType: "2d",
+      // },
+      cursor: {
+        enable: false,
+        expirationTime: 500,
+        moveDelayTime: 300,
+      },
+      syncOpt: {
+        interval: 100,
+        smoothSync: false,
+      },
+      bezier: {
+        enable: false,
+        maxDrawCount: 180,
+      },
+      textEditor: {
+        showFloatBar: false,
+        canSelectorSwitch: false,
+        rightBoundBreak: true,
+        // extendFontFaces: [{fontFamily: "Pacifico", src: "https://fonts.gstatic.com/s/pacifico/v17/FwZY7-Qmy14u9lezJ-6H6MmBp0u-.woff2"}]
+        extendFontFaces: [
+          {
+            fontFamily: "Noto Sans SC",
+            src: "https://fonts.gstatic.com/s/opensans/v44/memvYaGs126MiZpBA-UvWbX2vVnXBbObj2OVTS-mu0SC55I.woff2",
+          },
+        ],
+        loadFontFacesTimeout: 20000,
+      },
+      longDottedStroke: {
+        lineCap: "round",
+        segment: 2,
+        gap: 3,
+      },
+    },
+  };
+  const plugin = await ApplianceMultiPlugin.getInstance(manager as any, {
+    options: pluginOptions,
+  });
+  (window as any).appliancePlugin = plugin;
+  window.manager = manager;
+  await manager.switchMainViewToWriter();
+  const tool = store.getItem("currentApplianceName") as ApplianceNames;
+  if (tool) {
+    manager.mainView.setMemberState({ currentApplianceName: tool });
+  }
 }
 
 export const tools = Object.values(ApplianceNames);

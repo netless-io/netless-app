@@ -100,6 +100,7 @@ class Logger {
 
 export const logger = /** @__PURE__ */ new Logger(import.meta.env.DEV);
 export const log = /** @__PURE__ */ logger.log.bind(logger);
+export const warn = /** @__PURE__ */ logger.warn.bind(logger);
 export const verbose = /** @__PURE__ */ logger.verbose.bind(logger);
 export const setRoomLogger = (displayer: Displayer) => {
   logger.roomLogger = (displayer as any).logger;

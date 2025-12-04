@@ -1,4 +1,5 @@
 import "@netless/window-manager/dist/style.css";
+import "@netless/appliance-plugin/dist/style.css";
 import type { WindowManager } from "@netless/window-manager";
 import type { Room } from "white-web-sdk";
 
