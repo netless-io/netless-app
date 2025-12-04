@@ -90,7 +90,7 @@ export function renderSceneWithSlide(
   } else {
     currentScenePath = context.getView()?.focusScenePath || "";
   }
-  if (currentScenePath !== scenePath && room.scenePathType(scenePath) === ("page" as ScenePathType.Page)) {
+  if (isFirstRender && currentScenePath !== scenePath && room.scenePathType(scenePath) === ("page" as ScenePathType.Page)) {
     context.setScenePath(scenePath);
   }
 
