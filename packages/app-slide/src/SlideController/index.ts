@@ -209,7 +209,12 @@ export class SlideControllerBase {
 
     this.sideEffect.add(() => {
       document.addEventListener("visibilitychange", this.onVisibilityChange);
-      return () => document.removeEventListener("visibilitychange", this.onVisibilityChange);
+      this.bindAppStateChangeEvent();
+      return () => {
+        document.removeEventListener("visibilitychange", this.onVisibilityChange);
+        this.context.emitter.off('boxStatusChange', this.onAppStatusChangeHandler);
+        this.context.getWindowManager().emitter.off('boxStateChange', this.onAppStateChangeHandler);
+      };
     });
   }
 
@@ -387,14 +392,61 @@ export class SlideControllerBase {
     }
   };
 
+  protected bindAppStateChangeEvent = () => {
+    const boxStatus = this.context.getBoxStatus();
+    if (boxStatus) {
+      const appProxy = this.context.getAppProxy();
+      if (appProxy) {
+        this.context.emitter.on('boxStatusChange', this.onAppStatusChangeHandler);
+      }
+    } else {
+      const windowManager = this.context.getWindowManager();
+      if (windowManager) {
+        windowManager.emitter.on('boxStateChange', this.onAppStateChangeHandler);
+      }
+    }
+  };
+  
+  protected onAppStateChangeHandler = (state: "normal" | "minimized" | "maximized") => {
+    if ( state === 'minimized') {
+      log("[Slide] freeze because app state is minimized");
+      this.freeze();
+    }
+  };
+
+  protected onAppStatusChangeHandler = (payload: { appId: string, status: "normal" | "minimized" | "maximized" }) => {
+    const { appId, status } = payload;
+    if (appId === this.context.appId && status === 'minimized') {
+      log("[Slide] freeze because app status is minimized");
+      this.freeze();
+    }
+  };
+
+  protected getAppStatus = (): "normal" | "minimized" | "maximized" | undefined => {
+    const boxStatus = this.context.getBoxStatus();
+    // 如果boxStatus存在, 则使用boxStatus(单独窗口状态)
+    if (boxStatus) {
+      return boxStatus;
+    }
+    // 如果boxStatus不存在，则检查boxState是否存在(所有窗口统一状态)
+    const windowManager = this.context.getWindowManager();
+    const boxstate = windowManager.boxState;
+    return boxstate;
+  }
+
   protected onVisibilityChange = async () => {
+    const appStatus = this.getAppStatus();
+    if (appStatus === 'minimized') {
+      log("[Slide] do nothing because app state is minimized");
+      return;
+    }
     if (!(this.visible = document.visibilityState === "visible")) {
       this.savedIsFrozen = this.isFrozen;
       log("[Slide] freeze because tab becomes invisible");
       this.freeze();
     } else {
-      log("[Slide] unfreeze because tab becomes visible", { savedIsFrozen: this.savedIsFrozen });
       if (!this.savedIsFrozen) {
+        log("[Slide] unfreeze because tab becomes visible", { savedIsFrozen: this.savedIsFrozen });
         this.unfreeze();
       }
     }
