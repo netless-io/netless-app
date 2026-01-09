@@ -35,9 +35,9 @@ export class PageEl {
     $page.appendChild($img);
     const clearPageBackground = () => {
       $page.style.backgroundImage = "none";
-      $img.removeEventListener('load', clearPageBackground)
-    }
-    $img.addEventListener('load', clearPageBackground)
+      $img.removeEventListener("load", clearPageBackground);
+    };
+    $img.addEventListener("load", clearPageBackground);
 
     this.$page = $page;
   }
