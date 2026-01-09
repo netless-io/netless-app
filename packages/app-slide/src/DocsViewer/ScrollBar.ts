@@ -1,4 +1,4 @@
-import {ResizableContainer} from "./ResizableContainer";
+import { ResizableContainer } from "./ResizableContainer";
 
 export class ScrollBar {
   private container: HTMLElement;
@@ -44,8 +44,6 @@ export class ScrollBar {
     this.eventListeners = [];
   }
 
-
-
   /**
    * 渲染滚动条
    * @param containerWidth 容器宽度
@@ -79,7 +77,7 @@ export class ScrollBar {
 
     // 更新水平滚动条 thumb 位置
     if (this.horizontalScrollBar) {
-      const thumb = this.horizontalScrollBar.querySelector('.horizontal-thumb') as HTMLElement;
+      const thumb = this.horizontalScrollBar.querySelector(".horizontal-thumb") as HTMLElement;
       if (thumb) {
         const trackWidth = this.horizontalScrollBar.offsetWidth;
         const thumbWidth = thumb.offsetWidth;
@@ -93,7 +91,7 @@ export class ScrollBar {
 
     // 更新垂直滚动条 thumb 位置
     if (this.verticalScrollBar) {
-      const thumb = this.verticalScrollBar.querySelector('.vertical-thumb') as HTMLElement;
+      const thumb = this.verticalScrollBar.querySelector(".vertical-thumb") as HTMLElement;
       if (thumb) {
         const trackHeight = this.verticalScrollBar.offsetHeight;
         const thumbHeight = thumb.offsetHeight;
@@ -105,7 +103,6 @@ export class ScrollBar {
       }
     }
   }
-
 
   private clearScrollBars(): void {
     // 清理所有事件监听器
@@ -121,17 +118,17 @@ export class ScrollBar {
     }
   }
 
-  private createHorizontalScrollBar(
-    containerWidth: number,
-    contentWidth: number
-  ): void {
-    const scrollBar = document.createElement('div');
-    scrollBar.className = 'scroll-bar horizontal';
+  private createHorizontalScrollBar(containerWidth: number, contentWidth: number): void {
+    const scrollBar = document.createElement("div");
+    scrollBar.className = "scroll-bar horizontal";
 
     // 计算滚动条thumb宽度
     const availableWidth = containerWidth;
     const trackWidth = availableWidth;
-    const thumbWidth = Math.max(30, Math.min(trackWidth, (trackWidth * availableWidth) / contentWidth));
+    const thumbWidth = Math.max(
+      30,
+      Math.min(trackWidth, (trackWidth * availableWidth) / contentWidth)
+    );
 
     // 滚动条轨道
     scrollBar.style.cssText = `
@@ -149,8 +146,8 @@ export class ScrollBar {
     // 滚动条始终显示，无需 hover 效果
 
     // 滚动条thumb
-    const thumb = document.createElement('div');
-    thumb.className = 'scroll-bar-thumb horizontal-thumb';
+    const thumb = document.createElement("div");
+    thumb.className = "scroll-bar-thumb horizontal-thumb";
     thumb.style.cssText = `
       position: absolute;
       bottom: 0px;
@@ -164,24 +161,24 @@ export class ScrollBar {
     `;
 
     // 添加拖动事件
-    this.addThumbDragListener(thumb, 'horizontal', thumbWidth, trackWidth);
+    this.addThumbDragListener(thumb, "horizontal", thumbWidth, trackWidth);
 
     scrollBar.appendChild(thumb);
     this.container.appendChild(scrollBar);
     this.horizontalScrollBar = scrollBar;
   }
 
-  private createVerticalScrollBar(
-    containerHeight: number,
-    contentHeight: number
-  ): void {
-    const scrollBar = document.createElement('div');
-    scrollBar.className = 'scroll-bar vertical';
+  private createVerticalScrollBar(containerHeight: number, contentHeight: number): void {
+    const scrollBar = document.createElement("div");
+    scrollBar.className = "scroll-bar vertical";
 
     // 计算滚动条thumb高度
     const availableHeight = containerHeight;
     const trackHeight = availableHeight;
-    const thumbHeight = Math.max(30, Math.min(trackHeight, (trackHeight * availableHeight) / contentHeight));
+    const thumbHeight = Math.max(
+      30,
+      Math.min(trackHeight, (trackHeight * availableHeight) / contentHeight)
+    );
 
     // 滚动条轨道
     scrollBar.style.cssText = `
@@ -199,8 +196,8 @@ export class ScrollBar {
     // 滚动条始终显示，无需 hover 效果
 
     // 滚动条thumb
-    const thumb = document.createElement('div');
-    thumb.className = 'scroll-bar-thumb vertical-thumb';
+    const thumb = document.createElement("div");
+    thumb.className = "scroll-bar-thumb vertical-thumb";
     thumb.style.cssText = `
       position: absolute;
       top: 1px;
@@ -214,7 +211,7 @@ export class ScrollBar {
     `;
 
     // 添加拖动事件
-    this.addThumbDragListener(thumb, 'vertical', thumbHeight, trackHeight);
+    this.addThumbDragListener(thumb, "vertical", thumbHeight, trackHeight);
 
     scrollBar.appendChild(thumb);
     this.container.appendChild(scrollBar);
@@ -226,7 +223,7 @@ export class ScrollBar {
    */
   private addThumbDragListener(
     thumb: HTMLElement,
-    orientation: 'horizontal' | 'vertical',
+    orientation: "horizontal" | "vertical",
     thumbSize: number,
     trackSize: number
   ): void {
@@ -234,24 +231,26 @@ export class ScrollBar {
     let startThumbPos = 0;
 
     const handleStart = (clientX: number, clientY: number) => {
-      if (orientation === 'horizontal') {
+      if (orientation === "horizontal") {
         this.isDraggingHorizontal = true;
       } else {
         this.isDraggingVertical = true;
       }
-      startPos = orientation === 'horizontal' ? clientX : clientY;
-      startThumbPos = orientation === 'horizontal'
-        ? parseFloat(thumb.style.left) || 0
-        : parseFloat(thumb.style.top) || 0;
+      startPos = orientation === "horizontal" ? clientX : clientY;
+      startThumbPos =
+        orientation === "horizontal"
+          ? parseFloat(thumb.style.left) || 0
+          : parseFloat(thumb.style.top) || 0;
 
-      thumb.style.cursor = 'grabbing';
+      thumb.style.cursor = "grabbing";
     };
 
     const handleMove = (clientX: number, clientY: number) => {
-      const isDragging = orientation === 'horizontal' ? this.isDraggingHorizontal : this.isDraggingVertical;
+      const isDragging =
+        orientation === "horizontal" ? this.isDraggingHorizontal : this.isDraggingVertical;
       if (!isDragging) return;
 
-      const currentPos = orientation === 'horizontal' ? clientX : clientY;
+      const currentPos = orientation === "horizontal" ? clientX : clientY;
       const delta = currentPos - startPos;
 
       // 计算新的thumb位置
@@ -259,7 +258,7 @@ export class ScrollBar {
       newThumbPos = Math.max(1, Math.min(trackSize - thumbSize - 1, newThumbPos));
 
       // 更新thumb位置
-      if (orientation === 'horizontal') {
+      if (orientation === "horizontal") {
         thumb.style.left = `${newThumbPos}px`;
       } else {
         thumb.style.top = `${newThumbPos}px`;
@@ -274,26 +273,34 @@ export class ScrollBar {
       }
 
       // 调用ResizableContainer的handleNormalizeTranslate方法，传入 false 避免循环调用
-      if (orientation === 'horizontal') {
-        this.resizableContainer.handleNormalizeTranslate(scrollRatio, this.resizableContainer['translateY'] ?? 0.5, {
-          triggerScrollBar: false,
-          triggerSync: true,
-        });
+      if (orientation === "horizontal") {
+        this.resizableContainer.handleNormalizeTranslate(
+          scrollRatio,
+          this.resizableContainer["translateY"] ?? 0.5,
+          {
+            triggerScrollBar: false,
+            triggerSync: true,
+          }
+        );
       } else {
-        this.resizableContainer.handleNormalizeTranslate(this.resizableContainer['translateX'] ?? 0.5, scrollRatio, {
-          triggerScrollBar: false,
-          triggerSync: true,
-        });
+        this.resizableContainer.handleNormalizeTranslate(
+          this.resizableContainer["translateX"] ?? 0.5,
+          scrollRatio,
+          {
+            triggerScrollBar: false,
+            triggerSync: true,
+          }
+        );
       }
     };
 
     const handleEnd = () => {
-      if (orientation === 'horizontal') {
+      if (orientation === "horizontal") {
         this.isDraggingHorizontal = false;
       } else {
         this.isDraggingVertical = false;
       }
-      thumb.style.cursor = 'grab';
+      thumb.style.cursor = "grab";
     };
 
     // 鼠标事件
@@ -312,9 +319,9 @@ export class ScrollBar {
     };
 
     // 添加事件监听器
-    this.addTrackedListener(thumb, 'mousedown', handleMouseDown);
-    this.addTrackedListener(document, 'mousemove', handleMouseMove);
-    this.addTrackedListener(document, 'mouseup', handleMouseUp);
+    this.addTrackedListener(thumb, "mousedown", handleMouseDown);
+    this.addTrackedListener(document, "mousemove", handleMouseMove);
+    this.addTrackedListener(document, "mouseup", handleMouseUp);
   }
 
   /**
@@ -324,4 +331,3 @@ export class ScrollBar {
     this.clearScrollBars();
   }
 }
-

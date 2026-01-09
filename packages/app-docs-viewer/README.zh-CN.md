@@ -41,7 +41,7 @@ WindowManager.register({
   kind: "DocsViewer",
   appOptions: {
     // 设置为 true 可在应用初始化时设为只读模式
-    justDocsViewReadonly?: true,
+    justDocsViewReadonly: true,
   },
   src: NetlessAppDocsViewer,
 });
@@ -58,7 +58,7 @@ const box = await manager.createBox({
   // 可选的应用选项
   options: {
     justDocsViewReadonly: false, // 或 true 表示只读模式
-  }
+  },
 });
 ```
 
@@ -76,10 +76,10 @@ const staticDocs = {
         src: "https://example.com/page1.jpg",
         width: 1920,
         height: 1080,
-        previewURL: "https://example.com/page1-thumb.jpg"
-      }
-    }
-  ]
+        previewURL: "https://example.com/page1-thumb.jpg",
+      },
+    },
+  ],
 };
 
 // 动态演示文稿（转换后的 PPTX）
@@ -91,10 +91,10 @@ const dynamicPresentation = {
         src: "ppt://example.com/slide1.slide", // 以 "ppt" 开头的 URL 触发动态模式
         width: 1920,
         height: 1080,
-        previewURL: "https://example.com/slide1-thumb.png"
-      }
-    }
-  ]
+        previewURL: "https://example.com/slide1-thumb.png",
+      },
+    },
+  ],
 };
 
 // 多页面示例
@@ -106,8 +106,8 @@ const multiPageDocument = {
         src: "https://example.com/page1.jpg",
         width: 1920,
         height: 1080,
-        previewURL: "https://example.com/page1-thumb.jpg"
-      }
+        previewURL: "https://example.com/page1-thumb.jpg",
+      },
     },
     {
       name: "page2",
@@ -115,10 +115,10 @@ const multiPageDocument = {
         src: "https://example.com/page2.jpg",
         width: 1920,
         height: 1080,
-        previewURL: "https://example.com/page2-thumb.jpg"
-      }
-    }
-  ]
+        previewURL: "https://example.com/page2-thumb.jpg",
+      },
+    },
+  ],
 };
 ```
 
@@ -134,7 +134,7 @@ import NetlessAppDocsViewer from "@netless/app-docs-viewer";
 const manager = await WindowManager.create({
   useMobXState: true,
   cursor: true,
-  container: document.querySelector("#container")!
+  container: document.querySelector("#container")!,
 });
 
 // 在创建任何窗口之前注册文档查看器应用
@@ -142,7 +142,7 @@ WindowManager.register({
   kind: "DocsViewer",
   appOptions: {
     // 为所有实例定义默认应用选项
-    justDocsViewReadonly?: true,
+    justDocsViewReadonly: true,
   },
   src: NetlessAppDocsViewer,
 });
@@ -158,13 +158,13 @@ const box = await manager.createBox({
   title: "文档查看器",
   style: {
     width: 800,
-    height: 600
+    height: 600,
   },
   scenes: yourDocumentScenes,
   options: {
     // 为此特定实例覆盖默认应用选项
-    justDocsViewReadonly: false
-  }
+    justDocsViewReadonly: false,
+  },
 });
 ```
 
@@ -179,7 +179,7 @@ WindowManager.register({
   kind: "DocsViewer",
   appOptions: {
     // 所有实例的全局默认选项
-    justDocsViewReadonly?: true,
+    justDocsViewReadonly: true,
   },
   src: NetlessAppDocsViewer,
 });
@@ -202,9 +202,9 @@ interface NetlessAppDocsViewerOptions {
 
 ```typescript
 interface DocsViewerPage {
-  src: string;        // 页面或幻灯片 URL
-  height: number;     // 页面高度（像素）
-  width: number;      // 页面宽度（像素）
+  src: string; // 页面或幻灯片 URL
+  height: number; // 页面高度（像素）
+  width: number; // 页面宽度（像素）
   thumbnail?: string; // 可选的缩略图 URL 用于预览
 }
 ```
@@ -215,19 +215,21 @@ interface DocsViewerPage {
 const scenes = [
   {
     name: "page1",
-    ppt: { // 重要：使用 'ppt' 字段进行自动检测
+    ppt: {
+      // 重要：使用 'ppt' 字段进行自动检测
       src: "https://example.com/page1.jpg",
       width: 1920,
       height: 1080,
-      previewURL: "https://example.com/page1-thumb.jpg" // 可选
-    }
-  }
+      previewURL: "https://example.com/page1-thumb.jpg", // 可选
+    },
+  },
 ];
 ```
 
 #### 查看器模式
 
 1. **静态模式** - 用于 PDF 和图片
+
    - 连续滚动
    - 缩放控件（25% - 400%）
    - 缩略图侧边栏
@@ -273,13 +275,13 @@ import jsPDF from "jspdf";
 
 ## 键盘快捷键
 
-| 快捷键 | 功能 | 模式 |
-|--------|------|------|
-| `←` `→` | 上一页/下一页或幻灯片 | 全部 |
-| `Page Up` `Page Down` | 上一页/下一页 | 静态 |
-| `Space` | 播放/暂停（动态）/ 下一页（静态） | 全部 |
-| `+` `-` | 放大/缩小 | 静态 |
-| `Home` `End` | 第一页/最后一页 | 全部 |
+| 快捷键                | 功能                              | 模式 |
+| --------------------- | --------------------------------- | ---- |
+| `←` `→`               | 上一页/下一页或幻灯片             | 全部 |
+| `Page Up` `Page Down` | 上一页/下一页                     | 静态 |
+| `Space`               | 播放/暂停（动态）/ 下一页（静态） | 全部 |
+| `+` `-`               | 放大/缩小                         | 静态 |
+| `Home` `End`          | 第一页/最后一页                   | 全部 |
 
 ## 开发
 

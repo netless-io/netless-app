@@ -12,7 +12,7 @@ import {
   EmptyAttributes,
   syncSceneWithSlide,
   SlideController,
-  SlideControllerBase
+  SlideControllerBase,
 } from "./SlideController";
 import { SlideDocsViewer } from "./SlideDocsViewer";
 import { apps, FreezerLength, addHooks, useFreezer } from "./utils/freezer";
@@ -24,13 +24,20 @@ export { SlidePreviewer, default as previewSlide } from "./SlidePreviewer";
 export { DocsViewer } from "./DocsViewer";
 
 export type { Attributes, AddHooks, FreezableSlide };
-export { Slide, SlideController, SlideDocsViewer, syncSceneWithSlide, SideEffectManager, SlideControllerBase };
+export {
+  Slide,
+  SlideController,
+  SlideDocsViewer,
+  syncSceneWithSlide,
+  SideEffectManager,
+  SlideControllerBase,
+};
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const usePlugin: (plugin: any) => any = /* @__PURE__ */ Slide.usePlugin.bind(Slide);
 
 export const version = __APP_VERSION__;
 
-export { DefaultUrl, apps, FreezerLength, addHooks, useFreezer, log, logger  };
+export { DefaultUrl, apps, FreezerLength, addHooks, useFreezer, log, logger };
 
 export { setFreezerLength, getFreezerLength, onCreated, onDestroyed } from "./utils/freezer";
 
@@ -286,8 +293,8 @@ const SlideApp: NetlessApp<Attributes, MagixEvents, AppOptions, AppResult> = {
 
           if (maxScrollX > 0 || maxScrollY > 0) {
             // 获取当前标准化位置 (0 ~ 1)
-            const currentX = container['translateX'] ?? 0.5;
-            const currentY = container['translateY'] ?? 0.5;
+            const currentX = container["translateX"] ?? 0.5;
+            const currentY = container["translateY"] ?? 0.5;
 
             // 将像素偏移转换为标准化偏移
             const normalizedDeltaX = maxScrollX > 0 ? offsetX / maxScrollX : 0;

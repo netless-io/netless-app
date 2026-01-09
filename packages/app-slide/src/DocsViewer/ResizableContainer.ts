@@ -1,11 +1,10 @@
-import {Slide} from "@netless/slide";
-import {ScrollBar} from "./ScrollBar";
-import type {AppContext} from "@netless/window-manager";
-import type {Attributes, MagixEvents} from "../typings";
-import type {AppOptions} from "../index";
+import { Slide } from "@netless/slide";
+import { ScrollBar } from "./ScrollBar";
+import type { AppContext } from "@netless/window-manager";
+import type { Attributes, MagixEvents } from "../typings";
+import type { AppOptions } from "../index";
 
 export class ResizableContainer {
-
   private root: HTMLDivElement;
   public container: HTMLDivElement;
   private scrollContainer: HTMLDivElement;
@@ -35,19 +34,19 @@ export class ResizableContainer {
     this.enableResize = enableResize;
     this.parent = parent;
     this.context = context;
-    this.root = document.createElement('div');
-    this.root.style.width = '100%';
-    this.root.style.height = '100%';
-    this.root.style.overflow = 'hidden';
+    this.root = document.createElement("div");
+    this.root.style.width = "100%";
+    this.root.style.height = "100%";
+    this.root.style.overflow = "hidden";
     this.parent.appendChild(this.root);
-    this.scrollContainer = document.createElement('div');
+    this.scrollContainer = document.createElement("div");
     this.scrollContainer.setAttribute("data-resizable-scroll", "true");
-    this.scrollContainer.style.width = '100%';
-    this.scrollContainer.style.height = '100%';
-    this.scrollContainer.style.position = 'relative';
-    this.scrollContainer.style.overflow = 'hidden';
-    this.container = document.createElement('div');
-    this.container.style.position = 'relative';
+    this.scrollContainer.style.width = "100%";
+    this.scrollContainer.style.height = "100%";
+    this.scrollContainer.style.position = "relative";
+    this.scrollContainer.style.overflow = "hidden";
+    this.container = document.createElement("div");
+    this.container.style.position = "relative";
     this.container.setAttribute("data-resizable-container", "true");
     this.scrollContainer.appendChild(this.container);
     this.root.appendChild(this.scrollContainer);
@@ -63,7 +62,7 @@ export class ResizableContainer {
     this.resizeObserver.observe(this.scrollContainer);
   }
 
-  public getTranslate(): {x: number, y: number} {
+  public getTranslate(): { x: number; y: number } {
     return { x: this.translateX, y: this.translateY };
   }
 
@@ -71,7 +70,12 @@ export class ResizableContainer {
     return this.scale;
   }
 
-  private renderScrollBar(width: number, overflowWidth: number, height: number, overflowHeight: number): void {
+  private renderScrollBar(
+    width: number,
+    overflowWidth: number,
+    height: number,
+    overflowHeight: number
+  ): void {
     if (this.scrollBar) {
       this.scrollBar.render(width, height, overflowWidth, overflowHeight);
     }
@@ -105,12 +109,15 @@ export class ResizableContainer {
       const whiteboardBounds = this.whiteboardContainer.getBoundingClientRect();
       if (whiteboardBounds.width / whiteboardBounds.height > this.slideWidth / this.slideHeight) {
         // 裁剪两边
-        const renderWidth = (whiteboardBounds.height * this.slideWidth / this.slideHeight);
+        const renderWidth = (whiteboardBounds.height * this.slideWidth) / this.slideHeight;
         const padding = (whiteboardBounds.width - renderWidth) / 2;
         this.whiteboardContainer.style.clipPath = `inset(0px ${padding}px 0px ${padding}px)`;
-      } else if (whiteboardBounds.width / whiteboardBounds.height < this.slideWidth / this.slideHeight) {
+      } else if (
+        whiteboardBounds.width / whiteboardBounds.height <
+        this.slideWidth / this.slideHeight
+      ) {
         // 裁剪上下
-        const renderHeight = (whiteboardBounds.width * this.slideHeight / this.slideWidth);
+        const renderHeight = (whiteboardBounds.width * this.slideHeight) / this.slideWidth;
         const padding = (whiteboardBounds.height - renderHeight) / 2;
         this.whiteboardContainer.style.clipPath = `inset(${padding}px 0px ${padding}px 0px)`;
       }
@@ -119,7 +126,12 @@ export class ResizableContainer {
     this.translateX = 0.5;
     this.translateY = 0.5;
 
-    this.renderScrollBar(parentBounds.width, parentBounds.width * this.scale, parentBounds.height, parentBounds.height * this.scale);
+    this.renderScrollBar(
+      parentBounds.width,
+      parentBounds.width * this.scale,
+      parentBounds.height,
+      parentBounds.height * this.scale
+    );
     this.handleNormalizeTranslate(this.translateX, this.translateY, {
       triggerScrollBar: true,
       triggerSync: true,
@@ -127,11 +139,19 @@ export class ResizableContainer {
   }
 
   // x, y 范围 0 ~ 1
-  public handleNormalizeTranslate(x: number, y: number, options: {
-    triggerScrollBar: boolean,
-    triggerSync: boolean,
-  }) {
-    if (Math.abs(x - this.translateX) < 0.001 && Math.abs(y - this.translateY) < 0.001 && !options.triggerSync) {
+  public handleNormalizeTranslate(
+    x: number,
+    y: number,
+    options: {
+      triggerScrollBar: boolean;
+      triggerSync: boolean;
+    }
+  ) {
+    if (
+      Math.abs(x - this.translateX) < 0.001 &&
+      Math.abs(y - this.translateY) < 0.001 &&
+      !options.triggerSync
+    ) {
       return;
     }
     const parentBounds = this.scrollContainer.getBoundingClientRect();
@@ -154,11 +174,11 @@ export class ResizableContainer {
       return;
     }
     if (applyScale > 1.0) {
-      this.scrollContainer.style.width = 'calc(100% - 6px)';
-      this.scrollContainer.style.height = 'calc(100% - 6px)';
+      this.scrollContainer.style.width = "calc(100% - 6px)";
+      this.scrollContainer.style.height = "calc(100% - 6px)";
     } else {
-      this.scrollContainer.style.width = '100%';
-      this.scrollContainer.style.height = '100%';
+      this.scrollContainer.style.width = "100%";
+      this.scrollContainer.style.height = "100%";
     }
     applyScale = this.enableResize ? applyScale : 1;
     if (this.onScaleChanged && this.enableResize) {

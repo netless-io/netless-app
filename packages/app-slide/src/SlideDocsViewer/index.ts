@@ -1,5 +1,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import type { ReadonlyTeleBox, AnimationMode, View, AppContext, StorageStateChangedListener } from "@netless/window-manager";
+import type {
+  ReadonlyTeleBox,
+  AnimationMode,
+  View,
+  AppContext,
+  StorageStateChangedListener,
+} from "@netless/window-manager";
 import type { SlideController, SlideControllerOptions } from "../SlideController";
 
 import { SideEffectManager } from "side-effect-manager";
@@ -116,18 +122,21 @@ export class SlideDocsViewer {
       };
 
       // 记录初始状态
-      console.log('[SlideDocsViewer] Initial storage state:', this.context.storage.state);
-      console.log('[SlideDocsViewer] Initial slideScale:', this.context.storage.state.slideScale);
+      console.log("[SlideDocsViewer] Initial storage state:", this.context.storage.state);
+      console.log("[SlideDocsViewer] Initial slideScale:", this.context.storage.state.slideScale);
 
       // 应用初始的 slideScale 值（现在 ResizableContainer 应该已经创建）
       if (this.context.storage.state.slideScale !== undefined) {
-        console.log('[SlideDocsViewer] Applying initial slideScale:', this.context.storage.state.slideScale);
+        console.log(
+          "[SlideDocsViewer] Applying initial slideScale:",
+          this.context.storage.state.slideScale
+        );
         applyScale(this.context.storage.state.slideScale);
       } else {
-        console.log('[SlideDocsViewer] No initial slideScale found');
+        console.log("[SlideDocsViewer] No initial slideScale found");
       }
 
-      const handler: StorageStateChangedListener<Attributes> = (diff) => {
+      const handler: StorageStateChangedListener<Attributes> = diff => {
         if (diff.slideScale !== undefined) {
           // slideScale 是一个包含 newValue 和 oldValue 的对象
           const newScale = diff.slideScale.newValue;
@@ -135,8 +144,8 @@ export class SlideDocsViewer {
         }
         if (diff.translateX !== undefined || diff.translateY !== undefined) {
           const currentTranslate = this.resizableContainer.getTranslate();
-          const translateX = diff.translateX ? (diff.translateX.newValue ?? 0.5) : currentTranslate.x;
-          const translateY = diff.translateY ? (diff.translateY.newValue ?? 0.5) : currentTranslate.y;
+          const translateX = diff.translateX ? diff.translateX.newValue ?? 0.5 : currentTranslate.x;
+          const translateY = diff.translateY ? diff.translateY.newValue ?? 0.5 : currentTranslate.y;
           if (this.resizableContainer) {
             this.resizableContainer.handleNormalizeTranslate(translateX, translateY, {
               triggerScrollBar: true,
@@ -146,11 +155,11 @@ export class SlideDocsViewer {
         }
       };
 
-      console.log('[SlideDocsViewer] Adding storage state listener');
+      console.log("[SlideDocsViewer] Adding storage state listener");
       this.context.storage.onStateChanged.addListener(handler);
 
       return () => {
-        console.log('[SlideDocsViewer] Removing storage state listener');
+        console.log("[SlideDocsViewer] Removing storage state listener");
         this.context.storage.onStateChanged.removeListener(handler);
       };
     });
@@ -169,7 +178,11 @@ export class SlideDocsViewer {
   public render() {
     // 创建 ResizableContainer 来管理 slide 和 whiteboardView
     if (!this.resizableContainer) {
-      this.resizableContainer = new ResizableContainer(this.viewer.$content, this.context, this.enableScale);
+      this.resizableContainer = new ResizableContainer(
+        this.viewer.$content,
+        this.context,
+        this.enableScale
+      );
     }
 
     // 创建元素

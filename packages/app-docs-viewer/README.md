@@ -41,7 +41,7 @@ WindowManager.register({
   kind: "DocsViewer",
   appOptions: {
     // Set to true to make the viewer readonly when initialized
-    justDocsViewReadonly?: true,
+    justDocsViewReadonly: true,
   },
   src: NetlessAppDocsViewer,
 });
@@ -58,7 +58,7 @@ const box = await manager.createBox({
   // Optional app options
   options: {
     justDocsViewReadonly: false, // or true for readonly mode
-  }
+  },
 });
 ```
 
@@ -76,10 +76,10 @@ const staticDocs = {
         src: "https://example.com/page1.jpg",
         width: 1920,
         height: 1080,
-        previewURL: "https://example.com/page1-thumb.jpg"
-      }
-    }
-  ]
+        previewURL: "https://example.com/page1-thumb.jpg",
+      },
+    },
+  ],
 };
 
 // Dynamic presentation (converted PPTX)
@@ -91,10 +91,10 @@ const dynamicPresentation = {
         src: "ppt://example.com/slide1.slide", // URL starting with "ppt" triggers dynamic mode
         width: 1920,
         height: 1080,
-        previewURL: "https://example.com/slide1-thumb.png"
-      }
-    }
-  ]
+        previewURL: "https://example.com/slide1-thumb.png",
+      },
+    },
+  ],
 };
 
 // Multiple pages example
@@ -106,8 +106,8 @@ const multiPageDocument = {
         src: "https://example.com/page1.jpg",
         width: 1920,
         height: 1080,
-        previewURL: "https://example.com/page1-thumb.jpg"
-      }
+        previewURL: "https://example.com/page1-thumb.jpg",
+      },
     },
     {
       name: "page2",
@@ -115,10 +115,10 @@ const multiPageDocument = {
         src: "https://example.com/page2.jpg",
         width: 1920,
         height: 1080,
-        previewURL: "https://example.com/page2-thumb.jpg"
-      }
-    }
-  ]
+        previewURL: "https://example.com/page2-thumb.jpg",
+      },
+    },
+  ],
 };
 ```
 
@@ -134,7 +134,7 @@ import NetlessAppDocsViewer from "@netless/app-docs-viewer";
 const manager = await WindowManager.create({
   useMobXState: true,
   cursor: true,
-  container: document.querySelector("#container")!
+  container: document.querySelector("#container")!,
 });
 
 // Register the docs viewer app before creating any windows
@@ -142,7 +142,7 @@ WindowManager.register({
   kind: "DocsViewer",
   appOptions: {
     // Define default app options for all instances
-    justDocsViewReadonly?: true,
+    justDocsViewReadonly: true,
   },
   src: NetlessAppDocsViewer,
 });
@@ -158,13 +158,13 @@ const box = await manager.createBox({
   title: "Document Viewer",
   style: {
     width: 800,
-    height: 600
+    height: 600,
   },
   scenes: yourDocumentScenes,
   options: {
     // Override default app options for this specific instance
-    justDocsViewReadonly: false
-  }
+    justDocsViewReadonly: false,
+  },
 });
 ```
 
@@ -179,7 +179,7 @@ WindowManager.register({
   kind: "DocsViewer",
   appOptions: {
     // Global default options for all instances
-    justDocsViewReadonly?: true,
+    justDocsViewReadonly: true,
   },
   src: NetlessAppDocsViewer,
 });
@@ -202,9 +202,9 @@ Documents are configured through Netless scenes with the following page structur
 
 ```typescript
 interface DocsViewerPage {
-  src: string;        // Page or slide URL
-  height: number;     // Page height in pixels
-  width: number;      // Page width in pixels
+  src: string; // Page or slide URL
+  height: number; // Page height in pixels
+  width: number; // Page width in pixels
   thumbnail?: string; // Optional thumbnail URL for preview
 }
 ```
@@ -215,19 +215,21 @@ interface DocsViewerPage {
 const scenes = [
   {
     name: "page1",
-    ppt: { // Important: Use the 'ppt' field for automatic detection
+    ppt: {
+      // Important: Use the 'ppt' field for automatic detection
       src: "https://example.com/page1.jpg",
       width: 1920,
       height: 1080,
-      previewURL: "https://example.com/page1-thumb.jpg" // Optional
-    }
-  }
+      previewURL: "https://example.com/page1-thumb.jpg", // Optional
+    },
+  },
 ];
 ```
 
 #### Viewer Modes
 
 1. **Static Mode** - For PDFs and images
+
    - Continuous scrolling
    - Zoom controls (25% - 400%)
    - Thumbnail sidebar
@@ -273,13 +275,13 @@ import jsPDF from "jspdf";
 
 ## Keyboard Shortcuts
 
-| Shortcut | Function | Mode |
-|----------|----------|------|
-| `←` `→` | Previous/Next page or slide | Both |
-| `Page Up` `Page Down` | Previous/Next page | Static |
-| `Space` | Play/pause (dynamic) / Next page (static) | Both |
-| `+` `-` | Zoom in/out | Static |
-| `Home` `End` | First/last page | Both |
+| Shortcut              | Function                                  | Mode   |
+| --------------------- | ----------------------------------------- | ------ |
+| `←` `→`               | Previous/Next page or slide               | Both   |
+| `Page Up` `Page Down` | Previous/Next page                        | Static |
+| `Space`               | Play/pause (dynamic) / Next page (static) | Both   |
+| `+` `-`               | Zoom in/out                               | Static |
+| `Home` `End`          | First/last page                           | Both   |
 
 ## Development
 

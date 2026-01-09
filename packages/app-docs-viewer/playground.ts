@@ -46,10 +46,11 @@ const options: PlaygroundConfigs<
           ppt: {
             height: 735,
             src: "https://white-cover.oss-cn-hangzhou.aliyuncs.com/flat/staticConvert/49e8da7c62d2497fa85791ff1a4849c1/1.png",
-            previewURL: "https://white-cover.oss-cn-hangzhou.aliyuncs.com/flat/staticConvert/49e8da7c62d2497fa85791ff1a4849c1/1.png?x-oss-process=image%2Fresize%2Cl_50&quot;",
+            previewURL:
+              "https://white-cover.oss-cn-hangzhou.aliyuncs.com/flat/staticConvert/49e8da7c62d2497fa85791ff1a4849c1/1.png?x-oss-process=image%2Fresize%2Cl_50&quot;",
             width: 1031,
           },
-        }
+        },
       ],
     },
   },

@@ -58,7 +58,6 @@ type MagixEventListener = Parameters<
   AppContext<Attributes, MagixEvents>["addMagixEventListener"]
 >[1];
 
-
 export class SlideControllerBase {
   public readonly context: SlideControllerOptions["context"];
   public slide!: Slide;
@@ -87,7 +86,18 @@ export class SlideControllerBase {
   public previewList: string[] = [];
 
   public constructor(props: SlideControllerOptions) {
-    const { context, onRenderStart, onPageChanged, onTransitionStart, onTransitionEnd, onNavigate, onError, onRenderError, showRenderError, invisibleBehavior } = props;
+    const {
+      context,
+      onRenderStart,
+      onPageChanged,
+      onTransitionStart,
+      onTransitionEnd,
+      onNavigate,
+      onError,
+      onRenderError,
+      showRenderError,
+      invisibleBehavior,
+    } = props;
     this.invisibleBehavior = invisibleBehavior ?? "frozen";
     this.onRenderStart = onRenderStart;
     this.onPageChanged = onPageChanged;
@@ -209,7 +219,20 @@ export class SlideControllerBase {
 
     this.sideEffect.add(() => {
       document.addEventListener("visibilitychange", this.onVisibilityChange);
-      return () => document.removeEventListener("visibilitychange", this.onVisibilityChange);
+      this.bindAppStateChangeEvent();
+      return () => {
+        document.removeEventListener("visibilitychange", this.onVisibilityChange);
+        try {
+          this.context.emitter.off("boxStatusChange", this.onAppStatusChangeHandler);
+          this.context
+            .getWindowManager()
+            .emitter.off("boxStateChange", this.onAppStateChangeHandler);
+        } catch (error) {
+          log(
+            "[Slide] unbind app state change event failed, because should update window manager to latest version"
+          );
+        }
+      };
     });
   }
 
@@ -387,14 +410,74 @@ export class SlideControllerBase {
     }
   };
 
+  protected bindAppStateChangeEvent = () => {
+    try {
+      const boxStatus = this.context.getBoxStatus();
+      if (boxStatus) {
+        const appProxy = this.context.getAppProxy();
+        if (appProxy) {
+          this.context.emitter.on("boxStatusChange", this.onAppStatusChangeHandler);
+        }
+      } else {
+        const windowManager = this.context.getWindowManager();
+        if (windowManager) {
+          windowManager.emitter.on("boxStateChange", this.onAppStateChangeHandler);
+        }
+      }
+    } catch (error) {
+      log(
+        "[Slide] bind app state change event failed, because should update window manager to latest version"
+      );
+    }
+  };
+
+  protected onAppStateChangeHandler = (state: "normal" | "minimized" | "maximized") => {
+    if (state === "minimized") {
+      log("[Slide] freeze because app state is minimized");
+      this.freeze();
+    }
+  };
+
+  protected onAppStatusChangeHandler = (payload: {
+    appId: string;
+    status: "normal" | "minimized" | "maximized";
+  }) => {
+    const { appId, status } = payload;
+    if (appId === this.context.appId && status === "minimized") {
+      log("[Slide] freeze because app status is minimized");
+      this.freeze();
+    }
+  };
+
+  protected getAppStatus = (): "normal" | "minimized" | "maximized" | undefined => {
+    try {
+      const boxStatus = this.context.getBoxStatus();
+      // 如果boxStatus存在, 则使用boxStatus(单独窗口状态)
+      if (boxStatus) {
+        return boxStatus;
+      }
+      // 如果boxStatus不存在，则检查boxState是否存在(所有窗口统一状态)
+      const windowManager = this.context.getWindowManager();
+      const boxstate = windowManager.boxState;
+      return boxstate;
+    } catch (error) {
+      return undefined;
+    }
+  };
+
   protected onVisibilityChange = async () => {
+    const appStatus = this.getAppStatus();
+    if (appStatus === "minimized") {
+      log("[Slide] do nothing because app state is minimized");
+      return;
+    }
     if (!(this.visible = document.visibilityState === "visible")) {
       this.savedIsFrozen = this.isFrozen;
       log("[Slide] freeze because tab becomes invisible");
       this.freeze();
     } else {
-      log("[Slide] unfreeze because tab becomes visible", { savedIsFrozen: this.savedIsFrozen });
       if (!this.savedIsFrozen) {
+        log("[Slide] unfreeze because tab becomes visible", { savedIsFrozen: this.savedIsFrozen });
         this.unfreeze();
       }
     }
@@ -403,7 +486,7 @@ export class SlideControllerBase {
 
 export class SlideController extends SlideControllerBase {
   public constructor(props: SlideControllerOptions) {
-    super(props)
+    super(props);
     this.slide = this.createSlide(props.anchor, {
       whiteTracker: getRoomTracker(props.context.getDisplayer()),
     });
