@@ -27,7 +27,7 @@ export interface Attributes {
   playTimeState?: PlayTimeState;
   /** 是否使用新的同步plyr逻辑 */
   useNewPlayer: boolean;
-  /** 是否使用自定义播控组件 */
+  /** 是否使用自定义播控组件, 默认使用自定义播控页 */
   useCustomControls?: boolean;
   /** 是否同步音量数据，默认同步 */
   syncVolume?: boolean;
@@ -35,6 +35,10 @@ export interface Attributes {
   syncMuted?: boolean;
   /** 自定义播控组件标题 */
   customControlsTitle?: string;
+  /** 是否允许后台播放，默认允许 */
+  allowBackgroundPlayback?: boolean;
+  /** 是否保持播放器内部状态同步，默认保持同步 */
+  keepPlayerStateInSync?: boolean;
 }
 
 export interface AppResult {
@@ -43,15 +47,18 @@ export interface AppResult {
 
 const DefaultAttributes: Pick<
   Attributes,
-  "volume" | "paused" | "muted" | "currentTime" | "useNewPlayer" | "syncVolume" | "syncMuted"
+  "volume" | "paused" | "muted" | "currentTime" | "useNewPlayer" | "syncVolume" | "syncMuted" | "useCustomControls" | "allowBackgroundPlayback" | "keepPlayerStateInSync"
 > = {
   volume: 1,
   paused: true,
   muted: false,
   currentTime: 0,
-  useNewPlayer: false,
+  useNewPlayer: true,
   syncVolume: true,
   syncMuted: true,
+  useCustomControls: true,
+  allowBackgroundPlayback: true,
+  keepPlayerStateInSync: true,
 };
 
 const Plyr: NetlessApp<Attributes, any, any, AppResult> = {
@@ -65,55 +72,35 @@ const Plyr: NetlessApp<Attributes, any, any, AppResult> = {
     if (context.getIsWritable()) {
       storage.ensureState(DefaultAttributes);
     }
+    const logger = (context.getDisplayer() as any).logger;
 
     if (!storage.state.src) {
       context.emitter.emit("destroy", {
         error: new Error(`[Plyr]: missing "src"`),
       });
+      logger.error(`[Plyr]: missing "src"`);
       return {};
     }
 
     if (!storage.state.type && !storage.state.provider) {
       console.warn(`[Plyr]: missing "type", will guess from file extension`);
+      logger.warn(`[Plyr]: missing "type", will guess from file extension`);
     }
+
+    logger.info(`[Plyr]: appid ${context.appId} setup, storage state: ${JSON.stringify(storage.state)}`);
 
     const box = context.getBox();
 
     box.mountStyles(styles);
 
     if (storage.state.useNewPlayer) {
-      const controller = new Controller(context);
+      const controller = new Controller(context, logger);
       box.$content.appendChild(controller.playerContainer);
       controller.mountPlayer().then(() => {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        // if ((window as any).__pcmProxy) {
-        //   let currentApp = controller;
-        //   const handleVisibilityChange = () => {
-        //     if (document.visibilityState === "hidden") {
-        //       console.log("[Plyr] destroy app for pcm proxy.");
-        //       while (box.$content.firstChild) {
-        //         box.$content.removeChild(box.$content.firstChild);
-        //       }
-        //       currentApp.destroy();
-        //     } else {
-        //       console.log("[Plyr] recreate app for pcm proxy.");
-        //       controller.mountPlayer();
-        //     }
-        //   };
-
-        //   document.addEventListener("visibilitychange", handleVisibilityChange);
-        //   context.emitter.on("destroy", () => {
-        //     currentApp.destroy();
-        //     document.removeEventListener("visibilitychange", handleVisibilityChange);
-        //   });
-        // } else {
-        if (controller.customControls) {
-          box.$content.appendChild(controller.customControls.ui);
-        }
-        context.emitter.on("destroy", () => {
-          controller.destroy();
+        context.emitter.on("destroy", async () => {
+          await controller.destroy();
+          logger && logger.info(`[Plyr]: appid ${context.appId} destroy`);
         });
-        // }
       });
       return {
         controller,

@@ -3,6 +3,7 @@ import Plyr, { Provider } from "plyr";
 import { cannotPlayHLSNatively, guessTypeFromSrc, hlsTypes, loadHLS } from "./utils";
 import { debounce, isBoolean, isEqual, isNumber } from "lodash";
 import { AppContext, Player, Room } from "@netless/window-manager";
+import type { Logger } from "white-web-sdk";
 
 export interface PlayerOption {
   context: AppContext<Attributes>;
@@ -52,27 +53,23 @@ export class Controller {
     resolve: () => void;
   } | null = null;
   readonly context: AppContext<Attributes>;
-  public readonly playerContainer!: HTMLAudioElement | HTMLVideoElement | HTMLDivElement;
-  private pcmAudioSource: MediaElementAudioSourceNode | undefined;
+  public readonly playerContainer!: HTMLDivElement;
+  public readonly plyrElement!: HTMLAudioElement | HTMLVideoElement | HTMLDivElement;
   public customControls?: CustomPlyrControls;
   private lastSyncState: Partial<Pick<Attributes, "volume" | "muted" | "playTimeState">> = {};
-
-  public constructor(context: AppContext<Attributes>) {
+  public readonly logger: Logger;
+  private checkIntervaler: number | null = null;
+  public constructor(context: AppContext<Attributes>, logger: Logger) {
     this.context = context;
+    this.logger = logger;
     const { src, provider, type, poster } = this.context.storage.state;
     const _type = provider ? undefined : type || guessTypeFromSrc(src);
-    this.playerContainer = this.createPlayerContainer({ src, poster, provider, type: _type });
+    const {plyrElement, playerContainer} = this.createPlayerContainer({ src, poster, provider, type: _type });
+    this.plyrElement = plyrElement;
+    this.playerContainer = playerContainer;
     // (window as any).plyrController = this;
   }
-  private connectToPcmProxyIfPossible = (element: HTMLElement) => {
-    const pcmProxy = (window as any).__pcmProxy;
-    if (pcmProxy) {
-      if (element instanceof HTMLVideoElement || element instanceof HTMLAudioElement) {
-        console.log("[Plyr] connect pcm");
-        this.pcmAudioSource = pcmProxy.connect?.(element);
-      }
-    }
-  };
+
   get room(): Room | undefined {
     return this.context.getRoom();
   }
@@ -94,10 +91,6 @@ export class Controller {
       : this.displayer
       ? this.displayer.beginTimestamp + this.displayer?.progressTime
       : 0;
-  }
-
-  get playTimeState(): PlayTimeState | undefined {
-    return this.context.storage.state.playTimeState || undefined;
   }
 
   /**
@@ -141,6 +134,10 @@ export class Controller {
     return this.context.storage.state.useCustomControls || false;
   }
 
+  get playTimeState(): PlayTimeState | undefined {
+    return this.context.storage.state.playTimeState || undefined;
+  }
+
   private hasPermission = (_operation: PlayerOperationType): PermissionType => {
     // todo 如果客户需要更细粒度的权限控制，可以在这里添加
     if (_operation === "volume" && !this.context.storage.state.syncVolume) {
@@ -162,13 +159,14 @@ export class Controller {
     if (!this.player.elements) {
       return;
     }
-    console.log(
-      "[app plyr] attrsUpdateHandler",
-      this.player.volume,
-      this.volumeData,
-      this.player.muted,
-      this.mutedData,
-      this.playTimeState
+    this.logger.info(
+      "[Plyr] sync attrsUpdateHandler",
+      "volume:" + this.player.volume,
+      "volumeData:" + this.volumeData,
+      "muted:" + this.player.muted,
+      "mutedData:" + this.mutedData,
+      "paused:" + this.player.paused,
+      "playTimeState:" + this.playTimeState,
     );
     const willUpdateAttr: {
       volume?: number;
@@ -188,8 +186,8 @@ export class Controller {
       this.lastSyncState.playTimeState = this.playTimeState;
     }
     if (Object.keys(willUpdateAttr).length > 0) {
-      console.log("[app plyr] attrsUpdateHandler willUpdateAttr", willUpdateAttr);
       this.willSyncPlayerState(willUpdateAttr);
+      // this.logger.info("[Plyr] attrsUpdateHandler willUpdateAttr", JSON.stringify(willUpdateAttr));
     }
   }, 50);
 
@@ -223,7 +221,7 @@ export class Controller {
   }) => {
     if (this.player) {
       const { volume, muted, playTimeState } = target;
-      console.log("[app plyr] willSyncPlayerState", volume, muted, playTimeState);
+      console.log("[Plyr] willSyncPlayerState", volume, muted, playTimeState);
       if (isNumber(volume)) {
         this.player.volume = volume as number;
         if (this.customControls) {
@@ -237,48 +235,52 @@ export class Controller {
         }
       }
       if (playTimeState) {
-        const progressTime = this.progressTime / 1000;
-        const resovle = this.syncPromeResolveMap.get(progressTime);
-        if (resovle) {
-          if (resovle.timer) {
-            window.clearTimeout(resovle.timer);
-          }
-          this.syncPromeResolveMap.delete(progressTime);
-        }
-        await new Promise<void>(resolve => {
-          this.syncPromeResolveMap.set(progressTime, {
-            count: 0,
-            timer: null,
-            resolve,
-          });
-          this.syncPlayTimeState(progressTime);
-        }).then(() => {
-          if (this.player) {
-            const _progressTime = this.progressTime / 1000;
-            this.player.currentTime = _progressTime;
-            this.notSyncSeekTimeSet.add(Math.floor(_progressTime));
-          }
-          this.syncPromeResolveMap.delete(progressTime);
-        });
-        if (this.customControls && !this.customControls.isDraggingProgress) {
-          this.customControls.currentTime(progressTime, this.duration);
-        }
-        if (playTimeState[0]) {
-          console.log("[app plyr] willSyncPlayerState safePause");
-          this.safePause();
-          if (this.customControls) {
-            this.customControls.pause(playTimeState[0]);
-          }
-        }
-        if (!playTimeState[0]) {
-          await this.safePlay();
-          if (this.customControls) {
-            this.customControls.pause(this.player.paused);
-          }
-        }
+        await this.willsyncPlayTimeState(playTimeState);
       }
     }
   };
+
+  private willsyncPlayTimeState = async (playTimeState: PlayTimeState) => {
+    const progressTime = this.progressTime / 1000;
+    const resovle = this.syncPromeResolveMap.get(progressTime);
+    if (resovle) {
+      if (resovle.timer) {
+        window.clearTimeout(resovle.timer);
+      }
+      this.syncPromeResolveMap.delete(progressTime);
+    }
+    await new Promise<void>(resolve => {
+      this.syncPromeResolveMap.set(progressTime, {
+        count: 0,
+        timer: null,
+        resolve,
+      });
+      this.syncPlayTimeState(progressTime);
+    }).then(() => {
+      if (this.player) {
+        const _progressTime = this.progressTime / 1000;
+        this.player.currentTime = _progressTime;
+        this.notSyncSeekTimeSet.add(Math.floor(_progressTime));
+      }
+      this.syncPromeResolveMap.delete(progressTime);
+    });
+    if (this.customControls && !this.customControls.isDraggingProgress) {
+      this.customControls.currentTime(progressTime, this.duration);
+    }
+    if (playTimeState[0]) {
+      console.log("[Plyr] willSyncPlayerState safePause");
+      this.safePause();
+      if (this.customControls) {
+        this.customControls.pause(playTimeState[0]);
+      }
+    }
+    if (!playTimeState[0]) {
+      await this.safePlay();
+      if (this.customControls) {
+        this.customControls.pause(this.player?.paused || false);
+      }
+    }
+  }
 
   safePause = () => {
     if (!this.player) {
@@ -295,24 +297,25 @@ export class Controller {
       return;
     }
     if (loop > 3) {
-      console.error("[app plyr] play error loop overflow", loop);
+      this.logger.error("[Plyr] play error loop overflow", loop);
       return;
     }
-    console.log("[app plyr] play error safePlay start");
+    console.log("[Plyr] play error safePlay start");
     try {
       loop++;
       if (this.player.paused) {
         await this.player.play();
       }
     } catch (error) {
-      console.error("[app plyr] play error", error);
+      // console.error("[Plyr] play error", error);
+      this.logger.warn("[Plyr] play error", (error as Error)?.message ?? error)
       if (this.player) {
         this.player.muted = true;
         if (this.customControls) {
           this.customControls.volume(this.player.volume, true);
         }
         await this.safePlay(loop);
-        console.log("[app plyr] play error safePlay end");
+        console.log("[Plyr] play error safePlay end");
       }
     }
   };
@@ -367,43 +370,50 @@ export class Controller {
     poster?: string;
     provider?: Provider;
     type?: string;
-  }): HTMLAudioElement | HTMLVideoElement | HTMLDivElement {
+  }) {
     const { src, poster, provider, type } = option;
+    const container = document.createElement("div");
+    container.classList.add("plyr-container");
+    let plyrElement: HTMLDivElement | HTMLAudioElement | HTMLVideoElement | undefined;
     if (provider === "youtube") {
-      return this.createYoutubeContainer(src, poster);
+      plyrElement = this.createYoutubeContainer(src, poster);
+      container.classList.add("plyr-container-video-embed");
     } else if (provider === "vimeo") {
-      return this.createVimeoContainer(src, poster);
-    }
-    if (type) {
+      plyrElement = this.createVimeoContainer(src, poster);
+      container.classList.add("plyr-container-video-embed");
+    } else if (type) {
       if (type.startsWith("audio/")) {
-        return this.createAudioContainer(src, type, poster);
+        plyrElement = this.createAudioContainer(src, type, poster);
+        container.classList.add("plyr-container-audio");
       } else {
-        return this.createVideoContainer(src, type, poster);
+        plyrElement = this.createVideoContainer(src, type, poster);
+        container.classList.add("plyr-container-video");
       }
     } else {
-      const container = document.createElement("div");
-      container.classList.add("plyr--audio");
-      container.setAttribute("data-app-kind", "Plyr");
-      container.innerText = `Invalid "src" or "type". ${JSON.stringify({ src, type })}`;
-      return container;
+      container.classList.add("plyr-container-audio");
+      plyrElement = document.createElement("div");
+      plyrElement.classList.add("plyr--audio");
+      plyrElement.setAttribute("data-app-kind", "Plyr");
+      plyrElement.innerText = `Invalid "src" or "type". ${JSON.stringify({ src, type })}`;
     }
+    container.appendChild(plyrElement);
+    return {plyrElement: plyrElement, playerContainer: container};
   }
 
   public async mountPlayer(): Promise<void> {
     const { src, provider, type, paused, customControlsTitle, syncMuted, syncVolume } =
       this.context.storage.state;
     const _type = provider ? undefined : type || guessTypeFromSrc(src);
-    this.connectToPcmProxyIfPossible(this.playerContainer);
     const useHLS = hlsTypes.includes(String(_type).toLowerCase());
     this.cancleCalibrationProgressTime();
     const isAutoPlay = !paused;
-    if (this.playerContainer) {
-      if (useHLS && cannotPlayHLSNatively(this.playerContainer)) {
+    if (this.plyrElement) {
+      if (useHLS && cannotPlayHLSNatively(this.plyrElement)) {
         const hls = await loadHLS();
         hls.loadSource(src);
-        hls.attachMedia(this.playerContainer);
+        hls.attachMedia(this.plyrElement);
       }
-      this.player = new Plyr(this.playerContainer, {
+      this.player = new Plyr(this.plyrElement, {
         fullscreen: { enabled: false },
         controls: this.useCustomControls
           ? []
@@ -425,12 +435,13 @@ export class Controller {
         this.player.on("ended", () => {
           if (this.player) {
             const currentTime = this.player.currentTime;
-            console.log("[app plyr] ended, currentTime:", currentTime);
+            console.log("[Plyr] ended, currentTime:", currentTime);
             this.player?.pause();
             if (this.customControls) {
-              this.customControls.pause(true);
+              this.customControls.pause(true, true);
             }
             this.cancleCalibrationProgressTime();
+            this.cancelKeepCheckPlayerStateInSync();
           }
         });
         this.player.on("ready", () => {
@@ -440,9 +451,10 @@ export class Controller {
             }
             this.attrsUpdateHandler();
             this.context.storage.addStateChangedListener(this.attrsUpdateHandler);
+            this.keepCheckPlayerStateInSync();
           }
           // window.mediaPlayer = this.player;
-          console.log("[app plyr] ready, buffered:", this.player?.buffered);
+          console.log("[Plyr] ready, buffered:", this.player?.buffered);
         });
         this.player.on("seeked", () => {
           if (this.player) {
@@ -456,7 +468,7 @@ export class Controller {
             if (this.notSyncSeekTimeSet.has(key)) {
               this.notSyncSeekTimeSet.delete(key);
             }
-            console.log("[app plyr] seeked, seeking:", this.player?.seeking);
+            console.log("[Plyr] seeked, seeking:", this.player?.seeking);
           }
         });
         this.player.on("play", () => {
@@ -470,19 +482,20 @@ export class Controller {
               }
             }
             this.forceSyncOperation.delete("play");
-            console.log("[app plyr] play, paused:", this.player?.paused);
+            console.log("[Plyr] play, paused:", this.player?.paused);
             this.calibrationProgressTime();
+            this.keepCheckPlayerStateInSync();
           }
         });
         this.player.on("pause", () => {
           if (this.player) {
             const playPermission = this.hasPermission("play");
             if (playPermission === "sync" && this.forceSyncOperation.has("play")) {
-              console.log("[app plyr] pause by sync, paused:", this.player?.paused);
+              console.log("[Plyr] pause by sync, paused:", this.player?.paused);
               this.willActiveUpdatePlayTimeState();
             }
             this.forceSyncOperation.delete("play");
-            console.log("[app plyr] pause, paused:", this.player?.paused);
+            console.log("[Plyr] pause, paused:", this.player?.paused);
             this.cancleCalibrationProgressTime();
           }
         });
@@ -511,7 +524,7 @@ export class Controller {
             this.forceSyncOperation.delete("volume");
             this.forceSyncOperation.delete("muted");
             console.log(
-              "[app plyr] volumechange, volume:",
+              "[Plyr] volumechange, volume:",
               this.player?.volume,
               "muted:",
               this.player?.muted
@@ -520,12 +533,6 @@ export class Controller {
         });
         await this.setControlPermission();
         (window as any).__plyr = this.player;
-        if (!this.pcmAudioSource) {
-          const media = (this.player as any).media;
-          if (media) {
-            this.connectToPcmProxyIfPossible(media);
-          }
-        }
       }
     }
   }
@@ -560,7 +567,7 @@ export class Controller {
 
   private activeControlDom = (operation: PlayerOperationType) => {
     this.forceSyncOperation.add(operation);
-    console.log("[app plyr] activeControlDom", operation);
+    console.log("[Plyr] activeControlDom", operation);
   };
 
   public async setControlPermission() {
@@ -603,10 +610,10 @@ export class Controller {
         mutedDom.style.pointerEvents = "";
       }
       const playControlDom = controlsDom.querySelector("button.plyr__control") as HTMLButtonElement;
-      console.log("[app plyr] playControlDom", !!playControlDom);
+      console.log("[Plyr] playControlDom", !!playControlDom);
       if (playControlDom) {
         playControlDom.addEventListener("pointerdown", e => {
-          console.log("[app plyr] playControlDom pointerdown", e.target);
+          console.log("[Plyr] playControlDom pointerdown", e.target);
           this.activeControlDom("play");
         });
       }
@@ -669,7 +676,6 @@ export class Controller {
             this.notSyncSeekTimeSet.add(Math.round(progressTime));
             this.player.currentTime = progressTime;
             this.calibrationProgressTime();
-            // console.log("calibrationProgressTime==>1", progressTime - this.player.currentTime, this.player.speed, progressTime, this.player.currentTime);
             return;
           }
           // 如果进度时间与当前时间相差大于6秒，则设置速度为3
@@ -718,17 +724,17 @@ export class Controller {
   }, 20);
 
   private setVolumeData(volume: number): void {
-    console.log("[app plyr] setVolumeData", volume);
+    console.log("[Plyr] setVolumeData", volume);
     this.context.storage.setState({ volume });
   }
 
   public setMutedData(muted: boolean): void {
-    console.log("[app plyr] setMutedData", muted);
+    console.log("[Plyr] setMutedData", muted);
     this.context.storage.setState({ muted });
   }
 
   private setPlayTimeStateData(playTimeState: PlayTimeState): void {
-    console.log("[app plyr] setPlayTimeStateData", playTimeState);
+    console.log("[Plyr] setPlayTimeStateData", playTimeState);
     this.context.storage.setState({ playTimeState });
   }
 
@@ -776,7 +782,10 @@ export class Controller {
     const permission = this.hasPermission("play");
     switch (permission) {
       case "sync": {
-        const seekTime = this.player?.currentTime || 0;
+        let seekTime = this.player?.currentTime || 0;
+        if (seekTime >= this.duration) {
+          seekTime = 0;
+        }
         const calibrationTimestamp = this.calibrationTimestamp;
         const newState = [false, Math.floor(calibrationTimestamp - seekTime * 1000)] as [
           false,
@@ -854,16 +863,42 @@ export class Controller {
         }, 500);
       });
       this.player?.destroy();
-      this.pcmAudioSource?.disconnect();
-      this.pcmAudioSource = undefined;
       this.player = undefined;
-      this.playerContainer.innerHTML = "";
+      this.plyrElement.innerHTML = "";
       if (this.customControls) {
         this.customControls.destory();
         this.customControls = undefined;
       }
+      this.playerContainer?.remove();
+      this.cancelKeepCheckPlayerStateInSync();
     }
   }
+
+  private checkPlayerStateInSync = () => {
+    const playTimeState = this.playTimeState;
+    if (playTimeState && this.player && playTimeState[0] !== this.player.paused) {
+      const willSyncPlayTimeState = this.context.storage.state.allowBackgroundPlayback || document.visibilityState !== "hidden";
+      if (willSyncPlayTimeState) {
+        this.logger && this.logger.info(`[Plyr] Interval check sync playTimeState: visibilityState: ${document.visibilityState}, player paused: ${this.player.paused},  playTimeState: ${playTimeState[0]}`);
+        this.willsyncPlayTimeState(playTimeState)
+      }
+    }
+  }
+
+  private keepCheckPlayerStateInSync = (): void => {
+    this.cancelKeepCheckPlayerStateInSync();
+    this.checkIntervaler = setInterval(() => {
+      this.checkPlayerStateInSync();
+    }, 4000) as unknown as number;
+  };
+
+  private cancelKeepCheckPlayerStateInSync = (): void => {
+    if (this.checkIntervaler) {
+      clearInterval(this.checkIntervaler);
+      this.checkIntervaler = null;
+    }
+  }
+
 }
 
 export class CustomPlyrControls {
@@ -885,6 +920,9 @@ export class CustomPlyrControls {
   private _isDraggingProgress = false;
   private dragStartX?: [number, number];
 
+  private showControlsTimer: number | null = null;
+  private resizeObserver?: ResizeObserver;
+
   get isDraggingProgress(): boolean {
     return this._isDraggingProgress;
   }
@@ -893,12 +931,38 @@ export class CustomPlyrControls {
     this.controller = controller;
     this.plyr = plyr;
     this.ui = this.createUI();
+    this.controller.playerContainer.appendChild(this.ui);
+    this.initResizeObserver();
     this.bindEvent();
   }
 
   destory() {
     this.unBindEvent();
+    if (this.resizeObserver) {
+      this.resizeObserver.disconnect();
+      this.resizeObserver = undefined;
+    }
     this.ui.remove();
+  }
+
+  private initResizeObserver(): void {
+    if (typeof ResizeObserver === "undefined") {
+      return;
+    }
+    this.resizeObserver = new ResizeObserver(entries => {
+      for (const entry of entries) {
+        const width = entry.contentRect.width;
+        if (width > 310) {
+          this.ui.classList.remove("small");
+          this.ui.classList.remove("middle");
+        } else if (width < 200) {
+          this.ui.classList.add("small");
+        } else {
+          this.ui.classList.add("middle");
+        }
+      }
+    });
+    this.resizeObserver.observe(this.controller.playerContainer);
   }
 
   public createUI(): HTMLDivElement {
@@ -957,15 +1021,18 @@ export class CustomPlyrControls {
     } else {
       this.controller.play();
     }
+    this.hideControls();
   };
 
   private syncMute = () => {
     const muted = this.MuteButton.classList.contains("muted");
     this.controller.setMute(!muted);
+    this.hideControls();
   };
 
   private syncVolume = (num: number) => {
     this.controller.setVolume(num);
+    this.hideControls();
   };
 
   /**
@@ -991,6 +1058,7 @@ export class CustomPlyrControls {
       this.plyr.duration
     );
     this.syncSeek(seekTime);
+    this.hideControls();
   };
 
   private eventVolume = (e: PointerEvent) => {
@@ -999,6 +1067,7 @@ export class CustomPlyrControls {
     const progress = offsetX / width;
     const volume = Math.min(Math.max(Math.floor(progress * 100) / 100, 0), 1);
     this.syncVolume(volume);
+    this.hideControls();
   };
 
   private bindDragProgress = (e: PointerEvent) => {
@@ -1012,9 +1081,9 @@ export class CustomPlyrControls {
     this._isDraggingProgress = true;
     const offsetX = e.offsetX + this.ProgressSliderButton.offsetLeft;
     this.dragStartX = [e.clientX, offsetX];
-    window.addEventListener("pointermove", this.dragProgress, { passive: false });
-    window.addEventListener("pointerup", this.dragProgressEnd, { passive: false });
-    window.addEventListener("pointercancel", this.dragProgressEnd, { passive: false });
+    window.addEventListener("pointermove", this.dragProgress);
+    window.addEventListener("pointerup", this.dragProgressEnd);
+    window.addEventListener("pointercancel", this.dragProgressEnd);
   };
   private dragProgress = (e: PointerEvent) => {
     e.stopPropagation();
@@ -1065,6 +1134,7 @@ export class CustomPlyrControls {
     window.removeEventListener("pointermove", this.dragProgress);
     window.removeEventListener("pointerup", this.dragProgressEnd);
     window.removeEventListener("pointercancel", this.dragProgressEnd);
+    this.hideControls();
   };
 
   private bindDragVolume = (e: PointerEvent) => {
@@ -1116,6 +1186,7 @@ export class CustomPlyrControls {
     window.removeEventListener("pointermove", this.dragVolume);
     window.removeEventListener("pointerup", this.dragVolumeEnd);
     window.removeEventListener("pointercancel", this.dragVolumeEnd);
+    this.hideControls();
   };
 
   private bindEvent(): void {
@@ -1131,6 +1202,45 @@ export class CustomPlyrControls {
       capture: true,
       passive: false,
     });
+    this.controller.playerContainer.addEventListener("mouseenter", this.handleMouseEnter);
+    this.controller.playerContainer.addEventListener("mouseleave", this.handleMouseLeave);
+    this.controller.playerContainer.addEventListener("touchstart", this.handleTouchStart);
+    this.ui.addEventListener("touchstart", this.stopPropagationFun);
+  }
+
+  private stopPropagationFun = (e: TouchEvent | MouseEvent) => {
+    e.stopPropagation();
+    e.stopImmediatePropagation();
+  }
+
+  private handleTouchStart = (e: TouchEvent) => {
+    this.stopPropagationFun(e);
+    this.ui.classList.toggle("active", true);
+    this.hideControls();
+  }
+
+  private handleMouseEnter = () => {
+    this.ui.classList.toggle("hover", true);
+  }
+
+  private handleMouseLeave = () => {
+    this.hideControls(0);
+  }
+
+  private hideControls = (timeout: number=3000) => {
+    if (this.showControlsTimer) {
+      clearTimeout(this.showControlsTimer);
+      this.showControlsTimer = null;
+    }
+    this.showControlsTimer = setTimeout(() => {
+      this.showControlsTimer = null;
+      this.ui.classList.toggle("active", false);
+      if (this.controller.player && this.controller.player.paused) {
+        this.ui.classList.toggle("hover", true);
+        return;
+      }
+      this.ui.classList.toggle("hover", false);
+    }, timeout);
   }
 
   private unBindEvent() {
@@ -1140,6 +1250,10 @@ export class CustomPlyrControls {
     this.VolumeSliderContainer.removeEventListener("pointerup", this.eventVolume);
     this.ProgressSliderButton.removeEventListener("pointerdown", this.bindDragProgress);
     this.VolumeSliderButton.removeEventListener("pointerdown", this.bindDragVolume);
+    this.controller.playerContainer.removeEventListener("touchstart", this.handleTouchStart);
+    this.controller.playerContainer.removeEventListener("mouseenter", this.handleMouseEnter);
+    this.controller.playerContainer.removeEventListener("mouseleave", this.handleMouseLeave);
+    this.ui.removeEventListener("touchstart", this.stopPropagationFun);
   }
 
   private createVolumeSliderContainer(): HTMLDivElement {
@@ -1183,8 +1297,15 @@ export class CustomPlyrControls {
     }
   }
 
-  public pause(pause: boolean): void {
+  public pause(pause: boolean, forceShowControls?: boolean): void {
     this.PlayButton.classList.toggle("playing", !pause);
+    if (forceShowControls) {
+      if(this.showControlsTimer) {
+        clearTimeout(this.showControlsTimer);
+        this.showControlsTimer = null;
+      }
+      this.ui.classList.toggle("hover", true);
+    }
   }
 
   private formatTime(time: number): string {
@@ -1218,4 +1339,5 @@ export class CustomPlyrControls {
   public title(title: string): void {
     this.Title.textContent = title;
   }
+  
 }
