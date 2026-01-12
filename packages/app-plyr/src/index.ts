@@ -4,7 +4,7 @@ import { Sync } from "./sync";
 import styles from "./style.scss?inline";
 import { Controller, PlayTimeState } from "./controller";
 
-export { Controller } from "./controller";
+export { Controller, CustomPlyrControls } from "./controller";
 export type { PlayTimeState } from "./controller";
 
 export interface Attributes {
@@ -81,7 +81,7 @@ const Plyr: NetlessApp<Attributes, any, any, AppResult> = {
       logger.error(`[Plyr]: missing "src"`);
       return {};
     }
-
+    
     if (!storage.state.type && !storage.state.provider) {
       console.warn(`[Plyr]: missing "type", will guess from file extension`);
       logger.warn(`[Plyr]: missing "type", will guess from file extension`);
@@ -96,31 +96,28 @@ const Plyr: NetlessApp<Attributes, any, any, AppResult> = {
     if (storage.state.useNewPlayer) {
       const controller = new Controller(context, logger);
       box.$content.appendChild(controller.playerContainer);
-      controller.mountPlayer().then(() => {
-        context.emitter.on("destroy", async () => {
-          await controller.destroy();
-          logger && logger.info(`[Plyr]: appid ${context.appId} destroy`);
-        });
+      controller.mountPlayer();
+      context.emitter.on("destroy", async () => {
+        await controller.destroy();
+        logger && logger.info(`[Plyr]: appid ${context.appId} destroy`);
       });
       return {
         controller,
       };
     }
 
+    // old player logic
     const sync = new Sync(context);
     const app = new Player({
       target: box.$content,
       props: { storage: context.storage, sync },
     });
-
     // sync.behavior = "ideal";
-
     if (import.meta.env.DEV) {
       Object.assign(window, {
         media_player: { sync, app },
       });
     }
-
     context.emitter.on("destroy", () => {
       try {
         sync.dispose();
@@ -130,7 +127,6 @@ const Plyr: NetlessApp<Attributes, any, any, AppResult> = {
         // console.warn("[Plyr] destroy failed", err);
       }
     });
-
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     if ((window as any).__pcmProxy) {
       let currentApp = app;
