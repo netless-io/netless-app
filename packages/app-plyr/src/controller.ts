@@ -277,12 +277,14 @@ export class Controller {
       this.safePause();
       if (this.customControls) {
         this.customControls.pause(playTimeState[0]);
+        this.customControls.isLoading = false;
       }
     }
     if (!playTimeState[0]) {
       await this.safePlay();
       if (this.customControls) {
         this.customControls.pause(this.player?.paused || false);
+        this.customControls.isLoading = false;
       }
     }
   }
@@ -312,7 +314,6 @@ export class Controller {
         await this.player.play();
       }
     } catch (error) {
-      // console.error("[Plyr] play error", error);
       this.logger.warn("[Plyr] play error", (error as Error)?.message ?? error)
       if (this.player) {
         this.player.muted = true;
@@ -320,9 +321,9 @@ export class Controller {
           this.customControls.volume(this.player.volume, true);
         }
         await this.safePlay(loop);
-        console.log("[Plyr] play error safePlay end");
       }
     }
+    console.log("[Plyr] play error safePlay end", loop);
   };
 
   protected createYoutubeContainer(src: string, poster?: string): HTMLDivElement {
@@ -472,9 +473,25 @@ export class Controller {
             this.attrsUpdateHandler();
             this.context.storage.addStateChangedListener(this.attrsUpdateHandler);
             this.keepCheckPlayerStateInSync();
+            if (this.customControls) {
+              if (this.playTimeState && !this.playTimeState[0] && this.player.paused) {
+                this.customControls.isLoading = true;
+              } else {
+                this.customControls.isLoading = false;
+              }
+            }
           }
           // window.mediaPlayer = this.player;
           console.log("[Plyr] ready, buffered:", this.player?.buffered, this.player?.duration);
+        });
+        this.player.on("seeking", () => {
+          if (this.player) {
+            // this.isLoadDuration = true;
+            console.log("[Plyr] seeking:", this.player?.seeking);
+            if (this.customControls) {
+              this.customControls.isLoading = true;
+            }
+          }
         });
         this.player.on("seeked", () => {
           if (this.player) {
@@ -489,13 +506,13 @@ export class Controller {
               this.notSyncSeekTimeSet.delete(key);
             }
             console.log("[Plyr] seeked, seeking:", this.player?.seeking);
+            if (this.customControls) {
+              this.customControls.isLoading = false;
+            }
           }
         });
         this.player.on("play", () => {
           if (this.player) {
-            if (this.customControls) {
-              this.customControls.isLoading = false;
-            }
             const playPermission = this.hasPermission("play");
             if (playPermission === "sync") {
               if (this.forceSyncOperation.has("play")) {
@@ -508,6 +525,9 @@ export class Controller {
             console.log("[Plyr] play, paused:", this.player?.paused);
             this.calibrationProgressTime();
             this.keepCheckPlayerStateInSync();
+            if (this.customControls) {
+              this.customControls.isLoading = false;
+            }
           }
         });
         this.player.on("pause", () => {
@@ -521,6 +541,9 @@ export class Controller {
             console.log("[Plyr] pause, paused:", this.player?.paused);
             this.cancleCalibrationProgressTime();
             this.keepCheckPlayerStateInSync();
+            if (this.customControls) {
+              this.customControls.isLoading = false;
+            }
           }
         });
         this.player.on("timeupdate", () => {
@@ -1108,11 +1131,6 @@ export class CustomPlyrControls {
   }
 
   public init() {
-    if (this.controller.playTimeState && !this.controller.playTimeState[0] && this.plyr.paused) {
-      this.isLoading = true;
-    } else {
-      this.isLoading = false;
-    }
     this.pause(this.plyr.paused);
     this.volume(this.plyr.volume, this.plyr.muted);
     this.currentTime(this.plyr.currentTime, this.controller.duration);
@@ -1124,9 +1142,7 @@ export class CustomPlyrControls {
     }
     if (this.PlayButton.classList.contains("playing")) {
       this.controller.pause();
-      this.isLoading = false;
     } else {
-      this.isLoading = true;
       this.controller.play();
     }
     this.hideControls();
