@@ -60,6 +60,7 @@ export class Controller {
   public readonly logger: Logger;
   protected checkIntervaler: number | null = null;
   private isDestroying = false;
+  private isLoadDuration = false;
   public constructor(context: AppContext<Attributes>, logger: Logger) {
     this.context = context;
     this.logger = logger;
@@ -129,7 +130,7 @@ export class Controller {
   }
 
   get duration(): number {
-    return this.player?.duration || 3600;
+    return this.player?.duration || 0;
   }
   get useCustomControls(): boolean {
     return this.context.storage.state.useCustomControls || false;
@@ -153,7 +154,7 @@ export class Controller {
     return "none";
   };
 
-  protected attrsUpdateHandler = debounce(() => {
+  protected attrsUpdateHandler = debounce(async() => {
     if (!this.player) {
       return;
     }
@@ -187,8 +188,7 @@ export class Controller {
       this.lastSyncState.playTimeState = this.playTimeState;
     }
     if (Object.keys(willUpdateAttr).length > 0) {
-      this.willSyncPlayerState(willUpdateAttr);
-      // this.logger.info("[Plyr] attrsUpdateHandler willUpdateAttr", JSON.stringify(willUpdateAttr));
+      await this.willSyncPlayerState(willUpdateAttr);
     }
   }, 50);
 
@@ -236,6 +236,7 @@ export class Controller {
         }
       }
       if (playTimeState) {
+        // this.cancelKeepCheckPlayerStateInSync();
         await this.willsyncPlayTimeState(playTimeState);
       }
     }
@@ -266,6 +267,9 @@ export class Controller {
       this.syncPromeResolveMap.delete(progressTime);
     });
     if (this.customControls && !this.customControls.isDraggingProgress) {
+      if (!this.isLoadDuration && this.duration) {
+        this.isLoadDuration = true;
+      }
       this.customControls.currentTime(progressTime, this.duration);
     }
     if (playTimeState[0]) {
@@ -301,7 +305,7 @@ export class Controller {
       this.logger.error("[Plyr] play error loop overflow", loop);
       return;
     }
-    console.log("[Plyr] play error safePlay start");
+    console.log("[Plyr] play error safePlay start", loop);
     try {
       loop++;
       if (this.player.paused) {
@@ -459,6 +463,9 @@ export class Controller {
         });
         this.player.on("ready", () => {
           if (this.player) {
+            if (this.duration) {
+              this.isLoadDuration = true;
+            }
             if (this.customControls) {
               this.customControls.init();
             }
@@ -467,7 +474,7 @@ export class Controller {
             this.keepCheckPlayerStateInSync();
           }
           // window.mediaPlayer = this.player;
-          console.log("[Plyr] ready, buffered:", this.player?.buffered);
+          console.log("[Plyr] ready, buffered:", this.player?.buffered, this.player?.duration);
         });
         this.player.on("seeked", () => {
           if (this.player) {
@@ -486,6 +493,9 @@ export class Controller {
         });
         this.player.on("play", () => {
           if (this.player) {
+            if (this.customControls) {
+              this.customControls.isLoading = false;
+            }
             const playPermission = this.hasPermission("play");
             if (playPermission === "sync") {
               if (this.forceSyncOperation.has("play")) {
@@ -547,6 +557,9 @@ export class Controller {
         });
         // 监听 Plyr 错误事件
         this.player.on("error", (event: any) => {
+          if (this.customControls) {
+            this.customControls.isLoading = false;
+          }
           const error = event?.detail || event;
           const errorMessage = error?.message || error?.toString() || "Unknown error";
           console.error("[Plyr] player error event:", error);
@@ -631,7 +644,6 @@ export class Controller {
         mutedDom.style.pointerEvents = "";
       }
       const playControlDom = controlsDom.querySelector("button.plyr__control") as HTMLButtonElement;
-      console.log("[Plyr] playControlDom", !!playControlDom);
       if (playControlDom) {
         playControlDom.addEventListener("pointerdown", e => {
           console.log("[Plyr] playControlDom pointerdown", e.target);
@@ -878,14 +890,17 @@ export class Controller {
     }
   }
 
-  protected checkPlayerStateInSync = () => {
+  protected checkPlayerStateInSync = async () => {
     const playTimeState = this.playTimeState;
     if (playTimeState && this.player && playTimeState[0] !== this.player.paused) {
       const willSyncPlayTimeState = this.context.storage.state.allowBackgroundPlayback || document.visibilityState !== "hidden";
       if (willSyncPlayTimeState) {
         this.logger && this.logger.info(`[Plyr] Interval check sync playTimeState: visibilityState: ${document.visibilityState}, player paused: ${this.player.paused},  playTimeState: ${playTimeState[0]}`);
-        this.willsyncPlayTimeState(playTimeState)
+        await this.willsyncPlayTimeState(playTimeState)
       }
+    } else if (!playTimeState && !this.isLoadDuration && this.customControls && this.duration) {
+      this.isLoadDuration = true;
+      this.customControls.currentTime(this.progressTime / 1000, this.duration);
     }
   }
 
@@ -894,14 +909,15 @@ export class Controller {
       return;
     }
     this.cancelKeepCheckPlayerStateInSync();
-    this.checkIntervaler = setInterval(() => {
-      this.checkPlayerStateInSync();
+    this.checkIntervaler = setTimeout(async() => {
+      await this.checkPlayerStateInSync();
+      this.keepCheckPlayerStateInSync();
     }, 3000) as unknown as number;
   };
 
   protected cancelKeepCheckPlayerStateInSync = (): void => {
     if (this.checkIntervaler) {
-      clearInterval(this.checkIntervaler);
+      clearTimeout(this.checkIntervaler);
       this.checkIntervaler = null;
     }
   }
@@ -994,9 +1010,22 @@ export class CustomPlyrControls {
 
   protected showControlsTimer: number | null = null;
   protected resizeObserver?: ResizeObserver;
+  protected _isLoading = false;
 
   get isDraggingProgress(): boolean {
     return this._isDraggingProgress;
+  }
+
+  get isLoading(): boolean {
+    return this._isLoading;
+  }
+  set isLoading(value: boolean) {
+    this._isLoading = value;
+    if (value) {
+      this.controller.playerContainer.classList.add("loading");
+    } else {
+      this.controller.playerContainer.classList.remove("loading");
+    }
   }
 
   constructor(controller: Controller, plyr: Plyr) {
@@ -1079,9 +1108,14 @@ export class CustomPlyrControls {
   }
 
   public init() {
+    if (this.controller.playTimeState && !this.controller.playTimeState[0] && this.plyr.paused) {
+      this.isLoading = true;
+    } else {
+      this.isLoading = false;
+    }
     this.pause(this.plyr.paused);
     this.volume(this.plyr.volume, this.plyr.muted);
-    this.currentTime(this.plyr.currentTime, this.plyr.duration);
+    this.currentTime(this.plyr.currentTime, this.controller.duration);
   }
 
   protected syncPlay = () => {
@@ -1090,7 +1124,9 @@ export class CustomPlyrControls {
     }
     if (this.PlayButton.classList.contains("playing")) {
       this.controller.pause();
+      this.isLoading = false;
     } else {
+      this.isLoading = true;
       this.controller.play();
     }
     this.hideControls();

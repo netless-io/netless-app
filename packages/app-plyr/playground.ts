@@ -27,7 +27,7 @@ const options: PlaygroundConfigs<Attributes> = [
     attributes: {
       src: "https://cdn.plyr.io/static/demo/View_From_A_Blue_Moon_Trailer-576p.mp4",
       type: "video/mp4",
-      paused: false,
+      // paused: false,
       syncVolume: false,
       syncMuted: false,
       customControlsTitle: "自定义标题",

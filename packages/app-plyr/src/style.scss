@@ -31,6 +31,36 @@
   height: 100%;
   overflow: hidden;
   pointer-events: auto;
+  &.loading {
+    &::after {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.5);
+      z-index: 10;
+      
+      // Loading spinner - 在中心创建旋转的圆圈
+      // 使用 box-shadow 创建全屏遮罩，同时在中心显示旋转圆圈
+      box-shadow: 
+        // 全屏遮罩
+        inset 0 0 0 1000px rgba(0, 0, 0, 0.5),
+        // 中心旋转圆圈
+        0 0 0 0 var(--plyr-audio-control-color, #fff);
+      width: 32px;
+      height: 32px;
+      top: 50%;
+      left: 50%;
+      margin: -16px 0 0 -16px;
+      border: 3px solid transparent;
+      border-top-color: var(--plyr-audio-control-color, #fff);
+      border-right-color: rgba(255, 255, 255, 0.3);
+      border-radius: 50%;
+      animation: plyr-loading-spin 0.8s linear infinite;
+    }
+  }
 }
 
 .plyr-container-video-embed .plyr--youtube,
@@ -62,6 +92,16 @@
     padding: 0;
   }
 }
+
+@keyframes plyr-loading-spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
 .plyr-container-audio .custom-plyr-controls,
 .custom-plyr-controls.hover,
 .custom-plyr-controls.active {
