@@ -14,9 +14,10 @@ export interface Attributes {
   type: string;
   /** can only set once */
   poster: string;
-
   volume: number;
+  /** 是否暂停播放，默认暂停 */
   paused: boolean;
+  /** 是否静音，默认不静音 */
   muted: boolean;
   currentTime: number;
   hostTime: number;
@@ -29,9 +30,9 @@ export interface Attributes {
   useNewPlayer: boolean;
   /** 是否使用自定义播控组件, 默认使用自定义播控页 */
   useCustomControls?: boolean;
-  /** 是否同步音量数据，默认同步 */
+  /** 是否同步音量数据，默认不同步 */
   syncVolume?: boolean;
-  /** 是否同步静音数据，默认同步 */
+  /** 是否同步静音数据，默认不同步 */
   syncMuted?: boolean;
   /** 自定义播控组件标题 */
   customControlsTitle?: string;
@@ -54,8 +55,8 @@ const DefaultAttributes: Pick<
   muted: false,
   currentTime: 0,
   useNewPlayer: true,
-  syncVolume: true,
-  syncMuted: true,
+  syncVolume: false,
+  syncMuted: false,
   useCustomControls: true,
   allowBackgroundPlayback: true,
   keepPlayerStateInSync: true,
