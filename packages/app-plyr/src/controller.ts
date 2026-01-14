@@ -58,7 +58,7 @@ export class Controller {
   public customControls?: CustomPlyrControls;
   protected lastSyncState: Partial<Pick<Attributes, "volume" | "muted" | "playTimeState">> = {};
   public readonly logger: Logger;
-  protected checkIntervaler: number | null = null;
+  protected checkTimer: number | null = null;
   private isDestroying = false;
   private isLoadDuration = false;
   public constructor(context: AppContext<Attributes>, logger: Logger) {
@@ -196,7 +196,7 @@ export class Controller {
     const _resovle = this.syncPromeResolveMap.get(progressTime);
     if (_resovle) {
       const buffered = this.player?.buffered ?? undefined;
-      if (buffered || _resovle.count > 100) {
+      if (buffered || _resovle.count > 10) {
         _resovle.resolve();
         if (_resovle.timer) {
           window.clearTimeout(_resovle.timer);
@@ -236,7 +236,6 @@ export class Controller {
         }
       }
       if (playTimeState) {
-        // this.cancelKeepCheckPlayerStateInSync();
         await this.willsyncPlayTimeState(playTimeState);
       }
     }
@@ -269,6 +268,7 @@ export class Controller {
     if (this.customControls && !this.customControls.isDraggingProgress) {
       if (!this.isLoadDuration && this.duration) {
         this.isLoadDuration = true;
+        this.cancelLoadDuration();
       }
       this.customControls.currentTime(progressTime, this.duration);
     }
@@ -456,7 +456,7 @@ export class Controller {
             console.log("[Plyr] ended, currentTime:", currentTime);
             this.player?.pause();
             if (this.customControls) {
-              this.customControls.pause(true, true);
+              this.customControls.pause(true);
             }
             this.cancleCalibrationProgressTime();
             this.cancelKeepCheckPlayerStateInSync();
@@ -467,12 +467,12 @@ export class Controller {
             if (this.duration) {
               this.isLoadDuration = true;
             }
-            if (this.customControls) {
-              this.customControls.init();
-            }
             this.attrsUpdateHandler();
             this.context.storage.addStateChangedListener(this.attrsUpdateHandler);
-            this.keepCheckPlayerStateInSync();
+            if (this.customControls) {
+              this.customControls.init();
+              this.loadDuration();
+            }
             if (this.customControls) {
               if (this.playTimeState && !this.playTimeState[0] && this.player.paused) {
                 this.customControls.isLoading = true;
@@ -486,7 +486,6 @@ export class Controller {
         });
         this.player.on("seeking", () => {
           if (this.player) {
-            // this.isLoadDuration = true;
             console.log("[Plyr] seeking:", this.player?.seeking);
             if (this.customControls) {
               this.customControls.isLoading = true;
@@ -921,9 +920,6 @@ export class Controller {
         this.logger && this.logger.info(`[Plyr] Interval check sync playTimeState: visibilityState: ${document.visibilityState}, player paused: ${this.player.paused},  playTimeState: ${playTimeState[0]}`);
         await this.willsyncPlayTimeState(playTimeState)
       }
-    } else if (!playTimeState && !this.isLoadDuration && this.customControls && this.duration) {
-      this.isLoadDuration = true;
-      this.customControls.currentTime(this.progressTime / 1000, this.duration);
     }
   }
 
@@ -932,16 +928,38 @@ export class Controller {
       return;
     }
     this.cancelKeepCheckPlayerStateInSync();
-    this.checkIntervaler = setTimeout(async() => {
+    this.checkTimer = setTimeout(async() => {
       await this.checkPlayerStateInSync();
       this.keepCheckPlayerStateInSync();
     }, 3000) as unknown as number;
   };
 
   protected cancelKeepCheckPlayerStateInSync = (): void => {
-    if (this.checkIntervaler) {
-      clearTimeout(this.checkIntervaler);
-      this.checkIntervaler = null;
+    if (this.checkTimer) {
+      clearTimeout(this.checkTimer);
+      this.checkTimer = null;
+    }
+  }
+
+  protected loadDurationTimer: number | null = null;
+  protected loadDuration = (): void => {
+    this.cancelLoadDuration();
+    if (this.isDestroying || this.isLoadDuration) {
+      return;
+    }
+    if (!this.isLoadDuration && this.customControls && this.duration) {
+      this.isLoadDuration = true;
+      this.customControls.currentTime(this.progressTime / 1000, this.duration);
+    }
+    this.loadDurationTimer = setTimeout(() => {
+      this.loadDuration();
+    }, 1000) as unknown as number;
+  }
+
+  protected cancelLoadDuration = (): void => {
+    if (this.loadDurationTimer) {
+      clearTimeout(this.loadDurationTimer);
+      this.loadDurationTimer = null;
     }
   }
 
@@ -998,6 +1016,7 @@ export class Controller {
       this.playerContainer?.remove();
       this.cancleCalibrationProgressTime();
       this.cancelKeepCheckPlayerStateInSync();
+      this.cancelLoadDuration();
     }
     // 清理 YouTube 错误处理
     if (this.youtubeErrorHandler) {
@@ -1141,8 +1160,10 @@ export class CustomPlyrControls {
       return;
     }
     if (this.PlayButton.classList.contains("playing")) {
+      this.isLoading = true;
       this.controller.pause();
     } else {
+      this.isLoading = true;
       this.controller.play();
     }
     this.hideControls();
@@ -1359,10 +1380,6 @@ export class CustomPlyrControls {
     this.showControlsTimer = setTimeout(() => {
       this.showControlsTimer = null;
       this.ui.classList.toggle("active", false);
-      if (this.controller.player && this.controller.player.paused) {
-        this.ui.classList.toggle("hover", true);
-        return;
-      }
       this.ui.classList.toggle("hover", false);
     }, timeout);
   }
@@ -1421,15 +1438,9 @@ export class CustomPlyrControls {
     }
   }
 
-  public pause(pause: boolean, forceShowControls?: boolean): void {
+  public pause(pause: boolean): void {
     this.PlayButton.classList.toggle("playing", !pause);
-    if (forceShowControls) {
-      if(this.showControlsTimer) {
-        clearTimeout(this.showControlsTimer);
-        this.showControlsTimer = null;
-      }
-      this.ui.classList.toggle("hover", true);
-    }
+    this.ui.classList.toggle("paused", pause);
   }
 
   protected formatTime(time: number): string {

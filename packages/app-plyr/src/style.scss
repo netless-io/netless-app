@@ -104,7 +104,8 @@
 
 .plyr-container-audio .custom-plyr-controls,
 .custom-plyr-controls.hover,
-.custom-plyr-controls.active {
+.custom-plyr-controls.active,
+.custom-plyr-controls.paused{
   transform: translateY(0);
 }
 
