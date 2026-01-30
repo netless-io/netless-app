@@ -242,8 +242,8 @@ importers:
   packages/app-slide:
     devDependencies:
       '@netless/slide':
-        specifier: 1.4.50
-        version: 1.4.50
+        specifier: 1.4.51-alpha.0
+        version: 1.4.51-alpha.0
       '@types/color-string':
         specifier: ^1.5.2
         version: 1.5.5
@@ -479,8 +479,8 @@ packages:
   '@netless/canvas-polyfill@0.0.4':
     resolution: {integrity: sha512-7NzsJrba0R/mq/l10SkIZQwbrNVJyPxZYrjK6xL3Ts732iWAVuS2UB0u3s6iGeUVcqV39A679yva8APWRl4M0A==}
 
-  '@netless/slide@1.4.50':
-    resolution: {integrity: sha512-dcYFKoEMYL2unJq5S1VMDfWRSZzx/zvmGnG4m4LRdKgv2F/OHPtUD5aLlTezTPqn23eUyp/6q9DMzQ+jXZNcHw==}
+  '@netless/slide@1.4.51-alpha.0':
+    resolution: {integrity: sha512-NnEbHcw+4e+Lt3k3Og9jwMFk0fqL8oDMEaaLRhuATH5McjXXztIGbHSXj19DB3kLXs2AhZF7EEquTvNYDefX9A==}
 
   '@netless/telebox-insider@0.2.28':
     resolution: {integrity: sha512-UJDCm/f7yjiIaWqbS20LDXfAG6RUxsXSktPDzmEr51MgsevpQ3u241hVlyOpKAXSeTR6B3ioRAKcgflOw5JvTQ==}
@@ -726,8 +726,8 @@ packages:
   '@types/json-schema@7.0.15':
     resolution: {integrity: sha512-5+fP8P8MFNC+AyZCDxrB2pkZFPGzqQWUzpSeuuVLvm8VMcorNYavBqoFcxK8bQz4Qsbn4oUEEem4wDLfcysGHA==}
 
-  '@types/lodash@4.17.21':
-    resolution: {integrity: sha512-FOvQ0YPD5NOfPgMzJihoT+Za5pdkDJWcbpuj1DjaKZIr/gxodQjY/uWEFlTNqW2ugXHUiL8lRQgw63dzKHZdeQ==}
+  '@types/lodash@4.17.23':
+    resolution: {integrity: sha512-RDvF6wTulMPjrNdCoYRC8gNR880JNGT8uB+REUpC2Ns4pRqQJhGz90wh7rgdXDPpCczF3VGktDuFGVnz8zP7HA==}
 
   '@types/long@4.0.2':
     resolution: {integrity: sha512-MqTGEo5bj5t157U6fA/BiDynNkn0YknVdh48CMPkTSpFTVmvao5UQmm7uEF6xBEo7qIMAlY/JSleYaE6VOdpaA==}
@@ -2585,10 +2585,10 @@ snapshots:
 
   '@netless/canvas-polyfill@0.0.4': {}
 
-  '@netless/slide@1.4.50':
+  '@netless/slide@1.4.51-alpha.0':
     dependencies:
       '@juggle/resize-observer': 3.4.0
-      '@types/lodash': 4.17.21
+      '@types/lodash': 4.17.23
       dat.gui: 0.7.9
       eventemitter3: 4.0.7
       localforage: 1.10.0
@@ -2789,7 +2789,7 @@ snapshots:
 
   '@types/json-schema@7.0.15': {}
 
-  '@types/lodash@4.17.21': {}
+  '@types/lodash@4.17.23': {}
 
   '@types/long@4.0.2': {}
 
