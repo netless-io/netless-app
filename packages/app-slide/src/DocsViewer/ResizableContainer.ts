@@ -54,12 +54,13 @@ export class ResizableContainer {
     if (this.enableResize) {
       // 初始化滚动条
       this.scrollBar = new ScrollBar(this.root, this);
+      
+      this.resizeObserver = new ResizeObserver(() => {
+        this.updateResizableContainer();
+      });
+      this.resizeObserver.observe(this.scrollContainer);
     }
 
-    this.resizeObserver = new ResizeObserver(() => {
-      this.updateResizableContainer();
-    });
-    this.resizeObserver.observe(this.scrollContainer);
   }
 
   public getTranslate(): { x: number; y: number } {
