@@ -54,12 +54,12 @@ export class ResizableContainer {
     if (this.enableResize) {
       // 初始化滚动条
       this.scrollBar = new ScrollBar(this.root, this);
-      
-      this.resizeObserver = new ResizeObserver(() => {
-        this.updateResizableContainer();
-      });
-      this.resizeObserver.observe(this.scrollContainer);
     }
+
+    this.resizeObserver = new ResizeObserver(() => {
+      this.updateResizableContainer();
+    });
+    this.resizeObserver.observe(this.scrollContainer);
 
   }
 
@@ -165,7 +165,7 @@ export class ResizableContainer {
     if (options.triggerScrollBar) {
       this.scrollBar?.handleNormalizeTranslate(x, y);
     }
-    if (options.triggerSync) {
+    if (options.triggerSync && this.enableResize && this.context.getIsWritable()) {
       this.context.storage.setState({ translateX: this.translateX, translateY: this.translateY });
     }
   }
