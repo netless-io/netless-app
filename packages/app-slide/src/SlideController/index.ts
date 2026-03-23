@@ -340,6 +340,8 @@ export class SlideControllerBase {
       timestamp: this.timestamp,
       customLinks: attribute.customLinks,
       skipActionWhenFrozen: options.skipActionWhenFrozen ?? true,
+      resourceMaxRetries: options.resourceMaxRetries,
+      onResourceMaxRetries: options.onResourceMaxRetries,
     });
     if (import.meta.env.DEV) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
