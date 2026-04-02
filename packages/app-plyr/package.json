@@ -16,14 +16,18 @@
   ],
   "scripts": {
     "types": "cross-env NODE_ENV=production tsc --declaration --emitDeclarationOnly --outDir dist",
-    "build": "vite build && npm run types",
-    "build:dev": "vite build --mode development && npm run types",
+    "build:iife:es5": "babel dist/main.iife.js --out-file dist/main.iife.es5.js --source-maps --config-file ./babel.iife-es5.config.json",
+    "build": "vite build && npm run build:iife:es5 && npm run types",
+    "build:dev": "vite build --mode development && npm run build:iife:es5 && npm run types",
     "cleanup": "rimraf ./dist"
   },
   "devDependencies": {
+    "@babel/cli": "^7.28.6",
+    "@babel/core": "^7.29.0",
+    "@babel/preset-env": "^7.29.2",
     "@types/lodash": "^4.17.20",
-    "lodash": "^4.17.21",
     "hls.js": "^1.1.4",
+    "lodash": "^4.17.21",
     "plyr": "^3.7.2",
     "prepend-http": "^4.0.0"
   }
