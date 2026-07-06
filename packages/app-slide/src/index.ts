@@ -84,6 +84,8 @@ export interface AppOptions
   /** just readonly, no operate silder */
   justSildeReadonly?: true;
   enableScale?: boolean;
+  resourceMaxRetries?: number;
+  onResourceMaxRetries: (url: string, error: Error) => void;
 }
 
 export interface ILogger {
