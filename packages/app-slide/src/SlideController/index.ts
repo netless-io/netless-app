@@ -19,6 +19,7 @@ import { clamp } from "../utils/helpers";
 import { cachedGetBgColor } from "../utils/bgcolor";
 import { log, verbose, setRoomLogger } from "../utils/logger";
 import { getRoomTracker } from "../utils/tracker";
+import { releaseAndRestoreSlide } from "./recovery";
 export { syncSceneWithSlide, createDocsViewerPages } from "./helpers";
 
 export const DefaultUrl = "https://convertcdn.netless.link/dynamicConvert";
@@ -392,20 +393,20 @@ export class SlideControllerBase {
     if (!this.visible) return;
     this.isFrozen = false;
     if (this.ready) {
-      let isNeedSyncState = false;
       log("[Slide] unfreeze", this.context.appId);
-      if (this.invisibleBehavior === "frozen") {
-        this.slide.release();
-        isNeedSyncState = true;
-      } else {
-        this.slide.resume();
-      }
-      if (isNeedSyncState) {
-        const state = this.context.storage.state.state;
-        if (state) {
-          log("[Slide] sync storage", JSON.stringify(state));
-          this.slide.setSlideState(state);
+      try {
+        if (this.invisibleBehavior !== "frozen") {
+          this.slide.resume();
+          return;
         }
+
+        await releaseAndRestoreSlide(
+          this.slide,
+          () => this.context.storage.state.state,
+          state => log("[Slide] sync storage", JSON.stringify(state))
+        );
+      } catch (error) {
+        log("[Slide] unfreeze failed", error);
       }
     } else {
       this._toFreeze = -1;

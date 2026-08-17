@@ -5,6 +5,7 @@
   "module": "dist/main.es.js",
   "types": "dist/index.d.ts",
   "scripts": {
+    "test": "node __tests__/recovery.test.js",
     "types": "node scripts/build-types.mjs",
     "build": "vite build && npm run types",
     "build:dev": "vite build --mode development && npm run types",
