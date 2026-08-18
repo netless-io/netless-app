@@ -1,8 +1,11 @@
 import { Slide } from "@netless/slide";
+import { ResizeObserver as Polyfill } from "@juggle/resize-observer";
 import { ScrollBar } from "./ScrollBar";
 import type { AppContext } from "@netless/window-manager";
 import type { Attributes, MagixEvents } from "../typings";
 import type { AppOptions } from "../index";
+
+const ResizeObserver = window.ResizeObserver || Polyfill;
 
 export class ResizableContainer {
   private root: HTMLDivElement;
