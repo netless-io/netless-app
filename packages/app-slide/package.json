@@ -1,6 +1,6 @@
 {
   "name": "@netless/app-slide",
-  "version": "0.2.99",
+  "version": "0.2.100-alpha.0",
   "main": "dist/main.cjs.js",
   "module": "dist/main.es.js",
   "types": "dist/index.d.ts",
