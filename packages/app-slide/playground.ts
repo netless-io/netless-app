@@ -19,11 +19,14 @@ function definePPT(
 }
 
 const options: PlaygroundConfigs<Attributes> = [
-  definePPT("星空1", "9abed6605bbc11ec88a83b917638a00c", "", [
+  // 可写 Tab 1 & 2
+  definePPT("Writable-1", "9abed6605bbc11ec88a83b917638a00c", "", [
     { pageIndex: 1, shapeId: "slide-19", link: "https://www.baidu.com" },
   ]),
-  definePPT("星空2", "9abed6605bbc11ec88a83b917638a00c"),
-  definePPT("星空3", "9abed6605bbc11ec88a83b917638a00c"),
+  definePPT("Writable-2", "9abed6605bbc11ec88a83b917638a00c"),
+  // 只读 Tab 1 & 2
+  definePPT("Readonly-1", "9abed6605bbc11ec88a83b917638a00c"),
+  definePPT("Readonly-2", "9abed6605bbc11ec88a83b917638a00c"),
 ];
 
 export default options;

@@ -49,6 +49,7 @@ export interface SlideControllerOptions {
   onNavigate?: (index: number, origin?: string) => void;
   showRenderError?: boolean;
   invisibleBehavior?: "frozen" | "pause";
+  disableFrameResizeObserver?: boolean;
 }
 
 const noop = function noop() {
@@ -344,6 +345,7 @@ export class SlideControllerBase {
       skipActionWhenFrozen: options.skipActionWhenFrozen ?? true,
       resourceMaxRetries: options.resourceMaxRetries,
       onResourceMaxRetries: options.onResourceMaxRetries,
+      disableFrameResizeObserver: defaults.disableFrameResizeObserver ?? options.disableFrameResizeObserver,
     });
     if (import.meta.env.DEV) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -491,7 +493,7 @@ export class SlideControllerBase {
 export class SlideController extends SlideControllerBase {
   public constructor(props: SlideControllerOptions) {
     super(props);
-    this.slide = this.createSlide(props.anchor, {
+    this.slide = this.createSlide(props.anchor, { disableFrameResizeObserver: props.disableFrameResizeObserver,
       whiteTracker: getRoomTracker(props.context.getDisplayer()),
     });
     this.initialize();

@@ -17,8 +17,8 @@ importers:
         specifier: ^16.2.1
         version: 16.2.4
       '@netless/window-manager':
-        specifier: ^1.0.11
-        version: 1.0.11(jspdf@2.5.1)(white-web-sdk@2.16.52)
+        specifier: ^1.0.19
+        version: 1.0.19(jspdf@2.5.1)(white-web-sdk@2.16.57)
       '@sveltejs/vite-plugin-svelte':
         specifier: 1.0.0-next.48
         version: 1.0.0-next.48(svelte@3.59.2)(vite@2.9.18(sass@1.79.3))
@@ -40,6 +40,9 @@ importers:
       '@typescript-eslint/parser':
         specifier: ^5.27.1
         version: 5.62.0(eslint@8.57.1)(typescript@4.9.5)
+      '@vitejs/plugin-legacy':
+        specifier: 1.6.0
+        version: 1.6.0(vite@2.9.18(sass@1.79.3))
       cross-env:
         specifier: ^7.0.3
         version: 7.0.3
@@ -64,6 +67,9 @@ importers:
       prettier-plugin-svelte:
         specifier: ^2.7.0
         version: 2.10.1(prettier@2.8.8)(svelte@3.59.2)
+      regenerator-runtime:
+        specifier: ^0.14.1
+        version: 0.14.1
       rimraf:
         specifier: ^3.0.2
         version: 3.0.2
@@ -82,6 +88,9 @@ importers:
       svelte:
         specifier: ^3.48.0
         version: 3.59.2
+      terser:
+        specifier: ^5.50.0
+        version: 5.50.0
       typescript:
         specifier: ^4.7.3
         version: 4.9.5
@@ -92,8 +101,8 @@ importers:
         specifier: ^2.9.10
         version: 2.9.18(sass@1.79.3)
       white-web-sdk:
-        specifier: 2.16.52
-        version: 2.16.52
+        specifier: 2.16.57
+        version: 2.16.57
 
   packages/app-browser: {}
 
@@ -341,6 +350,10 @@ packages:
     resolution: {integrity: sha512-Q/N6JNWvIvPnLDvjlE1OUBLPQHH6l3CltCEsHIujp45zQUSSh8K+gHnaEX45yAT1nyngnINhvWtzN+Nb9D8RAQ==}
     engines: {node: '>=6.9.0'}
 
+  '@babel/standalone@7.29.8':
+    resolution: {integrity: sha512-XgbPNz+u6JzB7cKGnPDoS1U24J5td8yp3HFWbT/6f4/ASZ0PqaQGIvts1o5v5AI+f6i3jdVB/L/o2CYLCv101A==}
+    engines: {node: '>=6.9.0'}
+
   '@commitlint/cli@16.3.0':
     resolution: {integrity: sha512-P+kvONlfsuTMnxSwWE1H+ZcPMY3STFaHb2kAacsqoIkNx66O0T7sTpBxpxkMrFPyhkJiLJnJWMhk4bbvYD3BMA==}
     engines: {node: '>=v12'}
@@ -455,12 +468,21 @@ packages:
     resolution: {integrity: sha512-93zYdMES/c1D69yZiKDBj0V24vqNzB/koF26KPaagAfd3P/4gUlh3Dys5ogAK+Exi9QyzlD8x/08Zt7wIKcDcA==}
     deprecated: Use @eslint/object-schema instead
 
+  '@jridgewell/gen-mapping@0.3.13':
+    resolution: {integrity: sha512-2kkt/7niJ6MgEPxF0bYdQ6etZaA+fQvDcLKckhy1yIQOzaoKjBBjSj63/aLVjYE3qhRt5dvM+uUyfCg6UKCBbA==}
+
   '@jridgewell/resolve-uri@3.1.2':
     resolution: {integrity: sha512-bRISgCIjP20/tbWSPWMEi54QVPRZExkuD9lJL+UIxUKtwVJA8wW1Trb1jMs1RFXo1CBTNZ/5hpC9QvmKWdopKw==}
     engines: {node: '>=6.0.0'}
 
+  '@jridgewell/source-map@0.3.11':
+    resolution: {integrity: sha512-ZMp1V8ZFcPG5dIWnQLr3NSI1MiCU7UETdS/A0G8V/XWHvJv3ZsFqutJn1Y5RPmAPX6F3BiE397OqveU/9NCuIA==}
+
   '@jridgewell/sourcemap-codec@1.5.5':
     resolution: {integrity: sha512-cYQ9310grqxueWbl+WuIUIaiUaDcj7WOq5fVhEljNVgRfOUhY9fy2zTvfoqWsnebh8Sl70VScFbICvJnLKB0Og==}
+
+  '@jridgewell/trace-mapping@0.3.31':
+    resolution: {integrity: sha512-zzNR+SdQSDJzc8joaeP8QQoCQr8NuYx2dIIytl1QeBEZHJ9uW6hebsrYgbz8hJwUQao3TWCMtmfV8Nu1twOLAw==}
 
   '@jridgewell/trace-mapping@0.3.9':
     resolution: {integrity: sha512-3Belt6tdc8bPgAtbcmdtNJlirVoTmEb5e2gC94PnkwEW9jI6CAHUeoG85tjWP5WquqfavoMtMwiG4P926ZKKuQ==}
@@ -497,11 +519,11 @@ packages:
       jspdf:
         optional: true
 
-  '@netless/window-manager@1.0.11':
-    resolution: {integrity: sha512-/BbcuSsX483xIgaPqV6awUudm1zZd9iqWMvCuFCEpI8x0eU2i0+WPSI5dzHth9covF5Or5XT97A/IDjRMkVzFA==}
+  '@netless/window-manager@1.0.19':
+    resolution: {integrity: sha512-f1fHarb89sXTJZKYOfuTD71HrvVyQAAHthRzrqkVsQUi5aC8QKBYZTKiZoJzQ6vTppja/JK5coznzMMBRJwxog==}
     peerDependencies:
       jspdf: 2.5.1
-      white-web-sdk: ^2.16.52
+      white-web-sdk: ^2.16.57
     peerDependenciesMeta:
       jspdf:
         optional: true
@@ -600,66 +622,79 @@ packages:
     resolution: {integrity: sha512-Rn3n+FUk2J5VWx+ywrG/HGPTD9jXNbicRtTM11e/uorplArnXZYsVifnPPqNNP5BsO3roI4n8332ukpY/zN7rQ==}
     cpu: [arm]
     os: [linux]
+    libc: [glibc]
 
   '@rollup/rollup-linux-arm-musleabihf@4.55.1':
     resolution: {integrity: sha512-grPNWydeKtc1aEdrJDWk4opD7nFtQbMmV7769hiAaYyUKCT1faPRm2av8CX1YJsZ4TLAZcg9gTR1KvEzoLjXkg==}
     cpu: [arm]
     os: [linux]
+    libc: [musl]
 
   '@rollup/rollup-linux-arm64-gnu@4.55.1':
     resolution: {integrity: sha512-a59mwd1k6x8tXKcUxSyISiquLwB5pX+fJW9TkWU46lCqD/GRDe9uDN31jrMmVP3feI3mhAdvcCClhV8V5MhJFQ==}
     cpu: [arm64]
     os: [linux]
+    libc: [glibc]
 
   '@rollup/rollup-linux-arm64-musl@4.55.1':
     resolution: {integrity: sha512-puS1MEgWX5GsHSoiAsF0TYrpomdvkaXm0CofIMG5uVkP6IBV+ZO9xhC5YEN49nsgYo1DuuMquF9+7EDBVYu4uA==}
     cpu: [arm64]
     os: [linux]
+    libc: [musl]
 
   '@rollup/rollup-linux-loong64-gnu@4.55.1':
     resolution: {integrity: sha512-r3Wv40in+lTsULSb6nnoudVbARdOwb2u5fpeoOAZjFLznp6tDU8kd+GTHmJoqZ9lt6/Sys33KdIHUaQihFcu7g==}
     cpu: [loong64]
     os: [linux]
+    libc: [glibc]
 
   '@rollup/rollup-linux-loong64-musl@4.55.1':
     resolution: {integrity: sha512-MR8c0+UxAlB22Fq4R+aQSPBayvYa3+9DrwG/i1TKQXFYEaoW3B5b/rkSRIypcZDdWjWnpcvxbNaAJDcSbJU3Lw==}
     cpu: [loong64]
     os: [linux]
+    libc: [musl]
 
   '@rollup/rollup-linux-ppc64-gnu@4.55.1':
     resolution: {integrity: sha512-3KhoECe1BRlSYpMTeVrD4sh2Pw2xgt4jzNSZIIPLFEsnQn9gAnZagW9+VqDqAHgm1Xc77LzJOo2LdigS5qZ+gw==}
     cpu: [ppc64]
     os: [linux]
+    libc: [glibc]
 
   '@rollup/rollup-linux-ppc64-musl@4.55.1':
     resolution: {integrity: sha512-ziR1OuZx0vdYZZ30vueNZTg73alF59DicYrPViG0NEgDVN8/Jl87zkAPu4u6VjZST2llgEUjaiNl9JM6HH1Vdw==}
     cpu: [ppc64]
     os: [linux]
+    libc: [musl]
 
   '@rollup/rollup-linux-riscv64-gnu@4.55.1':
     resolution: {integrity: sha512-uW0Y12ih2XJRERZ4jAfKamTyIHVMPQnTZcQjme2HMVDAHY4amf5u414OqNYC+x+LzRdRcnIG1YodLrrtA8xsxw==}
     cpu: [riscv64]
     os: [linux]
+    libc: [glibc]
 
   '@rollup/rollup-linux-riscv64-musl@4.55.1':
     resolution: {integrity: sha512-u9yZ0jUkOED1BFrqu3BwMQoixvGHGZ+JhJNkNKY/hyoEgOwlqKb62qu+7UjbPSHYjiVy8kKJHvXKv5coH4wDeg==}
     cpu: [riscv64]
     os: [linux]
+    libc: [musl]
 
   '@rollup/rollup-linux-s390x-gnu@4.55.1':
     resolution: {integrity: sha512-/0PenBCmqM4ZUd0190j7J0UsQ/1nsi735iPRakO8iPciE7BQ495Y6msPzaOmvx0/pn+eJVVlZrNrSh4WSYLxNg==}
     cpu: [s390x]
     os: [linux]
+    libc: [glibc]
 
   '@rollup/rollup-linux-x64-gnu@4.55.1':
     resolution: {integrity: sha512-a8G4wiQxQG2BAvo+gU6XrReRRqj+pLS2NGXKm8io19goR+K8lw269eTrPkSdDTALwMmJp4th2Uh0D8J9bEV1vg==}
     cpu: [x64]
     os: [linux]
+    libc: [glibc]
 
   '@rollup/rollup-linux-x64-musl@4.55.1':
     resolution: {integrity: sha512-bD+zjpFrMpP/hqkfEcnjXWHMw5BIghGisOKPj+2NaNDuVT+8Ds4mPf3XcPHuat1tz89WRL+1wbcxKY3WSbiT7w==}
     cpu: [x64]
     os: [linux]
+    libc: [musl]
 
   '@rollup/rollup-openbsd-x64@4.55.1':
     resolution: {integrity: sha512-eLXw0dOiqE4QmvikfQ6yjgkg/xDM+MdU9YJuP4ySTibXU0oAvnEWXt7UDJmD4UkYialMfOGFPJnIHSe/kdzPxg==}
@@ -838,6 +873,12 @@ packages:
   '@videojs/xhr@2.7.0':
     resolution: {integrity: sha512-giab+EVRanChIupZK7gXjHy90y3nncA2phIOyG3Ne5fvpiMJzvqYwiTOnEVW2S4CoYcuKJkomat7bMXA/UoUZQ==}
 
+  '@vitejs/plugin-legacy@1.6.0':
+    resolution: {integrity: sha512-MrOT7DWJyln10Eobh38TL9Pg0yDjRec5ZlK0Opi+jZA/qniXgofvGJskOyvfbSKKmUkjLO2dUDLz2rIm2oIYtw==}
+    engines: {node: '>=12.0.0'}
+    peerDependencies:
+      vite: ^2.0.0
+
   '@xmldom/xmldom@0.8.11':
     resolution: {integrity: sha512-cQzWCtO6C8TQiYl1ruKNn2U6Ao4o4WBBcbL61yJl84x+j5sOWWFU9X7DpND8XZG3daDppSsigMdfAIl2upQBRw==}
     engines: {node: '>=10.0.0'}
@@ -927,6 +968,9 @@ packages:
     engines: {node: '>= 0.4.0'}
     hasBin: true
 
+  buffer-from@1.1.2:
+    resolution: {integrity: sha512-E+XQCRwSbaaiChtv6k6Dwgc+bx+Bs6vuKJHHl5kox/BaKbhiXzqQOwK4cO22yElGp2OCmjwVhT3HmxgyPGnJfQ==}
+
   callsites@3.1.0:
     resolution: {integrity: sha512-P8BjAsXvZS+VIDUI11hHCQEv74YT67YUi5JJFNWIqL235sBmjX4+qx9Muvls5ivyNENctx46xQLQ3aTuE7ssaQ==}
     engines: {node: '>=6'}
@@ -980,6 +1024,9 @@ packages:
   color@4.2.3:
     resolution: {integrity: sha512-1rXeuUUiGGrykh+CeBdu5Ie7OJwinCgQY0bc7GCRxy5xVHy+moaqkpL/jqQq0MtQOeYcrqEz4abc5f0KtU7W4A==}
     engines: {node: '>=12.5.0'}
+
+  commander@2.20.3:
+    resolution: {integrity: sha512-GpVkmM8vF2vQUkj2LvZmD35JxeJOLCwJ9cUkugyk2nuhbv3+mJvpLYYt+0+USMxE+oj+ey/lJEnhZw75x/OMcQ==}
 
   compare-func@2.0.0:
     resolution: {integrity: sha512-zHig5N+tPWARooBnb0Zx1MFcdfpyJrfTJ3Y5L+IFvUm8rM74hHz66z0gw0x4tijh5CorKkKUCnW82R2vmpeCRA==}
@@ -1681,6 +1728,9 @@ packages:
   m3u8-parser@7.2.0:
     resolution: {integrity: sha512-CRatFqpjVtMiMaKXxNvuI3I++vUumIXVVT/JpCpdU/FynV/ceVw1qpPyyBNindL+JlPMSesx+WX1QJaZEJSaMQ==}
 
+  magic-string@0.25.9:
+    resolution: {integrity: sha512-RmF0AsMzgt25qzqqLc1+MbHmhdx0ojF2Fvs4XnOqz2ZOBXzzkEwc/dJQZCYHAn7v1jbVOjAZfK8msRn4BxO4VQ==}
+
   magic-string@0.26.7:
     resolution: {integrity: sha512-hX9XH3ziStPoPhJxLq1syWuZMxbDvGNbVchfrdCtanC7D13888bMFow61x8axrx+GfHLtVeAx2kxL7tTGRl+Ow==}
     engines: {node: '>=12'}
@@ -1986,6 +2036,9 @@ packages:
   regenerator-runtime@0.13.11:
     resolution: {integrity: sha512-kY1AZVr2Ra+t+piVaJ4gxaFaReZVH40AKNo7UCX6W+dEwBo/2oZJzqfuN1qLq1oL45o56cPaTXELwrTh8Fpggg==}
 
+  regenerator-runtime@0.14.1:
+    resolution: {integrity: sha512-dYnhHh0nJoMfnkZs6GmmhFknAGRrLznOu5nc9ML+EJxGvrx6H7teuevqVqCuPcPK//3eDrrjQhehXVx9cnkGdw==}
+
   require-directory@2.1.1:
     resolution: {integrity: sha512-fGxEI7+wsG9xrvdjsrlmL22OMTTiHRwAMroiEeMgq8gzoLC/PQr7RsRDSTLUg/bZAZtF+TVIkHc6/4RIKrui+Q==}
     engines: {node: '>=0.10.0'}
@@ -2112,6 +2165,13 @@ packages:
     resolution: {integrity: sha512-UXWMKhLOwVKb728IUtQPXxfYU+usdybtUrK/8uGE8CQMvrhOpwvzDBwj0QhSL7MQc7vIsISBG8VQ8+IDQxpfQA==}
     engines: {node: '>=0.10.0'}
 
+  source-map-support@0.5.21:
+    resolution: {integrity: sha512-uBHU3L3czsIyYXKX88fdrGovxdSCoTGDRZ6SYXtSRxLZUzHg5P/66Ht6uoUlHu9EZod+inXhKo3qQgwXUT/y1w==}
+
+  source-map@0.6.1:
+    resolution: {integrity: sha512-UjgapumWlbMhkBgzT7Ykc5YXUT46F0iKu8SGXq0bcwP5dz/h0Plj6enJqjz1Zbq2l5WaqYnrVbwWOWMyF3F47g==}
+    engines: {node: '>=0.10.0'}
+
   sourcemap-codec@1.4.8:
     resolution: {integrity: sha512-9NykojV5Uih4lgo5So5dtw+f0JgJX30KCNI8gwhz2J9A15wD0Ml6tjHKwf6fTSa6fAdVBdZeNOs9eJ71qCk8vA==}
     deprecated: Please use @jridgewell/sourcemap-codec instead
@@ -2195,6 +2255,14 @@ packages:
   svg-pathdata@6.0.3:
     resolution: {integrity: sha512-qsjeeq5YjBZ5eMdFuUa4ZosMLxgr5RZ+F+Y1OrDhuOCEInRMA3x74XdBtggJcj9kOeInz0WE+LgCPDkZFlBYJw==}
     engines: {node: '>=12.0.0'}
+
+  systemjs@6.15.1:
+    resolution: {integrity: sha512-Nk8c4lXvMB98MtbmjX7JwJRgJOL8fluecYCfCeYBznwmpOs8Bf15hLM6z4z71EDAhQVrQrI+wt1aLWSXZq+hXA==}
+
+  terser@5.50.0:
+    resolution: {integrity: sha512-CN9BVxWhgS/hRxtUMjtC2uRWSTcSfQFHMDWma6sKKfIivCD91sM+FOPfvwoaRMqCSrUpe1nv3jDamd9eEQ4y+w==}
+    engines: {node: '>=10'}
+    hasBin: true
 
   text-extensions@1.9.0:
     resolution: {integrity: sha512-wiBrwC1EhBelW12Zy26JeOUkQ5mRu+5o8rpsJk5+2t+Y5vE7e842qtZDQ2g1NpX/29HdyFeJ4nSIhI47ENSxlQ==}
@@ -2352,8 +2420,14 @@ packages:
   white-web-sdk@2.16.24:
     resolution: {integrity: sha512-onauWjDLcoOHN5lELmV8vjGU5Mrgi3KaWxI6obciMPQXDrzUPljyosRUPqC0i5BM+xn3oIn8s53yX+J/IOtAKA==}
 
-  white-web-sdk@2.16.52:
-    resolution: {integrity: sha512-P15j3ytAYzPgSi5jaxvhZd+3yt7eYznenAf9LnGFMxqUt+OtuTAQl1JmAhexfpsfHAvMPEBpcw+Kh8cwiFsrHw==}
+  white-web-sdk@2.16.57:
+    resolution: {integrity: sha512-z3dtl63Vz33RE9CHayTXkIm7sJoj1cddJX5k54uGqM/r46eO+Dwiin1u9zuREItWAJFFiz1keZKkEIfEyaUrxA==}
+    hasBin: true
+    peerDependencies:
+      agora-foundation: 3.11.1-rc.1 || 3.11.1
+    peerDependenciesMeta:
+      agora-foundation:
+        optional: true
 
   word-wrap@1.2.5:
     resolution: {integrity: sha512-BN22B5eaMMI9UMtjrGd5g5eCYPpCPDUy0FJXbYsaT5zYxjFOckS53SQDE3pWkVoWpHXVb3BrYcEN4Twa55B5cA==}
@@ -2411,6 +2485,8 @@ snapshots:
   '@babel/helper-validator-identifier@7.28.5': {}
 
   '@babel/runtime@7.28.4': {}
+
+  '@babel/standalone@7.29.8': {}
 
   '@commitlint/cli@16.3.0':
     dependencies:
@@ -2563,9 +2639,24 @@ snapshots:
 
   '@humanwhocodes/object-schema@2.0.3': {}
 
+  '@jridgewell/gen-mapping@0.3.13':
+    dependencies:
+      '@jridgewell/sourcemap-codec': 1.5.5
+      '@jridgewell/trace-mapping': 0.3.31
+
   '@jridgewell/resolve-uri@3.1.2': {}
 
+  '@jridgewell/source-map@0.3.11':
+    dependencies:
+      '@jridgewell/gen-mapping': 0.3.13
+      '@jridgewell/trace-mapping': 0.3.31
+
   '@jridgewell/sourcemap-codec@1.5.5': {}
+
+  '@jridgewell/trace-mapping@0.3.31':
+    dependencies:
+      '@jridgewell/resolve-uri': 3.1.2
+      '@jridgewell/sourcemap-codec': 1.5.5
 
   '@jridgewell/trace-mapping@0.3.9':
     dependencies:
@@ -2618,7 +2709,7 @@ snapshots:
     optionalDependencies:
       jspdf: 2.5.1
 
-  '@netless/window-manager@1.0.11(jspdf@2.5.1)(white-web-sdk@2.16.52)':
+  '@netless/window-manager@1.0.19(jspdf@2.5.1)(white-web-sdk@2.16.57)':
     dependencies:
       '@juggle/resize-observer': 3.4.0
       '@netless/telebox-insider': 0.3.0
@@ -2627,7 +2718,7 @@ snapshots:
       p-retry: 4.6.2
       uuid: 7.0.3
       video.js: 8.23.4
-      white-web-sdk: 2.16.52
+      white-web-sdk: 2.16.57
     optionalDependencies:
       jspdf: 2.5.1
 
@@ -2924,6 +3015,15 @@ snapshots:
       global: 4.4.0
       is-function: 1.0.2
 
+  '@vitejs/plugin-legacy@1.6.0(vite@2.9.18(sass@1.79.3))':
+    dependencies:
+      '@babel/standalone': 7.29.8
+      core-js: 3.47.0
+      magic-string: 0.25.9
+      regenerator-runtime: 0.13.11
+      systemjs: 6.15.1
+      vite: 2.9.18(sass@1.79.3)
+
   '@xmldom/xmldom@0.8.11': {}
 
   JSONStream@1.3.5:
@@ -2999,6 +3099,8 @@ snapshots:
 
   btoa@1.2.1: {}
 
+  buffer-from@1.1.2: {}
+
   callsites@3.1.0: {}
 
   camelcase-keys@6.2.2:
@@ -3064,6 +3166,8 @@ snapshots:
     dependencies:
       color-convert: 2.0.1
       color-string: 1.9.1
+
+  commander@2.20.3: {}
 
   compare-func@2.0.0:
     dependencies:
@@ -3717,6 +3821,10 @@ snapshots:
       '@videojs/vhs-utils': 4.1.1
       global: 4.4.0
 
+  magic-string@0.25.9:
+    dependencies:
+      sourcemap-codec: 1.4.8
+
   magic-string@0.26.7:
     dependencies:
       sourcemap-codec: 1.4.8
@@ -4046,8 +4154,9 @@ snapshots:
       indent-string: 4.0.0
       strip-indent: 3.0.0
 
-  regenerator-runtime@0.13.11:
-    optional: true
+  regenerator-runtime@0.13.11: {}
+
+  regenerator-runtime@0.14.1: {}
 
   require-directory@2.1.1: {}
 
@@ -4174,6 +4283,13 @@ snapshots:
 
   source-map-js@1.2.1: {}
 
+  source-map-support@0.5.21:
+    dependencies:
+      buffer-from: 1.1.2
+      source-map: 0.6.1
+
+  source-map@0.6.1: {}
+
   sourcemap-codec@1.4.8: {}
 
   spark-md5@3.0.2: {}
@@ -4252,6 +4368,15 @@ snapshots:
 
   svg-pathdata@6.0.3:
     optional: true
+
+  systemjs@6.15.1: {}
+
+  terser@5.50.0:
+    dependencies:
+      '@jridgewell/source-map': 0.3.11
+      acorn: 8.15.0
+      commander: 2.20.3
+      source-map-support: 0.5.21
 
   text-extensions@1.9.0: {}
 
@@ -4416,7 +4541,7 @@ snapshots:
       url-parse: 1.5.10
       uuid: 7.0.3
 
-  white-web-sdk@2.16.52:
+  white-web-sdk@2.16.57:
     dependencies:
       '@juggle/resize-observer': 3.4.0
       '@netless/canvas-polyfill': 0.0.4
