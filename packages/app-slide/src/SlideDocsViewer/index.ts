@@ -16,6 +16,7 @@ import { logger } from "../utils/logger";
 import { isEditable } from "../utils/helpers";
 import type { Attributes, MagixEvents } from "../typings";
 import type { AppOptions } from "..";
+import type { SyncEventQueuePolicy } from "@netless/slide";
 
 export const ClickThroughAppliances = new Set(["clicker"]);
 
@@ -60,6 +61,7 @@ export class SlideDocsViewer {
   protected readonly appId: string;
   protected isViewMounted = false;
   protected justSildeReadonly = false;
+  protected syncEventQueuePolicy: SyncEventQueuePolicy = "fifo";
   private enableScale: boolean;
 
   public constructor({
@@ -172,7 +174,19 @@ export class SlideDocsViewer {
 
   public setJustSildeReadonly(justSildeReadonly: boolean) {
     this.justSildeReadonly = justSildeReadonly;
-    this.slideController?.slide.setInteractive(!this.justSildeReadonly);
+    this.applyInteractionState();
+  }
+
+  public setSyncEventQueuePolicy(policy: SyncEventQueuePolicy) {
+    this.syncEventQueuePolicy = policy;
+    this.applyInteractionState();
+  }
+
+  protected applyInteractionState() {
+    const slide = this.slideController?.slide;
+    if (!slide) return;
+    slide.setInteractive(!this.justSildeReadonly);
+    slide.setSyncEventQueuePolicy(this.syncEventQueuePolicy);
   }
 
   public render() {
@@ -261,6 +275,7 @@ export class SlideDocsViewer {
       onNavigate: this.onNavigate,
       onError: this.onError,
     });
+    this.applyInteractionState();
 
     this.resizableContainer.setSlideObject(this.slideController.slide);
     this.scaleDocsToFit();

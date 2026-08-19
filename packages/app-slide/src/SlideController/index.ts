@@ -316,6 +316,7 @@ export class SlideControllerBase {
       anchor,
       interactive: true,
       mode: "interactive",
+      syncEventQueuePolicy: options.syncEventQueuePolicy ?? "fifo",
       controller: false,
       enableGlobalClick: options.enableGlobalClick ?? true,
       renderOptions: {
