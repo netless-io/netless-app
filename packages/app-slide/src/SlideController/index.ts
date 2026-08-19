@@ -49,7 +49,6 @@ export interface SlideControllerOptions {
   onNavigate?: (index: number, origin?: string) => void;
   showRenderError?: boolean;
   invisibleBehavior?: "frozen" | "pause";
-  disableFrameResizeObserver?: boolean;
 }
 
 const noop = function noop() {
@@ -345,7 +344,8 @@ export class SlideControllerBase {
       skipActionWhenFrozen: options.skipActionWhenFrozen ?? true,
       resourceMaxRetries: options.resourceMaxRetries,
       onResourceMaxRetries: options.onResourceMaxRetries,
-      disableFrameResizeObserver: defaults.disableFrameResizeObserver ?? options.disableFrameResizeObserver,
+      // Slide 内部 ResizeObserver 关掉，改由 app-slide 的 observer + boxSizeChange 一起驱动
+      disableFrameResizeObserver: true,
     });
     if (import.meta.env.DEV) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -493,7 +493,7 @@ export class SlideControllerBase {
 export class SlideController extends SlideControllerBase {
   public constructor(props: SlideControllerOptions) {
     super(props);
-    this.slide = this.createSlide(props.anchor, { disableFrameResizeObserver: props.disableFrameResizeObserver,
+    this.slide = this.createSlide(props.anchor, {
       whiteTracker: getRoomTracker(props.context.getDisplayer()),
     });
     this.initialize();

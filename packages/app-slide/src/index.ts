@@ -55,7 +55,6 @@ export interface AppOptions
     | "enableGlobalClick"
     | "skipActionWhenFrozen"
     | "syncEventQueuePolicy"
-    | "disableFrameResizeObserver"
   > {
   /** show debug controller */
   debug?: boolean;

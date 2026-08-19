@@ -17,18 +17,23 @@ import { isEditable } from "../utils/helpers";
 import type { Attributes, MagixEvents } from "../typings";
 import type { AppOptions } from "..";
 import type { SyncEventQueuePolicy } from "@netless/slide";
+import { ResizeObserver as ResizeObserverPolyfill } from "@juggle/resize-observer";
 
-function debounce<T extends (...args: any[]) => void>(fn: T, ms: number): T {
-  let timer: ReturnType<typeof setTimeout> | null = null;
-  const debounced = (...args: any[]) => {
-    if (timer) clearTimeout(timer);
-    timer = setTimeout(() => {
-      timer = null;
-      fn(...args);
-    }, ms);
-  };
-  return debounced as unknown as T;
-}
+type BoxSize = { width: number; height: number };
+
+const ResizeObserverImpl = window.ResizeObserver || ResizeObserverPolyfill;
+const BOX_SIZE_EPSILON = 0.5;
+
+const formatBoxSize = ({ width, height }: BoxSize): string =>
+  `${width.toFixed(1)} x ${height.toFixed(1)} px`;
+
+const sizesEqual = (left?: BoxSize, right?: BoxSize): boolean =>
+  Boolean(
+    left &&
+      right &&
+      Math.abs(left.width - right.width) <= BOX_SIZE_EPSILON &&
+      Math.abs(left.height - right.height) <= BOX_SIZE_EPSILON
+  );
 
 export const ClickThroughAppliances = new Set(["clicker"]);
 
@@ -75,6 +80,13 @@ export class SlideDocsViewer {
   protected justSildeReadonly = false;
   protected syncEventQueuePolicy: SyncEventQueuePolicy = "fifo";
   private enableScale: boolean;
+  private boxSizeEventCount = 0;
+  private latestBoxSize: BoxSize | undefined;
+  private lastObserverSize: BoxSize | undefined;
+  private lastAppliedSize: BoxSize | undefined;
+  private lastAppliedSource: "observer" | "event" | undefined;
+  private offBoxSizeChange: (() => void) | undefined;
+  private contentResizeObserver: ResizeObserver | undefined;
 
   public constructor({
     context,
@@ -126,6 +138,7 @@ export class SlideDocsViewer {
     });
 
     this.render();
+    this._registerBoxSizeChange();
 
     // 在 render() 之后设置监听器，确保 ResizableContainer 已经创建
     this.sideEffect.add(() => {
@@ -287,7 +300,6 @@ export class SlideDocsViewer {
       onReady: this.refreshPages,
       onNavigate: this.onNavigate,
       onError: this.onError,
-      disableFrameResizeObserver: true,
     });
     this.applyInteractionState();
 
@@ -298,24 +310,97 @@ export class SlideDocsViewer {
       return () => this.whiteboardView.callbacks.off("onSizeUpdated", this.scaleDocsToFit);
     });
 
-    // 使用 window-manager 的 boxSizeChange 事件替代 ResizeObserver
-    this._registerBoxSizeChange();
+    this._observeContentSize();
+    this._applyCurrentBoxSize();
+    this.context.getAppProxy?.()?.scheduleBoxSizeSync?.();
 
     return this;
   }
 
-  private _handleBoxSizeChange = debounce(() => {
-    if (this.slideController?.slide) {
-      this.slideController.slide.notifyFrameResize();
+  private _getContentSize(): BoxSize {
+    const rect = (this.viewer.$content || this.box.$content).getBoundingClientRect();
+    return { width: rect.width, height: rect.height };
+  }
+
+  private _applyResize = (size: BoxSize, source: "observer" | "event"): void => {
+    if (size.width <= 0 || size.height <= 0) return;
+    if (sizesEqual(this.lastAppliedSize, size)) return;
+
+    this.lastAppliedSize = size;
+    this.lastAppliedSource = source;
+    this.resizableContainer?.updateResizableContainer();
+    this.slideController?.slide?.notifyFrameResize();
+    this.scaleDocsToFit();
+
+    const domSize = this._getContentSize();
+    console.log("[app-slide] resize", {
+      appId: this.appId,
+      source,
+      eventCount: this.boxSizeEventCount,
+      event: formatBoxSize(size),
+      dom: formatBoxSize(domSize),
+    });
+  };
+
+  private _applyCurrentBoxSize = (eventSize?: BoxSize): void => {
+    const size = eventSize ?? this._getContentSize();
+    this._applyResize(size, eventSize ? "event" : "observer");
+  };
+
+  private _onObserverSize = (size: BoxSize): void => {
+    if (size.width <= 0 || size.height <= 0) return;
+    this.lastObserverSize = size;
+    // observer 先到：立刻 resize，不等 650ms 的 boxSizeChange
+    this._applyResize(size, "observer");
+  };
+
+  private _reconnectContentObserver(): void {
+    const target = this.viewer.$content;
+    if (!target || !this.contentResizeObserver) return;
+    this.contentResizeObserver.disconnect();
+    this.contentResizeObserver.observe(target);
+  }
+
+  private _observeContentSize(): void {
+    if (!this.contentResizeObserver) {
+      this.contentResizeObserver = new ResizeObserverImpl(entries => {
+        const entry = entries[entries.length - 1];
+        const size = entry?.contentRect
+          ? { width: entry.contentRect.width, height: entry.contentRect.height }
+          : this._getContentSize();
+        this._onObserverSize(size);
+      });
     }
-  }, 50);
+    this._reconnectContentObserver();
+  }
+
+  private _onContextBoxSizeChange = (payload: { appId: string; width: number; height: number }) => {
+    if (payload.appId !== this.context.appId) return;
+
+    this.boxSizeEventCount += 1;
+    this.latestBoxSize = { width: payload.width, height: payload.height };
+
+    // observer 已经先处理过同一尺寸时，忽略晚到的 event
+    if (sizesEqual(this.lastObserverSize, this.latestBoxSize) || sizesEqual(this.lastAppliedSize, this.latestBoxSize)) {
+      console.log("[app-slide] boxSizeChange skipped, observer already applied", {
+        appId: this.appId,
+        eventCount: this.boxSizeEventCount,
+        source: this.lastAppliedSource,
+        size: formatBoxSize(this.latestBoxSize),
+      });
+      return;
+    }
+
+    // observer 比 event 晚到或漏了：用 event 补一次，并重新挂 observer
+    this._applyResize(this.latestBoxSize, "event");
+    this._reconnectContentObserver();
+  };
 
   private _registerBoxSizeChange(): void {
-    try {
-      this.box.events.on("boxSizeChange", this._handleBoxSizeChange);
-    } catch {
-      // window-manager 版本过旧，不支持 boxSizeChange，回退到 ResizeObserver
-    }
+    this.offBoxSizeChange = this.context.emitter.on("boxSizeChange", this._onContextBoxSizeChange);
+    this._observeContentSize();
+    this._applyCurrentBoxSize();
+    this.context.getAppProxy?.()?.scheduleBoxSizeSync?.();
   }
 
   protected onError = ({ error, index }: { error: Error; index: number }) => {
@@ -368,12 +453,10 @@ export class SlideDocsViewer {
   }
 
   public unmount() {
-    // 清理 boxSizeChange 监听
-    try {
-      this.box.events.off("boxSizeChange", this._handleBoxSizeChange);
-    } catch {
-      // ignore
-    }
+    this.offBoxSizeChange?.();
+    this.offBoxSizeChange = undefined;
+    this.contentResizeObserver?.disconnect();
+    this.contentResizeObserver = undefined;
     if (this.slideController) {
       this.slideController.destroy();
       this.slideController = null;

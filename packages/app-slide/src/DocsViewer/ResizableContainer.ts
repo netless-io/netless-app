@@ -1,11 +1,8 @@
 import { Slide } from "@netless/slide";
-import { ResizeObserver as Polyfill } from "@juggle/resize-observer";
 import { ScrollBar } from "./ScrollBar";
 import type { AppContext, ReadonlyTeleBox } from "@netless/window-manager";
 import type { Attributes, MagixEvents } from "../typings";
 import type { AppOptions } from "../index";
-
-const ResizeObserver = window.ResizeObserver || Polyfill;
 
 export class ResizableContainer {
   private root: HTMLDivElement;
@@ -17,7 +14,6 @@ export class ResizableContainer {
   private whiteboardContainer: HTMLDivElement | null = null;
   private slide: Slide | null = null;
   private scale = 1;
-  private resizeObserver: ResizeObserver | null = null;
   private slideWidth = 1;
   private slideHeight = 1;
   private scrollBar: ScrollBar | null = null;
@@ -28,13 +24,12 @@ export class ResizableContainer {
   private translateY = 0.5;
 
   private enableResize: boolean;
-  private _useBoxSizeChange: boolean = false;
 
   constructor(
     parent: HTMLElement,
     context: AppContext<Attributes, MagixEvents, AppOptions>,
     enableResize: boolean,
-    box?: ReadonlyTeleBox,
+    _box?: ReadonlyTeleBox,
   ) {
     this.enableResize = enableResize;
     this.parent = parent;
@@ -60,29 +55,6 @@ export class ResizableContainer {
       // 初始化滚动条
       this.scrollBar = new ScrollBar(this.root, this);
     }
-
-    // 尝试使用 window-manager 的 boxSizeChange 事件，失败则回退到 ResizeObserver
-    if (box) {
-      try {
-        box.events.on("boxSizeChange", this.onBoxSizeChange);
-        this._useBoxSizeChange = true;
-      } catch {
-        this._initResizeObserver();
-      }
-    } else {
-      this._initResizeObserver();
-    }
-  }
-
-  private _initResizeObserver(): void {
-    this.resizeObserver = new ResizeObserver(() => {
-      this.updateResizableContainer();
-    });
-    this.resizeObserver.observe(this.scrollContainer);
-  }
-
-  private onBoxSizeChange = (): void => {
-    this.updateResizableContainer();
   };
 
   public getTranslate(): { x: number; y: number } {
@@ -226,15 +198,7 @@ export class ResizableContainer {
     return this.scale;
   }
 
-  public destroy(box?: ReadonlyTeleBox): void {
-    if (this._useBoxSizeChange && box) {
-      try {
-        box.events.off("boxSizeChange", this.onBoxSizeChange);
-      } catch {
-        // ignore
-      }
-    }
-    this.resizeObserver?.disconnect();
+  public destroy(_box?: ReadonlyTeleBox): void {
     this.scrollBar?.destroy();
   }
 }
