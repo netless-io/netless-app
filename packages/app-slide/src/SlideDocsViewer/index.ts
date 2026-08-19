@@ -17,6 +17,18 @@ import { isEditable } from "../utils/helpers";
 import type { Attributes, MagixEvents } from "../typings";
 import type { AppOptions } from "..";
 
+function debounce<T extends (...args: any[]) => void>(fn: T, ms: number): T {
+  let timer: ReturnType<typeof setTimeout> | null = null;
+  const debounced = (...args: any[]) => {
+    if (timer) clearTimeout(timer);
+    timer = setTimeout(() => {
+      timer = null;
+      fn(...args);
+    }, ms);
+  };
+  return debounced as unknown as T;
+}
+
 export const ClickThroughAppliances = new Set(["clicker"]);
 
 const noop = function noop() {
@@ -181,7 +193,8 @@ export class SlideDocsViewer {
       this.resizableContainer = new ResizableContainer(
         this.viewer.$content,
         this.context,
-        this.enableScale
+        this.enableScale,
+        this.box,
       );
     }
 
@@ -260,6 +273,7 @@ export class SlideDocsViewer {
       onReady: this.refreshPages,
       onNavigate: this.onNavigate,
       onError: this.onError,
+      disableFrameResizeObserver: true,
     });
 
     this.resizableContainer.setSlideObject(this.slideController.slide);
@@ -269,7 +283,24 @@ export class SlideDocsViewer {
       return () => this.whiteboardView.callbacks.off("onSizeUpdated", this.scaleDocsToFit);
     });
 
+    // 使用 window-manager 的 boxSizeChange 事件替代 ResizeObserver
+    this._registerBoxSizeChange();
+
     return this;
+  }
+
+  private _handleBoxSizeChange = debounce(() => {
+    if (this.slideController?.slide) {
+      this.slideController.slide.notifyFrameResize();
+    }
+  }, 50);
+
+  private _registerBoxSizeChange(): void {
+    try {
+      this.box.events.on("boxSizeChange", this._handleBoxSizeChange);
+    } catch {
+      // window-manager 版本过旧，不支持 boxSizeChange，回退到 ResizeObserver
+    }
   }
 
   protected onError = ({ error, index }: { error: Error; index: number }) => {
@@ -322,12 +353,18 @@ export class SlideDocsViewer {
   }
 
   public unmount() {
+    // 清理 boxSizeChange 监听
+    try {
+      this.box.events.off("boxSizeChange", this._handleBoxSizeChange);
+    } catch {
+      // ignore
+    }
     if (this.slideController) {
       this.slideController.destroy();
       this.slideController = null;
     }
     this.viewer.unmount();
-    this.resizableContainer.destroy();
+    this.resizableContainer.destroy(this.box);
     return this;
   }
 
