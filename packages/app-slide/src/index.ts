@@ -54,6 +54,7 @@ export interface AppOptions
     | "logger"
     | "enableGlobalClick"
     | "skipActionWhenFrozen"
+    | "syncEventQueuePolicy"
   > {
   /** show debug controller */
   debug?: boolean;
@@ -105,6 +106,7 @@ export interface AppResult {
   prevPage: () => boolean;
   jumpToPage: (page: number) => boolean;
   setSildeReadonly: (bol: boolean) => void;
+  setSyncEventQueuePolicy: (policy: NonNullable<ISlideConfig["syncEventQueuePolicy"]>) => void;
   onScaleChanged: (cb: (scale: number) => void) => void;
   scaleView: (to: number) => void;
   getViewScale: () => number | undefined;
@@ -213,9 +215,9 @@ const SlideApp: NetlessApp<Attributes, MagixEvents, AppOptions, AppResult> = {
       },
     });
 
-    if (context.getAppOptions()?.justSildeReadonly) {
-      docsViewer?.setJustSildeReadonly(true);
-    }
+    const appOptions = context.getAppOptions();
+    docsViewer.setSyncEventQueuePolicy(appOptions?.syncEventQueuePolicy ?? "fifo");
+    docsViewer.setJustSildeReadonly(appOptions?.justSildeReadonly ?? false);
 
     if (import.meta.env.DEV) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -317,6 +319,9 @@ const SlideApp: NetlessApp<Attributes, MagixEvents, AppOptions, AppResult> = {
       },
       setSildeReadonly: (bol: boolean) => {
         docsViewer?.setJustSildeReadonly(bol);
+      },
+      setSyncEventQueuePolicy: policy => {
+        docsViewer?.setSyncEventQueuePolicy(policy);
       },
       viewer: () => {
         return docsViewer;

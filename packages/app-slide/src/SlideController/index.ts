@@ -315,6 +315,7 @@ export class SlideControllerBase {
       anchor,
       interactive: true,
       mode: "interactive",
+      syncEventQueuePolicy: options.syncEventQueuePolicy ?? "fifo",
       controller: false,
       enableGlobalClick: options.enableGlobalClick ?? true,
       renderOptions: {
@@ -342,6 +343,8 @@ export class SlideControllerBase {
       skipActionWhenFrozen: options.skipActionWhenFrozen ?? true,
       resourceMaxRetries: options.resourceMaxRetries,
       onResourceMaxRetries: options.onResourceMaxRetries,
+      // Slide 内部 ResizeObserver 关掉，改由 app-slide 的 observer + boxSizeChange 一起驱动
+      disableFrameResizeObserver: true,
     });
     if (import.meta.env.DEV) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any

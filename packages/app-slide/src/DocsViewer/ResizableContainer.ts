@@ -1,6 +1,6 @@
 import { Slide } from "@netless/slide";
 import { ScrollBar } from "./ScrollBar";
-import type { AppContext } from "@netless/window-manager";
+import type { AppContext, ReadonlyTeleBox } from "@netless/window-manager";
 import type { Attributes, MagixEvents } from "../typings";
 import type { AppOptions } from "../index";
 
@@ -14,7 +14,6 @@ export class ResizableContainer {
   private whiteboardContainer: HTMLDivElement | null = null;
   private slide: Slide | null = null;
   private scale = 1;
-  private resizeObserver: ResizeObserver | null = null;
   private slideWidth = 1;
   private slideHeight = 1;
   private scrollBar: ScrollBar | null = null;
@@ -29,7 +28,8 @@ export class ResizableContainer {
   constructor(
     parent: HTMLElement,
     context: AppContext<Attributes, MagixEvents, AppOptions>,
-    enableResize: boolean
+    enableResize: boolean,
+    _box?: ReadonlyTeleBox,
   ) {
     this.enableResize = enableResize;
     this.parent = parent;
@@ -55,13 +55,7 @@ export class ResizableContainer {
       // 初始化滚动条
       this.scrollBar = new ScrollBar(this.root, this);
     }
-
-    this.resizeObserver = new ResizeObserver(() => {
-      this.updateResizableContainer();
-    });
-    this.resizeObserver.observe(this.scrollContainer);
-
-  }
+  };
 
   public getTranslate(): { x: number; y: number } {
     return { x: this.translateX, y: this.translateY };
@@ -204,8 +198,7 @@ export class ResizableContainer {
     return this.scale;
   }
 
-  public destroy(): void {
-    this.resizeObserver?.disconnect();
+  public destroy(_box?: ReadonlyTeleBox): void {
     this.scrollBar?.destroy();
   }
 }
