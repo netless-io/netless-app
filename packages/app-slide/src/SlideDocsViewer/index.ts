@@ -486,24 +486,29 @@ export class SlideDocsViewer {
 
   protected scaleDocsToFit = () => {
     if (this.slideController) {
-      const { width, height } = this.slideController.slide;
-      if (width && height) {
-        this.whiteboardView.moveCameraToContain({
-          originX: -width / 2,
-          originY: -height / 2,
-          width,
-          height,
-          animationMode: "immediately" as AnimationMode.Immediately,
-        });
-        this.whiteboardView.setCameraBound({
-          damping: 1,
-          maxContentMode: () => this.whiteboardView.camera.scale,
-          minContentMode: () => this.whiteboardView.camera.scale,
-          centerX: 0,
-          centerY: 0,
-          width,
-          height,
-        });
+      const { width: slideWidth, height: slideHeight } = this.slideController.slide;
+      if (slideWidth && slideHeight) {
+        const { width, height } = this.context.getWindowManager().mainView.size;
+        if (width > 0 && height > 0) {
+          this.whiteboardView.moveCameraToContain({
+            originX: -width / 2,
+            originY: -height / 2,
+            width,
+            height,
+            animationMode: "immediately" as AnimationMode.Immediately,
+          });
+
+          const scale = this.whiteboardView.camera.scale;
+          this.whiteboardView.setCameraBound({
+            damping: 1,
+            maxContentMode: () => scale,
+            minContentMode: () => scale,
+            centerX: 0,
+            centerY: 0,
+            width: slideWidth,
+            height: slideHeight,
+          });
+        }
         if (!this.isViewMounted) {
           this.isViewMounted = true;
           console.log("[Slide] mount whiteboard view");
