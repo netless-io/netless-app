@@ -398,10 +398,14 @@ export class SlideControllerBase {
       let isNeedSyncState = false;
       log("[Slide] unfreeze", this.context.appId);
       if (this.invisibleBehavior === "frozen") {
-        this.slide.release();
+        this.slide.release(() => {
+          // release 会重建 player，内部 observer 已关闭，需要按当前 frame 尺寸重绘
+          this.slide.notifyFrameResize();
+        });
         isNeedSyncState = true;
       } else {
         this.slide.resume();
+        this.slide.notifyFrameResize();
       }
       if (isNeedSyncState) {
         const state = this.context.storage.state.state;

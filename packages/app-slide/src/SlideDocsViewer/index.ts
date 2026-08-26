@@ -223,6 +223,9 @@ export class SlideDocsViewer {
         this.enableScale,
         this.box,
       );
+      this.resizableContainer.onLayoutUpdated = () => {
+        this.scaleDocsToFit();
+      };
     }
 
     // 创建元素

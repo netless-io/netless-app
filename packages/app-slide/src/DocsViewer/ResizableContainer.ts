@@ -9,6 +9,7 @@ export class ResizableContainer {
   public container: HTMLDivElement;
   private scrollContainer: HTMLDivElement;
   public onScaleChanged: ((scale: number) => void) | null = null;
+  public onLayoutUpdated: (() => void) | null = null;
 
   private parent: HTMLElement;
   private whiteboardContainer: HTMLDivElement | null = null;
@@ -131,6 +132,12 @@ export class ResizableContainer {
       triggerScrollBar: true,
       triggerSync: true,
     });
+
+    // enableScale / scaleView 只改变内部 container 的像素尺寸，box 本身不变。
+    // Slide 内部 ResizeObserver 已关闭，box 上的 observer / boxSizeChange 都不会触发，
+    // 必须在这里主动通知 canvas 按新的 frame 尺寸重绘。
+    this.slide?.notifyFrameResize();
+    this.onLayoutUpdated?.();
   }
 
   // x, y 范围 0 ~ 1
@@ -199,6 +206,7 @@ export class ResizableContainer {
   }
 
   public destroy(_box?: ReadonlyTeleBox): void {
+    this.onLayoutUpdated = null;
     this.scrollBar?.destroy();
   }
 }
