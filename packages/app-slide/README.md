@@ -39,6 +39,7 @@ manager.addApp({
   attributes: {
     taskId: "1234567...", // [2]
     url: "https://convertcdn.netless.link/dynamicConvert", // [3]
+    originSize: manager.mainView.size, // [4]
     previewList: [
       "https://convertcdn.netless.group/test/dynamicConvert/8ed5cce449874494a9ca7894b39415fb/preview/1.png",
       "https://convertcdn.netless.group/test/dynamicConvert/8ed5cce449874494a9ca7894b39415fb/preview/2.png",
@@ -79,6 +80,10 @@ Parameters:
 3. (optional) `url`
 
    The base url of ppt resources, `https://convertcdn.netless.link/dynamicConvert` by default.
+
+4. (optional) `originSize`
+
+   Fixed whiteboard resolution used to fit the slide notes. Pass the main view size when adding the app; use `null` to use the slide resolution.
 
 ### Preview
 

@@ -15,6 +15,10 @@ export interface Attributes {
   slideScale: number;
   translateX: number;
   translateY: number;
+  originSize: {
+    width: number;
+    height: number;
+  } | null;
 }
 
 export type MagixPayload = {

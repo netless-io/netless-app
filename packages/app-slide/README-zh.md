@@ -36,6 +36,7 @@ manager.addApp({
   attributes: {
     taskId: "1234567...", // [2]
     url: "https://convertcdn.netless.link/dynamicConvert", // [3]
+    originSize: manager.mainView.size, // [4]
     previewList: [
       "https://convertcdn.netless.group/test/dynamicConvert/8ed5cce449874494a9ca7894b39415fb/preview/1.png",
       "https://convertcdn.netless.group/test/dynamicConvert/8ed5cce449874494a9ca7894b39415fb/preview/2.png",
@@ -66,6 +67,10 @@ manager.addApp({
 3. (可选) `url`
 
    PPT 转码后资源存储服务器链接前缀，默认为 `https://convertcdn.netless.link/dynamicConvert`。
+
+4. (可选) `originSize`
+
+   用于匹配课件笔记的固定白板分辨率。添加 app 时传入主白板尺寸；传入 `null` 时使用 PPT 自身分辨率。
 
 ### 协议
 

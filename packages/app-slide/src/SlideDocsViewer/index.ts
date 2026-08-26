@@ -488,7 +488,10 @@ export class SlideDocsViewer {
     if (this.slideController) {
       const { width: slideWidth, height: slideHeight } = this.slideController.slide;
       if (slideWidth && slideHeight) {
-        const { width, height } = this.context.getWindowManager().mainView.size;
+        const originSize = this.context.storage.state.originSize;
+        const { width, height } = originSize && originSize.width > 0 && originSize.height > 0
+          ? originSize
+          : { width: slideWidth, height: slideHeight };
         if (width > 0 && height > 0) {
           this.whiteboardView.moveCameraToContain({
             originX: -width / 2,

@@ -33,6 +33,7 @@ export const EmptyAttributes: Attributes = {
   slideScale: 1,
   translateX: 0.5,
   translateY: 0.5,
+  originSize: null,
 };
 
 export interface SlideControllerOptions {
