@@ -8,8 +8,10 @@ export class ResizableContainer {
   private root: HTMLDivElement;
   public container: HTMLDivElement;
   private scrollContainer: HTMLDivElement;
+  /** @deprecated Use addScaleChangedListener() for multiple observers. */
   public onScaleChanged: ((scale: number) => void) | null = null;
   public onLayoutUpdated: (() => void) | null = null;
+  private scaleChangedListeners = new Set<(scale: number) => void>();
 
   private parent: HTMLElement;
   private whiteboardContainer: HTMLDivElement | null = null;
@@ -30,7 +32,7 @@ export class ResizableContainer {
     parent: HTMLElement,
     context: AppContext<Attributes, MagixEvents, AppOptions>,
     enableResize: boolean,
-    _box?: ReadonlyTeleBox,
+    _box?: ReadonlyTeleBox
   ) {
     this.enableResize = enableResize;
     this.parent = parent;
@@ -56,7 +58,7 @@ export class ResizableContainer {
       // 初始化滚动条
       this.scrollBar = new ScrollBar(this.root, this);
     }
-  };
+  }
 
   public getTranslate(): { x: number; y: number } {
     return { x: this.translateX, y: this.translateY };
@@ -64,6 +66,13 @@ export class ResizableContainer {
 
   public getScale(): number {
     return this.scale;
+  }
+
+  public addScaleChangedListener(listener: (scale: number) => void): () => void {
+    this.scaleChangedListeners.add(listener);
+    return () => {
+      this.scaleChangedListeners.delete(listener);
+    };
   }
 
   private renderScrollBar(
@@ -183,10 +192,13 @@ export class ResizableContainer {
       this.scrollContainer.style.height = "100%";
     }
     applyScale = this.enableResize ? applyScale : 1;
-    if (this.onScaleChanged && this.enableResize) {
-      this.onScaleChanged(applyScale);
-    }
     this.scale = applyScale;
+    if (this.enableResize) {
+      this.onScaleChanged?.(this.scale);
+      for (const listener of this.scaleChangedListeners) {
+        listener(this.scale);
+      }
+    }
     setTimeout(() => {
       this.updateResizableContainer();
     });
@@ -207,6 +219,7 @@ export class ResizableContainer {
 
   public destroy(_box?: ReadonlyTeleBox): void {
     this.onLayoutUpdated = null;
+    this.scaleChangedListeners.clear();
     this.scrollBar?.destroy();
   }
 }

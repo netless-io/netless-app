@@ -107,7 +107,7 @@ export interface AppResult {
   jumpToPage: (page: number) => boolean;
   setSildeReadonly: (bol: boolean) => void;
   setSyncEventQueuePolicy: (policy: NonNullable<ISlideConfig["syncEventQueuePolicy"]>) => void;
-  onScaleChanged: (cb: (scale: number) => void) => void;
+  onScaleChanged: (cb: (scale: number) => void) => () => void;
   scaleView: (to: number) => void;
   getViewScale: () => number | undefined;
   translateView: (offsetX: number, offsetY: number) => void;
@@ -262,21 +262,13 @@ const SlideApp: NetlessApp<Attributes, MagixEvents, AppOptions, AppResult> = {
     return {
       onScaleChanged: (cb: (scale: number) => void) => {
         if (!docsViewer) {
-          return;
+          return () => void 0;
         }
-        docsViewer.resizableContainer.onScaleChanged = cb;
+        return docsViewer.resizableContainer.addScaleChangedListener(cb);
       },
       scaleView: (to: number) => {
-        let applyScale = Number(to);
-        if (Number.isNaN(applyScale)) {
-          applyScale = 1;
-        }
-        if (applyScale < 1.0) {
-          applyScale = 1.0;
-        }
-        if (applyScale > 4.0) {
-          applyScale = 4.0;
-        }
+        const applyScale = Number(to);
+        if (!Number.isFinite(applyScale) || applyScale <= 0) return;
 
         context.storage.setState({ slideScale: applyScale });
         context.storage.setState({ translateX: 0.5, translateY: 0.5 });
