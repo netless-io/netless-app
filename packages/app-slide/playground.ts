@@ -12,6 +12,7 @@ function definePPT(
   return {
     kind: "Slide",
     src: () => import("./src"),
+    appOptions: { enableScale: true },
     options: { title, scenePath: `/Slide/${taskId}/${title}` },
     attributes: { taskId, url, customLinks },
     addHooks,
