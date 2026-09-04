@@ -269,10 +269,15 @@ const SlideApp: NetlessApp<Attributes, MagixEvents, AppOptions, AppResult> = {
       scaleView: (to: number) => {
         const applyScale = Number(to);
         if (!Number.isFinite(applyScale) || applyScale <= 0) return;
+        const container = docsViewer?.resizableContainer;
+        if (!container || Math.abs(container.getScale() - applyScale) < 0.001) return;
 
-        context.storage.setState({ slideScale: applyScale });
-        context.storage.setState({ translateX: 0.5, translateY: 0.5 });
-        docsViewer?.resizableContainer.scaleContainer(applyScale);
+        context.storage.setState({
+          slideScale: applyScale,
+          translateX: 0.5,
+          translateY: 0.5,
+        });
+        container.scaleContainer(applyScale);
       },
       getViewScale: () => {
         return docsViewer?.resizableContainer.getScale();

@@ -1,4 +1,4 @@
-import { Slide } from "@netless/slide";
+import type { Slide } from "@netless/slide";
 import { ScrollBar } from "./ScrollBar";
 import type { AppContext, ReadonlyTeleBox } from "@netless/window-manager";
 import type { Attributes, MagixEvents } from "../typings";
@@ -20,6 +20,7 @@ export class ResizableContainer {
   private slideWidth = 1;
   private slideHeight = 1;
   private scrollBar: ScrollBar | null = null;
+  private layoutFrameId: number | undefined;
   private context: AppContext<Attributes, MagixEvents, AppOptions>;
 
   // 每次 scale 后, 重置为居中
@@ -106,6 +107,7 @@ export class ResizableContainer {
   };
 
   public updateResizableContainer() {
+    this.cancelScheduledLayoutUpdate();
     const parentBounds = this.scrollContainer.getBoundingClientRect();
     this.container.style.width = `${parentBounds.width * this.scale}px`;
     this.container.style.height = `${parentBounds.height * this.scale}px`;
@@ -199,9 +201,19 @@ export class ResizableContainer {
         listener(this.scale);
       }
     }
-    setTimeout(() => {
-      this.updateResizableContainer();
-    });
+    if (this.layoutFrameId === undefined) {
+      this.layoutFrameId = requestAnimationFrame(() => {
+        this.layoutFrameId = undefined;
+        this.updateResizableContainer();
+      });
+    }
+  }
+
+  private cancelScheduledLayoutUpdate(): void {
+    if (this.layoutFrameId !== undefined) {
+      cancelAnimationFrame(this.layoutFrameId);
+      this.layoutFrameId = undefined;
+    }
   }
 
   public addSlideContainer(slideContainer: HTMLDivElement) {
@@ -218,6 +230,7 @@ export class ResizableContainer {
   }
 
   public destroy(_box?: ReadonlyTeleBox): void {
+    this.cancelScheduledLayoutUpdate();
     this.onLayoutUpdated = null;
     this.scaleChangedListeners.clear();
     this.scrollBar?.destroy();

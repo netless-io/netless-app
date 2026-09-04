@@ -8,7 +8,8 @@
     "types": "node scripts/build-types.mjs",
     "build": "vite build && npm run types",
     "build:dev": "vite build --mode development && npm run types",
-    "cleanup": "rimraf ./dist"
+    "cleanup": "rimraf ./dist",
+    "test": "rimraf test/.cache && esbuild test/ResizableContainer.test.ts --bundle --platform=node --format=cjs --outfile=test/.cache/ResizableContainer.test.cjs && node test/.cache/ResizableContainer.test.cjs"
   },
   "files": [
     "src",

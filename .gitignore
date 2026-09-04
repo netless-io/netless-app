@@ -3,3 +3,4 @@ dist
 .eslintcache
 *.local
 .idea
+packages/app-slide/test/.cache
