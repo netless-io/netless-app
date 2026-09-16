@@ -25,12 +25,14 @@ export interface AppResult {
   setDocsViewReadonly: (bol: boolean) => void;
 }
 
+const teardownByContext = new WeakMap<object, () => void>();
+
 const NetlessAppDocsViewer: NetlessApp<
   NetlessAppStaticDocsViewerAttributes | NetlessAppDynamicDocsViewerAttributes,
   unknown,
   NetlessAppDocsViewerOptions,
   AppResult
-> = {
+> & { teardown(context: AppContext<any>): void } = {
   kind,
   setup(context) {
     const box = context.getBox();
@@ -64,6 +66,7 @@ const NetlessAppDocsViewer: NetlessApp<
     box.mountStyles(styles);
 
     let docsViewer: StaticDocsViewer | DynamicDocsViewer | null = null;
+    const cleanup: Array<() => void> = [];
 
     if (pages[0].src.startsWith("ppt")) {
       docsViewer = setupDynamicDocsViewer(
@@ -77,7 +80,8 @@ const NetlessAppDocsViewer: NetlessApp<
         context as AppContext<NetlessAppStaticDocsViewerAttributes>,
         whiteboardView,
         box,
-        pages
+        pages,
+        cleanup
       );
     }
     const appOptions = context.getAppOptions() || {};
@@ -86,11 +90,30 @@ const NetlessAppDocsViewer: NetlessApp<
       docsViewer.setDocsViewReadonly(true);
     }
 
+    let offDestroy: (() => void) | undefined;
+    const teardown = () => {
+      const removeDestroy = offDestroy;
+      offDestroy = undefined;
+      removeDestroy?.();
+      cleanup
+        .splice(0)
+        .reverse()
+        .forEach(dispose => dispose());
+      docsViewer?.destroy();
+      docsViewer = null;
+    };
+    teardownByContext.set(context, teardown);
+    offDestroy = context.emitter.on("destroy", teardown);
+
     return {
       setDocsViewReadonly: (bol: boolean) => {
         docsViewer?.setDocsViewReadonly(bol);
       },
     };
+  },
+  teardown(context) {
+    teardownByContext.get(context)?.();
+    teardownByContext.delete(context);
   },
 };
 
@@ -100,7 +123,8 @@ function setupStaticDocsViewer(
   context: AppContext<NetlessAppStaticDocsViewerAttributes>,
   whiteboardView: View,
   box: ReadonlyTeleBox,
-  pages: DocsViewerPage[]
+  pages: DocsViewerPage[],
+  cleanup: Array<() => void>
 ): StaticDocsViewer {
   whiteboardView.disableCameraTransform = !context.getIsWritable();
 
@@ -135,18 +159,22 @@ function setupStaticDocsViewer(
     (window as any).docsViewer = docsViewer;
   }
 
-  context.emitter.on("attributesUpdate", attributes => {
-    if (attributes) {
-      if (attributes.pageScrollTop != null) {
-        docsViewer.syncPageScrollTop(attributes.pageScrollTop);
+  cleanup.push(
+    context.emitter.on("attributesUpdate", attributes => {
+      if (attributes) {
+        if (attributes.pageScrollTop != null) {
+          docsViewer.syncPageScrollTop(attributes.pageScrollTop);
+        }
       }
-    }
-  });
+    })
+  );
 
-  context.emitter.on("writableChange", isWritable => {
-    docsViewer.setReadonly(!isWritable);
-    whiteboardView.disableCameraTransform = !isWritable;
-  });
+  cleanup.push(
+    context.emitter.on("writableChange", isWritable => {
+      docsViewer.setReadonly(!isWritable);
+      whiteboardView.disableCameraTransform = !isWritable;
+    })
+  );
   return docsViewer;
 }
 
