@@ -119,7 +119,9 @@ export interface AppResult {
   playPptMedia: () => void;
 }
 
-const SlideApp: NetlessApp<Attributes, MagixEvents, AppOptions, AppResult> = {
+const SlideApp: NetlessApp<Attributes, MagixEvents, AppOptions, AppResult> & {
+  teardown(context: import("@netless/window-manager").AppContext): void;
+} = {
   kind: "Slide",
   setup(context) {
     console.log("[Slide] setup @ " + version);
@@ -254,7 +256,14 @@ const SlideApp: NetlessApp<Attributes, MagixEvents, AppOptions, AppResult> = {
       });
     }
 
-    context.emitter.on("destroy", () => {
+    let disposed = false;
+    let offDestroy: (() => void) | undefined;
+    const teardown = () => {
+      if (disposed) return;
+      disposed = true;
+      const removeDestroy = offDestroy;
+      offDestroy = undefined;
+      removeDestroy?.();
       log("[Slide] destroy", context.appId);
       if (useFreezer) apps.delete(context.appId);
       sideEffect.flushAll();
@@ -262,9 +271,13 @@ const SlideApp: NetlessApp<Attributes, MagixEvents, AppOptions, AppResult> = {
         docsViewer.destroy();
         docsViewer = null;
       }
-    });
+    };
+    offDestroy = context.emitter.on("destroy", teardown);
 
     docsViewer.mount();
+
+    (SlideApp as any).__teardownByContext ||= new WeakMap<object, () => void>();
+    (SlideApp as any).__teardownByContext.set(context, teardown);
 
     return {
       onPptMediaPermissionRequest: callback => {
@@ -397,6 +410,10 @@ const SlideApp: NetlessApp<Attributes, MagixEvents, AppOptions, AppResult> = {
         return false;
       },
     };
+  },
+  teardown(context) {
+    (SlideApp as any).__teardownByContext?.get(context)?.();
+    (SlideApp as any).__teardownByContext?.delete(context);
   },
 };
 
