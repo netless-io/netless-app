@@ -17,6 +17,11 @@ export interface NetlessAppStaticDocsViewerAttributes {
 export interface NetlessAppDocsViewerOptions {
   /** justDocsViewReadonly is used to set the docs view readonly, it will be used in the docs view, and the docs view will be readonly when the app is initialized */
   justDocsViewReadonly?: true;
+  /**
+   * Max time (ms) `setup()` waits for the first visible page image to load
+    * before resolving anyway (remaining pages keep loading). Default: 5_000.
+   */
+  setupReadyTimeout?: number;
 }
 
 export interface NetlessAppDynamicDocsViewerAttributes {}
@@ -26,6 +31,58 @@ export interface AppResult {
 }
 
 const teardownByContext = new WeakMap<object, () => void>();
+
+const DEFAULT_SETUP_READY_TIMEOUT = 5_000;
+
+/**
+ * Resolve once the first visible page image has decoded (static viewer only
+ * renders visible pages, so the first `<img>` inside the box is the target).
+ * `false` means timeout or teardown; remaining pages keep loading in the
+ * background without blocking WindowManager's serial setup queue.
+ */
+const waitForFirstVisiblePage = (
+  box: ReadonlyTeleBox,
+  timeoutMs: number,
+  isDisposed: () => boolean,
+): Promise<boolean> =>
+  new Promise<boolean>(resolve => {
+    let settled = false;
+    let pollTimer: number | undefined;
+    const settle = (loaded: boolean) => {
+      window.clearTimeout(timeoutTimer);
+      if (pollTimer !== undefined) window.clearInterval(pollTimer);
+      resolve(loaded);
+    };
+    const timeoutTimer = window.setTimeout(() => settle(false), timeoutMs);
+    const check = () => {
+      if (isDisposed()) return settle(false);
+      const img = box.$content?.querySelector("img") as HTMLImageElement | null;
+      if (img && img.complete && img.naturalWidth > 0) {
+        settle(true);
+      }
+    };
+    check();
+    if (!settled) {
+      pollTimer = window.setInterval(check, 100);
+    }
+  });
+
+/** Resolve after two animation frames so the dynamic view finished a render tick. */
+const waitForFirstRenderTick = (isDisposed: () => boolean): Promise<boolean> =>
+  new Promise<boolean>(resolve => {
+    let ticks = 0;
+    const tick = () => {
+      if (isDisposed()) return resolve(false);
+      ticks += 1;
+      if (ticks >= 2) return resolve(true);
+      if (typeof requestAnimationFrame === "function") {
+        requestAnimationFrame(() => tick());
+      } else {
+        setTimeout(tick, 50);
+      }
+    };
+    tick();
+  });
 
 const NetlessAppDocsViewer: NetlessApp<
   NetlessAppStaticDocsViewerAttributes | NetlessAppDynamicDocsViewerAttributes,
@@ -65,10 +122,12 @@ const NetlessAppDocsViewer: NetlessApp<
 
     box.mountStyles(styles);
 
+    const isStaticViewer = !pages[0].src.startsWith("ppt");
+
     let docsViewer: StaticDocsViewer | DynamicDocsViewer | null = null;
     const cleanup: Array<() => void> = [];
 
-    if (pages[0].src.startsWith("ppt")) {
+    if (!isStaticViewer) {
       docsViewer = setupDynamicDocsViewer(
         context as AppContext<NetlessAppDynamicDocsViewerAttributes>,
         whiteboardView,
@@ -90,8 +149,10 @@ const NetlessAppDocsViewer: NetlessApp<
       docsViewer.setDocsViewReadonly(true);
     }
 
+    let disposed = false;
     let offDestroy: (() => void) | undefined;
     const teardown = () => {
+      disposed = true;
       const removeDestroy = offDestroy;
       offDestroy = undefined;
       removeDestroy?.();
@@ -105,11 +166,20 @@ const NetlessAppDocsViewer: NetlessApp<
     teardownByContext.set(context, teardown);
     offDestroy = context.emitter.on("destroy", teardown);
 
-    return {
+    const appResult: AppResult = {
       setDocsViewReadonly: (bol: boolean) => {
         docsViewer?.setDocsViewReadonly(bol);
       },
     };
+
+    // Serial setup queue support: resolve setup only after the first visible
+    // content is rendered (static: first page image; dynamic: first tick).
+    const setupReadyTimeout = appOptions.setupReadyTimeout ?? DEFAULT_SETUP_READY_TIMEOUT;
+    const ready = isStaticViewer
+      ? waitForFirstVisiblePage(box, setupReadyTimeout, () => disposed)
+      : waitForFirstRenderTick(() => disposed);
+
+    return ready.then(() => appResult) as unknown as AppResult;
   },
   teardown(context) {
     teardownByContext.get(context)?.();
