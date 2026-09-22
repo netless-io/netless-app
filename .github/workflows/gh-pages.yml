@@ -22,9 +22,11 @@ jobs:
             ${{ runner.os }}-
       - uses: pnpm/action-setup@v4
         with:
-          version: 9.15.9
-          run_install: |
-            - args: [--no-frozen-lockfile]
+          version: 11.1.1
+          run_install: false
+      - run: pnpm install --frozen-lockfile --ignore-scripts
+      - run: pnpm approve-builds --all
+      - run: pnpm install --frozen-lockfile
       - run: pnpm lint
       - run: pnpm build-all
       - run: pnpm -F playground build:ci
