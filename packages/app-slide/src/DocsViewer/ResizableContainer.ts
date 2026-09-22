@@ -35,6 +35,7 @@ export class ResizableContainer {
     enableResize: boolean,
     _box?: ReadonlyTeleBox
   ) {
+    void _box;
     this.enableResize = enableResize;
     this.parent = parent;
     this.context = context;
@@ -230,6 +231,7 @@ export class ResizableContainer {
   }
 
   public destroy(_box?: ReadonlyTeleBox): void {
+    void _box;
     this.cancelScheduledLayoutUpdate();
     this.onLayoutUpdated = null;
     this.scaleChangedListeners.clear();
