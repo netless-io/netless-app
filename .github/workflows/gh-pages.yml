@@ -24,9 +24,8 @@ jobs:
         with:
           version: 11.1.1
           run_install: false
-      - run: pnpm install --frozen-lockfile --ignore-scripts
-      - run: pnpm approve-builds --all
-      - run: pnpm install --frozen-lockfile
+      - run: pnpm install --frozen-lockfile --ignore-scripts --prod=false
+      - run: pnpm rebuild --pending
       - run: pnpm lint
       - run: pnpm build-all
       - run: pnpm -F playground build:ci
