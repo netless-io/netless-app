@@ -111,6 +111,8 @@ export interface AppResult {
   scaleView: (to: number) => void;
   getViewScale: () => number | undefined;
   translateView: (offsetX: number, offsetY: number) => void;
+  onPptMediaPermissionRequest: (callback: () => void) => () => void;
+  playPptMedia: () => void;
 }
 
 const SlideApp: NetlessApp<Attributes, MagixEvents, AppOptions, AppResult> = {
@@ -260,6 +262,13 @@ const SlideApp: NetlessApp<Attributes, MagixEvents, AppOptions, AppResult> = {
     docsViewer.mount();
 
     return {
+      onPptMediaPermissionRequest: callback => {
+        const slide = docsViewer?.slideController?.slide;
+        return slide?.onPptMediaPermissionRequest(callback) ?? (() => undefined);
+      },
+      playPptMedia: () => {
+        docsViewer?.slideController?.slide.playPptMedia();
+      },
       onScaleChanged: (cb: (scale: number) => void) => {
         if (!docsViewer) {
           return () => void 0;
