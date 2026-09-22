@@ -12,10 +12,7 @@ import { SideEffectManager } from "side-effect-manager";
 import { createDocsViewerPages } from "../SlideController";
 import { DocsViewer, type DocsViewerPage } from "../DocsViewer";
 import { ResizableContainer } from "../DocsViewer/ResizableContainer";
-import {
-  navigateWithNavigationButton,
-  resolveNavigationButtonMode,
-} from "./navigation";
+import { navigateWithNavigationButton, resolveNavigationButtonMode } from "./navigation";
 import { logger } from "../utils/logger";
 import { isEditable } from "../utils/helpers";
 import type { Attributes, MagixEvents } from "../typings";
@@ -229,7 +226,7 @@ export class SlideDocsViewer {
         this.viewer.$content,
         this.context,
         this.enableScale,
-        this.box,
+        this.box
       );
       this.resizableContainer.onLayoutUpdated = () => {
         this.scaleDocsToFit();
@@ -392,7 +389,10 @@ export class SlideDocsViewer {
     this.latestBoxSize = { width: payload.width, height: payload.height };
 
     // observer 已经先处理过同一尺寸时，忽略晚到的 event
-    if (sizesEqual(this.lastObserverSize, this.latestBoxSize) || sizesEqual(this.lastAppliedSize, this.latestBoxSize)) {
+    if (
+      sizesEqual(this.lastObserverSize, this.latestBoxSize) ||
+      sizesEqual(this.lastAppliedSize, this.latestBoxSize)
+    ) {
       console.log("[app-slide] boxSizeChange skipped, observer already applied", {
         appId: this.appId,
         eventCount: this.boxSizeEventCount,
@@ -497,9 +497,10 @@ export class SlideDocsViewer {
       const { width: slideWidth, height: slideHeight } = this.slideController.slide;
       if (slideWidth && slideHeight) {
         const originSize = this.context.storage.state.originSize;
-        const { width, height } = originSize && originSize.width > 0 && originSize.height > 0
-          ? originSize
-          : { width: slideWidth, height: slideHeight };
+        const { width, height } =
+          originSize && originSize.width > 0 && originSize.height > 0
+            ? originSize
+            : { width: slideWidth, height: slideHeight };
         if (width > 0 && height > 0) {
           this.whiteboardView.moveCameraToContain({
             originX: -width / 2,
