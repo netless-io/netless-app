@@ -15,8 +15,6 @@ WindowManager.register({
   appOptions: {
     // turn on to show debug controller
     debug: false,
-    // navigate animation steps with the footer buttons; defaults to "page"
-    navigationButtonMode: "step",
     urlInterrupter: async (url: string) => {
       // There will be different implementations depending on different cloud storage services.
       // Generally, signatures are added to the query parameters.
@@ -86,6 +84,17 @@ Parameters:
 4. (optional) `originSize`
 
    Fixed whiteboard resolution used to fit the slide notes. Pass the main view size when adding the app; use `null` to use the slide resolution.
+
+5. (optional) `navigationButtonMode`
+
+   Controls the footer left/right buttons. It defaults to `"page"`.
+
+   ```ts
+   appOptions: {
+     navigationButtonMode: "page", // previous/next page
+     // navigationButtonMode: "step", // previous/next animation step
+   }
+   ```
 
 ### Preview
 
