@@ -139,7 +139,7 @@ export class MonacoEditor {
     this.sideEffect.add(() =>
       this.context.mobxUtils.reaction(
         () => this.attrs.lang,
-        lang => {
+        (lang: string) => {
           if (lang) {
             this.monaco.editor.setModelLanguage(this.yBinding.monacoModel, lang);
             $langSelect.value = lang;
@@ -152,7 +152,7 @@ export class MonacoEditor {
     this.sideEffect.add(() =>
       this.context.mobxUtils.reaction(
         () => this.attrs.codeRunning,
-        codeRunning => {
+        (codeRunning: boolean) => {
           $runCode.disabled = codeRunning;
         }
       )
