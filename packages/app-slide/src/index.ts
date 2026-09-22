@@ -127,7 +127,7 @@ export interface AppResult {
 }
 
 const SlideApp: NetlessApp<Attributes, MagixEvents, AppOptions, AppResult> & {
-  teardown(context: import("@netless/window-manager").AppContext): void;
+  teardown(context: import("@netless/window-manager").AppContext): Promise<void>;
 } = {
   kind: "Slide",
   setup(context) {
@@ -146,6 +146,8 @@ const SlideApp: NetlessApp<Attributes, MagixEvents, AppOptions, AppResult> & {
       throw new Error("[Slide] no view, please set scenePath on addApp()");
     }
     view.disableCameraTransform = true;
+    const isLazySetupMode = (): boolean =>
+      (context.getWindowManager() as any)?.lazySetupInMaximizedMode === true;
 
     const box = context.getBox();
     box.mountStyles(styles);
@@ -201,7 +203,10 @@ const SlideApp: NetlessApp<Attributes, MagixEvents, AppOptions, AppResult> & {
         invisibleBehavior: appOptions.invisibleBehavior,
       });
       slideControllerRef = slideController;
-      if (useFreezer) apps.set(context.appId, slideController, box);
+      // The legacy addHooks freezer is not awaitable across App instances.
+      // Lazy WindowManager mode owns freeze/release ordering through the
+      // per-App focus lifecycle instead.
+      if (useFreezer && !isLazySetupMode()) apps.set(context.appId, slideController, box);
       logger.setAppController(context.appId, slideController);
       if (import.meta.env.DEV) {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -284,8 +289,6 @@ const SlideApp: NetlessApp<Attributes, MagixEvents, AppOptions, AppResult> & {
     // a lazy-mode-only cache optimization: inactive unless the WindowManager
     // runs with lazySetupInMaximizedMode enabled (read dynamically — lazy can
     // be disabled at runtime, e.g. when forceMaximized is cleared).
-    const isLazySetupMode = (): boolean =>
-      (context.getWindowManager() as any)?.lazySetupInMaximizedMode === true;
     const isBlurFreezeAllowed = (): boolean => {
       const boxStatus = context.getBoxStatus();
       if (boxStatus) return boxStatus !== "normal";
@@ -293,7 +296,7 @@ const SlideApp: NetlessApp<Attributes, MagixEvents, AppOptions, AppResult> & {
       return boxState != null && boxState !== "normal";
     };
     sideEffect.add(() =>
-      context.emitter.on("focus", (isFocused: boolean) => {
+      context.emitter.on("focus", async (isFocused: boolean) => {
         if (disposed) return;
         if (!isLazySetupMode()) return;
         const controller = docsViewer?.slideController;
@@ -302,22 +305,20 @@ const SlideApp: NetlessApp<Attributes, MagixEvents, AppOptions, AppResult> & {
           if (!isBlurFreezeAllowed()) return;
           if (!controller.isFrozen) {
             log("[Slide] blur freeze", context.appId);
-            controller.freeze();
+            await controller.freeze();
           }
           return;
         }
-        if (useFreezer) {
-          apps.focus(context.appId);
-        } else if (controller.isFrozen) {
+        if (controller.isFrozen) {
           log("[Slide] focus unfreeze", context.appId);
-          controller.unfreeze();
+          await controller.unfreeze();
         }
       })
     );
 
     let disposed = false;
     let offDestroy: (() => void) | undefined;
-    const teardown = () => {
+    const teardown = async (): Promise<void> => {
       if (disposed) return;
       disposed = true;
       const removeDestroy = offDestroy;
@@ -327,15 +328,16 @@ const SlideApp: NetlessApp<Attributes, MagixEvents, AppOptions, AppResult> & {
       if (useFreezer) apps.delete(context.appId);
       sideEffect.flushAll();
       if (docsViewer) {
-        docsViewer.destroy();
+        const viewer = docsViewer;
         docsViewer = null;
+        await viewer.destroy();
       }
     };
     offDestroy = context.emitter.on("destroy", teardown);
 
     docsViewer.mount();
 
-    (SlideApp as any).__teardownByContext ||= new WeakMap<object, () => void>();
+    (SlideApp as any).__teardownByContext ||= new WeakMap<object, () => Promise<void>>();
     (SlideApp as any).__teardownByContext.set(context, teardown);
 
     // Resolve once the SlideController finished its first render (renderEnd).
@@ -510,8 +512,8 @@ const SlideApp: NetlessApp<Attributes, MagixEvents, AppOptions, AppResult> & {
       return appResult;
     }) as unknown as AppResult;
   },
-  teardown(context) {
-    (SlideApp as any).__teardownByContext?.get(context)?.();
+  async teardown(context) {
+    await (SlideApp as any).__teardownByContext?.get(context)?.();
     (SlideApp as any).__teardownByContext?.delete(context);
   },
 };

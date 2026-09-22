@@ -470,14 +470,15 @@ export class SlideDocsViewer {
     return (page > 0 ? page : 1) - 1;
   }
 
-  public unmount() {
+  public async unmount(): Promise<this> {
     this.offBoxSizeChange?.();
     this.offBoxSizeChange = undefined;
     this.contentResizeObserver?.disconnect();
     this.contentResizeObserver = undefined;
     if (this.slideController) {
-      this.slideController.destroy();
+      const controller = this.slideController;
       this.slideController = null;
+      await controller.destroy();
     }
     this.viewer.unmount();
     this.resizableContainer.destroy(this.box);
@@ -488,9 +489,9 @@ export class SlideDocsViewer {
     this.viewer.setReadonly(readonly);
   }
 
-  public destroy() {
+  public async destroy(): Promise<void> {
     this.sideEffect.flushAll();
-    this.unmount();
+    await this.unmount();
     this.viewer.destroy();
   }
 
