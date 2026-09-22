@@ -19,7 +19,7 @@ export interface NetlessAppDocsViewerOptions {
   justDocsViewReadonly?: true;
   /**
    * Max time (ms) `setup()` waits for the first visible page image to load
-    * before resolving anyway (remaining pages keep loading). Default: 5_000.
+   * before resolving anyway (remaining pages keep loading). Default: 5_000.
    */
   setupReadyTimeout?: number;
 }
@@ -43,12 +43,14 @@ const DEFAULT_SETUP_READY_TIMEOUT = 5_000;
 const waitForFirstVisiblePage = (
   box: ReadonlyTeleBox,
   timeoutMs: number,
-  isDisposed: () => boolean,
+  isDisposed: () => boolean
 ): Promise<boolean> =>
   new Promise<boolean>(resolve => {
     let settled = false;
     let pollTimer: number | undefined;
     const settle = (loaded: boolean) => {
+      if (settled) return;
+      settled = true;
       window.clearTimeout(timeoutTimer);
       if (pollTimer !== undefined) window.clearInterval(pollTimer);
       resolve(loaded);

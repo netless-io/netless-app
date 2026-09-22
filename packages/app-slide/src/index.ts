@@ -292,28 +292,27 @@ const SlideApp: NetlessApp<Attributes, MagixEvents, AppOptions, AppResult> & {
       const boxState = context.getWindowManager()?.boxState;
       return boxState != null && boxState !== "normal";
     };
-    sideEffect.add(
-      () =>
-        context.emitter.on("focus", (isFocused: boolean) => {
-          if (disposed) return;
-          if (!isLazySetupMode()) return;
-          const controller = docsViewer?.slideController;
-          if (!controller) return;
-          if (!isFocused) {
-            if (!isBlurFreezeAllowed()) return;
-            if (!controller.isFrozen) {
-              log("[Slide] blur freeze", context.appId);
-              controller.freeze();
-            }
-            return;
+    sideEffect.add(() =>
+      context.emitter.on("focus", (isFocused: boolean) => {
+        if (disposed) return;
+        if (!isLazySetupMode()) return;
+        const controller = docsViewer?.slideController;
+        if (!controller) return;
+        if (!isFocused) {
+          if (!isBlurFreezeAllowed()) return;
+          if (!controller.isFrozen) {
+            log("[Slide] blur freeze", context.appId);
+            controller.freeze();
           }
-          if (useFreezer) {
-            apps.focus(context.appId);
-          } else if (controller.isFrozen) {
-            log("[Slide] focus unfreeze", context.appId);
-            controller.unfreeze();
-          }
-        }),
+          return;
+        }
+        if (useFreezer) {
+          apps.focus(context.appId);
+        } else if (controller.isFrozen) {
+          log("[Slide] focus unfreeze", context.appId);
+          controller.unfreeze();
+        }
+      })
     );
 
     let disposed = false;
@@ -345,12 +344,11 @@ const SlideApp: NetlessApp<Attributes, MagixEvents, AppOptions, AppResult> & {
     const waitForFirstRender = (timeoutMs: number): Promise<boolean> =>
       new Promise<boolean>(resolve => {
         let settled = false;
-        let pollTimer: number | undefined;
         const settle = (loaded: boolean) => {
           if (settled) return;
           settled = true;
           window.clearTimeout(timeoutTimer);
-          if (pollTimer !== undefined) window.clearInterval(pollTimer);
+          window.clearInterval(pollTimer);
           resolve(loaded);
         };
         const timeoutTimer = window.setTimeout(() => settle(false), timeoutMs);
@@ -358,9 +356,9 @@ const SlideApp: NetlessApp<Attributes, MagixEvents, AppOptions, AppResult> & {
         // the poll only catches teardown and pre-ready render failures.
         slideControllerRef?.readyPromise.then(
           () => settle(!firstRenderFailed),
-          () => settle(false),
+          () => settle(false)
         );
-        pollTimer = window.setInterval(() => {
+        const pollTimer = window.setInterval(() => {
           if (disposed || firstRenderFailed) settle(false);
         }, 100);
       });
@@ -501,8 +499,7 @@ const SlideApp: NetlessApp<Attributes, MagixEvents, AppOptions, AppResult> & {
       },
     };
 
-    const setupReadyTimeout =
-      appOptions?.setupReadyTimeout ?? DEFAULT_SLIDE_SETUP_READY_TIMEOUT;
+    const setupReadyTimeout = appOptions?.setupReadyTimeout ?? DEFAULT_SLIDE_SETUP_READY_TIMEOUT;
     return waitForFirstRender(setupReadyTimeout).then(() => {
       if (firstRenderFailed) {
         throw new Error("[Slide] first render failed before ready");
