@@ -22,10 +22,8 @@ jobs:
             ${{ runner.os }}-
       - uses: pnpm/action-setup@v4
         with:
-          version: 11.1.1
-          run_install: false
-      - run: pnpm approve-builds core-js esbuild protobufjs yjs
-      - run: pnpm install --frozen-lockfile
+          version: 9.15.9
+          run_install: true
       - run: pnpm lint
       - run: pnpm build-all
       - run: pnpm -F playground build:ci

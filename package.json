@@ -48,13 +48,5 @@
     "@netless/window-manager": "^1.0.19",
     "white-web-sdk": "2.16.57",
     "sass": "1.79.3"
-  },
-  "pnpm": {
-    "onlyBuiltDependencies": [
-      "core-js",
-      "esbuild",
-      "protobufjs",
-      "yjs"
-    ]
   }
 }
