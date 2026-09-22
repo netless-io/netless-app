@@ -13,6 +13,8 @@ WindowManager.register({
   appOptions: {
     // 打开这个选项显示 debug 工具栏
     debug: false,
+    // 底部左右按钮按动画步骤切换，默认值为 "page"（按页切换）
+    navigationButtonMode: "step",
     urlInterrupter: async (url: string) => {
       // 一般会有不同的实现，比如签名。
       const { ak, expire } = await getSTSToken(); // 客户的客户端实现。

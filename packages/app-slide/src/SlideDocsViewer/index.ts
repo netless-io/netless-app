@@ -12,10 +12,14 @@ import { SideEffectManager } from "side-effect-manager";
 import { createDocsViewerPages } from "../SlideController";
 import { DocsViewer, type DocsViewerPage } from "../DocsViewer";
 import { ResizableContainer } from "../DocsViewer/ResizableContainer";
+import {
+  navigateWithNavigationButton,
+  resolveNavigationButtonMode,
+} from "./navigation";
 import { logger } from "../utils/logger";
 import { isEditable } from "../utils/helpers";
 import type { Attributes, MagixEvents } from "../typings";
-import type { AppOptions } from "..";
+import type { AppOptions, NavigationButtonMode } from "..";
 import type { SyncEventQueuePolicy } from "@netless/slide";
 import { ResizeObserver as ResizeObserverPolyfill } from "@juggle/resize-observer";
 
@@ -55,6 +59,7 @@ export interface SlideDocsViewerConfig {
   appId: string;
   urlInterrupter?: (url: string) => Promise<string>;
   enableScale?: boolean;
+  navigationButtonMode?: NavigationButtonMode;
   onPagesReady?: (pages: DocsViewerPage[]) => void;
   onNavigate?: (index: number, origin?: string) => void;
 }
@@ -79,6 +84,7 @@ export class SlideDocsViewer {
   protected isViewMounted = false;
   protected justSildeReadonly = false;
   protected syncEventQueuePolicy: SyncEventQueuePolicy = "fifo";
+  private readonly navigationButtonMode: NavigationButtonMode;
   private enableScale: boolean;
   private boxSizeEventCount = 0;
   private latestBoxSize: BoxSize | undefined;
@@ -98,6 +104,7 @@ export class SlideDocsViewer {
     appId,
     urlInterrupter,
     enableScale,
+    navigationButtonMode,
     onPagesReady,
     onNavigate,
   }: SlideDocsViewerConfig) {
@@ -109,6 +116,7 @@ export class SlideDocsViewer {
     this.onNavigate = onNavigate || noop;
     this.baseScenePath = baseScenePath;
     this.enableScale = enableScale ?? false;
+    this.navigationButtonMode = resolveNavigationButtonMode(navigationButtonMode);
     this.appId = appId;
     this.viewer = new DocsViewer({
       readonly: box.readonly,
@@ -529,7 +537,14 @@ export class SlideDocsViewer {
 
   protected onNewPageIndex = (index: number, origin?: string) => {
     if (this.slideController) {
-      this.slideController.jumpToPage(index + 1, origin);
+      navigateWithNavigationButton(
+        this.navigationButtonMode,
+        origin,
+        this.viewer.pageIndex,
+        index,
+        this.slideController,
+        this.onNavigate
+      );
     }
   };
 

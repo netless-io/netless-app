@@ -41,6 +41,8 @@ export { DefaultUrl, apps, FreezerLength, addHooks, useFreezer, log, logger };
 
 export { setFreezerLength, getFreezerLength, onCreated, onDestroyed } from "./utils/freezer";
 
+export type NavigationButtonMode = "page" | "step";
+
 export interface AppOptions
   extends Pick<
     ISlideConfig,
@@ -84,6 +86,8 @@ export interface AppOptions
   invisibleBehavior?: "frozen" | "pause";
   /** just readonly, no operate silder */
   justSildeReadonly?: true;
+  /** footer navigation button behavior @default 'page' */
+  navigationButtonMode?: NavigationButtonMode;
   enableScale?: boolean;
   resourceMaxRetries?: number;
   onResourceMaxRetries: (url: string, error: Error) => void;
@@ -208,6 +212,7 @@ const SlideApp: NetlessApp<Attributes, MagixEvents, AppOptions, AppResult> = {
       appId: context.appId,
       urlInterrupter: context.getAppOptions()?.urlInterrupter,
       enableScale: context.getAppOptions()?.enableScale ?? false,
+      navigationButtonMode: context.getAppOptions()?.navigationButtonMode,
       onPagesReady: ({ length }) => {
         const index = docsViewer?.viewer.pageIndex || 0;
         context.dispatchAppEvent("pageStateChange", { index, length });

@@ -15,6 +15,8 @@ WindowManager.register({
   appOptions: {
     // turn on to show debug controller
     debug: false,
+    // navigate animation steps with the footer buttons; defaults to "page"
+    navigationButtonMode: "step",
     urlInterrupter: async (url: string) => {
       // There will be different implementations depending on different cloud storage services.
       // Generally, signatures are added to the query parameters.
