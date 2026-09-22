@@ -390,6 +390,10 @@ const SlideApp: NetlessApp<Attributes, MagixEvents, AppOptions, AppResult> & {
           translateX: 0.5,
           translateY: 0.5,
         });
+        container.handleNormalizeTranslate(0.5, 0.5, {
+          triggerScrollBar: true,
+          triggerSync: false,
+        });
         container.scaleContainer(applyScale);
       },
       getViewScale: () => {

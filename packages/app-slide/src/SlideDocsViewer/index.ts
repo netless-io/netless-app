@@ -168,6 +168,13 @@ export class SlideDocsViewer {
         console.log("[SlideDocsViewer] No initial slideScale found");
       }
 
+      const initialTranslateX = this.context.storage.state.translateX ?? 0.5;
+      const initialTranslateY = this.context.storage.state.translateY ?? 0.5;
+      this.resizableContainer.handleNormalizeTranslate(initialTranslateX, initialTranslateY, {
+        triggerScrollBar: true,
+        triggerSync: false,
+      });
+
       const handler: StorageStateChangedListener<Attributes> = diff => {
         if (diff.slideScale !== undefined) {
           // slideScale 是一个包含 newValue 和 oldValue 的对象

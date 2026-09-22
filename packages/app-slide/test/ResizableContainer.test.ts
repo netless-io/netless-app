@@ -1,11 +1,25 @@
 import { ResizableContainer } from "../src/DocsViewer/ResizableContainer";
 
 type TestContainer = {
+  container: {
+    style: Record<string, string>;
+    getBoundingClientRect(): Pick<DOMRect, "width" | "height">;
+  };
+  context: {
+    getIsWritable(): boolean;
+    storage: { setState(state: unknown): void };
+  };
   enableResize: boolean;
   layoutFrameId?: number;
   scale: number;
   scaleChangedListeners: Set<(scale: number) => void>;
-  scrollContainer: { style: Record<string, string> };
+  scrollContainer: {
+    style: Record<string, string>;
+    getBoundingClientRect(): Pick<DOMRect, "width" | "height">;
+  };
+  translateX: number;
+  translateY: number;
+  renderScrollBar(): void;
   getScale(): number;
   scaleContainer(scale: number): void;
   destroy(): void;
@@ -113,5 +127,37 @@ function testDestroyCancelsFrame(): void {
   }
 }
 
+function testLayoutPreservesTranslationWithoutSync(): void {
+  const storageWrites: unknown[] = [];
+  const container = Object.create(ResizableContainer.prototype) as unknown as TestContainer;
+  container.enableResize = true;
+  container.scale = 2;
+  container.translateX = 1;
+  container.translateY = 1;
+  container.layoutFrameId = undefined;
+  container.scaleChangedListeners = new Set();
+  container.scrollContainer = {
+    style: {},
+    getBoundingClientRect: () => ({ width: 100, height: 80 }),
+  };
+  container.container = {
+    style: {},
+    getBoundingClientRect: () => ({ width: 200, height: 160 }),
+  };
+  container.context = {
+    getIsWritable: () => true,
+    storage: { setState: state => storageWrites.push(state) },
+  };
+  container.renderScrollBar = () => void 0;
+
+  container.updateResizableContainer();
+
+  assertEqual(container.translateX, 1, "translation x after layout");
+  assertEqual(container.translateY, 1, "translation y after layout");
+  assertEqual(container.container.style.transform, "translate(-100px, -80px)", "transform");
+  assertArrayEqual(storageWrites, [], "storage writes caused by layout");
+}
+
 testLatestScaleFrame();
 testDestroyCancelsFrame();
+testLayoutPreservesTranslationWithoutSync();

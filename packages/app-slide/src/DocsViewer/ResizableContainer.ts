@@ -131,9 +131,6 @@ export class ResizableContainer {
       }
     }
 
-    this.translateX = 0.5;
-    this.translateY = 0.5;
-
     this.renderScrollBar(
       parentBounds.width,
       parentBounds.width * this.scale,
@@ -142,7 +139,8 @@ export class ResizableContainer {
     );
     this.handleNormalizeTranslate(this.translateX, this.translateY, {
       triggerScrollBar: true,
-      triggerSync: true,
+      triggerSync: false,
+      force: true,
     });
 
     // enableScale / scaleView 只改变内部 container 的像素尺寸，box 本身不变。
@@ -159,12 +157,14 @@ export class ResizableContainer {
     options: {
       triggerScrollBar: boolean;
       triggerSync: boolean;
+      force?: boolean;
     }
   ) {
     if (
       Math.abs(x - this.translateX) < 0.001 &&
       Math.abs(y - this.translateY) < 0.001 &&
-      !options.triggerSync
+      !options.triggerSync &&
+      !options.force
     ) {
       return;
     }
