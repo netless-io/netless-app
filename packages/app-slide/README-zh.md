@@ -72,6 +72,17 @@ manager.addApp({
 
    用于匹配课件笔记的固定白板分辨率。添加 app 时传入主白板尺寸；传入 `null` 时使用 PPT 自身分辨率。
 
+5. (可选) `navigationButtonMode`
+
+   底部左右按钮的导航模式，默认值为 `"page"`。
+
+   ```ts
+   appOptions: {
+     navigationButtonMode: "page", // 上一页/下一页
+     // navigationButtonMode: "step", // 上一步/下一步
+   }
+   ```
+
 ### 协议
 
 MIT @ [netless](https://github.com/netless-io)

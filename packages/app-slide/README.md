@@ -85,6 +85,17 @@ Parameters:
 
    Fixed whiteboard resolution used to fit the slide notes. Pass the main view size when adding the app; use `null` to use the slide resolution.
 
+5. (optional) `navigationButtonMode`
+
+   Controls the footer left/right buttons. It defaults to `"page"`.
+
+   ```ts
+   appOptions: {
+     navigationButtonMode: "page", // previous/next page
+     // navigationButtonMode: "step", // previous/next animation step
+   }
+   ```
+
 ### Preview
 
 ```ts

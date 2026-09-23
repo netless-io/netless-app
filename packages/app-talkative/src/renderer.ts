@@ -1,4 +1,4 @@
-import type { AppContext } from "@netless/window-manager";
+import type { AppContext, ReadonlyTeleBox } from "@netless/window-manager";
 import { SideEffectManager } from "side-effect-manager";
 import { ResizeObserver as Polyfill } from "@juggle/resize-observer";
 import { append, attr, detach, element, writable } from "./utils";
@@ -8,7 +8,7 @@ const ResizeObserver = window.ResizeObserver || Polyfill;
 
 export class Renderer {
   readonly sideEffect = new SideEffectManager();
-  readonly box = this.context.getBox();
+  readonly box: ReadonlyTeleBox = this.context.getBox();
   readonly role = writable<0 | 2>(2);
   readonly ratio = writable(16 / 9);
   readonly $content = element("div");

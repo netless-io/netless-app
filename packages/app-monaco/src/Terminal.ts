@@ -21,7 +21,7 @@ export class Terminal {
     this.sideEffect.add(() =>
       this.context.mobxUtils.reaction(
         () => this.attrs.terminal,
-        terminal => {
+        (terminal: string) => {
           if (terminal != null && terminal !== this.content) {
             this.content = terminal;
             this.render();

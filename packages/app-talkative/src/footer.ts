@@ -1,10 +1,10 @@
-import type { AppContext } from "@netless/window-manager";
+import type { AppContext, ReadonlyTeleBox } from "@netless/window-manager";
 import { SideEffectManager } from "side-effect-manager";
 import { append, attr, detach, element, writable } from "./utils";
 
 export class Footer {
   readonly sideEffect = new SideEffectManager();
-  readonly box = this.context.getBox();
+  readonly box: ReadonlyTeleBox = this.context.getBox();
   readonly role = writable<0 | 2>(2);
   readonly text = writable("...");
   readonly $footer = element("div");
