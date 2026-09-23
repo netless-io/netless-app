@@ -318,20 +318,25 @@ const SlideApp: NetlessApp<Attributes, MagixEvents, AppOptions, AppResult> & {
 
     let disposed = false;
     let offDestroy: (() => void) | undefined;
-    const teardown = async (): Promise<void> => {
-      if (disposed) return;
+    let teardownPromise: Promise<void> | undefined;
+    const teardown = (): Promise<void> => {
+      if (teardownPromise) return teardownPromise;
       disposed = true;
-      const removeDestroy = offDestroy;
-      offDestroy = undefined;
-      removeDestroy?.();
-      log("[Slide] destroy", context.appId);
-      if (useFreezer) apps.delete(context.appId);
-      sideEffect.flushAll();
-      if (docsViewer) {
-        const viewer = docsViewer;
-        docsViewer = null;
-        await viewer.destroy();
-      }
+      // Store the promise before cleanup can synchronously trigger another teardown.
+      teardownPromise = Promise.resolve().then(async () => {
+        const removeDestroy = offDestroy;
+        offDestroy = undefined;
+        removeDestroy?.();
+        log("[Slide] destroy", context.appId);
+        if (useFreezer) apps.delete(context.appId);
+        sideEffect.flushAll();
+        if (docsViewer) {
+          const viewer = docsViewer;
+          docsViewer = null;
+          await viewer.destroy();
+        }
+      });
+      return teardownPromise;
     };
     offDestroy = context.emitter.on("destroy", teardown);
 

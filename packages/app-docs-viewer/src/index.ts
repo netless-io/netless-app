@@ -18,8 +18,8 @@ export interface NetlessAppDocsViewerOptions {
   /** justDocsViewReadonly is used to set the docs view readonly, it will be used in the docs view, and the docs view will be readonly when the app is initialized */
   justDocsViewReadonly?: true;
   /**
-   * Max time (ms) `setup()` waits for the first visible page image to load
-   * before resolving anyway (remaining pages keep loading). Default: 5_000.
+   * Max time (ms) `setup()` waits for a visible page image or dynamic render
+   * ticks before resolving anyway. Default: 5_000.
    */
   setupReadyTimeout?: number;
 }
@@ -69,22 +69,45 @@ const waitForFirstVisiblePage = (
     }
   });
 
-/** Resolve after two animation frames so the dynamic view finished a render tick. */
-const waitForFirstRenderTick = (isDisposed: () => boolean): Promise<boolean> =>
-  new Promise<boolean>(resolve => {
+/** Wait for two frames, with timeout and explicit teardown cancellation. */
+const waitForFirstRenderTick = (timeoutMs: number) => {
+  let cancel!: () => void;
+  const promise = new Promise<boolean>(resolve => {
+    let settled = false;
     let ticks = 0;
+    let frame: number | undefined;
+    let fallbackTimer: ReturnType<typeof setTimeout> | undefined;
+    const settle = (loaded: boolean) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timeoutTimer);
+      if (fallbackTimer !== undefined) clearTimeout(fallbackTimer);
+      if (frame !== undefined && typeof cancelAnimationFrame === "function") {
+        cancelAnimationFrame(frame);
+      }
+      resolve(loaded);
+    };
+    const timeoutTimer = setTimeout(() => settle(false), timeoutMs);
+    cancel = () => settle(false);
     const tick = () => {
-      if (isDisposed()) return resolve(false);
+      frame = undefined;
+      fallbackTimer = undefined;
+      if (settled) return;
       ticks += 1;
-      if (ticks >= 2) return resolve(true);
+      if (ticks >= 2) return settle(true);
+      schedule();
+    };
+    const schedule = () => {
       if (typeof requestAnimationFrame === "function") {
-        requestAnimationFrame(() => tick());
+        frame = requestAnimationFrame(tick);
       } else {
-        setTimeout(tick, 50);
+        fallbackTimer = setTimeout(tick, 50);
       }
     };
-    tick();
+    schedule();
   });
+  return { promise, cancel: () => cancel() };
+};
 
 const NetlessAppDocsViewer: NetlessApp<
   NetlessAppStaticDocsViewerAttributes | NetlessAppDynamicDocsViewerAttributes,
@@ -151,10 +174,13 @@ const NetlessAppDocsViewer: NetlessApp<
       docsViewer.setDocsViewReadonly(true);
     }
 
+    const setupReadyTimeout = appOptions.setupReadyTimeout ?? DEFAULT_SETUP_READY_TIMEOUT;
+    const dynamicReady = isStaticViewer ? undefined : waitForFirstRenderTick(setupReadyTimeout);
     let disposed = false;
     let offDestroy: (() => void) | undefined;
     const teardown = () => {
       disposed = true;
+      dynamicReady?.cancel();
       const removeDestroy = offDestroy;
       offDestroy = undefined;
       removeDestroy?.();
@@ -176,10 +202,9 @@ const NetlessAppDocsViewer: NetlessApp<
 
     // Serial setup queue support: resolve setup only after the first visible
     // content is rendered (static: first page image; dynamic: first tick).
-    const setupReadyTimeout = appOptions.setupReadyTimeout ?? DEFAULT_SETUP_READY_TIMEOUT;
-    const ready = isStaticViewer
-      ? waitForFirstVisiblePage(box, setupReadyTimeout, () => disposed)
-      : waitForFirstRenderTick(() => disposed);
+    const ready = dynamicReady
+      ? dynamicReady.promise
+      : waitForFirstVisiblePage(box, setupReadyTimeout, () => disposed);
 
     return ready.then(() => appResult) as unknown as AppResult;
   },
