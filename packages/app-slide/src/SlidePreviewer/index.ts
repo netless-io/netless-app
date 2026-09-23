@@ -184,12 +184,14 @@ export class SlidePreviewer {
   };
 
   protected destroyed = false;
-  public destroy() {
+  protected destroyPromise?: Promise<void>;
+  public async destroy(): Promise<void> {
     this.sideEffect.flushAll();
     if (this.slide && !this.destroyed) {
-      this.slide.destroy();
       this.destroyed = true;
+      this.destroyPromise = Promise.resolve(this.slide.destroy());
     }
+    await this.destroyPromise;
     this.viewer.destroy();
   }
 

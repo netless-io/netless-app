@@ -355,14 +355,16 @@ export class SlideControllerBase {
   }
 
   protected destroyed = false;
+  protected destroyPromise?: Promise<void>;
 
-  public destroy() {
+  public destroy(): Promise<void> {
     this.sideEffect.flushAll();
     if (!this.destroyed) {
       log("[Slide] destroy slide (once)");
-      this.slide.destroy();
       this.destroyed = true;
+      this.destroyPromise = Promise.resolve(this.slide.destroy());
     }
+    return this.destroyPromise ?? Promise.resolve();
   }
 
   public timestamp = () => {
@@ -378,28 +380,30 @@ export class SlideControllerBase {
   public isFrozen = false;
   protected _toFreeze: -1 | 0 | 1 = 0; // -1: unfreeze, 0: no change, 1: freeze
 
-  public freeze = () => {
+  public freeze = (): Promise<void> => {
     this.isFrozen = true;
     if (this.ready) {
       log("[Slide] freeze", this.context.appId);
       if (this.invisibleBehavior === "frozen") {
-        this.slide.frozen();
+        return Promise.resolve(this.slide.frozen());
       } else {
         this.slide.pause();
       }
     } else {
       this._toFreeze = 1;
     }
+    return Promise.resolve();
   };
 
-  public unfreeze = async () => {
+  public unfreeze = async (): Promise<void> => {
     if (!this.visible) return;
+    if (!this.isFrozen && this.ready) return;
     this.isFrozen = false;
     if (this.ready) {
       let isNeedSyncState = false;
       log("[Slide] unfreeze", this.context.appId);
       if (this.invisibleBehavior === "frozen") {
-        this.slide.release(() => {
+        await this.slide.release(() => {
           // release 会重建 player，内部 observer 已关闭，需要按当前 frame 尺寸重绘
           this.slide.notifyFrameResize();
         });

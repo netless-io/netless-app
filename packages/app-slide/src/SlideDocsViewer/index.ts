@@ -168,6 +168,13 @@ export class SlideDocsViewer {
         console.log("[SlideDocsViewer] No initial slideScale found");
       }
 
+      const initialTranslateX = this.context.storage.state.translateX ?? 0.5;
+      const initialTranslateY = this.context.storage.state.translateY ?? 0.5;
+      this.resizableContainer.handleNormalizeTranslate(initialTranslateX, initialTranslateY, {
+        triggerScrollBar: true,
+        triggerSync: false,
+      });
+
       const handler: StorageStateChangedListener<Attributes> = diff => {
         if (diff.slideScale !== undefined) {
           // slideScale 是一个包含 newValue 和 oldValue 的对象
@@ -296,6 +303,7 @@ export class SlideDocsViewer {
   }
 
   public mount() {
+    this.unmountPromise = undefined;
     this.box.mountContent(this.viewer.$content);
     this.box.mountFooter(this.viewer.$footer);
 
@@ -463,28 +471,42 @@ export class SlideDocsViewer {
     return (page > 0 ? page : 1) - 1;
   }
 
-  public unmount() {
-    this.offBoxSizeChange?.();
-    this.offBoxSizeChange = undefined;
-    this.contentResizeObserver?.disconnect();
-    this.contentResizeObserver = undefined;
-    if (this.slideController) {
-      this.slideController.destroy();
-      this.slideController = null;
+  protected unmountPromise?: Promise<this>;
+  protected destroyPromise?: Promise<void>;
+
+  public unmount(): Promise<this> {
+    if (!this.unmountPromise) {
+      this.unmountPromise = Promise.resolve().then(async () => {
+        this.offBoxSizeChange?.();
+        this.offBoxSizeChange = undefined;
+        this.contentResizeObserver?.disconnect();
+        this.contentResizeObserver = undefined;
+        if (this.slideController) {
+          const controller = this.slideController;
+          this.slideController = null;
+          await controller.destroy();
+        }
+        this.viewer.unmount();
+        this.resizableContainer.destroy(this.box);
+        return this;
+      });
     }
-    this.viewer.unmount();
-    this.resizableContainer.destroy(this.box);
-    return this;
+    return this.unmountPromise;
   }
 
   public setReadonly(readonly: boolean) {
     this.viewer.setReadonly(readonly);
   }
 
-  public destroy() {
-    this.sideEffect.flushAll();
-    this.unmount();
-    this.viewer.destroy();
+  public destroy(): Promise<void> {
+    if (!this.destroyPromise) {
+      this.destroyPromise = Promise.resolve().then(async () => {
+        this.sideEffect.flushAll();
+        await this.unmount();
+        this.viewer.destroy();
+      });
+    }
+    return this.destroyPromise;
   }
 
   public toggleClickThrough(tool?: string) {

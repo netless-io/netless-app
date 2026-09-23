@@ -22,4 +22,5 @@ jobs:
       - run: pnpm install --frozen-lockfile --ignore-scripts --prod=false
       - run: pnpm rebuild --pending
       - run: pnpm lint
+      - run: pnpm test:runtime-lifecycle
       - run: pnpm build-all:ci

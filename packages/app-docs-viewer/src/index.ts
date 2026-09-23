@@ -17,6 +17,11 @@ export interface NetlessAppStaticDocsViewerAttributes {
 export interface NetlessAppDocsViewerOptions {
   /** justDocsViewReadonly is used to set the docs view readonly, it will be used in the docs view, and the docs view will be readonly when the app is initialized */
   justDocsViewReadonly?: true;
+  /**
+   * Max time (ms) `setup()` waits for a visible page image or dynamic render
+   * ticks before resolving anyway. Default: 5_000.
+   */
+  setupReadyTimeout?: number;
 }
 
 export interface NetlessAppDynamicDocsViewerAttributes {}
@@ -25,12 +30,91 @@ export interface AppResult {
   setDocsViewReadonly: (bol: boolean) => void;
 }
 
+const teardownByContext = new WeakMap<object, () => void>();
+
+const DEFAULT_SETUP_READY_TIMEOUT = 5_000;
+
+/**
+ * Resolve once the first visible page image has decoded (static viewer only
+ * renders visible pages, so the first `<img>` inside the box is the target).
+ * `false` means timeout or teardown; remaining pages keep loading in the
+ * background without blocking WindowManager's serial setup queue.
+ */
+const waitForFirstVisiblePage = (
+  box: ReadonlyTeleBox,
+  timeoutMs: number,
+  isDisposed: () => boolean
+): Promise<boolean> =>
+  new Promise<boolean>(resolve => {
+    let settled = false;
+    let pollTimer: number | undefined;
+    const settle = (loaded: boolean) => {
+      if (settled) return;
+      settled = true;
+      window.clearTimeout(timeoutTimer);
+      if (pollTimer !== undefined) window.clearInterval(pollTimer);
+      resolve(loaded);
+    };
+    const timeoutTimer = window.setTimeout(() => settle(false), timeoutMs);
+    const check = () => {
+      if (isDisposed()) return settle(false);
+      const img = box.$content?.querySelector("img") as HTMLImageElement | null;
+      if (img && img.complete && img.naturalWidth > 0) {
+        settle(true);
+      }
+    };
+    check();
+    if (!settled) {
+      pollTimer = window.setInterval(check, 100);
+    }
+  });
+
+/** Wait for two frames, with timeout and explicit teardown cancellation. */
+const waitForFirstRenderTick = (timeoutMs: number) => {
+  let cancel!: () => void;
+  const promise = new Promise<boolean>(resolve => {
+    let settled = false;
+    let ticks = 0;
+    let frame: number | undefined;
+    let fallbackTimer: ReturnType<typeof setTimeout> | undefined;
+    const settle = (loaded: boolean) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timeoutTimer);
+      if (fallbackTimer !== undefined) clearTimeout(fallbackTimer);
+      if (frame !== undefined && typeof cancelAnimationFrame === "function") {
+        cancelAnimationFrame(frame);
+      }
+      resolve(loaded);
+    };
+    const timeoutTimer = setTimeout(() => settle(false), timeoutMs);
+    cancel = () => settle(false);
+    const tick = () => {
+      frame = undefined;
+      fallbackTimer = undefined;
+      if (settled) return;
+      ticks += 1;
+      if (ticks >= 2) return settle(true);
+      schedule();
+    };
+    const schedule = () => {
+      if (typeof requestAnimationFrame === "function") {
+        frame = requestAnimationFrame(tick);
+      } else {
+        fallbackTimer = setTimeout(tick, 50);
+      }
+    };
+    schedule();
+  });
+  return { promise, cancel: () => cancel() };
+};
+
 const NetlessAppDocsViewer: NetlessApp<
   NetlessAppStaticDocsViewerAttributes | NetlessAppDynamicDocsViewerAttributes,
   unknown,
   NetlessAppDocsViewerOptions,
   AppResult
-> = {
+> & { teardown(context: AppContext<any>): void } = {
   kind,
   setup(context) {
     const box = context.getBox();
@@ -63,9 +147,12 @@ const NetlessAppDocsViewer: NetlessApp<
 
     box.mountStyles(styles);
 
-    let docsViewer: StaticDocsViewer | DynamicDocsViewer | null = null;
+    const isStaticViewer = !pages[0].src.startsWith("ppt");
 
-    if (pages[0].src.startsWith("ppt")) {
+    let docsViewer: StaticDocsViewer | DynamicDocsViewer | null = null;
+    const cleanup: Array<() => void> = [];
+
+    if (!isStaticViewer) {
       docsViewer = setupDynamicDocsViewer(
         context as AppContext<NetlessAppDynamicDocsViewerAttributes>,
         whiteboardView,
@@ -77,7 +164,8 @@ const NetlessAppDocsViewer: NetlessApp<
         context as AppContext<NetlessAppStaticDocsViewerAttributes>,
         whiteboardView,
         box,
-        pages
+        pages,
+        cleanup
       );
     }
     const appOptions = context.getAppOptions() || {};
@@ -86,11 +174,43 @@ const NetlessAppDocsViewer: NetlessApp<
       docsViewer.setDocsViewReadonly(true);
     }
 
-    return {
+    const setupReadyTimeout = appOptions.setupReadyTimeout ?? DEFAULT_SETUP_READY_TIMEOUT;
+    const dynamicReady = isStaticViewer ? undefined : waitForFirstRenderTick(setupReadyTimeout);
+    let disposed = false;
+    let offDestroy: (() => void) | undefined;
+    const teardown = () => {
+      disposed = true;
+      dynamicReady?.cancel();
+      const removeDestroy = offDestroy;
+      offDestroy = undefined;
+      removeDestroy?.();
+      cleanup
+        .splice(0)
+        .reverse()
+        .forEach(dispose => dispose());
+      docsViewer?.destroy();
+      docsViewer = null;
+    };
+    teardownByContext.set(context, teardown);
+    offDestroy = context.emitter.on("destroy", teardown);
+
+    const appResult: AppResult = {
       setDocsViewReadonly: (bol: boolean) => {
         docsViewer?.setDocsViewReadonly(bol);
       },
     };
+
+    // Serial setup queue support: resolve setup only after the first visible
+    // content is rendered (static: first page image; dynamic: first tick).
+    const ready = dynamicReady
+      ? dynamicReady.promise
+      : waitForFirstVisiblePage(box, setupReadyTimeout, () => disposed);
+
+    return ready.then(() => appResult) as unknown as AppResult;
+  },
+  teardown(context) {
+    teardownByContext.get(context)?.();
+    teardownByContext.delete(context);
   },
 };
 
@@ -100,7 +220,8 @@ function setupStaticDocsViewer(
   context: AppContext<NetlessAppStaticDocsViewerAttributes>,
   whiteboardView: View,
   box: ReadonlyTeleBox,
-  pages: DocsViewerPage[]
+  pages: DocsViewerPage[],
+  cleanup: Array<() => void>
 ): StaticDocsViewer {
   whiteboardView.disableCameraTransform = !context.getIsWritable();
 
@@ -135,18 +256,22 @@ function setupStaticDocsViewer(
     (window as any).docsViewer = docsViewer;
   }
 
-  context.emitter.on("attributesUpdate", attributes => {
-    if (attributes) {
-      if (attributes.pageScrollTop != null) {
-        docsViewer.syncPageScrollTop(attributes.pageScrollTop);
+  cleanup.push(
+    context.emitter.on("attributesUpdate", attributes => {
+      if (attributes) {
+        if (attributes.pageScrollTop != null) {
+          docsViewer.syncPageScrollTop(attributes.pageScrollTop);
+        }
       }
-    }
-  });
+    })
+  );
 
-  context.emitter.on("writableChange", isWritable => {
-    docsViewer.setReadonly(!isWritable);
-    whiteboardView.disableCameraTransform = !isWritable;
-  });
+  cleanup.push(
+    context.emitter.on("writableChange", isWritable => {
+      docsViewer.setReadonly(!isWritable);
+      whiteboardView.disableCameraTransform = !isWritable;
+    })
+  );
   return docsViewer;
 }
 

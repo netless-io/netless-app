@@ -37,6 +37,8 @@ export const usePlugin: (plugin: any) => any = /* @__PURE__ */ Slide.usePlugin.b
 
 export const version = __APP_VERSION__;
 
+const DEFAULT_SLIDE_SETUP_READY_TIMEOUT = 5_000;
+
 export { DefaultUrl, apps, FreezerLength, addHooks, useFreezer, log, logger };
 
 export { setFreezerLength, getFreezerLength, onCreated, onDestroyed } from "./utils/freezer";
@@ -91,6 +93,11 @@ export interface AppOptions
   enableScale?: boolean;
   resourceMaxRetries?: number;
   onResourceMaxRetries: (url: string, error: Error) => void;
+  /**
+   * Max time (ms) `setup()` waits for the first `renderEnd` before resolving
+   * anyway (the slide keeps loading in background). Default: 5_000.
+   */
+  setupReadyTimeout?: number;
 }
 
 export interface ILogger {
@@ -119,7 +126,9 @@ export interface AppResult {
   playPptMedia: () => void;
 }
 
-const SlideApp: NetlessApp<Attributes, MagixEvents, AppOptions, AppResult> = {
+const SlideApp: NetlessApp<Attributes, MagixEvents, AppOptions, AppResult> & {
+  teardown(context: import("@netless/window-manager").AppContext): Promise<void>;
+} = {
   kind: "Slide",
   setup(context) {
     console.log("[Slide] setup @ " + version);
@@ -137,6 +146,8 @@ const SlideApp: NetlessApp<Attributes, MagixEvents, AppOptions, AppResult> = {
       throw new Error("[Slide] no view, please set scenePath on addApp()");
     }
     view.disableCameraTransform = true;
+    const isLazySetupMode = (): boolean =>
+      (context.getWindowManager() as any)?.lazySetupInMaximizedMode === true;
 
     const box = context.getBox();
     box.mountStyles(styles);
@@ -150,6 +161,10 @@ const SlideApp: NetlessApp<Attributes, MagixEvents, AppOptions, AppResult> = {
     const baseScenePath = context.getInitScenePath() as string;
 
     let docsViewer: SlideDocsViewer | null = null;
+    // Serial setup queue support: capture the controller so setup() can await
+    // its first render before WindowManager starts the next app's setup.
+    let slideControllerRef: SlideController | null | undefined;
+    let firstRenderFailed = false;
 
     const onPageChanged = (page: number) => {
       const room = context.getRoom();
@@ -178,17 +193,29 @@ const SlideApp: NetlessApp<Attributes, MagixEvents, AppOptions, AppResult> = {
         ...options,
         onPageChanged,
         onNavigate: options.onNavigate,
-        onRenderError: appOptions.onRenderError,
+        // Wrap the user callback: a render failure before the first
+        // renderEnd also fails the setup wait (serial setup queue).
+        onRenderError: (error, pageIndex) => {
+          firstRenderFailed = true;
+          appOptions.onRenderError?.(error, pageIndex);
+        },
         showRenderError: appOptions.showRenderError,
         invisibleBehavior: appOptions.invisibleBehavior,
       });
-      if (useFreezer) apps.set(context.appId, slideController, box);
+      slideControllerRef = slideController;
+      // The legacy addHooks freezer is not awaitable across App instances.
+      // Lazy WindowManager mode owns freeze/release ordering through the
+      // per-App focus lifecycle instead.
+      if (useFreezer && !isLazySetupMode()) apps.set(context.appId, slideController, box);
       logger.setAppController(context.appId, slideController);
       if (import.meta.env.DEV) {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (window as any).slideController = slideController;
       }
       slideController.readyPromise.then(options.onReady).then(() => {
+        // Teardown may have destroyed the box while this deferred callback
+        // was pending; syncing scenes against a destroyed app throws.
+        if (disposed) return;
         const room = context.getRoom();
         let synced = false;
         if (room && context.getIsWritable()) {
@@ -254,19 +281,96 @@ const SlideApp: NetlessApp<Attributes, MagixEvents, AppOptions, AppResult> = {
       });
     }
 
-    context.emitter.on("destroy", () => {
-      log("[Slide] destroy", context.appId);
-      if (useFreezer) apps.delete(context.appId);
-      sideEffect.flushAll();
-      if (docsViewer) {
-        docsViewer.destroy();
-        docsViewer = null;
-      }
-    });
+    // Blur freeze (same semantics as the Presentation blur thumbnail
+    // degradation): while the app is cached and loses focus in a
+    // maximized/minimized workspace, freeze the slide (destroy the player,
+    // keep a snapshot); on focus, unfreeze. Freezing is skipped in normal
+    // mode where several windows are visible side by side. The whole flow is
+    // a lazy-mode-only cache optimization: inactive unless the WindowManager
+    // runs with lazySetupInMaximizedMode enabled (read dynamically — lazy can
+    // be disabled at runtime, e.g. when forceMaximized is cleared).
+    const isBlurFreezeAllowed = (): boolean => {
+      const boxStatus = context.getBoxStatus();
+      if (boxStatus) return boxStatus !== "normal";
+      const boxState = context.getWindowManager()?.boxState;
+      return boxState != null && boxState !== "normal";
+    };
+    sideEffect.add(() =>
+      context.emitter.on("focus", async (isFocused: boolean) => {
+        if (disposed) return;
+        if (!isLazySetupMode()) return;
+        const controller = docsViewer?.slideController;
+        if (!controller) return;
+        if (!isFocused) {
+          if (!isBlurFreezeAllowed()) return;
+          if (!controller.isFrozen) {
+            log("[Slide] blur freeze", context.appId);
+            await controller.freeze();
+          }
+          return;
+        }
+        if (controller.isFrozen) {
+          log("[Slide] focus unfreeze", context.appId);
+          await controller.unfreeze();
+        }
+      })
+    );
+
+    let disposed = false;
+    let offDestroy: (() => void) | undefined;
+    let teardownPromise: Promise<void> | undefined;
+    const teardown = (): Promise<void> => {
+      if (teardownPromise) return teardownPromise;
+      disposed = true;
+      // Store the promise before cleanup can synchronously trigger another teardown.
+      teardownPromise = Promise.resolve().then(async () => {
+        const removeDestroy = offDestroy;
+        offDestroy = undefined;
+        removeDestroy?.();
+        log("[Slide] destroy", context.appId);
+        if (useFreezer) apps.delete(context.appId);
+        sideEffect.flushAll();
+        if (docsViewer) {
+          const viewer = docsViewer;
+          docsViewer = null;
+          await viewer.destroy();
+        }
+      });
+      return teardownPromise;
+    };
+    offDestroy = context.emitter.on("destroy", teardown);
 
     docsViewer.mount();
 
-    return {
+    (SlideApp as any).__teardownByContext ||= new WeakMap<object, () => Promise<void>>();
+    (SlideApp as any).__teardownByContext.set(context, teardown);
+
+    // Resolve once the SlideController finished its first render (renderEnd).
+    // `false` means timeout or teardown; the slide then keeps loading in the
+    // background without blocking WindowManager's serial setup queue.
+    const waitForFirstRender = (timeoutMs: number): Promise<boolean> =>
+      new Promise<boolean>(resolve => {
+        let settled = false;
+        const settle = (loaded: boolean) => {
+          if (settled) return;
+          settled = true;
+          window.clearTimeout(timeoutTimer);
+          window.clearInterval(pollTimer);
+          resolve(loaded);
+        };
+        const timeoutTimer = window.setTimeout(() => settle(false), timeoutMs);
+        // Success path resolves straight from readyPromise (no polling lag);
+        // the poll only catches teardown and pre-ready render failures.
+        slideControllerRef?.readyPromise.then(
+          () => settle(!firstRenderFailed),
+          () => settle(false)
+        );
+        const pollTimer = window.setInterval(() => {
+          if (disposed || firstRenderFailed) settle(false);
+        }, 100);
+      });
+
+    const appResult: AppResult = {
       onPptMediaPermissionRequest: callback => {
         const slide = docsViewer?.slideController?.slide;
         return slide?.onPptMediaPermissionRequest(callback) ?? (() => undefined);
@@ -290,6 +394,10 @@ const SlideApp: NetlessApp<Attributes, MagixEvents, AppOptions, AppResult> = {
           slideScale: applyScale,
           translateX: 0.5,
           translateY: 0.5,
+        });
+        container.handleNormalizeTranslate(0.5, 0.5, {
+          triggerScrollBar: true,
+          triggerSync: false,
         });
         container.scaleContainer(applyScale);
       },
@@ -397,6 +505,21 @@ const SlideApp: NetlessApp<Attributes, MagixEvents, AppOptions, AppResult> = {
         return false;
       },
     };
+
+    const setupReadyTimeout = appOptions?.setupReadyTimeout ?? DEFAULT_SLIDE_SETUP_READY_TIMEOUT;
+    return waitForFirstRender(setupReadyTimeout).then(() => {
+      if (firstRenderFailed) {
+        throw new Error("[Slide] first render failed before ready");
+      }
+      if (!disposed && !slideControllerRef?.ready) {
+        log("[Slide] setup ready wait timed out, slide keeps loading in background");
+      }
+      return appResult;
+    }) as unknown as AppResult;
+  },
+  async teardown(context) {
+    await (SlideApp as any).__teardownByContext?.get(context)?.();
+    (SlideApp as any).__teardownByContext?.delete(context);
   },
 };
 
