@@ -1,6 +1,6 @@
 {
   "name": "@netless/app-slide",
-  "version": "0.2.106-beta.0",
+  "version": "0.2.106-beta.3",
   "main": "dist/main.cjs.js",
   "module": "dist/main.es.js",
   "types": "dist/index.d.ts",
@@ -9,7 +9,7 @@
     "build": "vite build && npm run types",
     "build:dev": "vite build --mode development && npm run types",
     "cleanup": "rimraf ./dist",
-    "test": "rimraf test/.cache && esbuild test/ResizableContainer.test.ts test/NavigationButtonMode.test.ts test/DocsViewerNavigation.integration.test.ts --bundle --platform=node --format=cjs --outdir=test/.cache && node test/.cache/ResizableContainer.test.js && node test/.cache/NavigationButtonMode.test.js && node test/.cache/DocsViewerNavigation.integration.test.js"
+    "test": "rimraf test/.cache && esbuild test/ResizableContainer.test.ts test/NavigationButtonMode.test.ts test/DocsViewerNavigation.integration.test.ts test/FocusTransition.test.ts --bundle --platform=node --format=cjs --outdir=test/.cache && node test/.cache/ResizableContainer.test.js && node test/.cache/NavigationButtonMode.test.js && node test/.cache/DocsViewerNavigation.integration.test.js && node test/.cache/FocusTransition.test.js && node test/run-runtime-activity.mjs"
   },
   "files": [
     "src",
