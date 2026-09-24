@@ -13,6 +13,7 @@ import {
   syncSceneWithSlide,
   SlideController,
   SlideControllerBase,
+  enqueueSlideWebGLTransition,
 } from "./SlideController";
 import { SlideDocsViewer } from "./SlideDocsViewer";
 import { apps, FreezerLength, addHooks, useFreezer } from "./utils/freezer";
@@ -126,9 +127,7 @@ export interface AppResult {
   playPptMedia: () => void;
 }
 
-const SlideApp: NetlessApp<Attributes, MagixEvents, AppOptions, AppResult> & {
-  teardown(context: import("@netless/window-manager").AppContext): Promise<void>;
-} = {
+const SlideApp: NetlessApp<Attributes, MagixEvents, AppOptions, AppResult> = {
   kind: "Slide",
   setup(context) {
     console.log("[Slide] setup @ " + version);
@@ -225,6 +224,8 @@ const SlideApp: NetlessApp<Attributes, MagixEvents, AppOptions, AppResult> & {
         const page = slideController.slide.slideState.currentSlideIndex;
         log("[Slide] page to", page, synced ? "(synced)" : "", "(on ready)");
         slideController.slide.on("renderEnd", options.onRenderEnd);
+      }).catch(error => {
+        if (!disposed) logger.warn("[Slide] ready callback failed", context.appId, error);
       });
       return slideController;
     };
@@ -329,10 +330,9 @@ const SlideApp: NetlessApp<Attributes, MagixEvents, AppOptions, AppResult> & {
     };
     offDestroy = context.emitter.on("destroy", teardown);
 
-    docsViewer.mount();
-
-    (SlideApp as any).__teardownByContext ||= new WeakMap<object, () => Promise<void>>();
-    (SlideApp as any).__teardownByContext.set(context, teardown);
+    const mounting = enqueueSlideWebGLTransition(() => {
+      if (!disposed) docsViewer?.mount();
+    }, false, `setup:${context.appId}`);
 
     // Resolve once the SlideController finished its first render (renderEnd).
     // New lazy hosts retain the real completion after the warning threshold.
@@ -357,7 +357,10 @@ const SlideApp: NetlessApp<Attributes, MagixEvents, AppOptions, AppResult> & {
         // the poll only catches teardown and pre-ready render failures.
         slideControllerRef?.readyPromise.then(
           () => settle(!firstRenderFailed),
-          () => settle(false)
+          () => {
+            firstRenderFailed = true;
+            settle(false);
+          }
         );
         const pollTimer = window.setInterval(() => {
           if (disposed || firstRenderFailed) settle(false);
@@ -502,7 +505,10 @@ const SlideApp: NetlessApp<Attributes, MagixEvents, AppOptions, AppResult> & {
     };
 
     const setupReadyTimeout = appOptions?.setupReadyTimeout ?? DEFAULT_SLIDE_SETUP_READY_TIMEOUT;
-    return waitForFirstRender(setupReadyTimeout).then(() => {
+    return mounting.then(() => {
+      if (disposed) throw new Error("[Slide] disposed before first render");
+      return waitForFirstRender(setupReadyTimeout);
+    }).then(async () => {
       if (disposed) throw new Error("[Slide] disposed before first render");
       if (firstRenderFailed) {
         throw new Error("[Slide] first render failed before ready");
@@ -511,11 +517,10 @@ const SlideApp: NetlessApp<Attributes, MagixEvents, AppOptions, AppResult> & {
         log("[Slide] setup ready wait timed out, slide keeps loading in background");
       }
       return appResult;
+    }).catch(async error => {
+      if (!disposed) await teardown();
+      throw error;
     }) as unknown as AppResult;
-  },
-  async teardown(context) {
-    await (SlideApp as any).__teardownByContext?.get(context)?.();
-    (SlideApp as any).__teardownByContext?.delete(context);
   },
 };
 

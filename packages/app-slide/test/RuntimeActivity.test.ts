@@ -3,7 +3,7 @@ import { strict as assert } from "node:assert";
 (globalThis as any).window = { addEventListener() {}, removeEventListener() {} };
 (globalThis as any).document = { visibilityState: "visible" };
 // Initialize the real controller after its browser globals are available.
-const { SlideControllerBase } = require("../src/SlideController");
+const { SlideControllerBase, enqueueSlideWebGLTransition } = require("../src/SlideController");
 const flush = async () => {
   for (let i = 0; i < 20; i++) await Promise.resolve();
 };
@@ -146,6 +146,72 @@ async function run() {
     await c.reconcileActivity();
     assert.equal(c.isFrozen, true, "host suspension wins over a stale visible UI");
   }
-  console.log("Slide runtime activity: 5 integration scenarios passed");
+  {
+    const old = fixture();
+    const next = fixture();
+    const destroyed = deferred();
+    const events: string[] = [];
+    old.controller.slide.frozen = (onPlayerDestroyed: () => void) => {
+      events.push("destroy:start");
+      void destroyed.promise.then(() => {
+        events.push("destroy:done");
+        onPlayerDestroyed();
+      });
+    };
+    next.controller.isFrozen = true;
+    let finishRestore!: () => void;
+    next.controller.slide.release = (
+      onRestored: () => void,
+      onPlayerCreated: () => void
+    ) => {
+      events.push("create");
+      finishRestore = onRestored;
+      onPlayerCreated();
+    };
+    const blurring = old.controller.setFocusedState(false);
+    const focusing = next.controller.setFocusedState(true);
+    await flush();
+    assert.deepEqual(events, ["destroy:start"], "new player waits for old player destruction");
+    destroyed.resolve();
+    await Promise.all([blurring, focusing]);
+    assert.deepEqual(events, ["destroy:start", "destroy:done", "create"]);
+    assert.deepEqual(next.calls, [], "storage restoration does not block focus completion");
+    finishRestore();
+    await flush();
+    assert.deepEqual(next.calls, ["resize", "state"]);
+  }
+  {
+    const old = fixture();
+    const next = fixture();
+    const events: string[] = [];
+    const destroyComplete = deferred();
+    old.controller.slide.frozen = () => { events.push("freeze:pending"); };
+    old.controller.slide.destroy = (onPlayerDestroyed: () => void) => {
+      events.push("destroy:start");
+      void destroyComplete.promise.then(() => {
+        events.push("player:destroyed");
+        onPlayerDestroyed();
+      });
+    };
+    next.controller.isFrozen = true;
+    next.controller.slide.release = (_restored: () => void, onPlayerCreated: () => void) => {
+      events.push("player:created");
+      onPlayerCreated();
+    };
+    const blurring = old.controller.setFocusedState(false);
+    const focusing = next.controller.setFocusedState(true);
+    await flush();
+    const setup = enqueueSlideWebGLTransition(() => { events.push("setup:create"); });
+    assert.deepEqual(events, ["freeze:pending"]);
+    const closing = old.controller.destroy();
+    await flush();
+    assert.deepEqual(events, ["freeze:pending", "destroy:start"]);
+    destroyComplete.resolve();
+    await Promise.all([closing, blurring, focusing, setup]);
+    assert.deepEqual(events, [
+      "freeze:pending", "destroy:start", "player:destroyed", "player:created", "setup:create",
+    ]);
+  }
+  console.log("Slide runtime activity: 7 integration scenarios passed");
 }
 void run();

@@ -56,6 +56,48 @@ const noop = function noop() {
   // do nothing
 };
 
+type SlideWebGLTask = {
+  label: string;
+  run: () => void | Promise<void>;
+  resolve: () => void;
+  reject: (error: unknown) => void;
+};
+
+const slideWebGLTasks: SlideWebGLTask[] = [];
+let slideWebGLRunning = false;
+
+function runNextSlideWebGLTask(): void {
+  if (slideWebGLRunning) return;
+  const task = slideWebGLTasks.shift();
+  if (!task) return;
+  slideWebGLRunning = true;
+  const startedAt = performance.now();
+  log("[Slide][player-queue] start", task.label, "pending", slideWebGLTasks.length);
+  void Promise.resolve().then(task.run).then(() => {
+    log("[Slide][player-queue] done", task.label, "ms", Math.round(performance.now() - startedAt));
+    task.resolve();
+  }, error => {
+    log("[Slide][player-queue] failed", task.label, error);
+    task.reject(error);
+  }).finally(() => {
+    slideWebGLRunning = false;
+    runNextSlideWebGLTask();
+  });
+}
+
+export function enqueueSlideWebGLTransition(
+  run: () => void | Promise<void>,
+  priority = false,
+  label = "unspecified"
+): Promise<void> {
+  return new Promise<void>((resolve, reject) => {
+    const task = { label, run, resolve, reject };
+    if (priority) slideWebGLTasks.unshift(task);
+    else slideWebGLTasks.push(task);
+    runNextSlideWebGLTask();
+  });
+}
+
 type MagixEventListener = Parameters<
   AppContext<Attributes, MagixEvents>["addMagixEventListener"]
 >[1];
@@ -364,13 +406,30 @@ export class SlideControllerBase {
 
   protected destroyed = false;
   protected destroyPromise?: Promise<void>;
+  private resolveDestroyedSignal!: () => void;
+  private readonly destroyedSignal = new Promise<void>(resolve => {
+    this.resolveDestroyedSignal = resolve;
+  });
 
   public destroy(): Promise<void> {
     this.sideEffect.flushAll();
     if (!this.destroyed) {
       log("[Slide] destroy slide (once)");
       this.destroyed = true;
-      this.destroyPromise = Promise.resolve(this.slide.destroy());
+      this.destroyPromise = enqueueSlideWebGLTransition(() => new Promise<void>((resolve, reject) => {
+        try {
+          (this.slide.destroy as (
+            onPlayerDestroyed?: () => void,
+            onError?: (error: unknown) => void
+          ) => void).call(this.slide, () => {
+            log("[Slide][player] destroy callback", this.context.appId);
+            resolve();
+          }, reject);
+        } catch (error) {
+          reject(error);
+        }
+      }), true, `destroy:${this.context.appId}`);
+      this.resolveDestroyedSignal();
     }
     return this.destroyPromise ?? Promise.resolve();
   }
@@ -445,7 +504,20 @@ export class SlideControllerBase {
       if (this.ready) {
         log("[Slide] freeze", this.context.appId);
         if (this.invisibleBehavior === "frozen") {
-          await this.slide.frozen();
+          await enqueueSlideWebGLTransition(() => {
+            if (this.destroyed) return Promise.resolve();
+            const destroyed = new Promise<void>((resolve, reject) => {
+              const result = (this.slide.frozen as (
+                onPlayerDestroyed?: () => void,
+                onError?: (error: unknown) => void
+              ) => void | Promise<void>).call(this.slide, () => {
+                log("[Slide][player] frozen callback", this.context.appId);
+                resolve();
+              }, reject);
+              if (result) void result.then(resolve, reject);
+            });
+            return Promise.race([destroyed, this.destroyedSignal]);
+          }, false, `freeze:${this.context.appId}`);
         } else {
           this.slide.pause();
         }
@@ -469,24 +541,38 @@ export class SlideControllerBase {
     this.isFrozen = false;
     try {
       if (this.ready) {
-        let isNeedSyncState = false;
         log("[Slide] unfreeze", this.context.appId);
         if (this.invisibleBehavior === "frozen") {
-          await this.slide.release(() => {
-            // release 会重建 player，内部 observer 已关闭，需要按当前 frame 尺寸重绘
-            if (!this.isLazySetupMode() || this.shouldBeActive()) this.slide.notifyFrameResize();
-          });
-          isNeedSyncState = true;
+          await enqueueSlideWebGLTransition(() => {
+            if (this.destroyed) return Promise.resolve();
+            const created = new Promise<void>((resolve, reject) => {
+              const result = (this.slide.release as (
+                onRestored?: () => void,
+                onPlayerCreated?: () => void,
+                onError?: (error: unknown) => void
+              ) => void | Promise<void>).call(this.slide, () => {
+                log("[Slide][player] restored callback", this.context.appId);
+                if (this.isLazySetupMode() && !this.shouldBeActive()) return;
+                this.slide.notifyFrameResize();
+                const state = this.context.storage.state.state;
+                if (state) {
+                  log("[Slide] sync storage", JSON.stringify(state));
+                  void this.slide.setSlideState(state).catch(error => {
+                    this.resourceStateUnknown = true;
+                    logger.warn("[Slide] storage sync after release failed", this.context.appId, error);
+                  });
+                }
+              }, () => {
+                log("[Slide][player] created callback", this.context.appId);
+                resolve();
+              }, reject);
+              if (result) void result.then(resolve, reject);
+            });
+            return Promise.race([created, this.destroyedSignal]);
+          }, false, `release:${this.context.appId}`);
         } else {
           this.slide.resume();
           this.slide.notifyFrameResize();
-        }
-        if (isNeedSyncState && (!this.isLazySetupMode() || this.shouldBeActive())) {
-          const state = this.context.storage.state.state;
-          if (state) {
-            log("[Slide] sync storage", JSON.stringify(state));
-            await this.slide.setSlideState(state);
-          }
         }
       } else {
         this._toFreeze = -1;
