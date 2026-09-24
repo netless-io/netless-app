@@ -19,6 +19,8 @@ import { cachedGetBgColor } from "../utils/bgcolor";
 import { log, verbose, setRoomLogger, logger } from "../utils/logger";
 import { getRoomTracker } from "../utils/tracker";
 import { createFocusTransitionQueue, shouldSlideRuntimeBeActive } from "../utils/focus-transition";
+import { SceneSync, isOwnWritableEvent, withTransportAuthor } from "./SceneSync";
+import type { EventOrigin } from "./SceneSync";
 export { syncSceneWithSlide, createDocsViewerPages } from "./helpers";
 
 export const DefaultUrl = "https://convertcdn.netless.link/dynamicConvert";
@@ -124,6 +126,7 @@ export class SlideControllerBase {
   protected readonly sideEffect = new SideEffectManager();
 
   protected readonly onRenderStart: SlideControllerOptions["onRenderStart"];
+  protected readonly onRenderEnd: SlideControllerOptions["onRenderEnd"];
   protected readonly onPageChanged: SlideControllerOptions["onPageChanged"];
   protected readonly onTransitionStart: SlideControllerOptions["onTransitionStart"];
   protected readonly onTransitionEnd: SlideControllerOptions["onTransitionEnd"];
@@ -144,6 +147,7 @@ export class SlideControllerBase {
     const {
       context,
       onRenderStart,
+      onRenderEnd,
       onPageChanged,
       onTransitionStart,
       onTransitionEnd,
@@ -155,6 +159,7 @@ export class SlideControllerBase {
     } = props;
     this.invisibleBehavior = invisibleBehavior ?? "frozen";
     this.onRenderStart = onRenderStart;
+    this.onRenderEnd = onRenderEnd;
     this.onPageChanged = onPageChanged;
     this.onTransitionStart = onTransitionStart;
     this.onTransitionEnd = onTransitionEnd;
@@ -248,6 +253,12 @@ export class SlideControllerBase {
 
   protected registerEventListeners() {
     const { context, slide } = this;
+    const sceneSync = new SceneSync(
+      context,
+      () => slide,
+      error => logger.warn("[Slide] scene sync failed", error)
+    );
+    this.sideEffect.addDisposer(sceneSync.destroy);
 
     // it is possible that we miss the first `renderSlide(1)` event
     // and the attributes has no value yet, so we need to sync state
@@ -268,6 +279,8 @@ export class SlideControllerBase {
     );
 
     slide.on(SLIDE_EVENTS.renderStart, this.onRenderStart);
+    slide.on(SLIDE_EVENTS.renderEnd, sceneSync.renderEnd);
+    slide.on(SLIDE_EVENTS.renderEnd, this.onRenderEnd);
     slide.on(SLIDE_EVENTS.slideChange, this.onPageChanged);
     slide.on(SLIDE_EVENTS.renderEnd, this.onTransitionEnd);
     slide.on(SLIDE_EVENTS.mainSeqStepStart, this.onTransitionStart);
@@ -313,7 +326,7 @@ export class SlideControllerBase {
     if (type === SLIDE_EVENTS.syncDispatch) {
       this.syncStateOnce();
       verbose("[Slide] receive", JSON.stringify(payload));
-      this.slide.emit(SLIDE_EVENTS.syncReceive, payload);
+      this.slide.emit(SLIDE_EVENTS.syncReceive, withTransportAuthor(payload, ev.authorId));
     }
   };
 
@@ -332,8 +345,8 @@ export class SlideControllerBase {
     }
   }
 
-  protected onStateChange = (state: SlideState) => {
-    if (this.context.getIsWritable()) {
+  protected onStateChange = (state: SlideState, origin?: EventOrigin) => {
+    if (isOwnWritableEvent(this.context, origin)) {
       verbose("[Slide] state change", JSON.stringify(state, null, 2));
       this.context.storage.setState({ state });
     }
@@ -384,6 +397,8 @@ export class SlideControllerBase {
       anchor,
       interactive: true,
       mode: "interactive",
+      // WhiteLogger records joinRoom's uid as suid. Keep the customer's exact value.
+      clientId: this.room?.uid,
       syncEventQueuePolicy: options.syncEventQueuePolicy ?? "fifo",
       controller: false,
       enableGlobalClick: options.enableGlobalClick ?? true,
@@ -460,11 +475,11 @@ export class SlideControllerBase {
         () =>
           new Promise<void>((resolve, reject) => {
             try {
-              (
+              const result = (
                 this.slide.destroy as (
                   onPlayerDestroyed?: () => void,
                   onError?: (error: unknown) => void
-                ) => void
+                ) => void | Promise<void>
               ).call(
                 this.slide,
                 () => {
@@ -472,6 +487,7 @@ export class SlideControllerBase {
                 },
                 reject
               );
+              if (result) void result.then(resolve, reject);
             } catch (error) {
               reject(error);
             }
