@@ -8,7 +8,7 @@
 // 4. automatically re-create scenes to sync strokes, a view must be existing
 // 5. pages information are loaded dynamically by the slide package
 
-import type { AppContext, Player, Room, Displayer } from "@netless/window-manager";
+import type { AppContext, Player, Room } from "@netless/window-manager";
 import type { ISlideConfig, SyncEvent } from "@netless/slide";
 import type { Attributes, MagixEvents, MagixPayload, SlideState } from "../typings";
 import type { AppOptions } from "..";
@@ -156,7 +156,7 @@ export class SlideControllerBase {
     this.context = context;
     this.room = context.getRoom();
     this.player = this.room ? undefined : (context.getDisplayer() as Player);
-    setRoomLogger((this.room || this.player) as Displayer);
+    setRoomLogger(context);
     // this.slide = this.createSlide(anchor, {
     //   whiteTracker: getRoomTracker(context.getDisplayer()),
     // });
@@ -360,7 +360,7 @@ export class SlideControllerBase {
   }
 
   protected createSlide(anchor: HTMLDivElement, defaults: Partial<ISlideConfig> = {}) {
-    const options = this.context.getAppOptions() || {};
+    const options = (this.context.getAppOptions() || {}) as AppOptions;
     const attribute = this.context.storage.state;
     const slide = new Slide({
       anchor,
@@ -389,18 +389,23 @@ export class SlideControllerBase {
       useLocalCache: options.useLocalCache,
       logger: {
         ...options.logger,
-        warn: (message, ...details) => {
-          const roomLogger = (this.room || this.player as any)?.logger;
-          try {
-            roomLogger?.warn(message, ...details);
-          } catch {
-            // Logging must not interrupt player cleanup.
+        error: (message, ...details) => {
+          logger.error(message, ...details);
+          if (options.logger !== logger.roomLogger) {
+            try {
+              options.logger?.error?.(message, ...details);
+            } catch {
+              // Keep the App error even if a custom logger fails.
+            }
           }
-          if (options.logger !== roomLogger) {
+        },
+        warn: (message, ...details) => {
+          logger.warn(message, ...details);
+          if (options.logger !== logger.roomLogger) {
             try {
               options.logger?.warn?.(message, ...details);
             } catch {
-              // Keep the Room warning even if a custom logger fails.
+              // Keep the App warning even if a custom logger fails.
             }
           }
         },
@@ -478,7 +483,7 @@ export class SlideControllerBase {
       if (active && this.shouldBeActive()) await this.unfreeze();
       else await this.freeze();
     },
-    error => logger.warn("[Slide] resource transition failed", this.context.appId, error)
+    error => logger.error("[Slide] resource transition failed", this.context.appId, error)
   );
 
   private shouldBeActive = (): boolean => {
@@ -573,7 +578,7 @@ export class SlideControllerBase {
                   log("[Slide] sync storage", JSON.stringify(state));
                   void this.slide.setSlideState(state).catch(error => {
                     this.resourceStateUnknown = true;
-                    logger.warn("[Slide] storage sync after release failed", this.context.appId, error);
+                    logger.error("[Slide] storage sync after release failed", this.context.appId, error);
                   });
                 }
               }, () => {

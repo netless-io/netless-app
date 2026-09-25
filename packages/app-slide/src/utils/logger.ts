@@ -1,14 +1,35 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import type { AppContext, Displayer } from "@netless/window-manager";
+import type { AppContext } from "@netless/window-manager";
 import type { SlideController } from "../SlideController";
 import { isObj } from "./helpers";
 
 type DebugMessage = { slide: boolean | "__instance" | "__debug" };
 
-type RoomLogger = {
+type WindowManagerLogger = {
   debug: (...args: any) => void;
   info: (...args: any) => void;
   warn: (...args: any) => void;
+  error: (...args: any) => void;
+};
+
+type LogLevel = keyof WindowManagerLogger;
+
+const getAppLogger = (context: AppContext<any, any, any>): WindowManagerLogger | undefined => {
+  try {
+    return context.getWindowManager()?.Logger as WindowManagerLogger | undefined;
+  } catch {
+    return undefined;
+  }
+};
+
+const reportAppLog = (appLogger: WindowManagerLogger | null, level: LogLevel, ...args: any[]) => {
+  try {
+    if (appLogger) appLogger[level](...args);
+    else if (level === "info" || level === "debug") console.log(...args);
+    else console[level](...args);
+  } catch {
+    // Diagnostics must not affect App setup or resource cleanup.
+  }
 };
 
 class Logger {
@@ -33,7 +54,8 @@ class Logger {
 
   public level: "debug" | "verbose" = import.meta.env.DEV ? "verbose" : "debug";
 
-  public roomLogger: RoomLogger | null = null;
+  /** Legacy field name; the value comes from WindowManager.Logger. */
+  public roomLogger: WindowManagerLogger | null = null;
 
   constructor(public enable: boolean) {
     this.initialize();
@@ -48,27 +70,21 @@ class Logger {
   }
 
   log(...args: any[]) {
-    if (this.roomLogger) {
-      this.roomLogger.info(...args);
-    } else if (this.enable) {
-      console.log(...args);
-    }
+    if (this.roomLogger || this.enable) reportAppLog(this.roomLogger, "info", ...args);
   }
 
   verbose(...args: any[]) {
-    if (this.roomLogger) {
-      this.roomLogger.debug(...args);
-    } else if (this.enable && this.level === "verbose") {
-      console.log(...args);
+    if (this.roomLogger || (this.enable && this.level === "verbose")) {
+      reportAppLog(this.roomLogger, "debug", ...args);
     }
   }
 
   warn(...args: any[]) {
-    if (this.roomLogger) {
-      this.roomLogger.warn(...args);
-    } else {
-      console.warn(...args);
-    }
+    reportAppLog(this.roomLogger, "warn", ...args);
+  }
+
+  error(...args: any[]) {
+    reportAppLog(this.roomLogger, "error", ...args);
   }
 
   /**
@@ -101,6 +117,6 @@ class Logger {
 export const logger = /** @__PURE__ */ new Logger(import.meta.env.DEV);
 export const log = /** @__PURE__ */ logger.log.bind(logger);
 export const verbose = /** @__PURE__ */ logger.verbose.bind(logger);
-export const setRoomLogger = (displayer: Displayer) => {
-  logger.roomLogger = (displayer as any).logger;
+export const setRoomLogger = (context: AppContext<any, any, any>) => {
+  logger.roomLogger = getAppLogger(context) ?? null;
 };

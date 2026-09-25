@@ -17,7 +17,7 @@ import {
 } from "./SlideController";
 import { SlideDocsViewer } from "./SlideDocsViewer";
 import { apps, FreezerLength, addHooks, useFreezer } from "./utils/freezer";
-import { log, logger } from "./utils/logger";
+import { log, logger, setRoomLogger } from "./utils/logger";
 import styles from "./style.scss?inline";
 
 export type { PreviewParams } from "./SlidePreviewer";
@@ -130,6 +130,7 @@ export interface AppResult {
 const SlideApp: NetlessApp<Attributes, MagixEvents, AppOptions, AppResult> = {
   kind: "Slide",
   setup(context) {
+    setRoomLogger(context);
     console.log("[Slide] setup @ " + version);
 
     if (context.getIsWritable()) {
@@ -185,7 +186,7 @@ const SlideApp: NetlessApp<Attributes, MagixEvents, AppOptions, AppResult> = {
     };
 
     const mountSlideController = (options: MountSlideOptions): SlideController => {
-      const appOptions = context.getAppOptions() || {};
+      const appOptions = (context.getAppOptions() || {}) as AppOptions;
 
       const slideController = new SlideController({
         context,

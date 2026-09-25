@@ -132,7 +132,7 @@ async function testAppTeardown(rejectDestroy) {
       "./SlidePreviewer": {},
       "./DocsViewer": {},
       "./utils/freezer": { useFreezer: false },
-      "./utils/logger": { log() {}, logger: { setAppContext() {}, setAppController() {}, deleteApp() {} } },
+      "./utils/logger": { log() {}, setRoomLogger() {}, logger: { setAppContext() {}, setAppController() {}, deleteApp() {} } },
       "./SlideDocsViewer": {
         SlideDocsViewer: class {
           setSyncEventQueuePolicy() {}
@@ -211,7 +211,7 @@ async function testFailedFirstRenderCleansBeforeRetry(mode) {
       "./SlidePreviewer": {},
       "./DocsViewer": {},
       "./utils/freezer": { useFreezer: false },
-      "./utils/logger": { log() {}, logger: { setAppContext() {}, setAppController() {}, deleteApp() {}, warn() {} } },
+      "./utils/logger": { log() {}, setRoomLogger() {}, logger: { setAppContext() {}, setAppController() {}, deleteApp() {}, warn() {} } },
       "./SlideDocsViewer": {
         SlideDocsViewer: class {
           constructor(options) {
@@ -283,7 +283,7 @@ async function testPendingSetupDoesNotMountAfterDestroy() {
       "./SlidePreviewer": {},
       "./DocsViewer": {},
       "./utils/freezer": { useFreezer: false },
-      "./utils/logger": { log() {}, logger: { setAppContext() {}, deleteApp() {} } },
+      "./utils/logger": { log() {}, setRoomLogger() {}, logger: { setAppContext() {}, deleteApp() {} } },
       "./SlideDocsViewer": {
         SlideDocsViewer: class {
           setSyncEventQueuePolicy() {}

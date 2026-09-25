@@ -1,9 +1,10 @@
-import type { ReadonlyTeleBox, RegisterParams } from "@netless/window-manager";
+import type { AppContext, ReadonlyTeleBox, RegisterParams } from "@netless/window-manager";
 import { log, logger } from "./logger";
 
 export interface FreezableSlide {
   freeze: () => void;
   unfreeze: () => void;
+  context?: AppContext<any, any, any>;
 }
 
 export let useFreezer = false;

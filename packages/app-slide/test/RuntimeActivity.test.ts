@@ -17,15 +17,25 @@ const deferred = () => {
 
 function fixture() {
   (document as any).visibilityState = "visible";
-  const wm = { lazySetupInMaximizedMode: true, boxState: "maximized" };
+  const errors: unknown[] = [];
+  const wm = {
+    lazySetupInMaximizedMode: true,
+    boxState: "maximized",
+    Logger: {
+      info() {}, debug() {}, warn() {},
+      error: (...args: unknown[]) => errors.push(args),
+    },
+  };
   const calls: string[] = [];
-  const warnings: unknown[] = [];
   const controller = new SlideControllerBase({
     context: {
       appId: "A",
       isAddApp: false,
       getRoom: () => ({
-        logger: { info() {}, debug() {}, warn: (...args: unknown[]) => warnings.push(args) },
+        logger: {
+          info() {}, debug() {}, warn() {},
+          error() {},
+        },
       }),
       getWindowManager: () => wm,
       getBoxStatus: () => undefined,
@@ -46,7 +56,7 @@ function fixture() {
       calls.push("state");
     },
   };
-  return { wm, calls, warnings, controller };
+  return { wm, calls, errors, controller };
 }
 
 async function run() {
@@ -92,7 +102,7 @@ async function run() {
     assert.equal(c.isFrozen, true);
   }
   {
-    const { controller: c, calls, warnings } = fixture();
+    const { controller: c, calls, errors } = fixture();
     c.slide.frozen = async () => {
       calls.push("freeze:failed");
       throw new Error("freeze failed");
@@ -104,7 +114,7 @@ async function run() {
       ["freeze:failed", "release", "resize", "state"],
       "unknown resource state must reconcile even when the old boolean was active"
     );
-    assert.equal(warnings.length, 1);
+    assert.equal(errors.length, 1);
   }
   {
     const { controller: c, calls, wm } = fixture();
@@ -214,12 +224,23 @@ async function run() {
   }
   {
     const roomWarnings: unknown[][] = [];
+    const roomErrors: unknown[][] = [];
+    const managerInfo: unknown[][] = [];
+    const managerDebug: unknown[][] = [];
+    const managerWarnings: unknown[][] = [];
+    const managerErrors: unknown[][] = [];
     const customWarnings: unknown[][] = [];
+    const customErrors: unknown[][] = [];
+    const customLogger = {
+      warn: (...args: unknown[]) => customWarnings.push(args),
+      error: (...args: unknown[]) => customErrors.push(args),
+    };
     const room = {
       logger: {
         info() {},
         debug() {},
         warn: (...args: unknown[]) => roomWarnings.push(args),
+        error: (...args: unknown[]) => roomErrors.push(args),
       },
     };
     const controller = new SlideControllerBase({
@@ -227,18 +248,61 @@ async function run() {
         appId: "warning-test",
         isAddApp: false,
         getRoom: () => room,
+        getWindowManager: () => ({ Logger: {
+          info: (...args: unknown[]) => managerInfo.push(args),
+          debug: (...args: unknown[]) => managerDebug.push(args),
+          warn: (...args: unknown[]) => managerWarnings.push(args),
+          error: (...args: unknown[]) => managerErrors.push(args),
+        } }),
         getAppOptions: () => ({
           bgColor: "#fff",
-          logger: { warn: (...args: unknown[]) => customWarnings.push(args) },
+          logger: customLogger,
         }),
         storage: { state: { customLinks: [] } },
       },
     });
     const slide = (controller as any).createSlide({});
     const error = new Error("WebGL cleanup failed");
+    const { log, verbose } = require("../src/utils/logger");
+    log("[Slide] info via manager");
+    verbose("[Slide] debug via manager");
     slide.config.logger.warn("[task] release failed", error);
-    assert.deepEqual(roomWarnings, [["[task] release failed", error]]);
+    slide.config.logger.error("[task] restore failed", error);
+    assert.deepEqual(managerInfo, [["[Slide] info via manager"]]);
+    assert.deepEqual(managerDebug, [["[Slide] debug via manager"]]);
+    assert.deepEqual(managerWarnings, [["[task] release failed", error]]);
     assert.deepEqual(customWarnings, [["[task] release failed", error]]);
+    assert.deepEqual(managerErrors, [["[task] restore failed", error]]);
+    assert.deepEqual(customErrors, [["[task] restore failed", error]]);
+    assert.deepEqual(roomWarnings, []);
+    assert.deepEqual(roomErrors, []);
+
+    customLogger.warn = () => { throw new Error("custom warning logger failed"); };
+    customLogger.error = () => { throw new Error("custom error logger failed"); };
+    assert.doesNotThrow(() => slide.config.logger.warn("[task] later warning", error));
+    assert.doesNotThrow(() => slide.config.logger.error("[task] later error", error));
+    assert.deepEqual(managerWarnings.at(-1), ["[task] later warning", error]);
+    assert.deepEqual(managerErrors.at(-1), ["[task] later error", error]);
+  }
+  {
+    const { logger, setRoomLogger } = require("../src/utils/logger");
+    const calls: unknown[][] = [];
+    const replayContext = {
+      getWindowManager: () => ({ Logger: {
+        info() {},
+        debug() {},
+        warn: (...args: unknown[]) => calls.push(["warn", ...args]),
+        error: (...args: unknown[]) => calls.push(["error", ...args]),
+      } }),
+      getRoom: () => undefined,
+    };
+    setRoomLogger(replayContext);
+    logger.warn("[Slide] first render still pending", "A", 5000);
+    logger.error("[Slide] resource transition failed", "A");
+    assert.deepEqual(calls, [
+      ["warn", "[Slide] first render still pending", "A", 5000],
+      ["error", "[Slide] resource transition failed", "A"],
+    ]);
   }
   {
     const { apps, getFreezerLength, setFreezerLength } = require("../src/utils/freezer");

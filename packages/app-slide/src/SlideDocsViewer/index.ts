@@ -431,7 +431,7 @@ export class SlideDocsViewer {
     if (this.slideController?.onRenderError) {
       this.slideController.onRenderError(error, index);
     }
-    logger.warn("[Slide] render error", error);
+    logger.error("[Slide] render error", this.appId, error);
   };
 
   protected onRenderStart = () => {
