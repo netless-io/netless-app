@@ -435,8 +435,8 @@ export class SlideDocsViewer {
   };
 
   protected onRenderStart = () => {
-    logger.log("[Slide][notes] hide", this.appId, "scene", this.whiteboardView.focusScenePath);
     this.$whiteboardView.classList.add(this.wrapClassName("wb-view-hidden"));
+    logger.log("[Slide][notes] hide", this.appId, "scene", this.whiteboardView.focusScenePath);
     this.viewer.setPlaying();
   };
 
@@ -448,15 +448,14 @@ export class SlideDocsViewer {
 
   public onPageChanged = () => {
     clearTimeout(this._onPageChangedTimer);
-    logger.log("[Slide][notes] show scheduled", this.appId, "scene", this.whiteboardView.focusScenePath);
     this._onPageChangedTimer = setTimeout(this._onPageChanged, 200) as unknown as number;
   };
 
   protected _onPageChangedTimer = 0;
   protected _onPageChanged = () => {
-    logger.log("[Slide][notes] show", this.appId, "scene", this.whiteboardView.focusScenePath);
     this.$overlay.style.opacity = "";
     this.$whiteboardView.classList.remove(this.wrapClassName("wb-view-hidden"));
+    logger.log("[Slide][notes] show", this.appId, "scene", this.whiteboardView.focusScenePath);
   };
 
   protected refreshPages = () => {

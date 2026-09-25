@@ -387,7 +387,24 @@ export class SlideControllerBase {
       resourceTimeout: options.resourceTimeout,
       rtcAudio: options.rtcAudio,
       useLocalCache: options.useLocalCache,
-      logger: options.logger,
+      logger: {
+        ...options.logger,
+        warn: (message, ...details) => {
+          const roomLogger = (this.room || this.player as any)?.logger;
+          try {
+            roomLogger?.warn(message, ...details);
+          } catch {
+            // Logging must not interrupt player cleanup.
+          }
+          if (options.logger !== roomLogger) {
+            try {
+              options.logger?.warn?.(message, ...details);
+            } catch {
+              // Keep the Room warning even if a custom logger fails.
+            }
+          }
+        },
+      },
       whiteTracker: defaults.whiteTracker,
       timestamp: this.timestamp,
       customLinks: attribute.customLinks,
@@ -422,7 +439,6 @@ export class SlideControllerBase {
             onPlayerDestroyed?: () => void,
             onError?: (error: unknown) => void
           ) => void).call(this.slide, () => {
-            log("[Slide][player] destroy callback", this.context.appId);
             resolve();
           }, reject);
         } catch (error) {
@@ -511,7 +527,6 @@ export class SlideControllerBase {
                 onPlayerDestroyed?: () => void,
                 onError?: (error: unknown) => void
               ) => void | Promise<void>).call(this.slide, () => {
-                log("[Slide][player] frozen callback", this.context.appId);
                 resolve();
               }, reject);
               if (result) void result.then(resolve, reject);
@@ -551,7 +566,6 @@ export class SlideControllerBase {
                 onPlayerCreated?: () => void,
                 onError?: (error: unknown) => void
               ) => void | Promise<void>).call(this.slide, () => {
-                log("[Slide][player] restored callback", this.context.appId);
                 if (this.isLazySetupMode() && !this.shouldBeActive()) return;
                 this.slide.notifyFrameResize();
                 const state = this.context.storage.state.state;
@@ -563,7 +577,6 @@ export class SlideControllerBase {
                   });
                 }
               }, () => {
-                log("[Slide][player] created callback", this.context.appId);
                 resolve();
               }, reject);
               if (result) void result.then(resolve, reject);

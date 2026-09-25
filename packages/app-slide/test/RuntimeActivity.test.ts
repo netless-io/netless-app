@@ -212,6 +212,76 @@ async function run() {
       "freeze:pending", "destroy:start", "player:destroyed", "player:created", "setup:create",
     ]);
   }
-  console.log("Slide runtime activity: 7 integration scenarios passed");
+  {
+    const roomWarnings: unknown[][] = [];
+    const customWarnings: unknown[][] = [];
+    const room = {
+      logger: {
+        info() {},
+        debug() {},
+        warn: (...args: unknown[]) => roomWarnings.push(args),
+      },
+    };
+    const controller = new SlideControllerBase({
+      context: {
+        appId: "warning-test",
+        isAddApp: false,
+        getRoom: () => room,
+        getAppOptions: () => ({
+          bgColor: "#fff",
+          logger: { warn: (...args: unknown[]) => customWarnings.push(args) },
+        }),
+        storage: { state: { customLinks: [] } },
+      },
+    });
+    const slide = (controller as any).createSlide({});
+    const error = new Error("WebGL cleanup failed");
+    slide.config.logger.warn("[task] release failed", error);
+    assert.deepEqual(roomWarnings, [["[task] release failed", error]]);
+    assert.deepEqual(customWarnings, [["[task] release failed", error]]);
+  }
+  {
+    const { apps, getFreezerLength, setFreezerLength } = require("../src/utils/freezer");
+    const { logger } = require("../src/utils/logger");
+    const previousLogger = logger.roomLogger;
+    const previousLength = getFreezerLength();
+    const entries: unknown[][] = [];
+    const frozen: string[] = [];
+    const boxA = { zIndex: 1 };
+    const boxB = { zIndex: 2 };
+    try {
+      logger.roomLogger = {
+        info: (...args: unknown[]) => entries.push(args),
+        debug() {},
+        warn: (...args: unknown[]) => entries.push(args),
+      };
+      setFreezerLength(1);
+      apps.set("A", { freeze: () => frozen.push("A"), unfreeze() {} }, boxA);
+      apps.set("B", { freeze: () => frozen.push("B"), unfreeze() {} }, boxB);
+      boxA.zIndex = 3;
+      apps.focus("A");
+      apps.focus("missing");
+
+      assert.deepEqual(frozen, ["A", "B"]);
+      assert.deepEqual(entries.filter(entry => entry[0] === "[Slide] freezer: add"), [
+        ["[Slide] freezer: add", "A", "[A]", "validate", "[A]"],
+        ["[Slide] freezer: add", "B", "[B]", "validate", "[B,A]", "freeze-requested", "[A]"],
+      ]);
+      assert.deepEqual(entries.filter(entry => entry[0] === "[Slide] freezer: focus"), [
+        ["[Slide] freezer: focus", "A", "[A]", "validate", "[A,B]", "freeze-requested", "[B]"],
+      ]);
+      assert.deepEqual(entries.filter(entry => entry[0] === "[Slide] freezer: focus-missing"), [
+        ["[Slide] freezer: focus-missing", "missing", "[A]", "validate", "[A,missing]", "missing", "[missing]"],
+      ]);
+      assert.equal(entries.some(entry => entry[0] === "[Slide] freezer: validate"), false);
+    } finally {
+      apps.map.clear();
+      apps.boxes.clear();
+      apps.queue.length = 0;
+      setFreezerLength(previousLength);
+      logger.roomLogger = previousLogger;
+    }
+  }
+  console.log("Slide runtime activity: 9 integration scenarios passed");
 }
 void run();

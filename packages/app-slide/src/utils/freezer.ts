@@ -1,5 +1,5 @@
 import type { ReadonlyTeleBox, RegisterParams } from "@netless/window-manager";
-import { log } from "./logger";
+import { log, logger } from "./logger";
 
 export interface FreezableSlide {
   freeze: () => void;
@@ -33,24 +33,36 @@ export const apps = {
       const zb = this.boxes.get(b)?.zIndex ?? 0;
       return -(za - zb);
     });
-    log("[Slide] freezer: validate", inspect(this.queue));
+    const validated = [...this.queue];
+    const frozen: string[] = [];
+    const missing: string[] = [];
     while (this.queue.length > FreezerLength) {
       const appId = this.queue.pop() as string;
       const slide = this.map.get(appId);
       if (slide) {
-        log("[Slide] freezer: validate-freeze", appId, inspect(this.queue));
-        slide.freeze();
+        try {
+          slide.freeze();
+          frozen.push(appId);
+        } catch (error) {
+          logger.warn("[Slide] freezer: freeze failed", appId, error);
+          throw error;
+        }
+      } else {
+        missing.push(appId);
       }
     }
+    return { validated, frozen, missing };
   },
   set(appId: string, slide: FreezableSlide, box: ReadonlyTeleBox) {
-    log("[Slide] freezer: add", appId, inspect(this.queue));
     this.map.set(appId, slide);
     this.boxes.set(appId, box);
     if (!this.queue.includes(appId)) {
       this.queue.unshift(appId);
     }
-    this.validateQueue();
+    const { validated, frozen, missing } = this.validateQueue();
+    log("[Slide] freezer: add", appId, inspect(this.queue), "validate", inspect(validated),
+      ...(frozen.length ? ["freeze-requested", inspect(frozen)] : []),
+      ...(missing.length ? ["missing", inspect(missing)] : []));
   },
   delete(appId: string) {
     this.map.delete(appId);
@@ -65,11 +77,19 @@ export const apps = {
       this.queue.splice(index, 1);
     }
     this.queue.unshift(appId);
-    this.validateQueue();
-    log("[Slide] freezer: focus", appId, inspect(this.queue));
+    const { validated, frozen, missing } = this.validateQueue();
     if (slide) {
-      slide.unfreeze();
+      try {
+        slide.unfreeze();
+      } catch (error) {
+        logger.warn("[Slide] freezer: unfreeze failed", appId, error);
+        throw error;
+      }
     }
+    log(slide ? "[Slide] freezer: focus" : "[Slide] freezer: focus-missing", appId,
+      inspect(this.queue), "validate", inspect(validated),
+      ...(frozen.length ? ["freeze-requested", inspect(frozen)] : []),
+      ...(missing.length ? ["missing", inspect(missing)] : []));
   },
 };
 
