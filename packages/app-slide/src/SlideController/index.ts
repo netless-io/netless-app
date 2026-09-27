@@ -2,8 +2,7 @@
 // 1. map slide events to ui
 // 2. make sure to init correctly
 //    - the one with (context.isAddApp === true) should call renderSlide(1)
-//    - others wait for first sync event and restore from sync state
-//    - if none of above happen, force doing renderSlide(1) after timeout
+//    - others restore from sync state, or render page 1 locally if no state exists
 // 3. send/receive slide sync events
 // 4. automatically re-create scenes to sync strokes, a view must be existing
 // 5. pages information are loaded dynamically by the slide package
@@ -225,10 +224,14 @@ export class SlideControllerBase {
       // otherwise, maybe this slide is just added, let the adder kick start first render
       log("[Slide] init by renderSlide", 1);
       slide.renderSlide(1);
+    } else if (taskId) {
+      // A previous add may have persisted the App before its first render.
+      // Render locally so a restored or read-only client can recover it.
+      void slide.doRenderSlide(1).catch(error => {
+        logger.error("[Slide] initial local render failed", context.appId, error);
+      });
     }
-    // there's still some risk that the adder is left and no first render
-    // so anyway, we start polling the slide's "ready state"
-    // if in the next 20 seconds the slide is not ready, start render first page
+    // Keep tracking the first render for setup diagnostics.
     this.pollReadyState();
   }
 

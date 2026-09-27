@@ -61,6 +61,27 @@ function fixture() {
 
 async function run() {
   {
+    const { controller: c } = fixture();
+    const actions: string[] = [];
+    const context = c.context as any;
+    context.getIsWritable = () => false;
+    context.storage.state = {
+      taskId: "persisted-task",
+      url: "https://example.com/dynamicConvert",
+      state: null,
+      resourceList: [],
+    };
+    c.slide.setResource = () => actions.push("resource");
+    c.slide.renderSlide = () => actions.push("sync-render");
+    c.slide.doRenderSlide = async (page: number) => { actions.push(`local-render:${page}`); };
+    (c as any).pollReadyState = () => undefined;
+
+    (c as any).kickStart();
+    await flush();
+    assert.deepEqual(actions, ["resource", "local-render:1"],
+      "a restored read-only App with no slide state renders its first page locally");
+  }
+  {
     const { controller: c, wm, calls } = fixture();
     await c.setFocusedState(false);
     (document as any).visibilityState = "hidden";
