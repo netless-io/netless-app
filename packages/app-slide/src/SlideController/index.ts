@@ -2,13 +2,12 @@
 // 1. map slide events to ui
 // 2. make sure to init correctly
 //    - the one with (context.isAddApp === true) should call renderSlide(1)
-//    - others wait for first sync event and restore from sync state
-//    - if none of above happen, force doing renderSlide(1) after timeout
+//    - others restore from sync state, or render page 1 locally if no state exists
 // 3. send/receive slide sync events
 // 4. automatically re-create scenes to sync strokes, a view must be existing
 // 5. pages information are loaded dynamically by the slide package
 
-import type { AppContext, Player, Room, Displayer } from "@netless/window-manager";
+import type { AppContext, Player, Room } from "@netless/window-manager";
 import type { ISlideConfig, SyncEvent } from "@netless/slide";
 import type { Attributes, MagixEvents, MagixPayload, SlideState } from "../typings";
 import type { AppOptions } from "..";
@@ -17,8 +16,9 @@ import { SideEffectManager } from "side-effect-manager";
 import { Slide, SLIDE_EVENTS } from "@netless/slide";
 import { clamp } from "../utils/helpers";
 import { cachedGetBgColor } from "../utils/bgcolor";
-import { log, verbose, setRoomLogger } from "../utils/logger";
+import { log, verbose, setRoomLogger, logger } from "../utils/logger";
 import { getRoomTracker } from "../utils/tracker";
+import { createFocusTransitionQueue, shouldSlideRuntimeBeActive } from "../utils/focus-transition";
 export { syncSceneWithSlide, createDocsViewerPages } from "./helpers";
 
 export const DefaultUrl = "https://convertcdn.netless.link/dynamicConvert";
@@ -55,6 +55,59 @@ const noop = function noop() {
   // do nothing
 };
 
+type SlideWebGLTask = {
+  label: string;
+  run: () => void | Promise<void>;
+  resolve: () => void;
+  reject: (error: unknown) => void;
+};
+
+const slideWebGLTasks: SlideWebGLTask[] = [];
+let slideWebGLRunning = false;
+
+function runNextSlideWebGLTask(): void {
+  if (slideWebGLRunning) return;
+  const task = slideWebGLTasks.shift();
+  if (!task) return;
+  slideWebGLRunning = true;
+  const startedAt = performance.now();
+  log("[Slide][player-queue] start", task.label, "pending", slideWebGLTasks.length);
+  void Promise.resolve()
+    .then(task.run)
+    .then(
+      () => {
+        log(
+          "[Slide][player-queue] done",
+          task.label,
+          "ms",
+          Math.round(performance.now() - startedAt)
+        );
+        task.resolve();
+      },
+      error => {
+        log("[Slide][player-queue] failed", task.label, error);
+        task.reject(error);
+      }
+    )
+    .finally(() => {
+      slideWebGLRunning = false;
+      runNextSlideWebGLTask();
+    });
+}
+
+export function enqueueSlideWebGLTransition(
+  run: () => void | Promise<void>,
+  priority = false,
+  label = "unspecified"
+): Promise<void> {
+  return new Promise<void>((resolve, reject) => {
+    const task = { label, run, resolve, reject };
+    if (priority) slideWebGLTasks.unshift(task);
+    else slideWebGLTasks.push(task);
+    runNextSlideWebGLTask();
+  });
+}
+
 type MagixEventListener = Parameters<
   AppContext<Attributes, MagixEvents>["addMagixEventListener"]
 >[1];
@@ -80,6 +133,7 @@ export class SlideControllerBase {
 
   protected visible: boolean;
   protected savedIsFrozen: boolean;
+  protected focused = true;
 
   protected invisibleBehavior: "frozen" | "pause";
 
@@ -112,7 +166,7 @@ export class SlideControllerBase {
     this.context = context;
     this.room = context.getRoom();
     this.player = this.room ? undefined : (context.getDisplayer() as Player);
-    setRoomLogger((this.room || this.player) as Displayer);
+    setRoomLogger(context);
     // this.slide = this.createSlide(anchor, {
     //   whiteTracker: getRoomTracker(context.getDisplayer()),
     // });
@@ -132,7 +186,9 @@ export class SlideControllerBase {
         log("[Slide] render end", slideIndex);
       } else {
         setTimeout(() => {
+          if (this.destroyed) return;
           this.ready = true;
+          if (this.isLazySetupMode()) void this.reconcileActivity(true).catch(() => undefined);
           resolve();
         }, 1000);
       }
@@ -179,10 +235,14 @@ export class SlideControllerBase {
       // otherwise, maybe this slide is just added, let the adder kick start first render
       log("[Slide] init by renderSlide", 1);
       slide.renderSlide(1);
+    } else if (taskId) {
+      // A previous add may have persisted the App before its first render.
+      // Render locally so a restored or read-only client can recover it.
+      void slide.doRenderSlide(1).catch(error => {
+        logger.error("[Slide] initial local render failed", context.appId, error);
+      });
     }
-    // there's still some risk that the adder is left and no first render
-    // so anyway, we start polling the slide's "ready state"
-    // if in the next 20 seconds the slide is not ready, start render first page
+    // Keep tracking the first render for setup diagnostics.
     this.pollReadyState();
   }
 
@@ -282,10 +342,18 @@ export class SlideControllerBase {
   protected pollCount = 0;
   protected pollReadyState = () => {
     if (this.ready) {
+      if (this.isLazySetupMode()) {
+        void this.reconcileActivity().catch(() => undefined);
+        return;
+      }
       if (this._toFreeze === 1) {
-        this.freeze();
+        void this.freeze().catch(error =>
+          logger.error("[Slide] deferred freeze failed", this.context.appId, error)
+        );
       } else if (this._toFreeze === -1) {
-        this.unfreeze();
+        void this.unfreeze().catch(error =>
+          logger.error("[Slide] deferred unfreeze failed", this.context.appId, error)
+        );
       }
     } else if (this.pollCount < MaxPollCount) {
       this.pollCount++;
@@ -310,7 +378,7 @@ export class SlideControllerBase {
   }
 
   protected createSlide(anchor: HTMLDivElement, defaults: Partial<ISlideConfig> = {}) {
-    const options = this.context.getAppOptions() || {};
+    const options = (this.context.getAppOptions() || {}) as AppOptions;
     const attribute = this.context.storage.state;
     const slide = new Slide({
       anchor,
@@ -337,7 +405,29 @@ export class SlideControllerBase {
       resourceTimeout: options.resourceTimeout,
       rtcAudio: options.rtcAudio,
       useLocalCache: options.useLocalCache,
-      logger: options.logger,
+      logger: {
+        ...options.logger,
+        error: (message, ...details) => {
+          logger.error(message, ...details);
+          if (options.logger !== logger.roomLogger) {
+            try {
+              options.logger?.error?.(message, ...details);
+            } catch {
+              // Keep the App error even if a custom logger fails.
+            }
+          }
+        },
+        warn: (message, ...details) => {
+          logger.warn(message, ...details);
+          if (options.logger !== logger.roomLogger) {
+            try {
+              options.logger?.warn?.(message, ...details);
+            } catch {
+              // Keep the App warning even if a custom logger fails.
+            }
+          }
+        },
+      },
       whiteTracker: defaults.whiteTracker,
       timestamp: this.timestamp,
       customLinks: attribute.customLinks,
@@ -356,13 +446,40 @@ export class SlideControllerBase {
 
   protected destroyed = false;
   protected destroyPromise?: Promise<void>;
+  private resolveDestroyedSignal!: () => void;
+  private readonly destroyedSignal = new Promise<void>(resolve => {
+    this.resolveDestroyedSignal = resolve;
+  });
 
   public destroy(): Promise<void> {
     this.sideEffect.flushAll();
     if (!this.destroyed) {
       log("[Slide] destroy slide (once)");
       this.destroyed = true;
-      this.destroyPromise = Promise.resolve(this.slide.destroy());
+      this.destroyPromise = enqueueSlideWebGLTransition(
+        () =>
+          new Promise<void>((resolve, reject) => {
+            try {
+              (
+                this.slide.destroy as (
+                  onPlayerDestroyed?: () => void,
+                  onError?: (error: unknown) => void
+                ) => void
+              ).call(
+                this.slide,
+                () => {
+                  resolve();
+                },
+                reject
+              );
+            } catch (error) {
+              reject(error);
+            }
+          }),
+        true,
+        `destroy:${this.context.appId}`
+      );
+      this.resolveDestroyedSignal();
     }
     return this.destroyPromise ?? Promise.resolve();
   }
@@ -378,49 +495,166 @@ export class SlideControllerBase {
   };
 
   public isFrozen = false;
+  private resourceStateUnknown = false;
+  private managedActivity = false;
   protected _toFreeze: -1 | 0 | 1 = 0; // -1: unfreeze, 0: no change, 1: freeze
 
-  public freeze = (): Promise<void> => {
+  public setFocusedState = (focused: boolean): Promise<void> => {
+    this.focused = focused;
+    return this.reconcileActivity();
+  };
+
+  private resourceTransition = createFocusTransitionQueue(
+    undefined,
+    async active => {
+      if (this.destroyed) return;
+      // A queued release can become stale before the engine starts it.
+      if (active && this.shouldBeActive()) await this.unfreeze();
+      else await this.freeze();
+    },
+    error => logger.error("[Slide] resource transition failed", this.context.appId, error)
+  );
+
+  private shouldBeActive = (): boolean => {
+    const wm = this.context.getWindowManager() as any;
+    const host = (this.context as any).getRuntimeActivity?.();
+    const lazy = this.isLazySetupMode();
+    // New hosts own one activity snapshot. Mixing it with the delayed UI
+    // boxState can acknowledge "frozen" while the host expects activation.
+    // Old hosts retain the original local/Attribute checks.
+    const minimized =
+      lazy && host
+        ? !host.active
+        : wm?.boxState === "minimized" ||
+          wm?.attributes?.minimized === true ||
+          this.context.getBoxStatus() === "minimized";
+    return (
+      shouldSlideRuntimeBeActive(
+        !lazy || this.focused,
+        document.visibilityState !== "hidden",
+        minimized
+      ) &&
+      (!lazy || host?.active !== false)
+    );
+  };
+
+  public reconcileActivity = (force = false): Promise<void> => {
+    if (this.destroyed) return Promise.resolve();
+    if (this.isLazySetupMode()) this.managedActivity = true;
+    if (!this.managedActivity) return Promise.resolve();
+    this.visible = document.visibilityState !== "hidden";
+    return this.resourceTransition(this.shouldBeActive(), force);
+  };
+
+  public freeze = async (): Promise<void> => {
+    const previousIsFrozen = this.isFrozen;
+    const previousToFreeze = this._toFreeze;
     this.isFrozen = true;
-    if (this.ready) {
-      log("[Slide] freeze", this.context.appId);
-      if (this.invisibleBehavior === "frozen") {
-        return Promise.resolve(this.slide.frozen());
+    try {
+      if (this.ready) {
+        log("[Slide] freeze", this.context.appId);
+        if (this.invisibleBehavior === "frozen") {
+          await enqueueSlideWebGLTransition(
+            () => {
+              if (this.destroyed) return Promise.resolve();
+              const destroyed = new Promise<void>((resolve, reject) => {
+                const result = (
+                  this.slide.frozen as (
+                    onPlayerDestroyed?: () => void,
+                    onError?: (error: unknown) => void
+                  ) => void | Promise<void>
+                ).call(
+                  this.slide,
+                  () => {
+                    resolve();
+                  },
+                  reject
+                );
+                if (result) void result.then(resolve, reject);
+              });
+              return Promise.race([destroyed, this.destroyedSignal]);
+            },
+            false,
+            `freeze:${this.context.appId}`
+          );
+        } else {
+          this.slide.pause();
+        }
       } else {
-        this.slide.pause();
+        this._toFreeze = 1;
       }
-    } else {
-      this._toFreeze = 1;
+      this.resourceStateUnknown = false;
+    } catch (error) {
+      this.resourceStateUnknown = true;
+      this.isFrozen = previousIsFrozen;
+      this._toFreeze = previousToFreeze;
+      throw error;
     }
-    return Promise.resolve();
   };
 
   public unfreeze = async (): Promise<void> => {
     if (!this.visible) return;
-    if (!this.isFrozen && this.ready) return;
+    if (!this.isFrozen && this.ready && !this.resourceStateUnknown) return;
+    const previousIsFrozen = this.isFrozen;
+    const previousToFreeze = this._toFreeze;
     this.isFrozen = false;
-    if (this.ready) {
-      let isNeedSyncState = false;
-      log("[Slide] unfreeze", this.context.appId);
-      if (this.invisibleBehavior === "frozen") {
-        await this.slide.release(() => {
-          // release 会重建 player，内部 observer 已关闭，需要按当前 frame 尺寸重绘
+    try {
+      if (this.ready) {
+        log("[Slide] unfreeze", this.context.appId);
+        if (this.invisibleBehavior === "frozen") {
+          await enqueueSlideWebGLTransition(
+            () => {
+              if (this.destroyed) return Promise.resolve();
+              const created = new Promise<void>((resolve, reject) => {
+                const result = (
+                  this.slide.release as (
+                    onRestored?: () => void,
+                    onPlayerCreated?: () => void,
+                    onError?: (error: unknown) => void
+                  ) => void | Promise<void>
+                ).call(
+                  this.slide,
+                  () => {
+                    if (this.isLazySetupMode() && !this.shouldBeActive()) return;
+                    this.slide.notifyFrameResize();
+                    const state = this.context.storage.state.state;
+                    if (state) {
+                      log("[Slide] sync storage", JSON.stringify(state));
+                      void this.slide.setSlideState(state).catch(error => {
+                        this.resourceStateUnknown = true;
+                        logger.error(
+                          "[Slide] storage sync after release failed",
+                          this.context.appId,
+                          error
+                        );
+                      });
+                    }
+                  },
+                  () => {
+                    resolve();
+                  },
+                  reject
+                );
+                if (result) void result.then(resolve, reject);
+              });
+              return Promise.race([created, this.destroyedSignal]);
+            },
+            false,
+            `release:${this.context.appId}`
+          );
+        } else {
+          this.slide.resume();
           this.slide.notifyFrameResize();
-        });
-        isNeedSyncState = true;
-      } else {
-        this.slide.resume();
-        this.slide.notifyFrameResize();
-      }
-      if (isNeedSyncState) {
-        const state = this.context.storage.state.state;
-        if (state) {
-          log("[Slide] sync storage", JSON.stringify(state));
-          this.slide.setSlideState(state);
         }
+      } else {
+        this._toFreeze = -1;
       }
-    } else {
-      this._toFreeze = -1;
+      this.resourceStateUnknown = false;
+    } catch (error) {
+      this.resourceStateUnknown = true;
+      this.isFrozen = previousIsFrozen;
+      this._toFreeze = previousToFreeze;
+      throw error;
     }
   };
 
@@ -446,9 +680,15 @@ export class SlideControllerBase {
   };
 
   protected onAppStateChangeHandler = (state: "normal" | "minimized" | "maximized") => {
+    if (this.isLazySetupMode() || this.managedActivity) {
+      void this.reconcileActivity().catch(() => undefined);
+      return;
+    }
     if (state === "minimized") {
       log("[Slide] freeze because app state is minimized");
-      this.freeze();
+      void this.freeze().catch(error =>
+        logger.error("[Slide] minimized freeze failed", this.context.appId, error)
+      );
     }
   };
 
@@ -457,9 +697,15 @@ export class SlideControllerBase {
     status: "normal" | "minimized" | "maximized";
   }) => {
     const { appId, status } = payload;
+    if (appId === this.context.appId && (this.isLazySetupMode() || this.managedActivity)) {
+      void this.reconcileActivity().catch(() => undefined);
+      return;
+    }
     if (appId === this.context.appId && status === "minimized") {
       log("[Slide] freeze because app status is minimized");
-      this.freeze();
+      void this.freeze().catch(error =>
+        logger.error("[Slide] minimized freeze failed", this.context.appId, error)
+      );
     }
   };
 
@@ -479,21 +725,39 @@ export class SlideControllerBase {
     }
   };
 
-  protected onVisibilityChange = async () => {
-    const appStatus = this.getAppStatus();
-    if (appStatus === "minimized") {
-      log("[Slide] do nothing because app state is minimized");
-      return;
+  protected isLazySetupMode = (): boolean => {
+    try {
+      return (this.context.getWindowManager() as any)?.lazySetupInMaximizedMode === true;
+    } catch {
+      return false;
     }
-    if (!(this.visible = document.visibilityState === "visible")) {
-      this.savedIsFrozen = this.isFrozen;
-      log("[Slide] freeze because tab becomes invisible");
-      this.freeze();
-    } else {
+  };
+
+  protected onVisibilityChange = async () => {
+    try {
+      this.visible = document.visibilityState === "visible";
+      if (this.isLazySetupMode() || this.managedActivity) {
+        await this.reconcileActivity().catch(() => undefined);
+        return;
+      }
+      const appStatus = this.getAppStatus();
+      if (!this.visible) {
+        this.savedIsFrozen = this.isFrozen;
+        log("[Slide] freeze because tab becomes invisible");
+        if (!this.isFrozen) await this.freeze();
+        return;
+      }
+
+      if (appStatus === "minimized") {
+        log("[Slide] do nothing because app state is minimized");
+        return;
+      }
       if (!this.savedIsFrozen) {
         log("[Slide] unfreeze because tab becomes visible", { savedIsFrozen: this.savedIsFrozen });
-        this.unfreeze();
+        await this.unfreeze();
       }
+    } catch (error) {
+      logger.error("[Slide] visibility transition failed", this.context.appId, error);
     }
   };
 }

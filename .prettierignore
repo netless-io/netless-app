@@ -1,2 +1,3 @@
 pnpm-lock.yaml
 packages/**/dist/
+packages/app-slide/test/.cache/

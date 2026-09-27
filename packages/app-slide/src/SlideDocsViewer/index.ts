@@ -431,11 +431,12 @@ export class SlideDocsViewer {
     if (this.slideController?.onRenderError) {
       this.slideController.onRenderError(error, index);
     }
-    logger.warn("[Slide] render error", error);
+    logger.error("[Slide] render error", this.appId, error);
   };
 
   protected onRenderStart = () => {
     this.$whiteboardView.classList.add(this.wrapClassName("wb-view-hidden"));
+    logger.log("[Slide][notes] hide", this.appId, "scene", this.whiteboardView.focusScenePath);
     this.viewer.setPlaying();
   };
 
@@ -454,6 +455,7 @@ export class SlideDocsViewer {
   protected _onPageChanged = () => {
     this.$overlay.style.opacity = "";
     this.$whiteboardView.classList.remove(this.wrapClassName("wb-view-hidden"));
+    logger.log("[Slide][notes] show", this.appId, "scene", this.whiteboardView.focusScenePath);
   };
 
   protected refreshPages = () => {
@@ -481,13 +483,19 @@ export class SlideDocsViewer {
         this.offBoxSizeChange = undefined;
         this.contentResizeObserver?.disconnect();
         this.contentResizeObserver = undefined;
-        if (this.slideController) {
-          const controller = this.slideController;
-          this.slideController = null;
-          await controller.destroy();
+        try {
+          if (this.slideController) {
+            const controller = this.slideController;
+            this.slideController = null;
+            await controller.destroy();
+          }
+        } finally {
+          try {
+            this.viewer.unmount();
+          } finally {
+            this.resizableContainer.destroy(this.box);
+          }
         }
-        this.viewer.unmount();
-        this.resizableContainer.destroy(this.box);
         return this;
       });
     }
@@ -502,8 +510,11 @@ export class SlideDocsViewer {
     if (!this.destroyPromise) {
       this.destroyPromise = Promise.resolve().then(async () => {
         this.sideEffect.flushAll();
-        await this.unmount();
-        this.viewer.destroy();
+        try {
+          await this.unmount();
+        } finally {
+          this.viewer.destroy();
+        }
       });
     }
     return this.destroyPromise;

@@ -128,11 +128,15 @@ async function testAppTeardown(rejectDestroy) {
     const app = loadSource("packages/app-slide/src/index.ts", {
       "@netless/slide": { Slide: { usePlugin() {} } },
       "./style.scss?inline": "",
-      "./SlideController": {},
+      "./SlideController": { enqueueSlideWebGLTransition: run => Promise.resolve().then(run) },
       "./SlidePreviewer": {},
       "./DocsViewer": {},
       "./utils/freezer": { useFreezer: false },
-      "./utils/logger": { log() {}, logger: { setAppContext() {}, deleteApp() {} } },
+      "./utils/logger": {
+        log() {},
+        setRoomLogger() {},
+        logger: { setAppContext() {}, setAppController() {}, deleteApp() {} },
+      },
       "./SlideDocsViewer": {
         SlideDocsViewer: class {
           setSyncEventQueuePolicy() {}
@@ -146,10 +150,9 @@ async function testAppTeardown(rejectDestroy) {
       },
     }).default;
     const ctx = context();
-    const setup = app.setup(ctx);
+    const setup = assert.rejects(app.setup(ctx), /disposed before first render/);
     const destroyListener = ctx.listeners.get("destroy");
-    let firstDone = false,
-      secondDone = false,
+    let secondDone = false,
       eventDone = false;
     const expected = new Error("destroy failed");
     const observe = (promise, done) =>
@@ -163,27 +166,161 @@ async function testAppTeardown(rejectDestroy) {
           done();
         }
       );
-    const first = observe(app.teardown(ctx), () => {
-      firstDone = true;
-    });
     const event = observe(destroyListener(), () => {
       eventDone = true;
     });
     await flush();
-    const second = observe(app.teardown(ctx), () => {
+    const second = observe(destroyListener(), () => {
       secondDone = true;
     });
     await flush();
     assert.equal(calls, 1);
-    assert.equal(firstDone || secondDone || eventDone, false);
+    assert.equal(secondDone || eventDone, false);
     if (rejectDestroy) pending.reject(expected);
     else pending.resolve();
     await flush();
-    assert.equal(firstDone && secondDone && eventDone, true);
-    await Promise.all([first, second, event]);
-    clock.timer(100); // Existing setup poll observes disposal and cleans its timers.
+    assert.equal(secondDone && eventDone, true);
+    await Promise.all([second, event]);
     await setup;
     assert.equal(ctx.listeners.has("destroy"), false);
+    clock.assertEmpty();
+  } finally {
+    restore();
+  }
+}
+
+async function testFailedFirstRenderCleansBeforeRetry(mode) {
+  const clock = new BrowserClock();
+  const restore = clock.install();
+  try {
+    const controllers = [];
+    const viewers = [];
+    const firstDestroy = deferred();
+    const app = loadSource("packages/app-slide/src/index.ts", {
+      "@netless/slide": { Slide: { usePlugin() {} } },
+      "./style.scss?inline": "",
+      "./SlideController": {
+        enqueueSlideWebGLTransition: run => Promise.resolve().then(run),
+        SlideController: class {
+          constructor(options) {
+            this.options = options;
+            this.readyDeferred = deferred();
+            this.readyPromise = this.readyDeferred.promise;
+            this.slide = { slideState: { currentSlideIndex: 1 }, on() {} };
+            this.ready = false;
+            controllers.push(this);
+          }
+        },
+      },
+      "./SlidePreviewer": {},
+      "./DocsViewer": {},
+      "./utils/freezer": { useFreezer: false },
+      "./utils/logger": {
+        log() {},
+        setRoomLogger() {},
+        logger: { setAppContext() {}, setAppController() {}, deleteApp() {}, warn() {} },
+      },
+      "./SlideDocsViewer": {
+        SlideDocsViewer: class {
+          constructor(options) {
+            this.options = options;
+            viewers.push(this);
+          }
+          setSyncEventQueuePolicy() {}
+          setJustSildeReadonly() {}
+          mount() {
+            this.slideController = this.options.mountSlideController({
+              onReady() {},
+              onRenderEnd() {},
+              onNavigate() {},
+            });
+          }
+          destroy() {
+            this.destroyCalls = (this.destroyCalls || 0) + 1;
+            return viewers.length === 1 ? firstDestroy.promise : Promise.resolve();
+          }
+        },
+      },
+    }).default;
+    const ctx = context();
+    assert.equal(app.teardown, undefined, "Slide must not advertise runtime eviction");
+    const first = assert.rejects(app.setup(ctx), /first render failed/);
+    await flush();
+    if (mode === "render-error") {
+      controllers[0].options.onRenderError(new Error("render failed"), 1);
+      controllers[0].readyDeferred.resolve();
+    } else {
+      controllers[0].readyDeferred.reject(new Error("load failed"));
+    }
+    await flush();
+    assert.equal(viewers[0].destroyCalls, 1);
+    assert.equal(ctx.listeners.has("destroy"), false);
+    let rejected = false;
+    first.then(() => {
+      rejected = true;
+    });
+    await flush();
+    assert.equal(rejected, false, "setup failure waits for viewer destruction");
+    firstDestroy.resolve();
+    await first;
+
+    const retry = app.setup(ctx);
+    await flush();
+    controllers[1].ready = true;
+    controllers[1].readyDeferred.resolve();
+    await retry;
+    assert.equal(viewers.length, 2);
+    assert.equal(viewers[1].destroyCalls, undefined, "retry keeps its new runtime alive");
+    await ctx.listeners.get("destroy")();
+    assert.equal(viewers[1].destroyCalls, 1);
+    clock.assertEmpty();
+  } finally {
+    restore();
+  }
+}
+
+async function testPendingSetupDoesNotMountAfterDestroy() {
+  const clock = new BrowserClock();
+  const restore = clock.install();
+  try {
+    const gate = deferred();
+    let mounts = 0;
+    let destroys = 0;
+    const app = loadSource("packages/app-slide/src/index.ts", {
+      "@netless/slide": { Slide: { usePlugin() {} } },
+      "./style.scss?inline": "",
+      "./SlideController": {
+        enqueueSlideWebGLTransition: run => gate.promise.then(run),
+      },
+      "./SlidePreviewer": {},
+      "./DocsViewer": {},
+      "./utils/freezer": { useFreezer: false },
+      "./utils/logger": {
+        log() {},
+        setRoomLogger() {},
+        logger: { setAppContext() {}, deleteApp() {} },
+      },
+      "./SlideDocsViewer": {
+        SlideDocsViewer: class {
+          setSyncEventQueuePolicy() {}
+          setJustSildeReadonly() {}
+          mount() {
+            mounts++;
+          }
+          destroy() {
+            destroys++;
+            return Promise.resolve();
+          }
+        },
+      },
+    }).default;
+    const ctx = context();
+    const setup = assert.rejects(app.setup(ctx), /disposed before first render/);
+    await ctx.listeners.get("destroy")();
+    assert.equal(destroys, 1);
+    gate.resolve();
+    await setup;
+    assert.equal(mounts, 0, "closed pending setup must not create a player");
     clock.assertEmpty();
   } finally {
     restore();
@@ -257,8 +394,7 @@ async function testViewerTeardown(rejectDestroy) {
     await result;
     assert.equal(viewer.destroy(), destroy);
     assert.equal(viewer.unmount(), unmount);
-    if (!rejectDestroy)
-      assert.deepEqual(counts, { controller: 1, unmount: 1, container: 1, destroy: 1, flush: 1 });
+    assert.deepEqual(counts, { controller: 1, unmount: 1, container: 1, destroy: 1, flush: 1 });
   } finally {
     restore();
   }
@@ -326,12 +462,15 @@ async function testDocsReady(mode) {
 (async () => {
   await testAppTeardown(false);
   await testAppTeardown(true);
+  await testFailedFirstRenderCleansBeforeRetry("render-error");
+  await testFailedFirstRenderCleansBeforeRetry("ready-rejection");
+  await testPendingSetupDoesNotMountAfterDestroy();
   await testViewerTeardown(false);
   await testViewerTeardown(true);
   for (const mode of ["frames", "timeout", "cancel", "no-raf", "cancel-no-raf", "static-timeout"]) {
     await testDocsReady(mode);
   }
-  console.log("Runtime lifecycle: 10 regression cases passed");
+  console.log("Runtime lifecycle: 13 regression cases passed");
 })().catch(error => {
   console.error(error);
   process.exitCode = 1;
