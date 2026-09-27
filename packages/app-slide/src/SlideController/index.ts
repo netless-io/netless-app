@@ -72,16 +72,27 @@ function runNextSlideWebGLTask(): void {
   slideWebGLRunning = true;
   const startedAt = performance.now();
   log("[Slide][player-queue] start", task.label, "pending", slideWebGLTasks.length);
-  void Promise.resolve().then(task.run).then(() => {
-    log("[Slide][player-queue] done", task.label, "ms", Math.round(performance.now() - startedAt));
-    task.resolve();
-  }, error => {
-    log("[Slide][player-queue] failed", task.label, error);
-    task.reject(error);
-  }).finally(() => {
-    slideWebGLRunning = false;
-    runNextSlideWebGLTask();
-  });
+  void Promise.resolve()
+    .then(task.run)
+    .then(
+      () => {
+        log(
+          "[Slide][player-queue] done",
+          task.label,
+          "ms",
+          Math.round(performance.now() - startedAt)
+        );
+        task.resolve();
+      },
+      error => {
+        log("[Slide][player-queue] failed", task.label, error);
+        task.reject(error);
+      }
+    )
+    .finally(() => {
+      slideWebGLRunning = false;
+      runNextSlideWebGLTask();
+    });
 }
 
 export function enqueueSlideWebGLTransition(
@@ -445,18 +456,29 @@ export class SlideControllerBase {
     if (!this.destroyed) {
       log("[Slide] destroy slide (once)");
       this.destroyed = true;
-      this.destroyPromise = enqueueSlideWebGLTransition(() => new Promise<void>((resolve, reject) => {
-        try {
-          (this.slide.destroy as (
-            onPlayerDestroyed?: () => void,
-            onError?: (error: unknown) => void
-          ) => void).call(this.slide, () => {
-            resolve();
-          }, reject);
-        } catch (error) {
-          reject(error);
-        }
-      }), true, `destroy:${this.context.appId}`);
+      this.destroyPromise = enqueueSlideWebGLTransition(
+        () =>
+          new Promise<void>((resolve, reject) => {
+            try {
+              (
+                this.slide.destroy as (
+                  onPlayerDestroyed?: () => void,
+                  onError?: (error: unknown) => void
+                ) => void
+              ).call(
+                this.slide,
+                () => {
+                  resolve();
+                },
+                reject
+              );
+            } catch (error) {
+              reject(error);
+            }
+          }),
+        true,
+        `destroy:${this.context.appId}`
+      );
       this.resolveDestroyedSignal();
     }
     return this.destroyPromise ?? Promise.resolve();
@@ -532,19 +554,29 @@ export class SlideControllerBase {
       if (this.ready) {
         log("[Slide] freeze", this.context.appId);
         if (this.invisibleBehavior === "frozen") {
-          await enqueueSlideWebGLTransition(() => {
-            if (this.destroyed) return Promise.resolve();
-            const destroyed = new Promise<void>((resolve, reject) => {
-              const result = (this.slide.frozen as (
-                onPlayerDestroyed?: () => void,
-                onError?: (error: unknown) => void
-              ) => void | Promise<void>).call(this.slide, () => {
-                resolve();
-              }, reject);
-              if (result) void result.then(resolve, reject);
-            });
-            return Promise.race([destroyed, this.destroyedSignal]);
-          }, false, `freeze:${this.context.appId}`);
+          await enqueueSlideWebGLTransition(
+            () => {
+              if (this.destroyed) return Promise.resolve();
+              const destroyed = new Promise<void>((resolve, reject) => {
+                const result = (
+                  this.slide.frozen as (
+                    onPlayerDestroyed?: () => void,
+                    onError?: (error: unknown) => void
+                  ) => void | Promise<void>
+                ).call(
+                  this.slide,
+                  () => {
+                    resolve();
+                  },
+                  reject
+                );
+                if (result) void result.then(resolve, reject);
+              });
+              return Promise.race([destroyed, this.destroyedSignal]);
+            },
+            false,
+            `freeze:${this.context.appId}`
+          );
         } else {
           this.slide.pause();
         }
@@ -570,31 +602,46 @@ export class SlideControllerBase {
       if (this.ready) {
         log("[Slide] unfreeze", this.context.appId);
         if (this.invisibleBehavior === "frozen") {
-          await enqueueSlideWebGLTransition(() => {
-            if (this.destroyed) return Promise.resolve();
-            const created = new Promise<void>((resolve, reject) => {
-              const result = (this.slide.release as (
-                onRestored?: () => void,
-                onPlayerCreated?: () => void,
-                onError?: (error: unknown) => void
-              ) => void | Promise<void>).call(this.slide, () => {
-                if (this.isLazySetupMode() && !this.shouldBeActive()) return;
-                this.slide.notifyFrameResize();
-                const state = this.context.storage.state.state;
-                if (state) {
-                  log("[Slide] sync storage", JSON.stringify(state));
-                  void this.slide.setSlideState(state).catch(error => {
-                    this.resourceStateUnknown = true;
-                    logger.error("[Slide] storage sync after release failed", this.context.appId, error);
-                  });
-                }
-              }, () => {
-                resolve();
-              }, reject);
-              if (result) void result.then(resolve, reject);
-            });
-            return Promise.race([created, this.destroyedSignal]);
-          }, false, `release:${this.context.appId}`);
+          await enqueueSlideWebGLTransition(
+            () => {
+              if (this.destroyed) return Promise.resolve();
+              const created = new Promise<void>((resolve, reject) => {
+                const result = (
+                  this.slide.release as (
+                    onRestored?: () => void,
+                    onPlayerCreated?: () => void,
+                    onError?: (error: unknown) => void
+                  ) => void | Promise<void>
+                ).call(
+                  this.slide,
+                  () => {
+                    if (this.isLazySetupMode() && !this.shouldBeActive()) return;
+                    this.slide.notifyFrameResize();
+                    const state = this.context.storage.state.state;
+                    if (state) {
+                      log("[Slide] sync storage", JSON.stringify(state));
+                      void this.slide.setSlideState(state).catch(error => {
+                        this.resourceStateUnknown = true;
+                        logger.error(
+                          "[Slide] storage sync after release failed",
+                          this.context.appId,
+                          error
+                        );
+                      });
+                    }
+                  },
+                  () => {
+                    resolve();
+                  },
+                  reject
+                );
+                if (result) void result.then(resolve, reject);
+              });
+              return Promise.race([created, this.destroyedSignal]);
+            },
+            false,
+            `release:${this.context.appId}`
+          );
         } else {
           this.slide.resume();
           this.slide.notifyFrameResize();

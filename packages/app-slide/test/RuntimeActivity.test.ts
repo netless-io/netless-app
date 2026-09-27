@@ -1,6 +1,9 @@
+/* eslint-disable @typescript-eslint/no-var-requires -- Test modules load after browser globals are installed. */
 import { strict as assert } from "node:assert";
 
-(globalThis as any).window = { addEventListener() {}, removeEventListener() {} };
+const noop = () => undefined;
+
+(globalThis as any).window = { addEventListener: noop, removeEventListener: noop };
 (globalThis as any).document = { visibilityState: "visible" };
 // Initialize the real controller after its browser globals are available.
 const { SlideControllerBase, enqueueSlideWebGLTransition } = require("../src/SlideController");
@@ -22,7 +25,9 @@ function fixture() {
     lazySetupInMaximizedMode: true,
     boxState: "maximized",
     Logger: {
-      info() {}, debug() {}, warn() {},
+      info: noop,
+      debug: noop,
+      warn: noop,
       error: (...args: unknown[]) => errors.push(args),
     },
   };
@@ -33,8 +38,10 @@ function fixture() {
       isAddApp: false,
       getRoom: () => ({
         logger: {
-          info() {}, debug() {}, warn() {},
-          error() {},
+          info: noop,
+          debug: noop,
+          warn: noop,
+          error: noop,
         },
       }),
       getWindowManager: () => wm,
@@ -73,13 +80,18 @@ async function run() {
     };
     c.slide.setResource = () => actions.push("resource");
     c.slide.renderSlide = () => actions.push("sync-render");
-    c.slide.doRenderSlide = async (page: number) => { actions.push(`local-render:${page}`); };
+    c.slide.doRenderSlide = async (page: number) => {
+      actions.push(`local-render:${page}`);
+    };
     (c as any).pollReadyState = () => undefined;
 
     (c as any).kickStart();
     await flush();
-    assert.deepEqual(actions, ["resource", "local-render:1"],
-      "a restored read-only App with no slide state renders its first page locally");
+    assert.deepEqual(
+      actions,
+      ["resource", "local-render:1"],
+      "a restored read-only App with no slide state renders its first page locally"
+    );
   }
   {
     const { controller: c, wm, calls } = fixture();
@@ -180,14 +192,21 @@ async function run() {
     wm.boxState = "minimized";
     active = true;
     const release = deferred();
-    c.slide.release = async () => { calls.push("release"); await release.promise; };
+    c.slide.release = async () => {
+      calls.push("release");
+      await release.promise;
+    };
     let done = false;
-    const activation = c.reconcileActivity().then(() => { done = true; });
+    const activation = c.reconcileActivity().then(() => {
+      done = true;
+    });
     await flush();
     assert.equal(done, false, "restored host activity waits for the real engine release");
-    release.resolve(); await activation;
+    release.resolve();
+    await activation;
     assert.equal(c.isFrozen, false, "host snapshot wins over a stale UI boxState");
-    active = false; wm.boxState = "maximized";
+    active = false;
+    wm.boxState = "maximized";
     await c.reconcileActivity();
     assert.equal(c.isFrozen, true, "host suspension wins over a stale visible UI");
   }
@@ -205,10 +224,7 @@ async function run() {
     };
     next.controller.isFrozen = true;
     let finishRestore!: () => void;
-    next.controller.slide.release = (
-      onRestored: () => void,
-      onPlayerCreated: () => void
-    ) => {
+    next.controller.slide.release = (onRestored: () => void, onPlayerCreated: () => void) => {
       events.push("create");
       finishRestore = onRestored;
       onPlayerCreated();
@@ -230,7 +246,9 @@ async function run() {
     const next = fixture();
     const events: string[] = [];
     const destroyComplete = deferred();
-    old.controller.slide.frozen = () => { events.push("freeze:pending"); };
+    old.controller.slide.frozen = () => {
+      events.push("freeze:pending");
+    };
     old.controller.slide.destroy = (onPlayerDestroyed: () => void) => {
       events.push("destroy:start");
       void destroyComplete.promise.then(() => {
@@ -246,7 +264,9 @@ async function run() {
     const blurring = old.controller.setFocusedState(false);
     const focusing = next.controller.setFocusedState(true);
     await flush();
-    const setup = enqueueSlideWebGLTransition(() => { events.push("setup:create"); });
+    const setup = enqueueSlideWebGLTransition(() => {
+      events.push("setup:create");
+    });
     assert.deepEqual(events, ["freeze:pending"]);
     const closing = old.controller.destroy();
     await flush();
@@ -254,7 +274,11 @@ async function run() {
     destroyComplete.resolve();
     await Promise.all([closing, blurring, focusing, setup]);
     assert.deepEqual(events, [
-      "freeze:pending", "destroy:start", "player:destroyed", "player:created", "setup:create",
+      "freeze:pending",
+      "destroy:start",
+      "player:destroyed",
+      "player:created",
+      "setup:create",
     ]);
   }
   {
@@ -272,8 +296,8 @@ async function run() {
     };
     const room = {
       logger: {
-        info() {},
-        debug() {},
+        info: noop,
+        debug: noop,
         warn: (...args: unknown[]) => roomWarnings.push(args),
         error: (...args: unknown[]) => roomErrors.push(args),
       },
@@ -283,12 +307,14 @@ async function run() {
         appId: "warning-test",
         isAddApp: false,
         getRoom: () => room,
-        getWindowManager: () => ({ Logger: {
-          info: (...args: unknown[]) => managerInfo.push(args),
-          debug: (...args: unknown[]) => managerDebug.push(args),
-          warn: (...args: unknown[]) => managerWarnings.push(args),
-          error: (...args: unknown[]) => managerErrors.push(args),
-        } }),
+        getWindowManager: () => ({
+          Logger: {
+            info: (...args: unknown[]) => managerInfo.push(args),
+            debug: (...args: unknown[]) => managerDebug.push(args),
+            warn: (...args: unknown[]) => managerWarnings.push(args),
+            error: (...args: unknown[]) => managerErrors.push(args),
+          },
+        }),
         getAppOptions: () => ({
           bgColor: "#fff",
           logger: customLogger,
@@ -312,8 +338,12 @@ async function run() {
     assert.deepEqual(roomWarnings, []);
     assert.deepEqual(roomErrors, []);
 
-    customLogger.warn = () => { throw new Error("custom warning logger failed"); };
-    customLogger.error = () => { throw new Error("custom error logger failed"); };
+    customLogger.warn = () => {
+      throw new Error("custom warning logger failed");
+    };
+    customLogger.error = () => {
+      throw new Error("custom error logger failed");
+    };
     assert.doesNotThrow(() => slide.config.logger.warn("[task] later warning", error));
     assert.doesNotThrow(() => slide.config.logger.error("[task] later error", error));
     assert.deepEqual(managerWarnings.at(-1), ["[task] later warning", error]);
@@ -323,12 +353,14 @@ async function run() {
     const { logger, setRoomLogger } = require("../src/utils/logger");
     const calls: unknown[][] = [];
     const replayContext = {
-      getWindowManager: () => ({ Logger: {
-        info() {},
-        debug() {},
-        warn: (...args: unknown[]) => calls.push(["warn", ...args]),
-        error: (...args: unknown[]) => calls.push(["error", ...args]),
-      } }),
+      getWindowManager: () => ({
+        Logger: {
+          info: noop,
+          debug: noop,
+          warn: (...args: unknown[]) => calls.push(["warn", ...args]),
+          error: (...args: unknown[]) => calls.push(["error", ...args]),
+        },
+      }),
       getRoom: () => undefined,
     };
     setRoomLogger(replayContext);
@@ -351,28 +383,46 @@ async function run() {
     try {
       logger.roomLogger = {
         info: (...args: unknown[]) => entries.push(args),
-        debug() {},
+        debug: noop,
         warn: (...args: unknown[]) => entries.push(args),
       };
       setFreezerLength(1);
-      apps.set("A", { freeze: () => frozen.push("A"), unfreeze() {} }, boxA);
-      apps.set("B", { freeze: () => frozen.push("B"), unfreeze() {} }, boxB);
+      apps.set("A", { freeze: () => frozen.push("A"), unfreeze: noop }, boxA);
+      apps.set("B", { freeze: () => frozen.push("B"), unfreeze: noop }, boxB);
       boxA.zIndex = 3;
       apps.focus("A");
       apps.focus("missing");
 
       assert.deepEqual(frozen, ["A", "B"]);
-      assert.deepEqual(entries.filter(entry => entry[0] === "[Slide] freezer: add"), [
-        ["[Slide] freezer: add", "A", "[A]", "validate", "[A]"],
-        ["[Slide] freezer: add", "B", "[B]", "validate", "[B,A]", "freeze-requested", "[A]"],
-      ]);
-      assert.deepEqual(entries.filter(entry => entry[0] === "[Slide] freezer: focus"), [
-        ["[Slide] freezer: focus", "A", "[A]", "validate", "[A,B]", "freeze-requested", "[B]"],
-      ]);
-      assert.deepEqual(entries.filter(entry => entry[0] === "[Slide] freezer: focus-missing"), [
-        ["[Slide] freezer: focus-missing", "missing", "[A]", "validate", "[A,missing]", "missing", "[missing]"],
-      ]);
-      assert.equal(entries.some(entry => entry[0] === "[Slide] freezer: validate"), false);
+      assert.deepEqual(
+        entries.filter(entry => entry[0] === "[Slide] freezer: add"),
+        [
+          ["[Slide] freezer: add", "A", "[A]", "validate", "[A]"],
+          ["[Slide] freezer: add", "B", "[B]", "validate", "[B,A]", "freeze-requested", "[A]"],
+        ]
+      );
+      assert.deepEqual(
+        entries.filter(entry => entry[0] === "[Slide] freezer: focus"),
+        [["[Slide] freezer: focus", "A", "[A]", "validate", "[A,B]", "freeze-requested", "[B]"]]
+      );
+      assert.deepEqual(
+        entries.filter(entry => entry[0] === "[Slide] freezer: focus-missing"),
+        [
+          [
+            "[Slide] freezer: focus-missing",
+            "missing",
+            "[A]",
+            "validate",
+            "[A,missing]",
+            "missing",
+            "[missing]",
+          ],
+        ]
+      );
+      assert.equal(
+        entries.some(entry => entry[0] === "[Slide] freezer: validate"),
+        false
+      );
     } finally {
       apps.map.clear();
       apps.boxes.clear();
@@ -407,14 +457,18 @@ async function run() {
       setFreezerLength(1);
       const boxA = { zIndex: 1 };
       const boxB = { zIndex: 2 };
-      apps.set("A", {
-        freeze: async () => {
-          if (++freezes === 1) throw new Error("freeze failed");
+      apps.set(
+        "A",
+        {
+          freeze: async () => {
+            if (++freezes === 1) throw new Error("freeze failed");
+          },
+          unfreeze: async () => {
+            if (++releases === 1) throw new Error("release failed");
+          },
         },
-        unfreeze: async () => {
-          if (++releases === 1) throw new Error("release failed");
-        },
-      }, boxA);
+        boxA
+      );
       apps.set("B", { freeze: () => undefined, unfreeze: () => undefined }, boxB);
       await flush();
       assert.deepEqual(apps.queue, ["B", "A"], "failed freeze remains eligible for retry");
@@ -435,10 +489,10 @@ async function run() {
       retryRelease();
       await flush();
       assert.equal(releases, 2, "focused app retries a failed release once");
-      assert.deepEqual(warnings.map(args => args[0]), [
-        "[Slide] freezer: freeze failed",
-        "[Slide] freezer: unfreeze failed",
-      ]);
+      assert.deepEqual(
+        warnings.map(args => args[0]),
+        ["[Slide] freezer: freeze failed", "[Slide] freezer: unfreeze failed"]
+      );
     } finally {
       (globalThis as any).setTimeout = previousSetTimeout;
       apps.map.clear();
@@ -461,13 +515,17 @@ async function run() {
         return timers.length;
       };
       setFreezerLength(1);
-      apps.set("A", {
-        freeze: () => {
-          freezes++;
-          if (freezes === 1) throw new Error("synchronous freeze failure");
+      apps.set(
+        "A",
+        {
+          freeze: () => {
+            freezes++;
+            if (freezes === 1) throw new Error("synchronous freeze failure");
+          },
+          unfreeze: () => undefined,
         },
-        unfreeze: () => undefined,
-      }, { zIndex: 1 });
+        { zIndex: 1 }
+      );
       apps.set("B", { freeze: () => undefined, unfreeze: () => undefined }, { zIndex: 2 });
       await flush();
       assert.deepEqual(apps.queue, ["B", "A"]);

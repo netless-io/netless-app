@@ -132,7 +132,11 @@ async function testAppTeardown(rejectDestroy) {
       "./SlidePreviewer": {},
       "./DocsViewer": {},
       "./utils/freezer": { useFreezer: false },
-      "./utils/logger": { log() {}, setRoomLogger() {}, logger: { setAppContext() {}, setAppController() {}, deleteApp() {} } },
+      "./utils/logger": {
+        log() {},
+        setRoomLogger() {},
+        logger: { setAppContext() {}, setAppController() {}, deleteApp() {} },
+      },
       "./SlideDocsViewer": {
         SlideDocsViewer: class {
           setSyncEventQueuePolicy() {}
@@ -211,7 +215,11 @@ async function testFailedFirstRenderCleansBeforeRetry(mode) {
       "./SlidePreviewer": {},
       "./DocsViewer": {},
       "./utils/freezer": { useFreezer: false },
-      "./utils/logger": { log() {}, setRoomLogger() {}, logger: { setAppContext() {}, setAppController() {}, deleteApp() {}, warn() {} } },
+      "./utils/logger": {
+        log() {},
+        setRoomLogger() {},
+        logger: { setAppContext() {}, setAppController() {}, deleteApp() {}, warn() {} },
+      },
       "./SlideDocsViewer": {
         SlideDocsViewer: class {
           constructor(options) {
@@ -222,7 +230,9 @@ async function testFailedFirstRenderCleansBeforeRetry(mode) {
           setJustSildeReadonly() {}
           mount() {
             this.slideController = this.options.mountSlideController({
-              onReady() {}, onRenderEnd() {}, onNavigate() {},
+              onReady() {},
+              onRenderEnd() {},
+              onNavigate() {},
             });
           }
           destroy() {
@@ -246,7 +256,9 @@ async function testFailedFirstRenderCleansBeforeRetry(mode) {
     assert.equal(viewers[0].destroyCalls, 1);
     assert.equal(ctx.listeners.has("destroy"), false);
     let rejected = false;
-    first.then(() => { rejected = true; });
+    first.then(() => {
+      rejected = true;
+    });
     await flush();
     assert.equal(rejected, false, "setup failure waits for viewer destruction");
     firstDestroy.resolve();
@@ -283,13 +295,22 @@ async function testPendingSetupDoesNotMountAfterDestroy() {
       "./SlidePreviewer": {},
       "./DocsViewer": {},
       "./utils/freezer": { useFreezer: false },
-      "./utils/logger": { log() {}, setRoomLogger() {}, logger: { setAppContext() {}, deleteApp() {} } },
+      "./utils/logger": {
+        log() {},
+        setRoomLogger() {},
+        logger: { setAppContext() {}, deleteApp() {} },
+      },
       "./SlideDocsViewer": {
         SlideDocsViewer: class {
           setSyncEventQueuePolicy() {}
           setJustSildeReadonly() {}
-          mount() { mounts++; }
-          destroy() { destroys++; return Promise.resolve(); }
+          mount() {
+            mounts++;
+          }
+          destroy() {
+            destroys++;
+            return Promise.resolve();
+          }
         },
       },
     }).default;

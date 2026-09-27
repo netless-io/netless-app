@@ -212,22 +212,25 @@ const SlideApp: NetlessApp<Attributes, MagixEvents, AppOptions, AppResult> = {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (window as any).slideController = slideController;
       }
-      slideController.readyPromise.then(options.onReady).then(() => {
-        // Teardown may have destroyed the box while this deferred callback
-        // was pending; syncing scenes against a destroyed app throws.
-        if (disposed) return;
-        const room = context.getRoom();
-        let synced = false;
-        if (room && context.getIsWritable()) {
-          syncSceneWithSlide(room, context, slideController.slide, baseScenePath);
-          synced = true;
-        }
-        const page = slideController.slide.slideState.currentSlideIndex;
-        log("[Slide] page to", page, synced ? "(synced)" : "", "(on ready)");
-        slideController.slide.on("renderEnd", options.onRenderEnd);
-      }).catch(error => {
-        if (!disposed) logger.warn("[Slide] ready callback failed", context.appId, error);
-      });
+      slideController.readyPromise
+        .then(options.onReady)
+        .then(() => {
+          // Teardown may have destroyed the box while this deferred callback
+          // was pending; syncing scenes against a destroyed app throws.
+          if (disposed) return;
+          const room = context.getRoom();
+          let synced = false;
+          if (room && context.getIsWritable()) {
+            syncSceneWithSlide(room, context, slideController.slide, baseScenePath);
+            synced = true;
+          }
+          const page = slideController.slide.slideState.currentSlideIndex;
+          log("[Slide] page to", page, synced ? "(synced)" : "", "(on ready)");
+          slideController.slide.on("renderEnd", options.onRenderEnd);
+        })
+        .catch(error => {
+          if (!disposed) logger.warn("[Slide] ready callback failed", context.appId, error);
+        });
       return slideController;
     };
 
@@ -331,9 +334,13 @@ const SlideApp: NetlessApp<Attributes, MagixEvents, AppOptions, AppResult> = {
     };
     offDestroy = context.emitter.on("destroy", teardown);
 
-    const mounting = enqueueSlideWebGLTransition(() => {
-      if (!disposed) docsViewer?.mount();
-    }, false, `setup:${context.appId}`);
+    const mounting = enqueueSlideWebGLTransition(
+      () => {
+        if (!disposed) docsViewer?.mount();
+      },
+      false,
+      `setup:${context.appId}`
+    );
 
     // Resolve once the SlideController finished its first render (renderEnd).
     // New lazy hosts retain the real completion after the warning threshold.
@@ -506,22 +513,25 @@ const SlideApp: NetlessApp<Attributes, MagixEvents, AppOptions, AppResult> = {
     };
 
     const setupReadyTimeout = appOptions?.setupReadyTimeout ?? DEFAULT_SLIDE_SETUP_READY_TIMEOUT;
-    return mounting.then(() => {
-      if (disposed) throw new Error("[Slide] disposed before first render");
-      return waitForFirstRender(setupReadyTimeout);
-    }).then(async () => {
-      if (disposed) throw new Error("[Slide] disposed before first render");
-      if (firstRenderFailed) {
-        throw new Error("[Slide] first render failed before ready");
-      }
-      if (!disposed && !slideControllerRef?.ready) {
-        log("[Slide] setup ready wait timed out, slide keeps loading in background");
-      }
-      return appResult;
-    }).catch(async error => {
-      if (!disposed) await teardown();
-      throw error;
-    }) as unknown as AppResult;
+    return mounting
+      .then(() => {
+        if (disposed) throw new Error("[Slide] disposed before first render");
+        return waitForFirstRender(setupReadyTimeout);
+      })
+      .then(async () => {
+        if (disposed) throw new Error("[Slide] disposed before first render");
+        if (firstRenderFailed) {
+          throw new Error("[Slide] first render failed before ready");
+        }
+        if (!disposed && !slideControllerRef?.ready) {
+          log("[Slide] setup ready wait timed out, slide keeps loading in background");
+        }
+        return appResult;
+      })
+      .catch(async error => {
+        if (!disposed) await teardown();
+        throw error;
+      }) as unknown as AppResult;
   },
 };
 
