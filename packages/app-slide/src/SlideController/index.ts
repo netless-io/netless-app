@@ -333,9 +333,13 @@ export class SlideControllerBase {
         return;
       }
       if (this._toFreeze === 1) {
-        this.freeze();
+        void this.freeze().catch(error =>
+          logger.error("[Slide] deferred freeze failed", this.context.appId, error)
+        );
       } else if (this._toFreeze === -1) {
-        this.unfreeze();
+        void this.unfreeze().catch(error =>
+          logger.error("[Slide] deferred unfreeze failed", this.context.appId, error)
+        );
       }
     } else if (this.pollCount < MaxPollCount) {
       this.pollCount++;
@@ -632,7 +636,9 @@ export class SlideControllerBase {
     }
     if (state === "minimized") {
       log("[Slide] freeze because app state is minimized");
-      this.freeze();
+      void this.freeze().catch(error =>
+        logger.error("[Slide] minimized freeze failed", this.context.appId, error)
+      );
     }
   };
 
@@ -647,7 +653,9 @@ export class SlideControllerBase {
     }
     if (appId === this.context.appId && status === "minimized") {
       log("[Slide] freeze because app status is minimized");
-      this.freeze();
+      void this.freeze().catch(error =>
+        logger.error("[Slide] minimized freeze failed", this.context.appId, error)
+      );
     }
   };
 
@@ -676,26 +684,30 @@ export class SlideControllerBase {
   };
 
   protected onVisibilityChange = async () => {
-    this.visible = document.visibilityState === "visible";
-    if (this.isLazySetupMode() || this.managedActivity) {
-      await this.reconcileActivity().catch(() => undefined);
-      return;
-    }
-    const appStatus = this.getAppStatus();
-    if (!this.visible) {
-      this.savedIsFrozen = this.isFrozen;
-      log("[Slide] freeze because tab becomes invisible");
-      if (!this.isFrozen) await this.freeze();
-      return;
-    }
+    try {
+      this.visible = document.visibilityState === "visible";
+      if (this.isLazySetupMode() || this.managedActivity) {
+        await this.reconcileActivity().catch(() => undefined);
+        return;
+      }
+      const appStatus = this.getAppStatus();
+      if (!this.visible) {
+        this.savedIsFrozen = this.isFrozen;
+        log("[Slide] freeze because tab becomes invisible");
+        if (!this.isFrozen) await this.freeze();
+        return;
+      }
 
-    if (appStatus === "minimized") {
-      log("[Slide] do nothing because app state is minimized");
-      return;
-    }
-    if (!this.savedIsFrozen) {
-      log("[Slide] unfreeze because tab becomes visible", { savedIsFrozen: this.savedIsFrozen });
-      await this.unfreeze();
+      if (appStatus === "minimized") {
+        log("[Slide] do nothing because app state is minimized");
+        return;
+      }
+      if (!this.savedIsFrozen) {
+        log("[Slide] unfreeze because tab becomes visible", { savedIsFrozen: this.savedIsFrozen });
+        await this.unfreeze();
+      }
+    } catch (error) {
+      logger.error("[Slide] visibility transition failed", this.context.appId, error);
     }
   };
 }

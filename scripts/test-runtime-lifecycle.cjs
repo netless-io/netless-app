@@ -373,8 +373,7 @@ async function testViewerTeardown(rejectDestroy) {
     await result;
     assert.equal(viewer.destroy(), destroy);
     assert.equal(viewer.unmount(), unmount);
-    if (!rejectDestroy)
-      assert.deepEqual(counts, { controller: 1, unmount: 1, container: 1, destroy: 1, flush: 1 });
+    assert.deepEqual(counts, { controller: 1, unmount: 1, container: 1, destroy: 1, flush: 1 });
   } finally {
     restore();
   }

@@ -483,13 +483,19 @@ export class SlideDocsViewer {
         this.offBoxSizeChange = undefined;
         this.contentResizeObserver?.disconnect();
         this.contentResizeObserver = undefined;
-        if (this.slideController) {
-          const controller = this.slideController;
-          this.slideController = null;
-          await controller.destroy();
+        try {
+          if (this.slideController) {
+            const controller = this.slideController;
+            this.slideController = null;
+            await controller.destroy();
+          }
+        } finally {
+          try {
+            this.viewer.unmount();
+          } finally {
+            this.resizableContainer.destroy(this.box);
+          }
         }
-        this.viewer.unmount();
-        this.resizableContainer.destroy(this.box);
         return this;
       });
     }
@@ -504,8 +510,11 @@ export class SlideDocsViewer {
     if (!this.destroyPromise) {
       this.destroyPromise = Promise.resolve().then(async () => {
         this.sideEffect.flushAll();
-        await this.unmount();
-        this.viewer.destroy();
+        try {
+          await this.unmount();
+        } finally {
+          this.viewer.destroy();
+        }
       });
     }
     return this.destroyPromise;

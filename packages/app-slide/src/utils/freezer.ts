@@ -2,8 +2,8 @@ import type { AppContext, ReadonlyTeleBox, RegisterParams } from "@netless/windo
 import { log, logger } from "./logger";
 
 export interface FreezableSlide {
-  freeze: () => void;
-  unfreeze: () => void;
+  freeze: () => void | Promise<void>;
+  unfreeze: () => void | Promise<void>;
   context?: AppContext<any, any, any>;
 }
 
@@ -23,11 +23,55 @@ const inspect = (arr: string[]) => {
   return "[" + arr + "]";
 };
 
+const FreezerRetryDelay = 500;
+
 export const apps = {
   map: new Map<string, FreezableSlide>(),
   boxes: new Map<string, ReadonlyTeleBox>(),
   queue: [] as string[],
-  validateQueue() {
+  focusedAppId: undefined as string | undefined,
+  runTransition(
+    appId: string,
+    slide: FreezableSlide,
+    action: "freeze" | "unfreeze",
+    retried = false
+  ) {
+    try {
+      const result = action === "freeze" ? slide.freeze() : slide.unfreeze();
+      void Promise.resolve(result).catch(error =>
+        this.onTransitionFailure(appId, slide, action, error, retried)
+      );
+    } catch (error) {
+      void Promise.resolve().then(() =>
+        this.onTransitionFailure(appId, slide, action, error, retried)
+      );
+    }
+  },
+  onTransitionFailure(
+    appId: string,
+    slide: FreezableSlide,
+    action: "freeze" | "unfreeze",
+    error: unknown,
+    retried: boolean
+  ) {
+    logger.warn(`[Slide] freezer: ${action} failed`, appId, error);
+    if (this.map.get(appId) !== slide) return;
+    // A failed freeze still occupies a cache slot until a later validation succeeds.
+    if (action === "freeze" && !this.queue.includes(appId)) this.queue.push(appId);
+    if (retried) return;
+    if (action === "freeze" ? this.focusedAppId === appId : this.focusedAppId !== appId) return;
+    setTimeout(() => {
+      if (this.map.get(appId) !== slide) return;
+      if (action === "freeze") {
+        if (this.focusedAppId !== appId && this.queue.length > FreezerLength) {
+          this.validateQueue(true);
+        }
+      } else if (this.focusedAppId === appId) {
+        this.runTransition(appId, slide, action, true);
+      }
+    }, FreezerRetryDelay);
+  },
+  validateQueue(retried = false) {
     // queue = [5, 4, 3, 2, 1]
     this.queue.sort((a, b) => {
       const za = this.boxes.get(a)?.zIndex ?? 0;
@@ -41,13 +85,8 @@ export const apps = {
       const appId = this.queue.pop() as string;
       const slide = this.map.get(appId);
       if (slide) {
-        try {
-          slide.freeze();
-          frozen.push(appId);
-        } catch (error) {
-          logger.warn("[Slide] freezer: freeze failed", appId, error);
-          throw error;
-        }
+        this.runTransition(appId, slide, "freeze", retried);
+        frozen.push(appId);
       } else {
         missing.push(appId);
       }
@@ -61,17 +100,25 @@ export const apps = {
       this.queue.unshift(appId);
     }
     const { validated, frozen, missing } = this.validateQueue();
-    log("[Slide] freezer: add", appId, inspect(this.queue), "validate", inspect(validated),
+    log(
+      "[Slide] freezer: add",
+      appId,
+      inspect(this.queue),
+      "validate",
+      inspect(validated),
       ...(frozen.length ? ["freeze-requested", inspect(frozen)] : []),
-      ...(missing.length ? ["missing", inspect(missing)] : []));
+      ...(missing.length ? ["missing", inspect(missing)] : [])
+    );
   },
   delete(appId: string) {
     this.map.delete(appId);
     this.boxes.delete(appId);
     this.queue = this.queue.filter(id => id !== appId);
+    if (this.focusedAppId === appId) this.focusedAppId = undefined;
     log("[Slide] freezer: delete", appId, inspect(this.queue));
   },
   focus(appId: string) {
+    this.focusedAppId = appId;
     const slide = this.map.get(appId);
     const index = this.queue.indexOf(appId);
     if (index > -1) {
@@ -80,17 +127,17 @@ export const apps = {
     this.queue.unshift(appId);
     const { validated, frozen, missing } = this.validateQueue();
     if (slide) {
-      try {
-        slide.unfreeze();
-      } catch (error) {
-        logger.warn("[Slide] freezer: unfreeze failed", appId, error);
-        throw error;
-      }
+      this.runTransition(appId, slide, "unfreeze");
     }
-    log(slide ? "[Slide] freezer: focus" : "[Slide] freezer: focus-missing", appId,
-      inspect(this.queue), "validate", inspect(validated),
+    log(
+      slide ? "[Slide] freezer: focus" : "[Slide] freezer: focus-missing",
+      appId,
+      inspect(this.queue),
+      "validate",
+      inspect(validated),
       ...(frozen.length ? ["freeze-requested", inspect(frozen)] : []),
-      ...(missing.length ? ["missing", inspect(missing)] : []));
+      ...(missing.length ? ["missing", inspect(missing)] : [])
+    );
   },
 };
 

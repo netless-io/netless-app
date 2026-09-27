@@ -117,6 +117,20 @@ async function run() {
     assert.equal(errors.length, 1);
   }
   {
+    const { controller: c, wm, errors } = fixture();
+    wm.lazySetupInMaximizedMode = false;
+    c.slide.frozen = async () => {
+      throw new Error("legacy freeze failed");
+    };
+    c.onAppStateChangeHandler("minimized");
+    await flush();
+    assert.equal(errors.length, 1, "legacy status errors are observed");
+    (document as any).visibilityState = "hidden";
+    await c.onVisibilityChange();
+    assert.equal(errors.length, 2, "DOM visibility listener does not reject");
+    (document as any).visibilityState = "visible";
+  }
+  {
     const { controller: c, calls, wm } = fixture();
     await c.setFocusedState(false);
     wm.lazySetupInMaximizedMode = false;
@@ -342,10 +356,115 @@ async function run() {
       apps.map.clear();
       apps.boxes.clear();
       apps.queue.length = 0;
+      apps.focusedAppId = undefined;
       setFreezerLength(previousLength);
       logger.roomLogger = previousLogger;
     }
   }
-  console.log("Slide runtime activity: 9 integration scenarios passed");
+  {
+    const { apps, getFreezerLength, setFreezerLength } = require("../src/utils/freezer");
+    const { logger } = require("../src/utils/logger");
+    const previousLogger = logger.roomLogger;
+    const previousLength = getFreezerLength();
+    const previousSetTimeout = globalThis.setTimeout;
+    const timers: Array<() => void> = [];
+    const warnings: unknown[][] = [];
+    let freezes = 0;
+    let releases = 0;
+    try {
+      (globalThis as any).setTimeout = (callback: () => void, delay: number) => {
+        assert.equal(delay, 500);
+        timers.push(callback);
+        return timers.length;
+      };
+      logger.roomLogger = {
+        info: () => undefined,
+        debug: () => undefined,
+        error: () => undefined,
+        warn: (...args: unknown[]) => warnings.push(args),
+      };
+      setFreezerLength(1);
+      const boxA = { zIndex: 1 };
+      const boxB = { zIndex: 2 };
+      apps.set("A", {
+        freeze: async () => {
+          if (++freezes === 1) throw new Error("freeze failed");
+        },
+        unfreeze: async () => {
+          if (++releases === 1) throw new Error("release failed");
+        },
+      }, boxA);
+      apps.set("B", { freeze: () => undefined, unfreeze: () => undefined }, boxB);
+      await flush();
+      assert.deepEqual(apps.queue, ["B", "A"], "failed freeze remains eligible for retry");
+      assert.equal(timers.length, 1);
+      const retryFreeze = timers.shift();
+      assert.ok(retryFreeze);
+      retryFreeze();
+      await flush();
+      assert.equal(freezes, 2);
+      assert.deepEqual(apps.queue, ["B"]);
+
+      boxA.zIndex = 3;
+      apps.focus("A");
+      await flush();
+      assert.equal(timers.length, 1);
+      const retryRelease = timers.shift();
+      assert.ok(retryRelease);
+      retryRelease();
+      await flush();
+      assert.equal(releases, 2, "focused app retries a failed release once");
+      assert.deepEqual(warnings.map(args => args[0]), [
+        "[Slide] freezer: freeze failed",
+        "[Slide] freezer: unfreeze failed",
+      ]);
+    } finally {
+      (globalThis as any).setTimeout = previousSetTimeout;
+      apps.map.clear();
+      apps.boxes.clear();
+      apps.queue.length = 0;
+      apps.focusedAppId = undefined;
+      setFreezerLength(previousLength);
+      logger.roomLogger = previousLogger;
+    }
+  }
+  {
+    const { apps, getFreezerLength, setFreezerLength } = require("../src/utils/freezer");
+    const previousLength = getFreezerLength();
+    const previousSetTimeout = globalThis.setTimeout;
+    const timers: Array<() => void> = [];
+    let freezes = 0;
+    try {
+      (globalThis as any).setTimeout = (callback: () => void) => {
+        timers.push(callback);
+        return timers.length;
+      };
+      setFreezerLength(1);
+      apps.set("A", {
+        freeze: () => {
+          freezes++;
+          if (freezes === 1) throw new Error("synchronous freeze failure");
+        },
+        unfreeze: () => undefined,
+      }, { zIndex: 1 });
+      apps.set("B", { freeze: () => undefined, unfreeze: () => undefined }, { zIndex: 2 });
+      await flush();
+      assert.deepEqual(apps.queue, ["B", "A"]);
+      const retry = timers.shift();
+      assert.ok(retry);
+      retry();
+      await flush();
+      assert.equal(freezes, 2);
+      assert.deepEqual(apps.queue, ["B"]);
+    } finally {
+      (globalThis as any).setTimeout = previousSetTimeout;
+      apps.map.clear();
+      apps.boxes.clear();
+      apps.queue.length = 0;
+      apps.focusedAppId = undefined;
+      setFreezerLength(previousLength);
+    }
+  }
+  console.log("Slide runtime activity: 12 integration scenarios passed");
 }
 void run();
