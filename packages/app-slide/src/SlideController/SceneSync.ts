@@ -60,16 +60,20 @@ export class SceneSync {
     const room = this.context.getRoom();
     const count = this.slide().slideCount;
     if (!room || !Number.isInteger(count) || count < 1) return false;
-    this.initialized = true;
     // WindowManager creates a placeholder page for a fresh App. Replace it once,
     // before any numbered PPT page exists, so native scene indexes match PPT pages.
     // Existing numbered pages/strokes are preserved; navigation never rebuilds them.
     const missing = Array.from({ length: count }, (_, i) => ({ name: String(i + 1) })).filter(
       scene => room.scenePathType(`${base}/${scene.name}`) !== "page"
     );
-    if (!missing.length) return false;
+    if (!missing.length) {
+      this.initialized = true;
+      return false;
+    }
     if (missing.length === count) room.removeScenes(base);
     room.putScenes(base, missing);
+    // SDK failures leave initialization retryable on the next renderEnd.
+    this.initialized = true;
     return true;
   }
 

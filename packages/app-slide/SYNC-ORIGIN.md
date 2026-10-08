@@ -13,6 +13,8 @@ app-slide 候选版本为 `0.2.107-alpha.0`；用户要求本轮仅在本地测�
 - 创建 App 的可写客户端在首次有效 renderEnd 补齐数字页场景一次。如果数字页尚未
   创建，先移除 WindowManager 占位页，避免页码偏移。已存在的数字页及笔迹保留；
   后续翻页不会重建场景。仅实际创建场景时设置初始共享 scene path。
+  初始化标记仅在数字页已齐全或 SDK 场景写入成功后设置；SDK 抛错时保持可重试，
+  后续有效 renderEnd 会重新尝试初始化。
 - 白板 1.0：可写且 `origin.authorId === room.observerId` 的客户端在 renderEnd
   调用共享 setScenePath。使用回调 index，不读取此时尚未更新的 currentSlideIndex。
 - 白板 1.5：以 `manager._appliancePlugin` 是否存在判断。所有客户端在 renderEnd

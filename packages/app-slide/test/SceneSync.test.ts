@@ -12,20 +12,37 @@ const tick = async () => {
 };
 
 function harness(
-  options: { author?: number; writable?: boolean; creator?: boolean; plugin?: any } = {}
+  options: {
+    author?: number;
+    writable?: boolean;
+    creator?: boolean;
+    plugin?: any;
+    failOnce?: "remove" | "put";
+  } = {}
 ) {
   const scenes = new Set(["/deck/1", "/deck/2", "/deck/3"]);
   const writes: string[] = [],
     puts: string[][] = [],
     errors: unknown[] = [];
+  const attempts = { remove: 0, put: 0 };
+  let failure = options.failOnce;
+  const checkFailure = (operation: "remove" | "put") => {
+    attempts[operation]++;
+    if (failure === operation) {
+      failure = undefined;
+      throw new Error(`Injected ${operation}Scenes failure`);
+    }
+  };
   const room = {
     uid: "shared-uid",
     observerId: options.author ?? 11,
     scenePathType: (path: string) => (scenes.has(path) ? "page" : "none"),
     removeScenes(base: string) {
+      checkFailure("remove");
       [...scenes].filter(path => path.startsWith(`${base}/`)).forEach(path => scenes.delete(path));
     },
     putScenes(base: string, values: { name: string }[]) {
+      checkFailure("put");
       puts.push(values.map(v => v.name));
       values.forEach(v => scenes.add(`${base}/${v.name}`));
     },
@@ -48,7 +65,7 @@ function harness(
     () => slide,
     error => errors.push(error)
   );
-  return { sync, context, scenes, writes, puts, errors };
+  return { sync, context, scenes, writes, puts, errors, attempts };
 }
 
 async function main() {
@@ -88,6 +105,11 @@ async function main() {
   restored.sync.renderEnd(1);
   await tick();
   assert.deepEqual(restored.writes, []);
+  restored.scenes.delete("/deck/3");
+  restored.sync.renderEnd(3);
+  await tick();
+  assert.deepEqual(restored.puts, [], "existing complete scenes mark initialization finished");
+  assert.deepEqual(restored.writes, []);
   const partial = harness({ creator: true });
   partial.scenes.delete("/deck/2");
   partial.scenes.delete("/deck/3");
@@ -102,6 +124,49 @@ async function main() {
   follower.sync.renderEnd(1, a);
   await tick();
   assert.deepEqual(follower.puts, [], "only the App creator initializes pages");
+
+  for (const failOnce of ["remove", "put"] as const) {
+    for (const withPlugin of [false, true]) {
+      const local: string[][] = [];
+      const recovering = harness({
+        creator: true,
+        failOnce,
+        plugin: withPlugin
+          ? {
+              currentManager: { viewContainerManager: { getView: () => ({}) } },
+              async setViewLocalScenePathChange(...args: string[]) {
+                local.push(args);
+              },
+            }
+          : undefined,
+      });
+      recovering.scenes.clear();
+      recovering.scenes.add("/deck/window-manager-placeholder");
+      recovering.sync.renderEnd(1);
+      await tick();
+      assert.equal(recovering.errors.length, 1);
+      assert.equal(recovering.scenes.has("/deck/1"), false);
+      assert.deepEqual(recovering.writes, []);
+      assert.deepEqual(local, []);
+
+      recovering.sync.renderEnd(2);
+      await tick();
+      assert.deepEqual([...recovering.scenes], ["/deck/1", "/deck/2", "/deck/3"]);
+      assert.deepEqual(
+        recovering.writes,
+        ["/deck/2"],
+        "retry initializes the latest rendered page"
+      );
+      assert.deepEqual(local, withPlugin ? [["/deck/2", "app-a"]] : []);
+      assert.deepEqual(recovering.attempts, { remove: 2, put: failOnce === "put" ? 2 : 1 });
+      const completedAttempts = { ...recovering.attempts };
+      recovering.sync.renderEnd(3);
+      await tick();
+      assert.deepEqual(recovering.attempts, completedAttempts, "success initializes only once");
+      assert.equal(recovering.errors.length, 1);
+      recovering.sync.destroy();
+    }
+  }
 
   for (const writable of [true, false]) {
     const calls: string[][] = [];
