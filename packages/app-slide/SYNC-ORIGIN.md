@@ -1,9 +1,8 @@
 # Slide 同步来源接线
 
-本分支依赖 Slide PR #254 的 `renderEnd(index, origin)` 和
-`stateChange(state, origin)`，其中 origin 包含可选的 clientId 和 authorId。
-正式 `@netless/slide@1.4.61` 不提供这两个来源参数。发布本分支之前，必须将
-package.json 和 pnpm-lock.yaml 更新为包含该能力的已发布 Slide 版本。
+本分支精确依赖已发布的 `@netless/slide@1.4.62-alpha.0`，提供
+`renderEnd(index, origin)` 和 `stateChange(state, origin)`，其中 origin
+包含可选的 clientId 和 authorId。package.json 和 pnpm-lock.yaml 已同步更新。
 构建入口会检查该能力，防止把旧引擎与新的写入规则打包到一起。
 
 ## 行为
@@ -26,7 +25,19 @@ package.json 和 pnpm-lock.yaml 更新为包含该能力的已发布 Slide 版�
 白板 1.0 接收端的 PPT 和标注层仍可能在加载期间短暂不同步。多端主动交错操作没有
 引入全局版本号/CAS。本变更解决接收端因本地渲染完成而重复回写的问题。
 
-## 本地候选包验证
+## 发布包验证
+
+在 netless-app 根目录安装锁定的 npm 包后执行：
+
+```sh
+pnpm install --frozen-lockfile
+pnpm --filter @netless/app-slide test
+pnpm --filter @netless/app-slide build
+```
+
+运行时打包与类型生成都使用已安装的 `1.4.62-alpha.0`。
+
+## 本地候选包验证（后续 SDK 开发）
 
 先在 netless-ppt-plugin 的 PR #254 分支构建 ppt-player 和 slide；本轮使用
 `ce61d015241067a02ae320187445c3e7981cdb33`。然后在 netless-app 根目录运行：
