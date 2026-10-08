@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="zh">
+  <meta charset="utf-8" /><title>app-slide 多人同步验收</title>
+  <style>
+    body {
+      margin: 0;
+      font: 14px system-ui;
+    }
+    header {
+      padding: 12px;
+    }
+    button {
+      margin-right: 10px;
+    }
+    #board {
+      height: 70vh;
+    }
+    pre {
+      white-space: pre-wrap;
+      padding: 12px;
+    }
+  </style>
+  <header>
+    <b id="title">连接中</b> <button id="run" disabled>发起连续翻页</button>
+    <button id="restore" disabled>冻结并恢复</button><button id="exit">断开</button>
+  </header>
+  <div id="board"></div>
+  <pre id="status"></pre>
+  <script type="module" src="./main.ts"></script>
+</html>

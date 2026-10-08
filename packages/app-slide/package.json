@@ -1,6 +1,6 @@
 {
   "name": "@netless/app-slide",
-  "version": "0.2.106",
+  "version": "0.2.107-alpha.0",
   "main": "dist/main.cjs.js",
   "module": "dist/main.es.js",
   "types": "dist/index.d.ts",
@@ -10,7 +10,9 @@
     "build:dev": "vite build --mode development && npm run types",
     "cleanup": "rimraf ./dist",
     "test": "rimraf test/.cache && esbuild test/ResizableContainer.test.ts test/NavigationButtonMode.test.ts test/DocsViewerNavigation.integration.test.ts test/FocusTransition.test.ts --bundle --platform=node --format=cjs --outdir=test/.cache && node test/.cache/ResizableContainer.test.js && node test/.cache/NavigationButtonMode.test.js && node test/.cache/DocsViewerNavigation.integration.test.js && node test/.cache/FocusTransition.test.js && node test/run-runtime-activity.mjs && node test/run-sync-tests.mjs",
-    "test:sync": "node test/run-sync-tests.mjs"
+    "test:sync": "node test/run-sync-tests.mjs",
+    "test:browser": "node test/browser-sync/server.mjs",
+    "test:browser:build": "node test/browser-sync/server.mjs --build"
   },
   "files": [
     "src",
@@ -19,6 +21,7 @@
   ],
   "devDependencies": {
     "@juggle/resize-observer": "^3.3.1",
+    "@netless/appliance-plugin": "1.1.38",
     "@netless/slide": "1.4.62-alpha.0",
     "@types/color-string": "^1.5.2",
     "color-string": "^1.9.1",
