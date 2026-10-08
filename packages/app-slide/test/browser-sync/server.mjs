@@ -31,7 +31,10 @@ if (config?.sdkToken) {
   config.rooms = {};
   for (const mode of ["1.0", "1.5"]) {
     const room = await postSdk("rooms", { isRecord: false, limit: 0 });
-    const roomToken = await postSdk(`tokens/rooms/${room.uuid}`, { role: "admin", lifespan: 7200 });
+    const roomToken = await postSdk(`tokens/rooms/${room.uuid}`, {
+      role: "admin",
+      lifespan: 2 * 60 * 60 * 1000,
+    });
     config.rooms[mode] = { uuid: room.uuid, roomToken };
   }
 }
@@ -46,7 +49,13 @@ const vite = {
   configFile: false,
   define: { "import.meta.env.DEV": "false" },
   resolve: { dedupe: ["white-web-sdk", "@netless/window-manager"] },
-  server: { host: "127.0.0.1", port: 5188, strictPort: true, fs: { allow: [project] } },
+  server: {
+    host: "127.0.0.1",
+    port: 5188,
+    strictPort: true,
+    hmr: false,
+    fs: { allow: [project] },
+  },
   build: {
     outDir: path.join(root, ".build"),
     emptyOutDir: true,
@@ -107,6 +116,11 @@ if (isBuild) {
                       "observerId",
                       "type",
                       "clientId",
+                      "creator",
+                      "storagePage",
+                      "scene",
+                      "pluginScene",
+                      "sceneNames",
                     ]
                       .filter(key => value[key] !== undefined)
                       .map(key => [key, value[key]])

@@ -6,7 +6,7 @@ import "@netless/appliance-plugin/dist/style.css";
 import fullWorkerUrl from "@netless/appliance-plugin/dist/fullWorker.js?url";
 import subWorkerUrl from "@netless/appliance-plugin/dist/subWorker.js?url";
 // Use the exact app-slide build, which bundles the registry Slide engine.
-import SlideApp from "../../dist/main.es.js";
+import SlideApp, { Slide } from "../../dist/main.es.js";
 
 const query = new URLSearchParams(location.search);
 const mode = query.get("mode") === "1.5" ? "1.5" : "1.0";
@@ -17,8 +17,9 @@ const writable = role.startsWith("writer");
 const delay = role === "writer-b" ? 1500 : 0;
 const events: Record<string, unknown>[] = [];
 const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
-let room: any, manager: any, appId: string | undefined, lastSlide: any;
+let room: any, manager: any, appId: string | undefined, config: any;
 let poll: ReturnType<typeof setInterval>;
+let lastSnapshot = "";
 const stats: any = {
   mode,
   role,
@@ -27,6 +28,18 @@ const stats: any = {
   sceneWrites: [],
   stateWrites: [],
   localWrites: [],
+  setups: [],
+};
+// Observe the first render as well, before setup has returned its AppResult.
+const engineEmit = Slide.prototype.emit;
+Slide.prototype.emit = function (type: string, ...args: any[]) {
+  if (type === "renderEnd") {
+    stats.renders.push(args[0]);
+    record("render-end", { page: args[0], origin: args[1] });
+  } else if (type === "syncDispatch") {
+    record("dispatch", { type: args[0].type, clientId: args[0].clientId, page: args[0].index });
+  }
+  return engineEmit.call(this, type, ...args);
 };
 
 function record(kind: string, value: Record<string, unknown>) {
@@ -43,6 +56,14 @@ function record(kind: string, value: Record<string, unknown>) {
 function observeContext(ctx: any) {
   if (ctx.__syncObserved) return;
   ctx.__syncObserved = true;
+  stats.setups.push({
+    appId: ctx.appId,
+    creator: ctx.isAddApp,
+    attributeKeys: Object.keys(ctx.getAttributes() || {}),
+    taskIdPresent: Boolean(ctx.storage.state.taskId),
+    writable: ctx.getIsWritable(),
+  });
+  record("context-setup", { creator: ctx.isAddApp, appId: ctx.appId });
   const setScene = ctx.setScenePath.bind(ctx);
   ctx.setScenePath = async (path: string) => {
     stats.sceneWrites.push(path);
@@ -72,8 +93,12 @@ async function waitReady() {
 async function start() {
   const response = await fetch(`/__sync/config?mode=${mode}`);
   if (!response.ok) throw new Error("需要先提供隔离测试房间配置，见 test/browser-sync/README.md");
-  const config = await response.json();
-  const sdk = new WhiteWebSdk({ appIdentifier: config.appIdentifier, region: config.region });
+  config = await response.json();
+  const sdk = new WhiteWebSdk({
+    appIdentifier: config.appIdentifier,
+    region: config.region,
+    useMobXState: true,
+  });
   const quiet = () => {
     // Observe explicit events below without logging room connection details.
   };
@@ -147,20 +172,6 @@ async function start() {
   poll = setInterval(() => {
     Object.keys(manager.apps || {}).forEach(attach);
     const slide = result()?.slide();
-    if (slide && slide !== lastSlide) {
-      lastSlide = slide;
-      slide.on("renderEnd", (page: number, origin: any) => {
-        stats.renders.push(page);
-        record("render-end", { page, origin });
-      });
-      slide.on("syncDispatch", (event: any) =>
-        record("dispatch", {
-          type: event.type,
-          clientId: event.clientId,
-          page: event.index,
-        })
-      );
-    }
     const proxy = appId && manager.queryOne(appId);
     Object.assign(stats, {
       phase: room.phase,
@@ -171,27 +182,57 @@ async function start() {
       pluginScene:
         manager._appliancePlugin?.currentManager?.viewContainerManager.getView(appId)
           ?.focusScenePath,
+      creator: proxy?.appContext?.isAddApp,
+      contextWritable: proxy?.appContext?.getIsWritable(),
+      initScenePath: proxy?.appContext?.getInitScenePath(),
+      slideCount: slide?.slideCount,
+      firstSceneType: proxy?.appContext
+        ? room.scenePathType(`${proxy.appContext.getInitScenePath()}/1`)
+        : undefined,
+      sceneNames: proxy?.appContext
+        ? (room.entireScenes()[proxy.appContext.getInitScenePath()] || []).map((s: any) => s.name)
+        : [],
     });
     document.querySelector("#status")!.textContent = JSON.stringify(stats, null, 2);
-    (document.querySelector("#run") as HTMLButtonElement).disabled =
-      role !== "writer-a" || !result()?.controller()?.ready;
+    const snapshot = JSON.stringify({
+      appId,
+      observerId: room.observerId,
+      page: stats.page,
+      storagePage: stats.storagePage,
+      scene: stats.scene,
+      pluginScene: stats.pluginScene,
+      creator: stats.creator,
+      sceneNames: stats.sceneNames,
+    });
+    if (snapshot !== lastSnapshot) {
+      lastSnapshot = snapshot;
+      record("snapshot", JSON.parse(snapshot));
+    }
+    for (const id of ["run", "page2", "page3", "step", "annotation"])
+      (document.getElementById(id) as HTMLButtonElement).disabled =
+        !writable || !result()?.controller()?.ready;
     (document.querySelector("#restore") as HTMLButtonElement).disabled =
       !result()?.controller()?.ready;
   }, 100);
   if (role === "writer-a") {
     await sleep(1000);
-    appId = await manager.addApp({
-      kind: "Slide",
-      options: {
-        scenePath: `/sync-origin-${config.runId}`,
-        title: `Sync origin ${mode}`,
-      },
-      attributes: { taskId: config.taskId, url: config.prefix },
-    });
-    attach(appId!);
+    if (!appId) await newApp();
   }
+  (document.querySelector("#new") as HTMLButtonElement).disabled = role !== "writer-a";
   document.querySelector("#title")!.textContent = `白板 ${mode} / ${role}`;
   record("joined", { observerId: room.observerId });
+}
+
+async function newApp() {
+  appId = await manager.addApp({
+    kind: "Slide",
+    options: {
+      scenePath: `/sync-origin-${config.runId}-${Date.now()}`,
+      title: `Sync origin ${mode}`,
+    },
+    attributes: { taskId: config.taskId, url: config.prefix },
+  });
+  record("app-created", { appId });
 }
 
 async function navigate() {
@@ -222,6 +263,20 @@ function showError(error: Error) {
   document.querySelector("#status")!.textContent = error.message;
 }
 document.querySelector("#run")!.addEventListener("click", () => void navigate().catch(showError));
+document.querySelector("#new")!.addEventListener("click", () => void newApp().catch(showError));
+for (const page of [2, 3])
+  document
+    .getElementById(`page${page}`)!
+    .addEventListener("click", () => result()?.jumpToPage(page));
+document.querySelector("#step")!.addEventListener("click", () => result()?.nextStep());
+document.querySelector("#annotation")!.addEventListener("click", () => {
+  const page = result()?.slide()?.slideState.currentSlideIndex;
+  room.setMemberState({ textSize: 32, strokeColor: [255, 0, 0] });
+  const id = manager._appliancePlugin
+    ? manager._appliancePlugin.insertText(-200, -80, `ORIGIN PAGE ${page}`)
+    : room.insertText(-200, -80, `ORIGIN PAGE ${page}`);
+  record("annotation", { page, appId, type: id ? "inserted" : "failed" });
+});
 document
   .querySelector("#restore")!
   .addEventListener("click", () => void restore().catch(showError));

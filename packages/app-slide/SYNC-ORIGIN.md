@@ -4,7 +4,7 @@
 `renderEnd(index, origin)` 和 `stateChange(state, origin)`，其中 origin
 包含可选的 clientId 和 authorId。package.json 和 pnpm-lock.yaml 已同步更新。
 构建入口会检查该能力，防止把旧引擎与新的写入规则打包到一起。
-app-slide 候选版本为 `0.2.107-alpha.0`；多人房间验收完成前不发布。
+app-slide 候选版本为 `0.2.107-alpha.0`；用户要求本轮仅在本地测试，暂不发布。
 
 ## 行为
 
@@ -70,5 +70,15 @@ package.json 或锁文件，也不发布 npm 包。
 - 使用 npm alpha 的 ES/CJS/IIFE 构建及类型生成通过；ESLint 无错误、格式检查通过。
 - 真实多人验收页构建通过；浏览器确认能加载，并在无配置时明确提示隔离房间缺失。
 - `npm pack` 已生成 `0.2.107-alpha.0` 候选包，测试页面不进入发布包。
-- 白板 1.0/1.5 四端房间验收、笔迹层像素检查、动画/媒体及重新加入检查未执行：
-  尚未提供隔离测试房间或测试 SDK Token。候选包尚未发布，PR 保持草稿。
+- 已使用用户授权的本机测试凭据完成白板 1.0/1.5 四端房间验收：每种包含两个
+  可写端及两个只读端，慢端 JSON 延迟 1500ms，连续切页中最终落后约 11 秒。
+  接收端无共享回写，改由慢可写端发起事件后共享写入归属随之切换。
+- 八端冻结恢复无共享写入增量；两个只读端重新加入后恢复第 2 页。实际观察了
+  第 1/2 页页码标注的出现、消失和冻结恢复；1.5 插件本地路径与 PPT 页一致。
+- 动画 nextStep 及 mediaFullscreen 来源经过真实传输；未覆盖所有 mediaPlay/
+  mediaPause/mediaSeek 或交错双作者压力场景。浏览器 SDK 日志出现 foundation logger
+  worker 不可用、回退 Argus 的错误级日志，没有发现 scene sync 失败。
+- 详细结果及脱敏事件位于 conversion-agent 的
+  `outputs/app-slide-origin-2026-10-08/`。仓库内摘要见
+  [test/browser-sync/ACCEPTANCE.md](test/browser-sync/ACCEPTANCE.md)。测试入口修正随
+  PR 提交，候选包尚未发布，PR 进入代码评审。
