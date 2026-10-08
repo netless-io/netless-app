@@ -21,7 +21,7 @@ export class Slide extends EventEmitter {
   constructor(public config: Record<string, unknown>) {
     super();
   }
-  destroy() {
+  async destroy() {
     this.removeAllListeners();
   }
 }

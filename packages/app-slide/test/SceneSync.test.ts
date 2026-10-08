@@ -22,6 +22,9 @@ function harness(
     uid: "shared-uid",
     observerId: options.author ?? 11,
     scenePathType: (path: string) => (scenes.has(path) ? "page" : "none"),
+    removeScenes(base: string) {
+      [...scenes].filter(path => path.startsWith(`${base}/`)).forEach(path => scenes.delete(path));
+    },
     putScenes(base: string, values: { name: string }[]) {
       puts.push(values.map(v => v.name));
       values.forEach(v => scenes.add(`${base}/${v.name}`));
@@ -71,8 +74,10 @@ async function main() {
 
   const creator = harness({ creator: true });
   creator.scenes.clear();
+  creator.scenes.add("/deck/window-manager-placeholder");
   creator.sync.renderEnd(1);
   await tick();
+  assert.deepEqual([...creator.scenes], ["/deck/1", "/deck/2", "/deck/3"]);
   creator.sync.renderEnd(2, a);
   await tick();
   creator.scenes.delete("/deck/3");
@@ -83,6 +88,20 @@ async function main() {
   restored.sync.renderEnd(1);
   await tick();
   assert.deepEqual(restored.writes, []);
+  const partial = harness({ creator: true });
+  partial.scenes.delete("/deck/2");
+  partial.scenes.delete("/deck/3");
+  partial.scenes.add("/deck/existing-notes");
+  partial.sync.renderEnd(1);
+  await tick();
+  assert.deepEqual(partial.puts, [["2", "3"]]);
+  assert.equal(partial.scenes.has("/deck/1"), true);
+  assert.equal(partial.scenes.has("/deck/existing-notes"), true);
+  const follower = harness();
+  follower.scenes.clear();
+  follower.sync.renderEnd(1, a);
+  await tick();
+  assert.deepEqual(follower.puts, [], "only the App creator initializes pages");
 
   for (const writable of [true, false]) {
     const calls: string[][] = [];
@@ -194,7 +213,9 @@ async function main() {
     global.setTimeout = oldSet;
     global.clearTimeout = oldClear;
   }
-  [sender, slow, reader, creator, restored, serial].forEach(h => h.sync.destroy());
+  [sender, slow, reader, creator, restored, partial, follower, serial].forEach(h =>
+    h.sync.destroy()
+  );
   console.log("SceneSync ownership, initialization, local switching and lifecycle passed");
 }
 main().catch(error => {

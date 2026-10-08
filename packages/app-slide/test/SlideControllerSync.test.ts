@@ -110,7 +110,7 @@ async function main() {
   await tick();
   assert.deepEqual(local, [["/deck/2", "app-a"]]);
   assert.equal(ends, 2, "render callbacks registered immediately");
-  c.destroy();
+  await c.destroy();
   console.log("Controller: suid/clientId, transport author, state ownership and local view passed");
 }
 main().catch(error => {
