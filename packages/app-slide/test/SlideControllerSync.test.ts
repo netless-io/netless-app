@@ -1,11 +1,16 @@
 import assert from "node:assert/strict";
 
-(global as any).window = { addEventListener() {}, removeEventListener() {} };
+const noop = () => {
+  // DOM and callback stubs outside this test's scene/state assertions.
+};
+(global as any).window = { addEventListener: noop, removeEventListener: noop };
 (global as any).document = {
   visibilityState: "visible",
-  addEventListener() {},
-  removeEventListener() {},
+  addEventListener: noop,
+  removeEventListener: noop,
 };
+// Install the DOM shims before importing modules with browser initialization.
+// eslint-disable-next-line @typescript-eslint/no-var-requires
 const { SlideControllerBase } = require("../src/SlideController");
 
 class Controller extends SlideControllerBase {
@@ -24,14 +29,14 @@ async function main() {
     stateWrites: any[] = [],
     outgoing: any[] = [];
   let writable = true,
-    receive: (event: any) => void = () => {};
+    receive: (event: any) => void = noop;
   const room = {
     uid: "00002345",
     observerId: 11,
     scenePathType: () => "page",
-    logger: { info() {}, debug() {}, warn() {} },
+    logger: { info: noop, debug: noop, warn: noop },
   };
-  const manager: any = { emitter: { on() {}, off() {} } };
+  const manager: any = { emitter: { on: noop, off: noop } };
   const context: any = {
     appId: "app-a",
     isAddApp: false,
@@ -48,27 +53,27 @@ async function main() {
     dispatchMagixEvent: (...args: any[]) => outgoing.push(args),
     addMagixEventListener: (_name: string, fn: (event: any) => void) => {
       receive = fn;
-      return () => {};
+      return noop;
     },
     storage: {
       state: {},
-      ensureState() {},
-      addStateChangedListener: () => () => {},
+      ensureState: noop,
+      addStateChangedListener: () => noop,
       setState: (value: any) => stateWrites.push(value),
     },
-    emitter: { off() {} },
+    emitter: { off: noop },
   };
   let ends = 0;
   const c = new Controller({
     context,
-    onRenderStart() {},
+    onRenderStart: noop,
     onRenderEnd() {
       ends++;
     },
-    onPageChanged() {},
-    onTransitionStart() {},
-    onTransitionEnd() {},
-    onError() {},
+    onPageChanged: noop,
+    onTransitionStart: noop,
+    onTransitionEnd: noop,
+    onError: noop,
   });
   // Avoid creating unrelated readiness timers; this test starts at a ready controller.
   c.ready = true;
