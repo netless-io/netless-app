@@ -167,14 +167,8 @@ const SlideApp: NetlessApp<Attributes, MagixEvents, AppOptions, AppResult> = {
     let firstRenderFailed = false;
 
     const onPageChanged = (page: number) => {
-      const room = context.getRoom();
       if (docsViewer && docsViewer.slideController) {
-        let synced = false;
-        if (room && context.getIsWritable()) {
-          syncSceneWithSlide(room, context, docsViewer.slideController.slide, baseScenePath);
-          synced = true;
-        }
-        log("[Slide] page to", page, synced ? "(synced)" : "");
+        log("[Slide] page to", page);
         docsViewer.viewer.setPageIndex(page - 1);
         docsViewer.viewer.setPaused();
         docsViewer.onPageChanged();
@@ -213,20 +207,9 @@ const SlideApp: NetlessApp<Attributes, MagixEvents, AppOptions, AppResult> = {
         (window as any).slideController = slideController;
       }
       slideController.readyPromise
-        .then(options.onReady)
         .then(() => {
-          // Teardown may have destroyed the box while this deferred callback
-          // was pending; syncing scenes against a destroyed app throws.
           if (disposed) return;
-          const room = context.getRoom();
-          let synced = false;
-          if (room && context.getIsWritable()) {
-            syncSceneWithSlide(room, context, slideController.slide, baseScenePath);
-            synced = true;
-          }
-          const page = slideController.slide.slideState.currentSlideIndex;
-          log("[Slide] page to", page, synced ? "(synced)" : "", "(on ready)");
-          slideController.slide.on("renderEnd", options.onRenderEnd);
+          options.onReady();
         })
         .catch(error => {
           if (!disposed) logger.warn("[Slide] ready callback failed", context.appId, error);

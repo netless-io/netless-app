@@ -2,11 +2,20 @@ import { rollup } from "rollup";
 import dts from "rollup-plugin-dts";
 import ts from "typescript";
 import fs from "fs";
+import path from "node:path";
 
 const { peerDependencies } = JSON.parse(
   fs.readFileSync(new URL("../package.json", import.meta.url), "utf-8")
 );
 const compilerOptions = {
+  ...(process.env.SLIDE_CANDIDATE_DIR
+    ? {
+        baseUrl: process.cwd(),
+        paths: {
+          "@netless/slide": [path.resolve(process.env.SLIDE_CANDIDATE_DIR, "lib/Slide.d.ts")],
+        },
+      }
+    : {}),
   noEmit: true,
   strict: true,
   isolatedModules: true,
