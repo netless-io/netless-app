@@ -132,7 +132,12 @@ export class SlideControllerBase {
   protected readonly onTransitionEnd: SlideControllerOptions["onTransitionEnd"];
   protected readonly onError: SlideControllerOptions["onError"];
 
-  protected syncStateOnceFlag: boolean;
+  protected storageSyncActive: boolean;
+  private storageSnapshotKey?: string;
+  private pendingStorageState?: SlideState;
+  private restoringStorage = false;
+  private pendingSyncEvents: SyncEvent[] = [];
+  private flushingSyncEvents = false;
 
   protected visible: boolean;
   protected savedIsFrozen: boolean;
@@ -177,7 +182,7 @@ export class SlideControllerBase {
     // });
 
     // the adder does not need to sync state
-    this.syncStateOnceFlag = !this.context.isAddApp;
+    this.storageSyncActive = !this.context.isAddApp;
     this.visible = document.visibilityState === "visible";
     this.savedIsFrozen = false;
     // this.initialize();
@@ -234,8 +239,7 @@ export class SlideControllerBase {
     if (state) {
       // if we already have state, try restore from it
       log("[Slide] init with state", JSON.stringify(state));
-      this.syncStateOnceFlag = false;
-      slide.setSlideState(state);
+      this.queueStorageState(state);
     } else if (context.isAddApp) {
       // otherwise, maybe this slide is just added, let the adder kick start first render
       log("[Slide] init by renderSlide", 1);
@@ -260,17 +264,14 @@ export class SlideControllerBase {
     );
     this.sideEffect.addDisposer(sceneSync.destroy);
 
-    // it is possible that we miss the first `renderSlide(1)` event
-    // and the attributes has no value yet, so we need to sync state
-    // when there's state change. we only have to do it once
-    const disposerId = this.sideEffect.addDisposer(
-      context.storage.addStateChangedListener(() => {
-        if (context.storage.state.state) {
-          this.syncStateOnce();
-          this.sideEffect.flush(disposerId);
-        }
-      })
-    );
+    // Magix does not replay events received before App setup. Follow snapshots
+    // until the first live Slide event takes over, even after the initial render.
+    if (this.storageSyncActive) {
+      this.sideEffect.addDisposer(
+        context.storage.addStateChangedListener(() => this.syncStorageState()),
+        "bootstrap-storage"
+      );
+    }
 
     this.sideEffect.add(() =>
       context.addMagixEventListener(SLIDE_EVENTS.syncDispatch, this.magixEventListener, {
@@ -323,25 +324,79 @@ export class SlideControllerBase {
 
   protected magixEventListener: MagixEventListener = ev => {
     const { type, payload } = ev.payload;
-    if (type === SLIDE_EVENTS.syncDispatch) {
-      this.syncStateOnce();
+    if (
+      type === SLIDE_EVENTS.syncDispatch &&
+      payload &&
+      typeof payload.type === "string" &&
+      !this.destroyed
+    ) {
+      // Close snapshot intake immediately. Already accepted restores must finish
+      // before live events, otherwise their async tail can overwrite those events.
+      this.stopStorageSync();
       verbose("[Slide] receive", JSON.stringify(payload));
-      this.slide.emit(SLIDE_EVENTS.syncReceive, withTransportAuthor(payload, ev.authorId));
+      this.pendingSyncEvents.push(withTransportAuthor(payload, ev.authorId));
+      this.flushSyncEvents();
     }
   };
 
-  protected syncStateOnce() {
-    // sync state before the first event, so that they can be in the correct order
-    if (this.syncStateOnceFlag) {
-      if (this.context.getIsWritable()) {
-        this.context.storage.ensureState(EmptyAttributes);
+  protected syncStorageState() {
+    if (!this.storageSyncActive || this.destroyed) return;
+    const { state } = this.context.storage.state;
+    if (state) this.queueStorageState(state);
+  }
+
+  private stopStorageSync() {
+    this.storageSyncActive = false;
+    this.sideEffect.flush("bootstrap-storage");
+  }
+
+  private queueStorageState(state: SlideState) {
+    if (this.destroyed) return;
+    const key = JSON.stringify(state);
+    // Unrelated storage fields must not reset animation or media state.
+    if (key === this.storageSnapshotKey) return;
+    this.storageSnapshotKey = key;
+    // Slide and storage must not share nested, mutable state objects.
+    this.pendingStorageState = JSON.parse(key) as SlideState;
+    if (!this.restoringStorage) void this.restoreStorageStates();
+  }
+
+  private async restoreStorageStates() {
+    this.restoringStorage = true;
+    try {
+      while (this.pendingStorageState && !this.destroyed) {
+        const state = this.pendingStorageState;
+        this.pendingStorageState = undefined;
+        try {
+          log("[Slide] sync bootstrap storage", JSON.stringify(state));
+          await this.slide.setSlideState(state);
+        } catch (error) {
+          // Permit the same snapshot to be retried on a later storage update.
+          if (!this.pendingStorageState) this.storageSnapshotKey = undefined;
+          logger.error("[Slide] bootstrap storage sync failed", this.context.appId, error);
+        }
       }
-      const { state } = this.context.storage.state;
-      if (state) {
-        log("[Slide] sync with state (once)", JSON.stringify(state));
-        this.slide.setSlideState(state);
-        this.syncStateOnceFlag = false;
+    } finally {
+      this.restoringStorage = false;
+      this.flushSyncEvents();
+    }
+  }
+
+  private flushSyncEvents() {
+    if (this.restoringStorage || this.flushingSyncEvents || this.destroyed) return;
+    this.flushingSyncEvents = true;
+    try {
+      while (this.pendingSyncEvents.length && !this.destroyed) {
+        const event = this.pendingSyncEvents.shift();
+        if (!event) break;
+        try {
+          this.slide.emit(SLIDE_EVENTS.syncReceive, event);
+        } catch (error) {
+          logger.error("[Slide] sync receive failed", this.context.appId, error);
+        }
       }
+    } finally {
+      this.flushingSyncEvents = false;
     }
   }
 
@@ -467,6 +522,9 @@ export class SlideControllerBase {
   });
 
   public destroy(): Promise<void> {
+    this.stopStorageSync();
+    this.pendingStorageState = undefined;
+    this.pendingSyncEvents = [];
     this.sideEffect.flushAll();
     if (!this.destroyed) {
       log("[Slide] destroy slide (once)");

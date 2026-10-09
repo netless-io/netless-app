@@ -8,7 +8,7 @@ import { spawnSync } from "node:child_process";
 const dir = path.dirname(fileURLToPath(import.meta.url));
 const output = mkdtempSync(path.join(tmpdir(), "app-slide-sync-test-"));
 try {
-  for (const name of ["SceneSync", "SlideControllerSync"]) {
+  for (const name of ["SceneSync", "SlideControllerSync", "BootstrapStorage"]) {
     const outfile = path.join(output, `${name}.cjs`);
     await build({
       entryPoints: [path.join(dir, `${name}.test.ts`)],

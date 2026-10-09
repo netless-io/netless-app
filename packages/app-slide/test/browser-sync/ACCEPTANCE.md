@@ -1,4 +1,36 @@
-# 来源同步验收：2026-10-08
+# 共享 scene 与重入验收：2026-10-09
+
+当前策略统一使用 WindowManager 的 context.setScenePath，只有事件发起者且可写时
+更新共享 scene/state；不再区分白板 1.0/1.5 的翻页路径。
+运行依赖为 White SDK 2.16.58、WindowManager 1.0.23、appliance-plugin 1.1.38、
+Slide 1.4.62-alpha.0。白板 1.5 使用实际 OffscreenCanvas Worker。
+
+两个新建、不录制的 CN-HZ 房间分别验证 1.0/1.5，各有可写 A、可写 B、只读 R。
+B 的公共 JSON loader 增加 400ms 延迟。使用同一 16 页真实 PPT。
+
+- A 连续翻到 2、3，B/R 接收过程中没有共享 scene/state 回写；各端最终为 3。
+- B 发起翻到 2，仅 B 增加共享 scene 调用；A/R 不回写。再由 A 翻到 3。
+- 1.0/1.5 的 B/R 各自动重连 3 次，共 12 次全部恢复到第 3 页；
+  PPT、storage、native View、共享 fullPath 一致，1.5 的新插件 View 也保持 3。
+- 重连后由 A 翻到 2，两种环境各端均继续对齐。
+- 每房间 A 的 shared scene 页码序列为 [1,2,3,3,2]（1 是初始化）；B 为 [2]。
+  R 的共享 scene/state 写入均为 0。动画可增加 stateChange 次数，不要求每页仅一次 state 写入。
+
+启动期补偿另有定向回归：首次恢复旧 snapshot 后仍监听 storage，串行保留最新状态；
+收到第一条有效 Slide 信令后注销监听，恢复完成后按顺序转交缓存信令。
+新增 BootstrapStorage 测试覆盖迟到的 snapshot、恢复中信令、错误重试、无状态和销毁。
+
+常规全量测试、三格式构建与类型生成通过。翻页期间仍观察到短暂的 PPT/scene 不同
+步，稳定后对齐；没有全局版本号/CAS。历史 fullPath/state 已经不一致的 App 不会由
+接收端自动迁移，需要可写发起者切到另一页再切回。旧录制回放未在本轮验证。
+真实笔迹逐像素、全部媒体、设备和 lazy setup 配置也不属于本轮新增验收。
+
+测试页面、服务已关闭，房间已停用并独立回读。原始脱敏时序与分析断言保留在任务
+制品 app-slide-shared-scenes-2026-10-09；不包含凭据。
+
+## 历史来源同步验收：2026-10-08（原本地切页策略）
+
+下面保留原策略的验收记录，其中 1.5 使用插件本地切页，与当前共享策略不同。
 
 使用本地 app-slide `0.2.107-alpha.0` 构建，内含已发布 Slide `1.4.62-alpha.0`。
 White SDK `2.16.57`、WindowManager `1.0.19`、appliance-plugin `1.1.38`。
