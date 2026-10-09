@@ -1,4 +1,45 @@
-# 共享 scene 与重入验收：2026-10-09
+# Slide 与共享 scene 回归验收
+
+## 正式 Slide 1.4.63：2026-10-09
+
+app-slide 精确依赖 npm 正式包 `@netless/slide@1.4.63`，源码 gitHead 为
+`b2a4f19db781bd76bbefc9f855faad0434233b16`。运行时及类型构建均使用安装包，
+未使用 SLIDE_CANDIDATE_DIR。引擎文件与发布时编译产物逐字节一致。
+White SDK 2.16.58、WindowManager 1.0.23、appliance-plugin 1.1.38。
+
+两个新建、不录制的 CN-HZ 房间分别验证白板 1.0/1.5，各有快可写 A、慢可写 B、只读 R。
+B 的 JSON loader 延迟 400ms；harness 保留原始 setSlideState 实现及参数，在完成后
+额外等待 500ms，以延长恢复窗口。插件使用实际 OffscreenCanvas Worker。
+
+| 场景                                        | 完成情况       |
+| ------------------------------------------- | -------------- |
+| 接收端冻结/恢复，含重复解冻与恢复中再次冻结 | 12/12          |
+| B/R 自动重连，每端每种白板 2 次             | 8/8            |
+| B/R 完整重入，从 storage 恢复最新页         | 4/4            |
+| B 发起翻页后切回 A，验证写入归属            | 两种白板均通过 |
+
+四个接收端各实际执行 3 次冻结恢复；各观察到 6 次引擎/app 状态恢复，最大并发为 1。
+4 次再次冻结请求发生在恢复活动期间；缓存信令均在恢复结束后转交。
+重连均重建 App proxy，新 View 的 PPT/storage/native/shared 路径收敛到第 3 页，
+1.5 插件 View 也保持第 3 页。完整重入后再次检查了实际 PPT Canvas。
+
+接收 A 翻页和恢复/重连期间 B/R 不回写共享 scene/state。由 B 发起时只有 B 写入；
+切回 A 发起后只有 A 增加写入，R 全程写入为 0。动画/媒体状态可使同一页产生多次
+stateChange，不要求一页只写一次状态。
+
+120 条带来源的回调/信令保留客户端标识与整数 authorId；其中 108 条按当前显式
+join 的 observerId 精确核对。自动重连会改变 observerId，另外 12 条不能用首次
+join 值核对，只检查来源字段保留；写入归属另外通过实际 scene/state 调用验证。
+初次 setup 的恢复开始早于插桩安装，其并发由 Controller 调度回归单独覆盖。
+
+全量 app-slide 回归、runtime-lifecycle、ES/CJS/IIFE 与类型构建、测试页编译和发布包
+dry-run 检查通过。app ESM SHA256 为
+`25e51a705405463351bd0e754fd61edb1fcdbaeb42bac87aefa15cf0cbc85011`。
+本轮制品、日志断言与截图保留在任务目录 `app-slide-slide-1.4.63-2026-10-09`。
+未发布 app-slide 包；弱网/低端设备、全部媒体和旧录制未在本轮覆盖。
+本轮测试端与服务已关闭，两个新房间已停用并独立回读，均未开启录制。
+
+## 此前共享 scene 与重入验收（Slide alpha）：2026-10-09
 
 当前策略统一使用 WindowManager 的 context.setScenePath，只有事件发起者且可写时
 更新共享 scene/state；不再区分白板 1.0/1.5 的翻页路径。

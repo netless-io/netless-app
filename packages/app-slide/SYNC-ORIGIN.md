@@ -1,6 +1,6 @@
 # Slide 同步来源接线
 
-本分支精确依赖已发布的 `@netless/slide@1.4.62-alpha.0`，提供
+本分支精确依赖已发布的 `@netless/slide@1.4.63`，提供
 `renderEnd(index, origin)` 和 `stateChange(state, origin)`，其中 origin
 包含可选的 clientId 和 authorId。package.json 和 pnpm-lock.yaml 已同步更新。
 构建入口会检查该能力，防止把旧引擎与新的写入规则打包到一起。
@@ -37,15 +37,15 @@ FIFO 转交信令，保留 clientId 与传输 authorId。
    ready 前的冻结只记录意图，不阻止首屏恢复。
 2. 冻结/解冻期间缓存信令和仍由启动监听接受的最新快照。
 3. 解冻等待 Slide 内部完整恢复。Player 创建完成仅释放全局 WebGL 队列，其他 App
-   的资源操作可以继续；当前 alpha 使用 Promise，新版引擎使用独立完成回调。
+   的资源操作可以继续；当前正式版使用独立完成回调，并保留旧 alpha 的 Promise 兼容。
 4. Player 恢复后读取最新 storage，强制送入同一个快照队列，即使内容与上次相同。
    快照恢复完成后转交缓存信令；解冻不重新开启已经关闭的 storage 监听。
 5. 重复 freeze/unfreeze 串行执行。release 或解冻后的快照恢复失败保持信令暂停，
    后续激活可重试。解冻中途失活也保留未完成恢复，重新激活后再恢复快照与信令。
    destroy 清理监听、快照和信令，并终止生命周期等待。
 
-新版 Slide 的 release 还需保证已有 Player 时调用完成回调，内部恢复失败时调用 onError；
-对应修复在 netless-ppt-plugin PR #254。alpha 的 Promise 接口不依赖这次回调修复。
+Slide 1.4.63 的 release 在已有 Player 时调用完成回调，内部恢复失败时调用 onError；
+对应修复已随 netless-ppt-plugin PR #254 合入并发布。
 快照与信令没有共同序号，历史 fullPath/state 不一致也没有自动迁移。
 
 调度回归使用真实 Controller，替换渲染和传输边界，覆盖最大恢复并发为 1、最新快照、
@@ -62,12 +62,12 @@ pnpm --filter @netless/app-slide test
 pnpm --filter @netless/app-slide build
 ```
 
-运行时打包与类型生成都使用已安装的 `1.4.62-alpha.0`。
+运行时打包与类型生成都使用已安装的 `1.4.63`。
 
 ## 本地候选包验证（后续 SDK 开发）
 
-先在 netless-ppt-plugin 的 PR #254 分支构建 ppt-player 和 slide；本轮使用
-`ce61d015241067a02ae320187445c3e7981cdb33`。然后在 netless-app 根目录运行：
+需要验证尚未发布的 SDK 改动时，先在 netless-ppt-plugin 的目标分支构建 ppt-player
+和 slide，再在 netless-app 根目录运行：
 
 ```sh
 pnpm --filter @netless/app-slide test

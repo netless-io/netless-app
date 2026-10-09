@@ -1,6 +1,6 @@
 # 真实多人验收
 
-使用 `pnpm --filter @netless/app-slide build` 的实际产物和 registry Slide alpha。
+使用 `pnpm --filter @netless/app-slide build` 的实际产物和 registry Slide 1.4.63 正式版。
 白板 1.5 使用 `@netless/appliance-plugin@1.1.38` 实际发布包。
 
 将测试配置放在仓库外，文件仅对本人可读：
