@@ -1,6 +1,6 @@
 # 真实多人验收
 
-使用 `pnpm --filter @netless/app-slide build` 的实际产物和 registry Slide alpha。
+使用 `pnpm --filter @netless/app-slide build` 的实际产物和 registry Slide 1.4.63 正式版。
 白板 1.5 使用 `@netless/appliance-plugin@1.1.38` 实际发布包。
 
 将测试配置放在仓库外，文件仅对本人可读：
@@ -34,11 +34,12 @@ writer-a 自动创建一个唯一路径的测试 PPT。writer-b 的 JSON 加载�
 
 观察页面、SDK Canvas 和 events.jsonl：
 
-- writer-b、reader-1/2 的 shared-scene/shared-state 写入为零。
-- 1.0 的 shared-scene 和 storagePage 跟随 writer-a，旧页 renderEnd 不引起回退；
+- 当 writer-a 发起翻页时，writer-b、reader-1/2 不回写 shared-scene/shared-state；
+  换 writer-b 发起后，共享写入应随事件作者变化。只读端始终不写入。
+- 两种白板环境都由当前发起者更新 shared-scene、共享 fullPath 和 storagePage；
   接收端加载期间标注层与 PPT 暂时不同步属于当前已接受的限制。
-- 1.5 的 shared-scene 只含创建阶段。所有端渲染完成后 localWrites 的末页、
-  pluginScene 和 page 一致；同时观察笔迹/文字层实际像素，不能只看状态字段。
+- 1.5 不再调用本地切页接口。所有端收敛后，pluginScene、原生 View、fullPath 和
+  page 一致；自动重连新 View 后仍应一致。同时观察笔迹/文字层像素，不能只看状态字段。
 - dispatch.clientId 等于该端 joinRoom uid；origin.authorId 对应事件作者的 observerId。
 - 动画、媒体和冻结/恢复后没有过时的共享状态回写；新加入端恢复最新状态。
 
@@ -52,4 +53,4 @@ writer-a 自动创建一个唯一路径的测试 PPT。writer-b 的 JSON 加载�
 
 `pnpm --filter @netless/app-slide test:browser:build` 仅编译验收页面；通过不代表房间验收通过。
 
-2026-10-08 的实际八端验收摘要见 [ACCEPTANCE.md](ACCEPTANCE.md)。
+2026-10-09 的共享 scene/重入验收及 2026-10-08 的历史八端摘要见 [ACCEPTANCE.md](ACCEPTANCE.md)。

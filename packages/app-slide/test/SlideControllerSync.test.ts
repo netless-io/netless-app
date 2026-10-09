@@ -113,10 +113,18 @@ async function main() {
   };
   c.slide.emit("renderEnd", 2, { authorId: 22 });
   await tick();
-  assert.deepEqual(local, [["/deck/2", "app-a"]]);
-  assert.equal(ends, 2, "render callbacks registered immediately");
+  assert.deepEqual(local, [], "plugin hosts also use shared scene synchronization");
+  assert.deepEqual(sceneWrites, ["/deck/3"], "readonly receivers never publish scenes");
+  writable = true;
+  c.slide.emit("renderEnd", 2, received);
+  await tick();
+  assert.deepEqual(sceneWrites, ["/deck/3", "/deck/2"]);
+  assert.deepEqual(local, [], "the initiating writer never calls the local plugin API");
+  assert.equal(ends, 3, "render callbacks registered immediately");
   await c.destroy();
-  console.log("Controller: suid/clientId, transport author, state ownership and local view passed");
+  console.log(
+    "Controller: suid/clientId, transport author, state ownership and shared scenes passed"
+  );
 }
 main().catch(error => {
   console.error(error);

@@ -18,6 +18,7 @@ function harness(
     creator?: boolean;
     plugin?: any;
     failOnce?: "remove" | "put";
+    switchScene?: (path: string) => Promise<void>;
   } = {}
 ) {
   const scenes = new Set(["/deck/1", "/deck/2", "/deck/3"]);
@@ -57,6 +58,7 @@ function harness(
     getWindowManager: () => ({ _appliancePlugin: options.plugin }),
     async setScenePath(path: string) {
       writes.push(path);
+      await options.switchScene?.(path);
     },
   };
   const slide: any = { slideCount: 3, slideState: { currentSlideIndex: 1 } };
@@ -157,7 +159,7 @@ async function main() {
         ["/deck/2"],
         "retry initializes the latest rendered page"
       );
-      assert.deepEqual(local, withPlugin ? [["/deck/2", "app-a"]] : []);
+      assert.deepEqual(local, [], "scene initialization never calls the local plugin API");
       assert.deepEqual(recovering.attempts, { remove: 2, put: failOnce === "put" ? 2 : 1 });
       const completedAttempts = { ...recovering.attempts };
       recovering.sync.renderEnd(3);
@@ -179,34 +181,30 @@ async function main() {
         },
       },
     });
-    h.sync.renderEnd(3, b);
+    h.sync.renderEnd(3, a);
     await tick();
-    h.sync.renderEnd(2);
+    h.sync.renderEnd(2, b);
     await tick();
-    assert.deepEqual(calls, [
-      ["/deck/3", "app-a"],
-      ["/deck/2", "app-a"],
-    ]);
-    assert.deepEqual(h.writes, []);
+    h.sync.renderEnd(1);
+    await tick();
+    assert.deepEqual(calls, []);
+    assert.deepEqual(h.writes, writable ? ["/deck/3"] : []);
     h.sync.destroy();
   }
   const calls: string[] = [];
   let release!: () => void;
   const serial = harness({
-    plugin: {
-      currentManager: { viewContainerManager: { getView: () => ({}) } },
-      async setViewLocalScenePathChange(path: string) {
-        calls.push(path);
-        if (path === "/deck/1")
-          await new Promise<void>(r => {
-            release = r;
-          });
-      },
+    async switchScene(path: string) {
+      calls.push(path);
+      if (path === "/deck/1")
+        await new Promise<void>(r => {
+          release = r;
+        });
     },
   });
-  serial.sync.renderEnd(1);
-  serial.sync.renderEnd(2);
-  serial.sync.renderEnd(3);
+  serial.sync.renderEnd(1, a);
+  serial.sync.renderEnd(2, a);
+  serial.sync.renderEnd(3, a);
   release();
   await tick();
   assert.deepEqual(calls, ["/deck/1", "/deck/3"]);
@@ -214,74 +212,48 @@ async function main() {
   let rejectFirst!: (error: Error) => void;
   const afterFailure: string[] = [];
   const failing = harness({
-    plugin: {
-      currentManager: { viewContainerManager: { getView: () => ({}) } },
-      async setViewLocalScenePathChange(path: string) {
-        afterFailure.push(path);
-        if (path === "/deck/1")
-          await new Promise<void>((_resolve, reject) => {
-            rejectFirst = reject;
-          });
-      },
+    async switchScene(path: string) {
+      afterFailure.push(path);
+      if (path === "/deck/1")
+        await new Promise<void>((_resolve, reject) => {
+          rejectFirst = reject;
+        });
     },
   });
-  failing.sync.renderEnd(1);
-  failing.sync.renderEnd(3);
+  failing.sync.renderEnd(1, a);
+  failing.sync.renderEnd(3, a);
   rejectFirst(new Error("old switch failed"));
   await tick();
   assert.deepEqual(afterFailure, ["/deck/1", "/deck/3"]);
   assert.equal(failing.errors.length, 1, "failed old switch must not discard new completed page");
   failing.sync.destroy();
 
-  const timers = new Map<number, () => void>();
-  const oldSet = global.setTimeout,
-    oldClear = global.clearTimeout;
-  let id = 0;
-  global.setTimeout = ((fn: () => void) => {
-    timers.set(++id, fn);
-    return id;
-  }) as any;
-  global.clearTimeout = ((key: number) => {
-    timers.delete(key);
-  }) as any;
-  try {
-    let mounted = false;
-    const local: string[] = [];
-    const late = harness({
-      writable: false,
-      plugin: {
-        currentManager: { viewContainerManager: { getView: () => (mounted ? {} : undefined) } },
-        async setViewLocalScenePathChange(path: string) {
-          local.push(path);
-        },
-      },
-    });
-    late.sync.renderEnd(1);
-    late.sync.renderEnd(3);
-    assert.equal(timers.size, 1);
-    mounted = true;
-    const fn = [...timers.values()][0];
-    timers.clear();
-    fn();
-    await tick();
-    assert.deepEqual(local, ["/deck/3"]);
-    mounted = false;
-    late.sync.renderEnd(2);
-    late.sync.destroy();
-    assert.equal(timers.size, 0);
-    const unsupported = harness({ plugin: {} });
-    unsupported.sync.renderEnd(3, a);
-    await tick();
-    assert.equal(unsupported.errors.length, 1);
-    assert.deepEqual(unsupported.writes, []);
-  } finally {
-    global.setTimeout = oldSet;
-    global.clearTimeout = oldClear;
-  }
+  const unavailablePlugin = harness({ plugin: {} });
+  unavailablePlugin.sync.renderEnd(3, a);
+  await tick();
+  assert.deepEqual(unavailablePlugin.writes, ["/deck/3"]);
+  assert.deepEqual(unavailablePlugin.errors, []);
+  unavailablePlugin.sync.destroy();
+
+  let finishSwitch!: () => void;
+  const disposed = harness({
+    async switchScene() {
+      await new Promise<void>(resolve => {
+        finishSwitch = resolve;
+      });
+    },
+  });
+  disposed.sync.renderEnd(1, a);
+  disposed.sync.renderEnd(2, a);
+  disposed.sync.destroy();
+  finishSwitch();
+  await tick();
+  disposed.sync.renderEnd(3, a);
+  assert.deepEqual(disposed.writes, ["/deck/1"], "destroy discards queued and later renders");
   [sender, slow, reader, creator, restored, partial, follower, serial].forEach(h =>
     h.sync.destroy()
   );
-  console.log("SceneSync ownership, initialization, local switching and lifecycle passed");
+  console.log("SceneSync shared ownership, initialization, coalescing and lifecycle passed");
 }
 main().catch(error => {
   console.error(error);
