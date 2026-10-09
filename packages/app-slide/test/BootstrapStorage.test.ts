@@ -29,6 +29,7 @@ function fixture(initial: any = snapshot(2), isAddApp = false) {
   const received: any[] = [];
   const writes: any[] = [];
   const errors: unknown[] = [];
+  const lifecycle: string[] = [];
   const storageListeners = new Set<() => void>();
   let receive!: (event: any) => void;
   let writable = false;
@@ -109,6 +110,7 @@ function fixture(initial: any = snapshot(2), isAddApp = false) {
     received,
     writes,
     errors,
+    lifecycle,
     storageListeners,
     maxActiveRestores: () => maxActiveRestores,
     makeWritable: () => {
@@ -129,6 +131,24 @@ function fixture(initial: any = snapshot(2), isAddApp = false) {
     },
     unrelatedSignal() {
       receive({ payload: { type: "unrelated" } });
+    },
+    installLifecycle(style: "promise" | "callback" = "callback") {
+      c.slide.notifyFrameResize = noop;
+      c.slide.frozen = async () => {
+        lifecycle.push("frozen");
+      };
+      c.slide.release = (
+        onRestored: () => void,
+        onCreated: () => void,
+        onError: (error: unknown) => void
+      ) => {
+        lifecycle.push("release");
+        onCreated?.();
+        // Model the engine's own asynchronous frozen-state restoration.
+        const restoring = c.slide.setSlideState(snapshot(1));
+        if (style === "promise") return restoring;
+        void restoring.then(onRestored, onError);
+      };
     },
   };
 }
@@ -273,7 +293,180 @@ async function main() {
     );
     await f.c.destroy();
   }
-  console.log("Bootstrap: late storage, latest snapshot, FIFO handoff, errors and cleanup passed");
+  for (const style of ["promise", "callback"] as const) {
+    const f = fixture();
+    f.installLifecycle(style);
+    const freezing = f.c.freeze();
+    f.update(snapshot(3));
+    await tick();
+    assert.deepEqual(f.lifecycle, [], "freeze waits for the running bootstrap restore");
+    f.restores[0].done.resolve();
+    await freezing;
+    assert.equal(f.restores.length, 1, "pending storage cannot restore a frozen Player");
+    f.update(snapshot(4));
+    const unfreezing = f.c.unfreeze();
+    await tick();
+    assert.deepEqual(f.lifecycle, ["frozen", "release"]);
+    assert.deepEqual(
+      f.restores.map(r => r.state.currentSlideIndex),
+      [2, 1]
+    );
+    f.signal(5);
+    f.update(snapshot(6));
+    f.signal(7);
+    assert.equal(f.storageListeners.size, 0);
+    assert.deepEqual(f.received, [], "creation alone does not release buffered signals");
+    f.restores[1].done.resolve();
+    await tick();
+    assert.deepEqual(
+      f.restores.map(r => r.state.currentSlideIndex),
+      [2, 1, 6]
+    );
+    assert.deepEqual(f.received, [], "signals also wait for the latest storage restore");
+    f.restores[2].done.resolve();
+    await unfreezing;
+    assert.equal(f.maxActiveRestores(), 1, `${style}: engine and app restores never overlap`);
+    assert.deepEqual(
+      f.received.map(e => e.index),
+      [5, 7]
+    );
+    assert.equal(f.received[0].authorId, 11);
+    assert.equal(f.received[0].clientId, "writer");
+    assert.equal(f.storageListeners.size, 0, "unfreeze never reopens the storage listener");
+    assert.deepEqual(f.writes, []);
+    await f.c.destroy();
+  }
+  {
+    const f = fixture();
+    f.installLifecycle();
+    f.restores[0].done.resolve();
+    await tick();
+    f.signal(3);
+    await f.c.freeze();
+    f.update(snapshot(2));
+    const first = f.c.unfreeze();
+    const second = f.c.unfreeze();
+    await tick();
+    assert.equal(f.lifecycle.filter(e => e === "release").length, 1);
+    f.restores[1].done.resolve();
+    await tick();
+    assert.deepEqual(
+      f.restores.map(r => r.state.currentSlideIndex),
+      [2, 1, 2],
+      "unchanged snapshot is forced after Player recreation"
+    );
+    f.restores[2].done.resolve();
+    await Promise.all([first, second]);
+    assert.equal(f.maxActiveRestores(), 1);
+    assert.equal(
+      f.lifecycle.filter(e => e === "release").length,
+      1,
+      "direct duplicate unfreeze calls share serialized completion"
+    );
+    await f.c.destroy();
+  }
+  {
+    const f = fixture();
+    f.installLifecycle();
+    f.restores[0].done.resolve();
+    await tick();
+    await f.c.freeze();
+    const releasing = f.c.unfreeze();
+    const failure = assert.rejects(releasing, /release failed/);
+    await tick();
+    f.signal(3);
+    f.restores[1].done.reject(new Error("release failed"));
+    await failure;
+    assert.deepEqual(f.received, [], "failed release keeps signals out of an unknown Player");
+    const retry = f.c.unfreeze();
+    await tick();
+    f.restores[2].done.resolve();
+    await tick();
+    f.restores[3].done.resolve();
+    await retry;
+    assert.deepEqual(
+      f.received.map(e => e.index),
+      [3],
+      "retry drains buffered signals"
+    );
+    assert.equal(f.maxActiveRestores(), 1);
+    await f.c.destroy();
+  }
+  {
+    const f = fixture();
+    f.installLifecycle();
+    const freezing = f.c.freeze();
+    await f.c.destroy();
+    await freezing;
+    assert.deepEqual(f.lifecycle, [], "destroy terminates the wait for a bootstrap restore");
+    f.restores[0].done.resolve();
+    await tick();
+  }
+  {
+    const f = fixture();
+    f.installLifecycle();
+    f.restores[0].done.resolve();
+    await tick();
+    await f.c.freeze();
+    const releasing = f.c.unfreeze();
+    await tick();
+    f.signal(3);
+    await f.c.destroy();
+    await releasing;
+    f.restores[1].done.resolve();
+    await tick();
+    assert.equal(f.restores.length, 2, "destroy never applies the post-release snapshot");
+    assert.deepEqual(f.received, []);
+  }
+  {
+    const f = fixture(null);
+    f.installLifecycle();
+    f.c.ready = false;
+    await f.c.freeze();
+    f.update(snapshot(2));
+    assert.equal(f.restores.length, 1, "a deferred freeze cannot block the first render/readiness");
+    f.restores[0].done.resolve();
+    await tick();
+    f.c.ready = true;
+    await f.c.freeze();
+    assert.deepEqual(f.lifecycle, ["frozen"]);
+    await f.c.destroy();
+  }
+  {
+    const f = fixture();
+    f.installLifecycle();
+    f.restores[0].done.resolve();
+    await tick();
+    await f.c.freeze();
+    const releasing = f.c.unfreeze();
+    await tick();
+    f.restores[1].done.resolve();
+    await tick();
+    const freezing = f.c.freeze();
+    f.update(snapshot(3));
+    f.signal(4);
+    await tick();
+    assert.deepEqual(f.lifecycle, ["frozen", "release"], "refreeze waits for post-release storage");
+    f.restores[2].done.resolve();
+    await Promise.all([releasing, freezing]);
+    assert.deepEqual(f.received, [], "refreeze retains signals for the next activation");
+    assert.deepEqual(f.lifecycle, ["frozen", "release", "frozen"]);
+    const retry = f.c.unfreeze();
+    await tick();
+    f.restores[3].done.resolve();
+    await tick();
+    f.restores[4].done.resolve();
+    await retry;
+    assert.equal(f.maxActiveRestores(), 1);
+    assert.deepEqual(
+      f.received.map(e => e.index),
+      [4]
+    );
+    await f.c.destroy();
+  }
+  console.log(
+    "Bootstrap: storage/lifecycle serialization, FIFO handoff, errors and cleanup passed"
+  );
 }
 main().catch(error => {
   console.error(error);

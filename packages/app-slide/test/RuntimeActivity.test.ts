@@ -234,11 +234,25 @@ async function run() {
     await flush();
     assert.deepEqual(events, ["destroy:start"], "new player waits for old player destruction");
     destroyed.resolve();
-    await Promise.all([blurring, focusing]);
-    assert.deepEqual(events, ["destroy:start", "destroy:done", "create"]);
-    assert.deepEqual(next.calls, [], "storage restoration does not block focus completion");
-    finishRestore();
+    let focused = false;
+    void focusing.then(() => {
+      focused = true;
+    });
+    await blurring;
     await flush();
+    assert.deepEqual(events, ["destroy:start", "destroy:done", "create"]);
+    assert.equal(focused, false, "focus completion waits for full state restoration");
+    assert.deepEqual(next.calls, []);
+    await enqueueSlideWebGLTransition(() => {
+      events.push("other-app:create");
+    });
+    assert.equal(
+      events.at(-1),
+      "other-app:create",
+      "restoration does not hold the global WebGL queue"
+    );
+    finishRestore();
+    await focusing;
     assert.deepEqual(next.calls, ["resize", "state"]);
   }
   {
@@ -257,9 +271,10 @@ async function run() {
       });
     };
     next.controller.isFrozen = true;
-    next.controller.slide.release = (_restored: () => void, onPlayerCreated: () => void) => {
+    next.controller.slide.release = (restored: () => void, onPlayerCreated: () => void) => {
       events.push("player:created");
       onPlayerCreated();
+      restored();
     };
     const blurring = old.controller.setFocusedState(false);
     const focusing = next.controller.setFocusedState(true);
