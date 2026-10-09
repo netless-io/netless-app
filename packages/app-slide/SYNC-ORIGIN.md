@@ -40,7 +40,8 @@ FIFO 转交信令，保留 clientId 与传输 authorId。
    的资源操作可以继续；当前 alpha 使用 Promise，新版引擎使用独立完成回调。
 4. Player 恢复后读取最新 storage，强制送入同一个快照队列，即使内容与上次相同。
    快照恢复完成后转交缓存信令；解冻不重新开启已经关闭的 storage 监听。
-5. 重复 freeze/unfreeze 串行执行。release 失败保持信令暂停，后续激活可重试。
+5. 重复 freeze/unfreeze 串行执行。release 或解冻后的快照恢复失败保持信令暂停，
+   后续激活可重试。解冻中途失活也保留未完成恢复，重新激活后再恢复快照与信令。
    destroy 清理监听、快照和信令，并终止生命周期等待。
 
 新版 Slide 的 release 还需保证已有 Player 时调用完成回调，内部恢复失败时调用 onError；

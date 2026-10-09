@@ -464,6 +464,75 @@ async function main() {
     );
     await f.c.destroy();
   }
+  {
+    const f = fixture();
+    f.installLifecycle();
+    f.restores[0].done.resolve();
+    await tick();
+    await f.c.freeze();
+    const releasing = f.c.unfreeze();
+    const failure = assert.rejects(releasing, /post-release snapshot failed/);
+    await tick();
+    f.restores[1].done.resolve();
+    await tick();
+    f.signal(3);
+    f.restores[2].done.reject(new Error("post-release snapshot failed"));
+    await failure;
+    f.signal(4);
+    assert.deepEqual(
+      f.received,
+      [],
+      "failed post-release storage cannot release queued or new signals"
+    );
+    f.update(snapshot(4));
+    const retry = f.c.unfreeze();
+    await tick();
+    f.restores[3].done.resolve();
+    await tick();
+    assert.equal(f.restores[4].state.currentSlideIndex, 4);
+    f.restores[4].done.resolve();
+    await retry;
+    assert.deepEqual(
+      f.received.map(e => e.index),
+      [3, 4]
+    );
+    assert.equal(f.maxActiveRestores(), 1);
+    await f.c.destroy();
+  }
+  {
+    const f = fixture();
+    f.installLifecycle();
+    let active = true;
+    f.c.context.getWindowManager = () => ({ lazySetupInMaximizedMode: true });
+    f.c.context.getRuntimeActivity = () => ({ active });
+    f.restores[0].done.resolve();
+    await tick();
+    await f.c.freeze();
+    const releasing = f.c.unfreeze();
+    await tick();
+    active = false;
+    f.signal(3);
+    f.update(snapshot(3));
+    f.restores[1].done.resolve();
+    await releasing;
+    assert.deepEqual(f.received, [], "inactive host retains signals");
+    assert.equal(f.restores.length, 2, "inactive host skips post-release snapshots");
+    active = true;
+    const activation = f.c.reconcileActivity();
+    await tick();
+    f.restores[2].done.resolve();
+    await tick();
+    assert.equal(f.restores[3].state.currentSlideIndex, 3);
+    f.restores[3].done.resolve();
+    await activation;
+    assert.deepEqual(
+      f.received.map(e => e.index),
+      [3],
+      "reactivation without a separate freeze completes recovery and drains signals"
+    );
+    assert.equal(f.maxActiveRestores(), 1);
+    await f.c.destroy();
+  }
   console.log(
     "Bootstrap: storage/lifecycle serialization, FIFO handoff, errors and cleanup passed"
   );

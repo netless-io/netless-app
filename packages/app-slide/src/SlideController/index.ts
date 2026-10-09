@@ -365,13 +365,13 @@ export class SlideControllerBase {
     this.startStorageRestore();
   }
 
-  private startStorageRestore() {
+  private startStorageRestore(requireSuccess = false) {
     if (!this.restoringStorage && !this.storageBlocked && !this.destroyed) {
-      this.storageRestoreTask = this.restoreStorageStates();
+      this.storageRestoreTask = this.restoreStorageStates(requireSuccess);
     }
   }
 
-  private async restoreStorageStates() {
+  private async restoreStorageStates(requireSuccess: boolean) {
     this.restoringStorage = true;
     try {
       while (this.pendingStorageState && !this.storageBlocked && !this.destroyed) {
@@ -384,6 +384,9 @@ export class SlideControllerBase {
           // Permit the same snapshot to be retried on a later storage update.
           if (!this.pendingStorageState) this.storageSnapshotKey = undefined;
           logger.error("[Slide] bootstrap storage sync failed", this.context.appId, error);
+          // Activation must fail if the recreated Player cannot apply the
+          // latest snapshot. Startup still allows a later live signal to heal it.
+          if (requireSuccess) throw error;
         }
       }
     } finally {
@@ -651,7 +654,9 @@ export class SlideControllerBase {
       if (this.destroyed) return;
       if (this.ready && this.invisibleBehavior === "frozen") {
         this.storageBlocked = true;
-        await Promise.race([this.storageRestoreTask, this.destroyedSignal]);
+        // Wait for settlement without inheriting a previous activation failure;
+        // the next lifecycle operation is how the host retries that failure.
+        await Promise.race([this.storageRestoreTask?.catch(noop), this.destroyedSignal]);
         if (this.destroyed) return;
       }
       await run();
@@ -782,13 +787,19 @@ export class SlideControllerBase {
           // Only player creation holds the global WebGL queue. Full restoration
           // holds this controller's state queue, not other Apps' resource work.
           await Promise.all([created, Promise.race([restored, this.destroyedSignal])]);
-          if (this.destroyed || (this.isLazySetupMode() && !this.shouldBeActive())) return;
+          if (this.destroyed) return;
+          if (this.isLazySetupMode() && !this.shouldBeActive()) {
+            // The Player exists, but activation did not apply the latest snapshot.
+            // A later activation must retry even without an intervening freeze.
+            this.resourceStateUnknown = true;
+            return;
+          }
           this.slide.notifyFrameResize();
           const state = this.context.storage.state.state;
           if (state) this.queueStorageState(state, true);
           // Recreated Players need the latest snapshot even if its JSON is unchanged.
           this.storageBlocked = false;
-          this.startStorageRestore();
+          this.startStorageRestore(true);
           await Promise.race([this.storageRestoreTask, this.destroyedSignal]);
         } else {
           this.slide.resume();
@@ -800,6 +811,7 @@ export class SlideControllerBase {
       this.resourceStateUnknown = false;
     } catch (error) {
       this.resourceStateUnknown = true;
+      if (this.invisibleBehavior === "frozen") this.storageBlocked = true;
       this.isFrozen = previousIsFrozen;
       this._toFreeze = previousToFreeze;
       throw error;
