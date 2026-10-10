@@ -4,7 +4,7 @@
 `renderEnd(index, origin)` 和 `stateChange(state, origin)`，其中 origin
 包含可选的 clientId 和 authorId。package.json 和 pnpm-lock.yaml 已同步更新。
 构建入口会检查该能力，防止把旧引擎与新的写入规则打包到一起。
-app-slide 候选版本为 `0.2.107-alpha.0`；用户要求本轮仅在本地测试，暂不发布。
+app-slide 正式版本 `0.2.107` 已发布至 npm latest，发布包内容已与本地验证产物核对一致。
 
 ## 行为
 
