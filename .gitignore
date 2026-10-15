@@ -4,3 +4,5 @@ dist
 *.local
 .idea
 packages/app-slide/test/.cache
+
+packages/app-slide/test/browser-media-e2e/.results

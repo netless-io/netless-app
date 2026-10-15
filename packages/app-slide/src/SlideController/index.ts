@@ -499,6 +499,7 @@ export class SlideControllerBase {
       urlInterrupter: options.urlInterrupter,
       resourceTimeout: options.resourceTimeout,
       rtcAudio: options.rtcAudio,
+      enableWebAudio: options.enableWebAudio,
       useLocalCache: options.useLocalCache,
       logger: {
         ...options.logger,
