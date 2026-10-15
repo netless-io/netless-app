@@ -276,8 +276,13 @@ setInterval(() => {
   nextStep() {
     return engine().nextStep();
   },
-  async close() {
-    await room.disconnect();
-  },
+  close: disconnect,
 };
-addEventListener("pagehide", () => void room?.disconnect());
+let disconnectPromise: Promise<void> | undefined;
+function disconnect() {
+  if (!disconnectPromise) {
+    disconnectPromise = room.phase === "disconnected" ? Promise.resolve() : room.disconnect();
+  }
+  return disconnectPromise;
+}
+addEventListener("pagehide", () => void disconnect());

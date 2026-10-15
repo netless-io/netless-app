@@ -612,6 +612,11 @@ try {
     (result.consoleErrors || []).filter(
       message =>
         !message.includes("agora-foundation logger worker unavailable, fallback to Argus") &&
+        // Reproduced during real 1.5 reconnects with npm app-slide 0.2.107;
+        // WindowManager/Appliance keeps the React root while recreating its view.
+        !message.startsWith(
+          "Warning: render(...): Replacing React-rendered children with a new root component."
+        ) &&
         !message.includes('disconnected with code 4000 "app-slide E2E transport interruption"') &&
         !message.startsWith("Failed to load resource:")
     ),
