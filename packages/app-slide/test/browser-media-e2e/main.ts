@@ -17,7 +17,7 @@ const appBundleUrl = "/app/main.es.js";
 const bundle = registration === "esm" ? await import(/* @vite-ignore */ appBundleUrl) : undefined;
 const errors: string[] = [];
 const signals: { type: string; id?: string; authorId?: number }[] = [];
-let room: any, manager: any, appId: string, observedController: any, observedProxy: any;
+let appId: string, observedController: any, observedProxy: any;
 let sceneWrites = 0,
   stateWrites = 0,
   epoch = 0,
@@ -184,7 +184,7 @@ const sdk = new WhiteWebSdk({
   region: config.region,
   useMobXState: true,
 });
-room = await sdk.joinRoom({
+const room = await sdk.joinRoom({
   uuid: config.uuid,
   roomToken: config.roomToken,
   uid: `${config.runId}-${mode}-${backend}-${role}`,
@@ -193,7 +193,7 @@ room = await sdk.joinRoom({
   disableMagixEventDispatchLimit: true,
   invisiblePlugins: mode === "1.5" ? [WindowManager, ApplianceMultiPlugin] : [WindowManager],
 });
-manager = await WindowManager.mount({
+const manager = await WindowManager.mount({
   room,
   container: document.querySelector("#board")!,
   chessboard: false,
