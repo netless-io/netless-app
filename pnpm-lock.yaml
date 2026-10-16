@@ -61,6 +61,9 @@ importers:
       husky:
         specifier: ^7.0.4
         version: 7.0.4
+      playwright:
+        specifier: 1.62.1
+        version: 1.62.1
       prettier:
         specifier: ^2.6.2
         version: 2.8.8
@@ -257,8 +260,8 @@ importers:
         specifier: 1.1.38
         version: 1.1.38(@netless/window-manager@1.0.23(jspdf@2.5.1)(white-web-sdk@2.16.58))(white-web-sdk@2.16.58)
       '@netless/slide':
-        specifier: 1.4.63
-        version: 1.4.63
+        specifier: 1.4.64-alpha.3
+        version: 1.4.64-alpha.3
       '@types/color-string':
         specifier: ^1.5.2
         version: 1.5.5
@@ -526,8 +529,8 @@ packages:
   '@netless/canvas-polyfill@0.0.4':
     resolution: {integrity: sha512-7NzsJrba0R/mq/l10SkIZQwbrNVJyPxZYrjK6xL3Ts732iWAVuS2UB0u3s6iGeUVcqV39A679yva8APWRl4M0A==}
 
-  '@netless/slide@1.4.63':
-    resolution: {integrity: sha512-DH7puPBgMB3bkHWp0DtLGFEWYtkwHmZ7OsT8r9iVUzY65NeMKATWxtqo4ZlGUViWoFKZnyx9LZl6UE2LDS8D/A==}
+  '@netless/slide@1.4.64-alpha.3':
+    resolution: {integrity: sha512-eR5EXc6YDBitcXaXPG+NVlwC3ruLFX25LxTKq5IZwF3KaskO7zQkVFCFhkak/S0Jzq8RuUfABILWPUsbApzpLg==}
 
   '@netless/telebox-insider@0.2.28':
     resolution: {integrity: sha512-UJDCm/f7yjiIaWqbS20LDXfAG6RUxsXSktPDzmEr51MgsevpQ3u241hVlyOpKAXSeTR6B3ioRAKcgflOw5JvTQ==}
@@ -1538,6 +1541,11 @@ packages:
   fs.realpath@1.0.0:
     resolution: {integrity: sha512-OO0pH2lK6a0hZnAdau5ItzHPI6pUlvI7jMVnxUQRtw4owF2wk8lOSabtGDCTP4Ggrg2MbGnWO9X8K1t4+fGMDw==}
 
+  fsevents@2.3.2:
+    resolution: {integrity: sha512-xiqMQR4xAeHTuB9uWm+fFRcIOgKBMiOBP+eXiyT7jsgVCq1bkVygt00oASowB7EdtpOHaaPgKt812P9ab+DDKA==}
+    engines: {node: ^8.16.0 || ^10.6.0 || >=11.0.0}
+    os: [darwin]
+
   fsevents@2.3.3:
     resolution: {integrity: sha512-5xoDfX+fL7faATnagmWPpbFtwh/R77WmMMqqHGS65C3vvB0YHrgF+B1YmZ3441tMj5n63k0212XNoJwzlhffQw==}
     engines: {node: ^8.16.0 || ^10.6.0 || >=11.0.0}
@@ -2041,6 +2049,16 @@ packages:
 
   pkcs7@1.0.4:
     resolution: {integrity: sha512-afRERtHn54AlwaF2/+LFszyAANTCggGilmcmILUzEjvs3XgFZT+xE6+QWQcAGmu4xajy+Xtj7acLOPdx5/eXWQ==}
+    hasBin: true
+
+  playwright-core@1.62.1:
+    resolution: {integrity: sha512-wPYSwEBJY9GHraISXqyqtx0na0LpO3XEX7jNDhntbex7tzUS7kLnZsOlFruFJB4Hi/rhDMjXGqHewDZ68nYZVw==}
+    engines: {node: '>=20'}
+    hasBin: true
+
+  playwright@1.62.1:
+    resolution: {integrity: sha512-0M+L3LAD8/nm554LOla9Ayx0j0tmFZ0FBcoQ7F1VuVHpM/XpiC8RcDzBQB8W5+hA8L22THxELzeF+2WcUzvcLg==}
+    engines: {node: '>=20'}
     hasBin: true
 
   plyr@3.8.4:
@@ -2877,7 +2895,7 @@ snapshots:
 
   '@netless/canvas-polyfill@0.0.4': {}
 
-  '@netless/slide@1.4.63':
+  '@netless/slide@1.4.64-alpha.3':
     dependencies:
       '@juggle/resize-observer': 3.4.0
       '@types/lodash': 4.17.23
@@ -3832,6 +3850,9 @@ snapshots:
 
   fs.realpath@1.0.0: {}
 
+  fsevents@2.3.2:
+    optional: true
+
   fsevents@2.3.3:
     optional: true
 
@@ -4301,6 +4322,14 @@ snapshots:
   pkcs7@1.0.4:
     dependencies:
       '@babel/runtime': 7.28.4
+
+  playwright-core@1.62.1: {}
+
+  playwright@1.62.1:
+    dependencies:
+      playwright-core: 1.62.1
+    optionalDependencies:
+      fsevents: 2.3.2
 
   plyr@3.8.4:
     dependencies:
