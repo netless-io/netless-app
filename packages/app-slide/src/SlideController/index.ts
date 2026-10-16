@@ -753,7 +753,8 @@ export class SlideControllerBase {
                   this.slide.release as (
                     onRestored?: () => void,
                     onPlayerCreated?: () => void,
-                    onError?: (error: unknown) => void
+                    onError?: (error: unknown) => void,
+                    getCurrentState?: () => SlideState | undefined
                   ) => void | Promise<void>
                 ).call(
                   this.slide,
@@ -764,7 +765,8 @@ export class SlideControllerBase {
                   error => {
                     rejectRestored(error);
                     reject(error);
-                  }
+                  },
+                  () => (this.destroyed ? undefined : this.context.storage.state.state || undefined)
                 );
                 // Published alpha returns a full-restoration Promise; newer
                 // engines report player creation and restoration separately.

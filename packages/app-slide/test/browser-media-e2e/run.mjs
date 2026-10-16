@@ -5,23 +5,36 @@ import assert from "node:assert/strict";
 import crypto from "node:crypto";
 import { createRequire } from "node:module";
 import { fileURLToPath } from "node:url";
+import { installNativeProbe } from "./native-probe.mjs";
+import { extendedCoverage } from "./coverage.mjs";
+import { boundaryCoverage } from "./boundaries.mjs";
 
 const root = path.dirname(fileURLToPath(import.meta.url));
 const project = path.resolve(root, "../../../..");
 const require = createRequire(path.join(project, "package.json"));
-const { createServer } = require("vite");
-const { chromium } = process.env.APP_SLIDE_PLAYWRIGHT
+const { build } = require("vite");
+const engines = process.env.APP_SLIDE_PLAYWRIGHT
   ? createRequire(import.meta.url)(process.env.APP_SLIDE_PLAYWRIGHT)
   : require("playwright");
+const browserEngine = process.env.APP_SLIDE_E2E_BROWSER || "chromium";
+const blockedAutoplay = process.env.APP_SLIDE_E2E_AUTOPLAY === "blocked";
+const diagnostic = process.env.APP_SLIDE_E2E_DIAGNOSTIC;
 const output = path.resolve(
-  process.env.APP_SLIDE_E2E_OUTPUT || path.join(root, ".results", String(Date.now()))
+  (process.env.APP_SLIDE_E2E_OUTPUT || path.join(root, ".results", String(Date.now()))) +
+    (browserEngine !== "chromium"
+      ? "/" + browserEngine
+      : blockedAutoplay
+      ? "/autoplay-blocked"
+      : "")
 );
 let config;
 const pkg = JSON.parse(
   await fs.readFile(path.join(project, "packages/app-slide/package.json"), "utf8")
 );
 const leaf = createRequire(path.join(project, "packages/app-slide/package.json"));
-const slideEntry = leaf.resolve("@netless/slide");
+const slideEntry = process.env.SLIDE_CANDIDATE_DIR
+  ? path.join(process.env.SLIDE_CANDIDATE_DIR, "lib/Slide.js")
+  : leaf.resolve("@netless/slide");
 const slidePkg = JSON.parse(
   await fs.readFile(path.join(path.dirname(slideEntry), "../package.json"), "utf8")
 );
@@ -39,10 +52,14 @@ const result = {
   cleanup: [],
   browserErrors: [],
   notRun: [],
+  browserEngine,
+  blockedAutoplay,
+  scope: diagnostic ? "diagnostic/" + diagnostic : "full",
+  matrixComplete: false,
 };
 const rooms = new Map(),
   runId = "app-media-" + Date.now();
-let vite, server, browser, origin;
+let server, browser, origin;
 const appDist = path.join(project, "packages/app-slide/dist");
 
 async function api(endpoint, method = "GET", body) {
@@ -66,9 +83,9 @@ async function api(endpoint, method = "GET", body) {
     }
   }
 }
-function fixture(index) {
+function fixture(index, scenario = "") {
   const type = index === 1 ? "video" : "audio";
-  return {
+  const data = {
     type: "Stage",
     width: 640,
     height: 360,
@@ -95,11 +112,26 @@ function fixture(index) {
     smartArtShapeList: [],
     coloredSheets: index === 3 ? [] : ["sheet"],
   };
+  if (scenario.includes("cut") && data.children[0])
+    data.children[0].media.cut = { start: 3, end: 15 };
+  if (scenario.includes("multiple") && data.children[0]) {
+    data.children[0].width = 270;
+    const second = structuredClone(data.children[0]);
+    second.id += "-second";
+    second.position.x = 330;
+    second.media.src = origin + "/fixture/second." + (type === "video" ? "mp4" : "mp3");
+    data.children.push(second);
+  }
+  if (scenario.includes("failure") && data.children[0]) {
+    data.children[0].media.src = origin + "/fixture/retry." + (type === "video" ? "mp4" : "mp3");
+  }
+  return data;
 }
 async function start() {
   await fs.mkdir(output, { recursive: true });
   server = http.createServer();
-  vite = await createServer({
+  const hostDist = path.join(output, "host");
+  await build({
     root,
     configFile: false,
     define: { "import.meta.env.DEV": "false" },
@@ -112,7 +144,13 @@ async function start() {
         ),
       },
     },
-    server: { middlewareMode: true, hmr: false, fs: { allow: [project, appDist] } },
+    build: {
+      target: "esnext",
+      outDir: hostDist,
+      emptyOutDir: true,
+      minify: false,
+      sourcemap: false,
+    },
   });
   server.on("request", async (req, res) => {
     try {
@@ -124,12 +162,7 @@ async function start() {
       }
       if (url.pathname === "/") {
         res.setHeader("Content-Type", "text/html; charset=utf-8");
-        return res.end(
-          await vite.transformIndexHtml(
-            "/",
-            await fs.readFile(path.join(root, "index.html"), "utf8")
-          )
-        );
+        return res.end(await fs.readFile(path.join(hostDist, "index.html")));
       }
       if (url.pathname === "/__config") {
         const room = rooms.get(
@@ -156,7 +189,7 @@ async function start() {
       const index = url.pathname.match(/\/slide-([123])\.json$/)?.[1];
       if (url.pathname.startsWith("/fixture/") && index) {
         res.setHeader("Content-Type", "application/json");
-        return res.end(JSON.stringify(fixture(Number(index))));
+        return res.end(JSON.stringify(fixture(Number(index), url.pathname)));
       }
       if (url.pathname.startsWith("/fixture/") && url.pathname.endsWith("/sheet.json")) {
         res.setHeader("Content-Type", "application/json");
@@ -179,13 +212,29 @@ async function start() {
         res.setHeader("Content-Type", "image/png");
         return res.end(
           Buffer.from(
-            "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+a1z8AAAAASUVORK5CYII=",
+            "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAC0lEQVR4nGP4DwQACfsD/fteaysAAAAASUVORK5CYII=",
             "base64"
           )
         );
       }
-      if (["/fixture/media.mp4", "/fixture/media.mp3"].includes(url.pathname)) {
-        const data = await fs.readFile(path.join(root, "fixtures", path.basename(url.pathname)));
+      if (
+        [
+          "/fixture/media.mp4",
+          "/fixture/media.mp3",
+          "/fixture/retry.mp4",
+          "/fixture/retry.mp3",
+          "/fixture/second.mp4",
+          "/fixture/second.mp3",
+        ].includes(url.pathname)
+      ) {
+        if (url.pathname.includes("/retry.") && result.injectMediaFailure) {
+          result.injectedFailures = (result.injectedFailures || 0) + 1;
+          res.writeHead(503);
+          return res.end("Intentional media failure");
+        }
+        const data = await fs.readFile(
+          path.join(root, "fixtures", "media" + path.extname(url.pathname))
+        );
         res.setHeader("Content-Type", url.pathname.endsWith("mp4") ? "video/mp4" : "audio/mpeg");
         res.setHeader("Accept-Ranges", "bytes");
         const range = req.headers.range?.match(/^bytes=(\d+)-(\d*)$/);
@@ -200,7 +249,24 @@ async function start() {
         }
         return res.end(data);
       }
-      vite.middlewares(req, res);
+      if (url.pathname.startsWith("/assets/")) {
+        const filename = path.resolve(hostDist, "." + decodeURIComponent(url.pathname));
+        assert.ok(filename.startsWith(hostDist + path.sep));
+        const mime = {
+          ".js": "application/javascript",
+          ".css": "text/css",
+          ".json": "application/json",
+          ".map": "application/json",
+          ".wasm": "application/wasm",
+          ".png": "image/png",
+          ".svg": "image/svg+xml",
+          ".woff2": "font/woff2",
+        };
+        res.setHeader("Content-Type", mime[path.extname(filename)] || "application/octet-stream");
+        return res.end(await fs.readFile(filename));
+      }
+      res.writeHead(404);
+      res.end("Unknown E2E asset");
     } catch {
       res.writeHead(500);
       res.end("E2E resource unavailable");
@@ -252,6 +318,54 @@ async function checkpoint(label, pages, details = {}) {
   return rows;
 }
 async function playing(pages, backend) {
+  const recovered = [];
+  if (blockedAutoplay || browserEngine === "webkit") {
+    await Promise.all(
+      pages.map(async page => {
+        await page.waitForFunction(
+          () => {
+            const s = appMediaGate.sample();
+            return (
+              s.needsGesture ||
+              (s.backend === "webaudio" &&
+                s.audioContextState === "suspended" &&
+                s.engineMediaState?.type === "play") ||
+              (s.audioPaused === false &&
+                (s.backend === "html5"
+                  ? s.audioNodePaused === false
+                  : s.audioContextState === "running"))
+            );
+          },
+          null,
+          { timeout: 60000 }
+        );
+        if (
+          (await sample(page)).needsGesture ||
+          (await sample(page)).audioContextState === "suspended"
+        )
+          await page.waitForFunction(
+            () => {
+              const s = appMediaGate.sample();
+              return (
+                s.engineMediaState?.type === "play" &&
+                s.storageMediaState?.type === "play" &&
+                s.engineMediaState.time === s.storageMediaState.time
+              );
+            },
+            null,
+            { timeout: 15000 }
+          );
+        const beforeGesture = await sample(page);
+        if (
+          beforeGesture.needsGesture ||
+          (beforeGesture.backend === "webaudio" && beforeGesture.audioContextState === "suspended")
+        ) {
+          recovered.push({ page, before: beforeGesture });
+          await page.locator("#media-permission").click();
+        }
+      })
+    );
+  }
   await Promise.all(
     pages.map(page =>
       page.waitForFunction(
@@ -292,13 +406,32 @@ async function playing(pages, backend) {
     result.playFailure = { before, after: await Promise.all(pages.map(sample)) };
     throw error;
   }
+  for (const { page, before } of recovered) {
+    const after = await sample(page);
+    assert.deepEqual(
+      after.storedMediaStates,
+      before.storedMediaStates,
+      "Gesture recovery changes local playback only"
+    );
+    assert.equal(after.stateWrites, before.stateWrites, "Gesture recovery must not publish state");
+    assert.equal(after.sceneWrites, before.sceneWrites);
+    assert.equal(
+      after.receivedSignalCount,
+      before.receivedSignalCount,
+      "Gesture recovery must not emit another play/seek signal"
+    );
+    result.permissionChecks ||= [];
+    result.permissionChecks.push({
+      role: after.role,
+      mode: after.mode,
+      backend,
+      requests: after.permissionRequests,
+      gestures: after.permissionGestures,
+    });
+  }
 }
 async function pauseCounts(pages) {
-  return Promise.all(
-    pages.map(
-      async page => (await sample(page)).signals.filter(e => e.type === "mediaPause").length
-    )
-  );
+  return Promise.all(pages.map(async page => (await sample(page)).mediaPauseCount));
 }
 async function stopped(label, pages, backend, previousPauses) {
   await Promise.all(
@@ -307,7 +440,7 @@ async function stopped(label, pages, backend, previousPauses) {
         count => {
           const s = appMediaGate.sample();
           return (
-            s.signals.filter(e => e.type === "mediaPause").length > count &&
+            s.mediaPauseCount > count &&
             s.engineMediaState?.type === "pause" &&
             s.storageMediaState?.type === "pause" &&
             s.isPlaying === false &&
@@ -321,23 +454,56 @@ async function stopped(label, pages, backend, previousPauses) {
   );
   await pages[0].waitForTimeout(150);
   const samples = [];
-  result.pauseInProgress = { label, samples };
-  for (let n = 0; n < 4; n++) {
+  const transientStorage = [];
+  result.pauseInProgress = { label, samples, transientStorage };
+  const deadline = Date.now() + 15000;
+  while (samples.length < 4) {
+    assert.ok(
+      Date.now() < deadline,
+      label + " shared pause state must settle and remain consistent for 900ms"
+    );
     const rows = await Promise.all(pages.map(sample));
-    samples.push(rows);
     for (const s of rows) {
       assert.equal(s.backend, backend, label + " requested real backend");
       assert.equal(s.audioPaused, true, label + " audio must stop");
       if (backend === "html5") assert.equal(s.audioNodePaused, true);
       else assert.equal(s.webAudioSourceActive, false);
       if (s.mediaType === "video") assert.equal(s.videoPaused, true);
+    }
+    const settled = rows.every(
+      s =>
+        s.engineMediaState?.type === "pause" &&
+        s.storageMediaState?.type === "pause" &&
+        Math.abs(s.engineMediaState.time - s.storageMediaState.time) < 0.001 &&
+        Math.abs(s.audioTime - (Math.floor(s.storageMediaState.time) + s.trimStart)) < 0.2 &&
+        (s.mediaType !== "video" ||
+          Math.abs(s.videoTime - (Math.floor(s.storageMediaState.time) + s.trimStart)) < 0.2)
+    );
+    if (!settled) {
+      if (transientStorage.length < 10)
+        transientStorage.push(
+          rows.map(s => ({
+            role: s.role,
+            engine: s.engineMediaState,
+            storage: s.storageMediaState,
+          }))
+        );
+      samples.length = 0;
+      await pages[0].waitForTimeout(300);
+      continue;
+    }
+    samples.push(rows);
+    for (const s of rows) {
       assert.equal(s.engineMediaState.type, "pause");
       assert.equal(s.storageMediaState.type, "pause");
       assert.ok(Math.abs(s.engineMediaState.time - s.storageMediaState.time) < 0.001);
-      assert.ok(Math.abs(s.audioTime - Math.floor(s.storageMediaState.time)) < 0.2);
+      assert.ok(
+        Math.abs(s.audioTime - (Math.floor(s.storageMediaState.time) + s.trimStart)) < 0.2,
+        label + " native pause position including trim start"
+      );
       assert.ok(s.signals.some(event => event.type === "mediaPause" && event.id === s.mediaId));
     }
-    if (n < 3) await pages[0].waitForTimeout(300);
+    if (samples.length < 4) await pages[0].waitForTimeout(300);
   }
   for (let i = 0; i < pages.length; i++) {
     const audio = samples.map(rows => rows[i].audioTime);
@@ -364,10 +530,20 @@ async function group(mode, backend) {
   const pages = [];
   for (const role of ["writer-a", "writer-b", "reader"]) {
     const context = await browser.newContext({ viewport: { width: 1280, height: 900 } });
+    await context.addInitScript(installNativeProbe);
     const page = await context.newPage();
     page.on("pageerror", error => result.browserErrors.push(error.message));
     page.on("console", message => {
       if (message.type() === "error") {
+        if (
+          result.injectMediaFailure &&
+          message.text().includes("[media-failure]") &&
+          /(?:Video audio|Audio) load failed:/.test(message.text())
+        ) {
+          result.expectedMediaLoadErrors ||= [];
+          result.expectedMediaLoadErrors.push({ mode, backend, role, message: message.text() });
+          return;
+        }
         result.consoleErrors ||= [];
         result.consoleErrors.push(message.text().slice(0, 300));
       }
@@ -385,11 +561,27 @@ async function group(mode, backend) {
         error: request.failure()?.errorText,
       });
     });
+    page.on("framenavigated", frame => {
+      if (frame === page.mainFrame()) {
+        result.navigations ||= [];
+        result.navigations.push({
+          mode,
+          backend,
+          role,
+          path: new URL(frame.url()).pathname,
+          at: Date.now(),
+        });
+      }
+    });
     page.on("response", response => {
       const pathname = new URL(response.url()).pathname;
       if (response.status() >= 400 && !pathname.startsWith("/logstores/")) {
         result.resourceErrors ||= [];
-        result.resourceErrors.push({ path: pathname, status: response.status() });
+        result.resourceErrors.push({
+          path: pathname,
+          status: response.status(),
+          expected: pathname.startsWith("/fixture/retry.") && response.status() === 503,
+        });
       }
     });
     await page.goto(origin + "/?mode=" + mode + "&backend=" + backend + "&role=" + role);
@@ -406,8 +598,32 @@ async function group(mode, backend) {
   }
   const [a, b, r] = pages,
     prefix = mode + "/" + backend;
-  if (mode === "1.5") assert.ok((await sample(a)).workerActive, "Use the real appliance worker");
+  if (mode === "1.5" && browserEngine === "chromium")
+    assert.ok((await sample(a)).workerActive, "Use the real appliance worker");
   await checkpoint(prefix + "/setup", pages);
+  if (diagnostic) {
+    if (diagnostic === "customer") await documents(prefix, pages, backend);
+    else
+      await boundaryCoverage({
+        prefix,
+        pages,
+        backend,
+        sample,
+        converged,
+        playing,
+        stopped,
+        pauseCounts,
+        checkpoint,
+        result,
+      });
+    await Promise.all(
+      pages.map(async p => {
+        await p.evaluate(() => appMediaGate.close());
+        await p.context().close();
+      })
+    );
+    return;
+  }
   for (const index of [1, 2]) {
     if ((await sample(a)).page !== index)
       await a.evaluate(index => appMediaGate.page(index), index);
@@ -417,8 +633,16 @@ async function group(mode, backend) {
       await a.evaluate(() => appMediaGate.play());
       if (name !== "rapid-play-pause") await playing(pages, backend);
       if (name === "seek-play-pause") {
+        const seekBefore = (await sample(a)).mediaSeekCount;
         await a.evaluate(() => appMediaGate.seek(5.4));
-        await a.waitForTimeout(400);
+        await a.waitForFunction(
+          count => {
+            const s = appMediaGate.sample();
+            return s.mediaSeekCount > count && Math.abs(s.audioTime - 5) < 0.2;
+          },
+          seekBefore,
+          { timeout: 15000 }
+        );
       }
       await a.evaluate(() => appMediaGate.pause());
       if (name === "repeat-pause") await a.evaluate(() => appMediaGate.pause());
@@ -431,6 +655,30 @@ async function group(mode, backend) {
     }
   }
   await lifecycle(prefix, pages);
+  await extendedCoverage({
+    prefix,
+    pages,
+    backend,
+    sample,
+    converged,
+    playing,
+    stopped,
+    pauseCounts,
+    checkpoint,
+    result,
+  });
+  await boundaryCoverage({
+    prefix,
+    pages,
+    backend,
+    sample,
+    converged,
+    playing,
+    stopped,
+    pauseCounts,
+    checkpoint,
+    result,
+  });
   for (const index of [1, 2]) {
     await a.evaluate(index => appMediaGate.page(index), index);
     await converged(pages, index);
@@ -520,6 +768,55 @@ async function documents(prefix, pages, backend) {
     await playing(pages, backend);
     await a.evaluate(() => appMediaGate.pause());
     await stopped(prefix + "/customer-video-pause", pages, backend, previousPauses);
+    await a.evaluate(() => appMediaGate.play());
+    await playing(pages, backend);
+    const passiveBefore = await Promise.all(pages.slice(1).map(sample));
+    await Promise.all(pages.slice(1).map(p => p.evaluate(() => appMediaGate.freeze())));
+    await Promise.all(
+      pages.slice(1).map(p =>
+        p.waitForFunction(
+          () => {
+            const s = appMediaGate.sample();
+            return (
+              s.frozen &&
+              !s.playerExists &&
+              s.native.activeRetiredNodes === 0 &&
+              s.native.activeSources === 0
+            );
+          },
+          null,
+          { timeout: 15000 }
+        )
+      )
+    );
+    await Promise.all(pages.slice(1).map(p => p.evaluate(() => appMediaGate.unfreeze())));
+    await converged(pages, 1);
+    const leader = await sample(a);
+    const shouldPlay =
+      leader.storageMediaState?.type === "play" &&
+      (leader.now - leader.storageMediaState.time) / 1000 < leader.clippedDuration;
+    if (shouldPlay) await playing(pages, backend);
+    else
+      await Promise.all(
+        pages.map(p =>
+          p.waitForFunction(
+            () => !appMediaGate.sample().isPlaying && appMediaGate.sample().audioPaused
+          )
+        )
+      );
+    const passiveAfter = await Promise.all(pages.slice(1).map(sample));
+    passiveAfter.forEach((s, i) => {
+      assert.equal(s.stateWrites, passiveBefore[i].stateWrites);
+      assert.equal(s.sceneWrites, passiveBefore[i].sceneWrites);
+      assert.equal(s.native.activeRetiredNodes, 0);
+      assert.equal(s.native.activeRetiredSources, 0);
+    });
+    await checkpoint(prefix + "/customer-video-frozen-release", pages, { shouldPlay });
+    if (shouldPlay) {
+      const counts = await pauseCounts(pages);
+      await a.evaluate(() => appMediaGate.pause());
+      await stopped(prefix + "/customer-video-release-pause", pages, backend, counts);
+    }
     for (let index = 2; index <= config.customerResource.pageCount; index++) {
       await a.evaluate(index => appMediaGate.page(index), index);
       await converged(pages, index, 180000);
@@ -583,27 +880,60 @@ try {
     .update(await fs.readFile(path.join(appDist, "main.es.js")))
     .digest("hex");
   await start();
-  browser = await chromium.launch({
-    ...(process.env.SLIDE_CHROMIUM_EXECUTABLE
+  assert.ok(["chromium", "webkit"].includes(browserEngine), "Supported real browser engine");
+  browser = await engines[browserEngine].launch({
+    ...(browserEngine !== "chromium"
+      ? {}
+      : process.env.SLIDE_CHROMIUM_EXECUTABLE
       ? { executablePath: process.env.SLIDE_CHROMIUM_EXECUTABLE }
       : { channel: "chrome" }),
     headless: true,
-    args: [
-      "--autoplay-policy=no-user-gesture-required",
-      "--disable-background-timer-throttling",
-      "--disable-backgrounding-occluded-windows",
-      "--disable-renderer-backgrounding",
-    ],
+    args:
+      browserEngine !== "chromium"
+        ? []
+        : [
+            "--autoplay-policy=" +
+              (blockedAutoplay ? "document-user-activation-required" : "no-user-gesture-required"),
+            "--disable-background-timer-throttling",
+            "--disable-backgrounding-occluded-windows",
+            "--disable-renderer-backgrounding",
+          ],
   });
   result.browser = browser.version();
-  for (const mode of ["1.0", "1.5"])
-    for (const backend of ["html5", "webaudio"]) await group(mode, backend);
+  assert.ok(
+    !diagnostic || ["boundaries", "customer"].includes(diagnostic),
+    "Known diagnostic phase"
+  );
+  for (const mode of diagnostic ? ["1.0"] : ["1.0", "1.5"])
+    for (const backend of diagnostic ? ["html5"] : ["html5", "webaudio"])
+      await group(mode, backend);
   assert.deepEqual(result.browserErrors, []);
   assert.deepEqual(result.notRun, []);
-  assert.deepEqual(result.resourceErrors || [], [], "Resource HTTP failures");
+  if (blockedAutoplay) {
+    assert.equal(
+      new Set((result.permissionChecks || []).map(c => c.role)).size,
+      3,
+      "All roles must recover genuinely blocked autoplay"
+    );
+    assert.ok(
+      result.cases.some(c =>
+        c.rows.some(s => s.permissionRequests > 0 && s.permissionGestures > 0)
+      ),
+      "Must actually deny autoplay and recover through a real gesture"
+    );
+  }
+  assert.deepEqual(
+    (result.resourceErrors || []).filter(e => !e.expected),
+    [],
+    "Unexpected resource HTTP failures"
+  );
   assert.deepEqual(
     (result.requestFailures || []).filter(
-      f => f.error !== "net::ERR_ABORTED" && !f.path.startsWith("/logstores/")
+      f =>
+        f.error !== "net::ERR_ABORTED" &&
+        // WebKit uses this spelling when freeze/page change unloads native media.
+        !(browserEngine === "webkit" && f.error === "cancelled" && /\.mp[34]$/.test(f.path)) &&
+        !f.path.startsWith("/logstores/")
     ),
     [],
     "Resource transport failures"
@@ -624,14 +954,21 @@ try {
     "Unexpected console errors"
   );
   result.passed = true;
+  result.matrixComplete = !diagnostic;
 } catch (error) {
   result.passed = false;
   result.error = error.message;
+  if (browser)
+    result.failureSnapshots = await Promise.all(
+      browser
+        .contexts()
+        .flatMap(c => c.pages())
+        .map(p => p.evaluate(() => window.appMediaGate?.sample()).catch(() => null))
+    );
   console.error(error.message);
   process.exitCode = 1;
 } finally {
   if (browser) await browser.close();
-  if (vite) await vite.close();
   if (server) {
     server.closeAllConnections();
     await new Promise(resolve => server.close(resolve));
