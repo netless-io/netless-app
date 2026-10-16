@@ -186,6 +186,18 @@ export async function extendedCoverage({
     await Promise.all([b, reader].map(p => p.evaluate(() => appMediaGate.freeze())));
     await a.evaluate(() => appMediaGate.stop());
     await a.waitForFunction(() => !appMediaGate.sample().storageMediaState?.type);
+    await Promise.all(
+      [b, reader].map(p =>
+        p.waitForFunction(
+          id => {
+            const s = appMediaGate.sample();
+            return s.frozen && !s.playerExists && !s.storedMediaStates?.[id];
+          },
+          before[0].mediaId,
+          { timeout: 15000 }
+        )
+      )
+    );
     await Promise.all([b, reader].map(p => p.evaluate(() => appMediaGate.unfreeze())));
     await converged(pages, index);
     await Promise.all(

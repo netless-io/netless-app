@@ -20,6 +20,7 @@ const signals: { type: string; id?: string; authorId?: number }[] = [];
 const observedMedia = new WeakSet<object>();
 const observedPlayers = new WeakSet<object>();
 const mediaActions: object[] = [];
+const resourceLoads: { path: string; durationMs: number }[] = [];
 let appId: string, observedController: any, observedProxy: any;
 let sceneWrites = 0,
   stateWrites = 0,
@@ -226,6 +227,7 @@ function sample() {
     playerPaused: slide?.player?.isPaused,
     stageActive: m?.ctx?.stageClock?.isActive,
     mediaActions: mediaActions.slice(-12),
+    slowResourceLoads: resourceLoads.filter(r => r.durationMs > 1000).slice(-20),
     trimStart: m?.controller?.start || 0,
     needsGesture: m?.needsUserGesture,
     permissionRequests,
@@ -277,6 +279,9 @@ await WindowManager.register({
   src: registration === "esm" ? async () => bundle!.default : location.origin + "/app/main.iife.js",
   appOptions: {
     useLocalCache: false,
+    // Functional media acceptance uses live CDN assets; keep download latency
+    // separate from the stricter native playback/clock deadlines.
+    resourceTimeout: 60000,
     ...(backend === "webaudio" ? { enableWebAudio: false } : {}),
     loaderDelegate: {
       async loadJson(url: string) {
@@ -286,9 +291,15 @@ await WindowManager.register({
         return response.text();
       },
       async loadImage(url: string) {
+        const started = performance.now();
         const response = await fetch(url);
         if (!response.ok) throw Error("Fixture image unavailable");
-        return response.blob();
+        const blob = await response.blob();
+        resourceLoads.push({
+          path: new URL(url).pathname,
+          durationMs: performance.now() - started,
+        });
+        return blob;
       },
       redirectMedia: (url: string) => url,
     },
