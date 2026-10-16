@@ -608,7 +608,7 @@ async function group(mode, backend) {
   if (mode === "1.5" && browserEngine === "chromium")
     assert.ok((await sample(a)).workerActive, "Use the real appliance worker");
   await checkpoint(prefix + "/setup", pages);
-  if (diagnostic) {
+  if (diagnostic && diagnostic !== "pause") {
     if (diagnostic === "customer") await documents(prefix, pages, backend);
     else
       await boundaryCoverage({
@@ -635,7 +635,28 @@ async function group(mode, backend) {
     if ((await sample(a)).page !== index)
       await a.evaluate(index => appMediaGate.page(index), index);
     await converged(pages, index);
-    for (const name of ["play-pause", "repeat-pause", "seek-play-pause", "rapid-play-pause"]) {
+    const operations = ["play-pause", "repeat-pause", "seek-play-pause", "rapid-play-pause"];
+    for (const name of diagnostic === "pause"
+      ? Array.from({ length: 3 }, () => operations).flat()
+      : operations) {
+      if (diagnostic === "pause") {
+        // Permission recovery can consume most of a 30s fixture; reset through
+        // a real shared seek before each repeated operation.
+        await a.evaluate(() => appMediaGate.seek(0));
+        await Promise.all(
+          pages.map(p =>
+            p.waitForFunction(() => {
+              const s = appMediaGate.sample();
+              return (
+                s.audioPaused &&
+                s.audioTime < 0.1 &&
+                s.storageMediaState?.type === "pause" &&
+                s.storageMediaState.time === 0
+              );
+            })
+          )
+        );
+      }
       const previousPauses = await pauseCounts(pages);
       await a.evaluate(() => appMediaGate.play());
       if (name !== "rapid-play-pause") await playing(pages, backend);
@@ -660,6 +681,15 @@ async function group(mode, backend) {
         previousPauses
       );
     }
+  }
+  if (diagnostic === "pause") {
+    await Promise.all(
+      pages.map(async p => {
+        await p.evaluate(() => appMediaGate.close());
+        await p.context().close();
+      })
+    );
+    return;
   }
   await lifecycle(prefix, pages);
   await extendedCoverage({
@@ -908,7 +938,7 @@ try {
   });
   result.browser = browser.version();
   assert.ok(
-    !diagnostic || ["boundaries", "customer"].includes(diagnostic),
+    !diagnostic || ["boundaries", "customer", "pause"].includes(diagnostic),
     "Known diagnostic phase"
   );
   for (const mode of diagnostic ? ["1.0"] : ["1.0", "1.5"])
