@@ -44,4 +44,8 @@ app-slide 的 `prepublishOnly` 会依次执行单测、生命周期测试、正�
 
 桌面浏览器 E2E 不替代移动设备、录制回放与 RTC/PCM 的独立验收。
 
+禁止自动播放配置通过真实 CDP Runtime（userGesture=false）读取状态和发起房间命令，避免 Playwright 普通 evaluate 自动附带 userGesture=true 使权限测试失效。每组起播前断言三端 userActivation.hasBeenActive=false，HTML5 三端均须产生真实权限请求并通过真实点击恢复；WebAudio 验证实际挂起的 AudioContext 在点击后恢复。媒体元素、播放器和原生 Promise 均不替换。
+
+测试宿主通过 White SDK 的 LoggerReportMode.BanReport 和 localLog.enabled=false 关闭非媒体日志上传，避免 Argus 上报地址的 CORS 异常干扰媒体验收；不放行页面未处理异常，不修改生产默认配置，媒体加载错误和真实房间交互仍严格检查。
+
 快速定位可设置 `APP_SLIDE_E2E_DIAGNOSTIC=boundaries`，只运行一组真实房间的边界场景，结果标为 diagnostic、matrixComplete=false，不算完整验收。浏览器选择使用 `APP_SLIDE_E2E_BROWSER=webkit`；`APP_SLIDE_E2E_AUTOPLAY=blocked` 开启实际 Chrome 自动播放限制。权限恢复必须由真实点击触发，并断言共享状态/写入次数/信令数不变。WebAudio 使用真实用户手势恢复原生 AudioContext，不宣称 HTML5 的 SDK 权限回调覆盖所有 WebAudio 设备。

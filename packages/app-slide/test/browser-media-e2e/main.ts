@@ -1,4 +1,4 @@
-import { WhiteWebSdk } from "white-web-sdk";
+import { WhiteWebSdk, LoggerReportMode } from "white-web-sdk";
 import { WindowManager } from "@netless/window-manager";
 import "@netless/window-manager/dist/style.css";
 import { ApplianceMultiPlugin } from "@netless/appliance-plugin";
@@ -310,6 +310,13 @@ const sdk = new WhiteWebSdk({
   appIdentifier: config.appIdentifier,
   region: config.region,
   useMobXState: true,
+  // SDK telemetry transport is separate from media/room acceptance. Disable it
+  // through the SDK API, keeping all product errors and media failures visible.
+  loggerOptions: {
+    reportDebugLogMode: LoggerReportMode.BanReport,
+    reportQualityMode: LoggerReportMode.BanReport,
+    localLog: { enabled: false, enabledUpload: false },
+  },
 });
 const room = await sdk.joinRoom({
   uuid: config.uuid,

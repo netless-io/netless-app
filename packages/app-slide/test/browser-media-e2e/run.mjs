@@ -8,6 +8,7 @@ import { fileURLToPath } from "node:url";
 import { installNativeProbe } from "./native-probe.mjs";
 import { extendedCoverage } from "./coverage.mjs";
 import { boundaryCoverage } from "./boundaries.mjs";
+import { installPassiveEvaluation } from "./passive-page.mjs";
 
 const root = path.dirname(fileURLToPath(import.meta.url));
 const project = path.resolve(root, "../../../..");
@@ -539,6 +540,7 @@ async function group(mode, backend) {
     const context = await browser.newContext({ viewport: { width: 1280, height: 900 } });
     await context.addInitScript(installNativeProbe);
     const page = await context.newPage();
+    if (blockedAutoplay) await installPassiveEvaluation(context, page);
     page.on("pageerror", error => result.browserErrors.push(error.message));
     page.on("console", message => {
       if (message.type() === "error") {
@@ -608,6 +610,22 @@ async function group(mode, backend) {
   if (mode === "1.5" && browserEngine === "chromium")
     assert.ok((await sample(a)).workerActive, "Use the real appliance worker");
   await checkpoint(prefix + "/setup", pages);
+  if (blockedAutoplay) {
+    const activation = await Promise.all(
+      pages.map(p =>
+        p.evaluate(() => ({
+          active: navigator.userActivation.hasBeenActive,
+          role: appMediaGate.sample().role,
+        }))
+      )
+    );
+    assert.ok(
+      activation.every(s => !s.active),
+      "Setup/evaluation must not grant autoplay activation"
+    );
+    result.activationChecks ||= [];
+    result.activationChecks.push({ prefix, activation });
+  }
   if (diagnostic && diagnostic !== "pause") {
     if (diagnostic === "customer") await documents(prefix, pages, backend);
     else
@@ -947,6 +965,7 @@ try {
   assert.deepEqual(result.browserErrors, []);
   assert.deepEqual(result.notRun, []);
   if (blockedAutoplay) {
+    assert.equal(result.activationChecks.length, diagnostic ? 1 : 4);
     assert.equal(
       new Set((result.permissionChecks || []).map(c => c.role)).size,
       3,
@@ -958,6 +977,23 @@ try {
       ),
       "Must actually deny autoplay and recover through a real gesture"
     );
+    for (const mode of diagnostic ? ["1.0"] : ["1.0", "1.5"])
+      for (const backend of diagnostic ? ["html5"] : ["html5", "webaudio"])
+        assert.equal(
+          new Set(
+            result.permissionChecks
+              .filter(
+                c =>
+                  c.mode === mode &&
+                  c.backend === backend &&
+                  c.gestures > 0 &&
+                  (backend !== "html5" || c.requests > 0)
+              )
+              .map(c => c.role)
+          ).size,
+          3,
+          mode + "/" + backend + " must recover all three genuinely blocked clients"
+        );
   }
   assert.deepEqual(
     (result.resourceErrors || []).filter(e => !e.expected),
