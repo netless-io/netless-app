@@ -48,6 +48,6 @@ app-slide 的 `prepublishOnly` 会依次执行单测、生命周期测试、正�
 
 测试宿主通过 White SDK 的 LoggerReportMode.BanReport 和 localLog.enabled=false 关闭非媒体日志上传，避免 Argus 上报地址的 CORS 异常干扰媒体验收；不放行页面未处理异常，不修改生产默认配置，媒体加载错误和真实房间交互仍严格检查。
 
-边界用例重建测试文档后先等待本地 ready；若创建端尚无初始共享 snapshot，则通过真实的第3页→第1页导航建立测试初始状态，随后仍严格检查三端 storage/场景/媒体收敛。HTTP 重试用例验收从该初始状态开始的重建恢复，空 snapshot 的首屏引导时序另行验收。
+边界用例重建测试文档后先等待本地 ready；若创建端尚无初始共享 snapshot，则通过真实的第 3 页 → 第 1 页导航建立测试初始状态，随后仍严格检查三端 storage/场景/媒体收敛。HTTP 重试用例验收从该初始状态开始的重建恢复，空 snapshot 的首屏引导时序另行验收。
 
 快速定位可设置 `APP_SLIDE_E2E_DIAGNOSTIC=boundaries`，只运行一组真实房间的边界场景，结果标为 diagnostic、matrixComplete=false，不算完整验收。浏览器选择使用 `APP_SLIDE_E2E_BROWSER=webkit`；`APP_SLIDE_E2E_AUTOPLAY=blocked` 开启实际 Chrome 自动播放限制。权限恢复必须由真实点击触发，并断言共享状态/写入次数/信令数不变。WebAudio 使用真实用户手势恢复原生 AudioContext，不宣称 HTML5 的 SDK 权限回调覆盖所有 WebAudio 设备。
