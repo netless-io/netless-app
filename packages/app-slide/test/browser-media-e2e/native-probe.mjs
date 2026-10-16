@@ -18,7 +18,7 @@ export function installNativeProbe() {
     const create = Context.prototype.createBufferSource;
     Context.prototype.createBufferSource = function (...args) {
       const source = create.apply(this, args);
-      const row = { started: false, ended: false, realMedia: false };
+      const row = { started: false, ended: false, realMedia: false, stoppedAt: undefined };
       sources.set(source, row);
       const start = source.start;
       source.start = function (...values) {
@@ -26,6 +26,12 @@ export function installNativeProbe() {
         row.started = true;
         row.realMedia = source.buffer?.duration > 0.1;
         if (row.realMedia) audioStarts++;
+        return result;
+      };
+      const stop = source.stop;
+      source.stop = function (...values) {
+        const result = stop.apply(this, values);
+        row.stoppedAt = values[0] || 0;
         return result;
       };
       source.addEventListener("ended", () => {
@@ -48,17 +54,20 @@ export function installNativeProbe() {
           realMedia: !!node.src && !node.src.startsWith("data:"),
         }))
         .filter(n => n.realMedia);
+      const activeSources = [...sources].filter(
+        ([source, row]) =>
+          row.realMedia &&
+          row.started &&
+          !row.ended &&
+          (row.stoppedAt === undefined || source.context.currentTime < row.stoppedAt)
+      );
       return {
         audioStarts,
         nodes,
         activeRetiredNodes: nodes.filter(n => !n.current && !n.paused && !n.ended).length,
-        activeRetiredSources: [...sources].filter(
-          ([source, row]) =>
-            row.realMedia && row.started && !row.ended && !currentSources.includes(source)
-        ).length,
-        activeSources: [...sources.values()].filter(
-          row => row.realMedia && row.started && !row.ended
-        ).length,
+        activeRetiredSources: activeSources.filter(([source]) => !currentSources.includes(source))
+          .length,
+        activeSources: activeSources.length,
       };
     },
   };
