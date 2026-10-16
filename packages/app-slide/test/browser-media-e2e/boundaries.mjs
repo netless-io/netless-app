@@ -17,6 +17,35 @@ export async function boundaryCoverage({
     await a.evaluate(() => appMediaGate.removeDocument());
     await Promise.all(pages.map(p => p.waitForFunction(() => !appMediaGate.sample().resultReady)));
     await a.evaluate(task => appMediaGate.fixture(task), task);
+    await Promise.all(
+      pages.map(p =>
+        p.waitForFunction(
+          task => {
+            const s = appMediaGate.sample();
+            return (
+              s.ready &&
+              !s.frozen &&
+              !s.loading &&
+              s.page === 1 &&
+              s.renderedPage === 1 &&
+              s.resourceTaskId === task
+            );
+          },
+          task,
+          { timeout: 90000 }
+        )
+      )
+    );
+    if ((await sample(a)).storagePage == null) {
+      // A recreated App can render locally before its first shared snapshot.
+      // Establish the test document through real navigation, then keep every
+      // storage/scene/media convergence assertion for the operation under test.
+      result.initialStateNavigation ||= [];
+      result.initialStateNavigation.push({ prefix, task });
+      await a.evaluate(() => appMediaGate.page(3));
+      await converged(pages, 3);
+      await a.evaluate(() => appMediaGate.page(1));
+    }
     await converged(pages, 1);
   }
   async function silence() {

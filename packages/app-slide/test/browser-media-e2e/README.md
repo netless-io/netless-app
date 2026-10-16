@@ -38,14 +38,16 @@ app-slide 的 `prepublishOnly` 会依次执行单测、生命周期测试、正�
 
 客户整稿检查逐页完成渲染和三端页码收敛；客户媒体验收使用首页原始视频，另用合成视频/纯音频覆盖完整操作矩阵。动画验收使用含剩余点击步骤的页面，检查引擎及 storage 步骤同步；不代表所有动画内媒体均已验收。快速播放后暂停专门覆盖尚未完成起播的取消路径，其余播放场景必须验证时间推进。旧注册地址重入后会再次验证视频和纯音频播放/暂停及实际后端。
 
-未处理异常、资源 HTTP/传输失败和非预期 console error 均使验收失败。白名单仅包括当前 SDK 的日志 Worker 降级、主动断线错误、切页/销毁的 ERR_ABORTED（WebKit 仅对 MP3/MP4 允许对应 cancelled）、以及已有独立 HTTP/传输门禁覆盖的浏览器资源错误消息。另允许 `Warning: render(...): Replacing React-rendered children with a new root component.`：已使用 npm app-slide 0.2.107 在同一白板 1.5 重连/重入路径独立复现，属于现有 WindowManager/Appliance React View 重挂载警告；其他 React 错误仍会阻止验收。
+未处理异常、资源 HTTP/传输失败和非预期 console error 均使验收失败。白名单仅包括当前 SDK 的日志 Worker 降级、主动断线错误、切页/销毁的 ERR_ABORTED（WebKit 仅对 MP3/MP4 允许对应 cancelled）、以及有独立 HTTP/传输门禁覆盖的受控 HTTP503 浏览器资源错误消息。另允许 `Warning: render(...): Replacing React-rendered children with a new root component.`：已使用 npm app-slide 0.2.107 在同一白板 1.5 重连/重入路径独立复现，属于现有 WindowManager/Appliance React View 重挂载警告；其他 React 错误仍会阻止验收。
 
 失败同样精确停用本次创建的房间并回读确认 isBan=true、isRecord=false。结果不记录 SDK/Room Token。合成 MP4/MP3 fixture 来自 Slide 的本地 ffmpeg 测试图与正弦音，不含客户内容。
 
 桌面浏览器 E2E 不替代移动设备、录制回放与 RTC/PCM 的独立验收。
 
-禁止自动播放配置通过真实 CDP Runtime（userGesture=false）读取状态和发起房间命令，避免 Playwright 普通 evaluate 自动附带 userGesture=true 使权限测试失效。每组起播前断言三端 userActivation.hasBeenActive=false，HTML5 三端均须产生真实权限请求并通过真实点击恢复；WebAudio 验证实际挂起的 AudioContext 在点击后恢复。媒体元素、播放器和原生 Promise 均不替换。
+禁止自动播放配置通过真实 CDP Runtime（userGesture=false）读取状态和发起房间命令，避免 Playwright 普通 evaluate 自动附带 userGesture=true 使权限测试失效。每组新文档首次起播前断言三端 userActivation.hasBeenActive=false，HTML5 三端均须产生真实权限请求并通过真实点击恢复；WebAudio 验证实际挂起的 AudioContext 在点击后恢复。媒体元素、播放器和原生 Promise 均不替换。
 
 测试宿主通过 White SDK 的 LoggerReportMode.BanReport 和 localLog.enabled=false 关闭非媒体日志上传，避免 Argus 上报地址的 CORS 异常干扰媒体验收；不放行页面未处理异常，不修改生产默认配置，媒体加载错误和真实房间交互仍严格检查。
+
+边界用例重建测试文档后先等待本地 ready；若创建端尚无初始共享 snapshot，则通过真实的第3页→第1页导航建立测试初始状态，随后仍严格检查三端 storage/场景/媒体收敛。HTTP 重试用例验收从该初始状态开始的重建恢复，空 snapshot 的首屏引导时序另行验收。
 
 快速定位可设置 `APP_SLIDE_E2E_DIAGNOSTIC=boundaries`，只运行一组真实房间的边界场景，结果标为 diagnostic、matrixComplete=false，不算完整验收。浏览器选择使用 `APP_SLIDE_E2E_BROWSER=webkit`；`APP_SLIDE_E2E_AUTOPLAY=blocked` 开启实际 Chrome 自动播放限制。权限恢复必须由真实点击触发，并断言共享状态/写入次数/信令数不变。WebAudio 使用真实用户手势恢复原生 AudioContext，不宣称 HTML5 的 SDK 权限回调覆盖所有 WebAudio 设备。

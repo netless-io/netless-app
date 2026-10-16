@@ -20,6 +20,7 @@ const engines = process.env.APP_SLIDE_PLAYWRIGHT
 const browserEngine = process.env.APP_SLIDE_E2E_BROWSER || "chromium";
 const blockedAutoplay = process.env.APP_SLIDE_E2E_AUTOPLAY === "blocked";
 const diagnostic = process.env.APP_SLIDE_E2E_DIAGNOSTIC;
+const diagnosticBackend = process.env.APP_SLIDE_E2E_DIAGNOSTIC_BACKEND || "html5";
 const output = path.resolve(
   (process.env.APP_SLIDE_E2E_OUTPUT || path.join(root, ".results", String(Date.now()))) +
     (browserEngine !== "chromium"
@@ -960,7 +961,7 @@ try {
     "Known diagnostic phase"
   );
   for (const mode of diagnostic ? ["1.0"] : ["1.0", "1.5"])
-    for (const backend of diagnostic ? ["html5"] : ["html5", "webaudio"])
+    for (const backend of diagnostic ? [diagnosticBackend] : ["html5", "webaudio"])
       await group(mode, backend);
   assert.deepEqual(result.browserErrors, []);
   assert.deepEqual(result.notRun, []);
@@ -971,14 +972,8 @@ try {
       3,
       "All roles must recover genuinely blocked autoplay"
     );
-    assert.ok(
-      result.cases.some(c =>
-        c.rows.some(s => s.permissionRequests > 0 && s.permissionGestures > 0)
-      ),
-      "Must actually deny autoplay and recover through a real gesture"
-    );
     for (const mode of diagnostic ? ["1.0"] : ["1.0", "1.5"])
-      for (const backend of diagnostic ? ["html5"] : ["html5", "webaudio"])
+      for (const backend of diagnostic ? [diagnosticBackend] : ["html5", "webaudio"]) {
         assert.equal(
           new Set(
             result.permissionChecks
@@ -994,6 +989,28 @@ try {
           3,
           mode + "/" + backend + " must recover all three genuinely blocked clients"
         );
+        if (!diagnostic || diagnostic === "pause") {
+          const first = result.cases.find(
+            c => c.label === mode + "/" + backend + "/video/play-pause"
+          );
+          assert.equal(first?.rows.length, 3);
+          assert.ok(
+            first.rows.every(
+              s =>
+                s.permissionGestures > 0 &&
+                (backend === "html5" ? s.permissionRequests > 0 : s.audioContextState === "running")
+            ),
+            "Every client must recover in the first playback case, before later pointer actions"
+          );
+          if (backend === "webaudio") {
+            const setup = result.cases.find(c => c.label === mode + "/" + backend + "/setup");
+            assert.ok(
+              setup.rows.every(s => s.audioContextState === "suspended"),
+              "Actual AudioContexts must start suspended"
+            );
+          }
+        }
+      }
   }
   assert.deepEqual(
     (result.resourceErrors || []).filter(e => !e.expected),
@@ -1021,7 +1038,7 @@ try {
           "Warning: render(...): Replacing React-rendered children with a new root component."
         ) &&
         !message.includes('disconnected with code 4000 "app-slide E2E transport interruption"') &&
-        !message.startsWith("Failed to load resource:")
+        !(message.startsWith("Failed to load resource:") && /\b503\b/.test(message))
     ),
     [],
     "Unexpected console errors"
