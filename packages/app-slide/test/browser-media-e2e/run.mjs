@@ -366,26 +366,33 @@ async function playing(pages, backend) {
       })
     );
   }
-  await Promise.all(
-    pages.map(page =>
-      page.waitForFunction(
+  // Capture readiness and the clock baseline atomically. A late SDK storage
+  // delivery can recreate an App between two separate evaluate calls.
+  const before = await Promise.all(
+    pages.map(async page => {
+      const handle = await page.waitForFunction(
         backend => {
           const s = appMediaGate.sample();
-          return (
-            s.backend === backend &&
+          return s.backend === backend &&
             s.isPlaying &&
+            Number.isFinite(s.audioTime) &&
             s.audioPaused === false &&
             (s.mediaType !== "video" || s.videoPaused === false) &&
             s.engineMediaState?.type === "play" &&
             s.storageMediaState?.type === "play"
-          );
+            ? s
+            : false;
         },
         backend,
         { timeout: 120000 }
-      )
-    )
+      );
+      try {
+        return await handle.jsonValue();
+      } finally {
+        await handle.dispose();
+      }
+    })
   );
-  const before = await Promise.all(pages.map(sample));
   try {
     await Promise.all(
       pages.map((page, i) =>

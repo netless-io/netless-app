@@ -18,13 +18,14 @@ export function installNativeProbe() {
     const create = Context.prototype.createBufferSource;
     Context.prototype.createBufferSource = function (...args) {
       const source = create.apply(this, args);
-      const row = { started: false, ended: false };
+      const row = { started: false, ended: false, realMedia: false };
       sources.set(source, row);
       const start = source.start;
       source.start = function (...values) {
         const result = start.apply(this, values);
         row.started = true;
-        if (source.buffer?.duration > 0.1) audioStarts++;
+        row.realMedia = source.buffer?.duration > 0.1;
+        if (row.realMedia) audioStarts++;
         return result;
       };
       source.addEventListener("ended", () => {
@@ -52,9 +53,12 @@ export function installNativeProbe() {
         nodes,
         activeRetiredNodes: nodes.filter(n => !n.current && !n.paused && !n.ended).length,
         activeRetiredSources: [...sources].filter(
-          ([source, row]) => row.started && !row.ended && !currentSources.includes(source)
+          ([source, row]) =>
+            row.realMedia && row.started && !row.ended && !currentSources.includes(source)
         ).length,
-        activeSources: [...sources.values()].filter(row => row.started && !row.ended).length,
+        activeSources: [...sources.values()].filter(
+          row => row.realMedia && row.started && !row.ended
+        ).length,
       };
     },
   };
