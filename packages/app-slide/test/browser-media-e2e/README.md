@@ -51,3 +51,9 @@ app-slide 的 `prepublishOnly` 会依次执行单测、生命周期测试、正�
 边界用例重建测试文档后先等待本地 ready；若创建端尚无初始共享 snapshot，则通过真实的第 3 页 → 第 1 页导航建立测试初始状态，随后仍严格检查三端 storage/场景/媒体收敛。HTTP 重试用例验收从该初始状态开始的重建恢复，空 snapshot 的首屏引导时序另行验收。
 
 快速定位可设置 `APP_SLIDE_E2E_DIAGNOSTIC=boundaries`，只运行一组真实房间的边界场景，结果标为 diagnostic、matrixComplete=false，不算完整验收。浏览器选择使用 `APP_SLIDE_E2E_BROWSER=webkit`；`APP_SLIDE_E2E_AUTOPLAY=blocked` 开启实际 Chrome 自动播放限制。权限恢复必须由真实点击触发，并断言共享状态/写入次数/信令数不变。WebAudio 使用真实用户手势恢复原生 AudioContext，不宣称 HTML5 的 SDK 权限回调覆盖所有 WebAudio 设备。
+
+重连、冻结与角色恢复使用300秒的合成音视频；重连前逐端要求剩余时长超过200秒并保存实际值。自然结束仍使用3至15秒的裁剪段单独验收。素材为160×90/5FPS测试图和440Hz正弦音，生成命令见本次修复验证记录。
+
+创建任何房间前，独立页面以真实点击启动原生 Audio，要求15秒内时钟实际推进；该页面不加载 Slide/White SDK，失败会中止且不创建房间。它的Context随后销毁，正式权限测试仍使用全新、无用户激活的Context。
+
+新增 `native-seeking-unlocked-pause`：作者端实测原生seeking=true且Howler播放锁已解除后立即暂停，暂停事件仍经真实房间传播；三端检查共享位置、原生位置、seeking结束和900ms静止。原pending-play用例仍通过真实未完成的原生play Promise触发，不等待定位完成后再制造取消。

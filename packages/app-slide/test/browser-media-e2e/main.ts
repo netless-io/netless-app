@@ -244,6 +244,7 @@ function sample() {
     howlLock: h?._playLock,
     globalAudioContextState: (window as any).Howler?.ctx?.state,
     audioNodeTime: sound?._node?.currentTime,
+    audioNodeSeeking: h?._webAudio ? undefined : sound?._node?.seeking,
     audioDuration: sound?._node?.duration,
     audioReadyState: sound?._node?.readyState,
     audioEnded: sound?._node?.ended,
@@ -412,11 +413,14 @@ setInterval(() => {
   async cancelActiveSeek() {
     const m = media(),
       audio = m.rtcAudio || m.audioPlayer;
-    await m.seek(5);
+    m.pause();
+    audio.play();
+    const pendingSeek = m.seek(5);
     const howl = audio.howl,
       node = howl?._soundById(audio.staticEventId)?._node;
     const nativePlayPending = howl?._playLock === true;
     await engine().player.setMediaState(m.id, false, 5);
+    await pendingSeek;
     // Publish the actual controller event so all participants also traverse Magix.
     m.ctx.eventHub.emit("mediaPause", { id: m.id, time: 5 });
     return {
@@ -425,6 +429,22 @@ setInterval(() => {
       reusedRetiredNode:
         howl !== audio.howl && node === audio.howl?._soundById(audio.staticEventId)?._node,
     };
+  },
+  async cancelUnlockedNativeSeek() {
+    const m = media(), audio = m.rtcAudio || m.audioPlayer;
+    const pending = m.seek(4);
+    const deadline = performance.now() + 3000;
+    let observed;
+    while (performance.now() < deadline) {
+      const h = audio.howl, node = h?._soundById(audio.staticEventId)?._node;
+      if (node?.seeking && h._playLock === false) { observed = sample(); break; }
+      await new Promise(resolve => setTimeout(resolve, 0));
+    }
+    if (!observed) throw Error("Real unlocked native seek window was not observed");
+    await engine().player.setMediaState(m.id, false, 4);
+    await pending;
+    m.ctx.eventHub.emit("mediaPause", {id:m.id,time:4});
+    return {observed,final:sample()};
   },
   async removeDocument() {
     await manager.closeApp(appId);

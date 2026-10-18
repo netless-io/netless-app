@@ -44,6 +44,7 @@ const result = {
   startedAt: new Date().toISOString(),
   appVersion: pkg.version,
   slideVersion: slidePkg.version,
+  slideArtifact: process.env.SLIDE_CANDIDATE_DIR ? "local-unreleased-candidate" : "installed-npm",
   versions: Object.fromEntries(
     ["white-web-sdk", "@netless/window-manager", "@netless/appliance-plugin"].map(name => [
       name,
@@ -63,6 +64,24 @@ const rooms = new Map(),
   runId = "app-media-" + Date.now();
 let server, browser, origin;
 const appDist = path.join(project, "packages/app-slide/dist");
+
+async function verifyNativeAudioEnvironment() {
+  const context=await browser.newContext();
+  const page=await context.newPage();
+  const sampleNative=()=>page.evaluate(()=>({time:window.a.currentTime,paused:window.a.paused,ready:window.a.readyState,playState:window.playState}));
+  try {
+    await page.goto(origin+"/media-environment-check");
+    await page.click("#play");
+    await page.waitForFunction(()=>window.a.currentTime>0.1&&!window.a.paused,null,{timeout:15000,polling:50});
+    result.nativeEnvironment={passed:true,observed:await sampleNative()};
+  } catch(error) {
+    result.nativeEnvironment={passed:false,observed:await sampleNative()};
+    throw Error("Native audio environment did not advance before any room was created: "+error.message);
+  } finally {
+    await page.evaluate(()=>{window.a?.pause();window.a?.removeAttribute("src");window.a?.load();}).catch(()=>{});
+    await context.close();
+  }
+}
 
 async function api(endpoint, method = "GET", body) {
   const attempts = method === "POST" ? 1 : 3;
@@ -114,8 +133,10 @@ function fixture(index, scenario = "") {
     smartArtShapeList: [],
     coloredSheets: index === 3 ? [] : ["sheet"],
   };
-  if (scenario.includes("cut") && data.children[0])
+  if (scenario.includes("cut") && data.children[0]) {
+    data.children[0].media.src = origin + "/fixture/short." + (type === "video" ? "mp4" : "mp3");
     data.children[0].media.cut = { start: 3, end: 15 };
+  }
   if (scenario.includes("multiple") && data.children[0]) {
     data.children[0].width = 270;
     const second = structuredClone(data.children[0]);
@@ -189,6 +210,10 @@ async function start() {
         return res.end(await fs.readFile(config.oldIifePath));
       }
       const index = url.pathname.match(/\/slide-([123])\.json$/)?.[1];
+      if (url.pathname === "/media-environment-check") {
+        res.setHeader("Content-Type","text/html; charset=utf-8");
+        return res.end('<button id="play">play</button><script>window.a=new Audio("/fixture/media.mp3");a.preload="auto";document.querySelector("button").onclick=()=>{window.playState="pending";a.play().then(()=>window.playState="resolved",e=>window.playState=e.name)};</script>');
+      }
       if (url.pathname.startsWith("/fixture/") && index) {
         res.setHeader("Content-Type", "application/json");
         return res.end(JSON.stringify(fixture(Number(index), url.pathname)));
@@ -221,6 +246,8 @@ async function start() {
       }
       if (
         [
+          "/fixture/short.mp4",
+          "/fixture/short.mp3",
           "/fixture/media.mp4",
           "/fixture/media.mp3",
           "/fixture/retry.mp4",
@@ -235,7 +262,7 @@ async function start() {
           return res.end("Intentional media failure");
         }
         const data = await fs.readFile(
-          path.join(root, "fixtures", "media" + path.extname(url.pathname))
+          path.join(root, "fixtures", (url.pathname.startsWith("/fixture/short.") ? "short" : "media") + path.extname(url.pathname))
         );
         res.setHeader("Content-Type", url.pathname.endsWith("mp4") ? "video/mp4" : "audio/mpeg");
         res.setHeader("Accept-Ranges", "bytes");
@@ -485,6 +512,7 @@ async function stopped(label, pages, backend, previousPauses) {
         s.storageMediaState?.type === "pause" &&
         Math.abs(s.engineMediaState.time - s.storageMediaState.time) < 0.001 &&
         Math.abs(s.audioTime - (Math.floor(s.storageMediaState.time) + s.trimStart)) < 0.2 &&
+        (backend !== "html5" || (!s.audioNodeSeeking && Math.abs(s.audioNodeTime - (Math.floor(s.storageMediaState.time) + s.trimStart)) < 0.2)) &&
         (s.mediaType !== "video" ||
           Math.abs(s.videoTime - (Math.floor(s.storageMediaState.time) + s.trimStart)) < 0.2)
     );
@@ -956,6 +984,7 @@ try {
           ],
   });
   result.browser = browser.version();
+  await verifyNativeAudioEnvironment();
   assert.ok(
     !diagnostic || ["boundaries", "customer", "pause"].includes(diagnostic),
     "Known diagnostic phase"

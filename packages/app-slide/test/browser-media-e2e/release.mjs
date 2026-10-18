@@ -57,6 +57,12 @@ for (const [engine, autoplay] of [
           "Required real-room scenario: " + name
         );
       }
+      if (backend === "html5") for (const kind of ["audio","video"]) {
+        assert.ok(report.cases.some(c=>c.label===`${mode}/${backend}/${kind}/native-seeking-unlocked-pause`),"Real unlocked native seeking acceptance is required");
+        const window=report.nativeSeekWindows?.find(w=>w.prefix===`${mode}/${backend}`&&w.kind===kind);
+        assert.equal(window?.observed.audioNodeSeeking,true);
+        assert.equal(window?.observed.howlLock,false);
+      }
       for (const kind of ["audio", "video"])
         for (const name of [
           "deterministic-native-seek-cancel",
