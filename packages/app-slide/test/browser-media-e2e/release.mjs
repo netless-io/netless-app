@@ -39,6 +39,8 @@ for (const [engine, autoplay] of [
   );
   const report = JSON.parse(await fs.readFile(file, "utf8"));
   assert.equal(report.passed, true);
+  assert.equal(report.appRebuilt, true, "Each profile must build the selected npm Slide input");
+  assert.equal(report.slideArtifact, "installed-npm");
   assert.equal(report.scope, "full");
   assert.equal(report.matrixComplete, true);
   assert.equal(report.cleanup.length, 4);

@@ -17,7 +17,7 @@
     "test:media:e2e:webkit": "APP_SLIDE_E2E_BROWSER=webkit node test/browser-media-e2e/run.mjs",
     "test:media:e2e:permission": "APP_SLIDE_E2E_AUTOPLAY=blocked node test/browser-media-e2e/run.mjs",
     "test:media:release": "node test/browser-media-e2e/release.mjs",
-    "prepublishOnly": "npm run test && node ../../scripts/test-runtime-lifecycle.cjs && npm run build && npm run test:media:release"
+    "prepublishOnly": "npm run test && node ../../scripts/test-runtime-lifecycle.cjs && npm run test:media:release"
   },
   "files": [
     "src",

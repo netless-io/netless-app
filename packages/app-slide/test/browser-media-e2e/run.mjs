@@ -5,6 +5,7 @@ import assert from "node:assert/strict";
 import crypto from "node:crypto";
 import { createRequire } from "node:module";
 import { fileURLToPath } from "node:url";
+import { spawnSync } from "node:child_process";
 import { installNativeProbe } from "./native-probe.mjs";
 import { extendedCoverage } from "./coverage.mjs";
 import { boundaryCoverage } from "./boundaries.mjs";
@@ -963,6 +964,21 @@ try {
     config.sdkToken && config.appIdentifier && config.oldIifePath,
     "APP_SLIDE_E2E_CONFIG requires private test credentials and previous IIFE"
   );
+  if (!process.env.SLIDE_CANDIDATE_DIR) {
+    assert.equal(slidePkg.version, pkg.devDependencies["@netless/slide"],
+      "Installed npm Slide must match the app's exact dependency pin");
+  }
+  // Bind the reported Slide input to the app actually served to the browser.
+  // A prior candidate build must not survive a later installed-npm test run.
+  const built = spawnSync(process.platform === "win32" ? "npm.cmd" : "npm", ["run", "build"], {
+    cwd: path.resolve(root, "../.."),
+    stdio: "inherit",
+    env: process.env,
+  });
+  assert.ifError(built.error);
+  assert.equal(built.signal, null, "App build must finish normally before E2E");
+  assert.equal(built.status, 0, "Build the selected Slide input before E2E");
+  result.appRebuilt = true;
   result.slideSHA256 = crypto
     .createHash("sha256")
     .update(await fs.readFile(slideEntry))

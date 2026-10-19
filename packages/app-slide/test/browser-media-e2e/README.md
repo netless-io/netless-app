@@ -32,6 +32,8 @@
 
 app-slide 的 `prepublishOnly` 会依次执行单测、生命周期测试、正式构建和 `test:media:release`。该门禁必须完成 Chrome 默认/禁止自动播放及 WebKit 三轮完整矩阵，核对同一制品哈希及每个必需场景。每次发布必须提供私有配置和浏览器；缺失即失败。诊断子集和 `SLIDE_CANDIDATE_DIR` 本地覆盖不允许满足发布门禁。
 
+每个 E2E profile 都先按当前依赖和候选配置重新构建 app，再计算制品哈希并启动浏览器；独立执行 `test:media:release` 也走这条路径。npm 模式还校验实际安装版本与 app 的精确依赖一致。这样不会把之前候选构建遗留的 dist 误标成已安装的 npm 包。版本不一致或构建失败即停止，不创建测试房间。
+
 配置位于仓库外，权限 0600，包含专用测试 sdkToken、appIdentifier、region、已下载旧版本脚本的 oldIifePath，以及 customerResource: {taskId,prefix,pageCount} 和 animationResource: {taskId,prefix,page}。缺少两类资源会记录 notRun 并使完整验收失败。不得配置或修改客户真实房间。
 
 运行环境需安装 Playwright 与 Chrome；可通过 APP_SLIDE_PLAYWRIGHT 指定本机 Playwright 模块路径、SLIDE_CHROMIUM_EXECUTABLE 指定 Chrome。HTML5 是当前 Slide 的默认实际后端，WebAudio 通过透传 appOptions.enableWebAudio=false 配置。测试每次核对实际后端。
