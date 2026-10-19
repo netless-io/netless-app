@@ -516,6 +516,61 @@ async function playing(pages, backend) {
 async function pauseCounts(pages) {
   return Promise.all(pages.map(async page => (await sample(page)).mediaPauseCount));
 }
+async function seekWhilePlaying(page, time) {
+  const request = await page.evaluate(time => appMediaGate.seek(time), time);
+  assert.equal(request.playing, true, "Exercise a seek during actual playback");
+  assert.equal(request.state.type, "play");
+  assert.ok(
+    request.state.time >= request.requestedAt - time * 1000 - 1 &&
+      request.state.time <= request.completedAt - time * 1000 + 1,
+    "The authored room clock must encode the requested seek position"
+  );
+  try {
+    const handle = await page.waitForFunction(
+      request => {
+        const s = appMediaGate.sample();
+        const elapsed = (s.now - request.state.time) / 1000;
+        const position = Math.floor(elapsed) + s.trimStart;
+        return s.mediaSeekCount > request.receivedBefore &&
+          s.signals.some(
+            event =>
+              event.type === "mediaSeek" &&
+              event.id === request.id &&
+              event.state?.type === "play" &&
+              event.state.time === request.state.time
+          ) &&
+          s.engineMediaState?.type === "play" &&
+          s.engineMediaState.time === request.state.time &&
+          s.storageMediaState?.type === "play" &&
+          s.storageMediaState.time === request.state.time &&
+          elapsed >= 0 &&
+          elapsed < s.clippedDuration &&
+          s.isPlaying &&
+          !s.audioPaused &&
+          !s.audioExecution?.pending &&
+          (s.backend !== "html5" || (!s.audioNodeSeeking && !s.audioNodePaused)) &&
+          Math.abs(s.audioTime - position) < 1.25 &&
+          (s.mediaType !== "video" ||
+            (!s.videoPaused &&
+              !s.videoSeeking &&
+              !s.videoExecution?.pending &&
+              Math.abs(s.videoTime - position) < 1.25))
+          ? s
+          : false;
+      },
+      request,
+      { timeout: 15000 }
+    );
+    try {
+      (result.seekChecks ||= []).push({ request, observed: await handle.jsonValue() });
+    } finally {
+      await handle.dispose();
+    }
+  } catch (error) {
+    result.seekFailure = { request, after: await sample(page) };
+    throw error;
+  }
+}
 async function stopped(label, pages, backend, previousPauses) {
   await Promise.all(
     pages.map((page, i) =>
@@ -715,6 +770,7 @@ async function group(mode, backend) {
         sample,
         converged,
         playing,
+        seekWhilePlaying,
         stopped,
         pauseCounts,
         checkpoint,
@@ -758,16 +814,7 @@ async function group(mode, backend) {
       await a.evaluate(() => appMediaGate.play());
       if (name !== "rapid-play-pause") await playing(pages, backend);
       if (name === "seek-play-pause") {
-        const seekBefore = (await sample(a)).mediaSeekCount;
-        await a.evaluate(() => appMediaGate.seek(5.4));
-        await a.waitForFunction(
-          count => {
-            const s = appMediaGate.sample();
-            return s.mediaSeekCount > count && Math.abs(s.audioTime - 5) < 0.2;
-          },
-          seekBefore,
-          { timeout: 15000 }
-        );
+        await seekWhilePlaying(a, 5.4);
       }
       await a.evaluate(() => appMediaGate.pause());
       if (name === "repeat-pause") await a.evaluate(() => appMediaGate.pause());
@@ -796,6 +843,7 @@ async function group(mode, backend) {
     sample,
     converged,
     playing,
+    seekWhilePlaying,
     stopped,
     pauseCounts,
     checkpoint,
@@ -808,6 +856,7 @@ async function group(mode, backend) {
     sample,
     converged,
     playing,
+    seekWhilePlaying,
     stopped,
     pauseCounts,
     checkpoint,

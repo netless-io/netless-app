@@ -104,7 +104,12 @@ function observe() {
   const emit = slide.emit.bind(slide);
   slide.emit = (event: string, ...args: any[]) => {
     if (event === "syncReceive")
-      signals.push({ type: args[0]?.type, id: args[0]?.id, authorId: args[0]?.authorId });
+      signals.push({
+        type: args[0]?.type,
+        id: args[0]?.id,
+        authorId: args[0]?.authorId,
+        state: args[0]?.state && { ...args[0].state },
+      });
     if (event === "renderError") errors.push("Slide renderError");
     return emit(event, ...args);
   };
@@ -405,12 +410,26 @@ setInterval(() => {
     media().stop();
   },
   seek(time: number) {
-    media().ctx.eventHub.emit("mediaSeek", {
-      id: media().id,
+    const current = media();
+    const slide = engine();
+    const requestedAt = slide.timestamp();
+    const playing = current.isPlaying;
+    const receivedBefore = signals.filter(event => event.type === "mediaSeek").length;
+    current.ctx.eventHub.emit("mediaSeek", {
+      id: current.id,
       time,
-      isPlaying: media().isPlaying,
+      isPlaying: playing,
       _stateOnly: false,
     });
+    return {
+      id: current.id,
+      time,
+      playing,
+      requestedAt,
+      completedAt: slide.timestamp(),
+      receivedBefore,
+      state: { ...slide.slideState.mediaState[current.id] },
+    };
   },
   prepareControls() {
     // The product's clicker tool routes real pointer events through the drawing layer.

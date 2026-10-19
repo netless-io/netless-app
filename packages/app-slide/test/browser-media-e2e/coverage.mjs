@@ -7,6 +7,7 @@ export async function extendedCoverage({
   sample,
   converged,
   playing,
+  seekWhilePlaying,
   stopped,
   pauseCounts,
   checkpoint,
@@ -244,12 +245,7 @@ export async function extendedCoverage({
     await a.evaluate(() => appMediaGate.freeze());
     await quiet([a], true);
     await playing([b, reader], backend);
-    await b.evaluate(() => appMediaGate.seek(7.4));
-    await b.waitForFunction(
-      () => appMediaGate.sample().audioTime >= 7 && appMediaGate.sample().audioTime < 10,
-      null,
-      { timeout: 15000 }
-    );
+    await seekWhilePlaying(b, 7.4);
     const prior = await pauseCounts([b, reader]);
     await b.evaluate(() => appMediaGate.pause());
     await stopped(
@@ -304,12 +300,7 @@ export async function extendedCoverage({
     passiveWrites = writes([before[1], before[2]]);
     await Promise.all([b, reader].map(p => p.evaluate(() => appMediaGate.freeze())));
     await quiet([b, reader], true);
-    await a.evaluate(() => appMediaGate.seek(4.4));
-    await a.waitForFunction(
-      () => appMediaGate.sample().audioTime >= 4 && appMediaGate.sample().audioTime < 7,
-      null,
-      { timeout: 15000 }
-    );
+    await seekWhilePlaying(a, 4.4);
     await a.evaluate(() => appMediaGate.pause());
     await a.waitForFunction(() => appMediaGate.sample().storageMediaState?.type === "pause");
     const pausedState = (await sample(a)).storageMediaState;

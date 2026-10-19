@@ -7,6 +7,7 @@ export async function boundaryCoverage({
   sample,
   converged,
   playing,
+  seekWhilePlaying,
   stopped,
   pauseCounts,
   checkpoint,
@@ -79,20 +80,7 @@ export async function boundaryCoverage({
       initial.every(s => s.audioTime >= 3 && s.audioTime < 15),
       "Initial playback stays inside the actual trimmed source interval"
     );
-    const seekBefore = (await sample(a)).mediaSeekCount;
-    await a.evaluate(() => appMediaGate.seek(6.4));
-    await a.waitForFunction(
-      count => {
-        const s = appMediaGate.sample();
-        return (
-          s.mediaSeekCount > count &&
-          Math.abs(s.audioTime - 9) < 0.2 &&
-          (s.mediaType !== "video" || Math.abs(s.videoTime - 9) < 0.2)
-        );
-      },
-      seekBefore,
-      { timeout: 5000 }
-    );
+    await seekWhilePlaying(a, 6.4);
     const counts = await pauseCounts(pages);
     await a.evaluate(() => appMediaGate.pause());
     await stopped(
@@ -102,7 +90,12 @@ export async function boundaryCoverage({
       counts
     );
     const paused = await Promise.all(pages.map(sample));
-    assert.ok(paused.every(s => Math.abs(s.audioTime - 9) < 0.2));
+    const pausedState = paused[0].storageMediaState;
+    for (const s of paused) {
+      assert.deepEqual(s.storageMediaState, pausedState);
+      assert.deepEqual(s.engineMediaState, pausedState);
+      assert.ok(Math.abs(s.audioTime - (Math.floor(pausedState.time) + s.trimStart)) < 0.2);
+    }
     const resumeTrace = { prefix, index, before: paused, samples: [] };
     (result.trimResumeTraces ||= []).push(resumeTrace);
     let observing = true;
@@ -154,8 +147,19 @@ export async function boundaryCoverage({
     await playing(pages, backend);
     const replay = await Promise.all(pages.map(sample));
     assert.ok(
-      replay.every(s => s.audioTime >= 3 && s.audioTime < 6),
-      "Replay starts at the trim boundary"
+      replay.every(s => {
+        const state = s.storageMediaState;
+        const expected = Math.floor((s.now - state.time) / 1000) + s.trimStart;
+        return (
+          state.type === "play" &&
+          s.engineMediaState?.time === state.time &&
+          s.audioTime >= 3 &&
+          s.audioTime < 15 &&
+          Math.abs(s.audioTime - expected) < 1.25 &&
+          (s.mediaType !== "video" || Math.abs(s.videoTime - expected) < 1.25)
+        );
+      }),
+      "Replay follows the new room clock inside the trim interval"
     );
     const replayCounts = await pauseCounts(pages);
     await a.evaluate(() => appMediaGate.pause());
