@@ -118,6 +118,17 @@ function sample() {
   const a = m?.rtcAudio || m?.audioPlayer,
     h = a?.howl,
     sound = h?._soundById(a.staticEventId);
+  const execution = (track: any, owner: any) => {
+    const p = track?.pending;
+    return track && {
+      revision: track.revision, desiredPlaying: track.desiredPlaying,
+      suspended: track.isSuspended, pending: p && {
+        revision: p.revision, time: p.time, resume: p.resume, live: p.live,
+        remainingMs: p.deadline - Date.now(), corrections: p.corrections,
+        appliedTime: p.applied?.time, appliedToCurrentOwner: p.applied?.owner === owner,
+      },
+    };
+  };
   if (slide?.player && !observedPlayers.has(slide.player)) {
     const player = slide.player;
     observedPlayers.add(player);
@@ -224,6 +235,11 @@ function sample() {
     clippedDuration: m?.clippedDuration,
     videoDuration: m?.videoElement?.duration,
     videoReadyState: m?.videoElement?.readyState,
+    videoSeeking: m?.videoElement?.seeking,
+    videoExecution: execution(m?.videoExecution, m?.videoElement),
+    audioExecution: execution(a?.execution, h),
+    howlState: h?._state,
+    howlQueue: h?._queue?.map((entry: any) => entry.event),
     playerPaused: slide?.player?.isPaused,
     stageActive: m?.ctx?.stageClock?.isActive,
     mediaActions: mediaActions.slice(-12),

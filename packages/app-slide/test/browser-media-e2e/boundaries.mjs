@@ -103,8 +103,19 @@ export async function boundaryCoverage({
     );
     const paused = await Promise.all(pages.map(sample));
     assert.ok(paused.every(s => Math.abs(s.audioTime - 9) < 0.2));
+    const resumeTrace = { prefix, index, before: paused, samples: [] };
+    (result.trimResumeTraces ||= []).push(resumeTrace);
+    let observing = true;
+    const observations = (async () => {
+      const deadline = Date.now() + 18000;
+      while (observing && Date.now() < deadline) {
+        resumeTrace.samples.push({ at: Date.now(), clients: await Promise.all(pages.map(sample)) });
+        await a.waitForTimeout(100);
+      }
+    })();
     await a.evaluate(() => appMediaGate.play());
-    await playing(pages, backend);
+    try { await playing(pages, backend); }
+    finally { observing = false; await observations; }
     await Promise.all(
       pages.map(p =>
         p.waitForFunction(
