@@ -148,6 +148,14 @@ function fixture(index, scenario = "") {
   if (scenario.includes("failure") && data.children[0]) {
     data.children[0].media.src = origin + "/fixture/retry." + (type === "video" ? "mp4" : "mp3");
   }
+  // Pictures require a real shape mask; an empty geometry hides the video
+  // even when its native element keeps decoding and advancing.
+  for (const picture of data.children) {
+    const { width, height } = picture;
+    const hash = `fixture-${width}-${height}`;
+    picture.geometry = { hash, paths: [{ id: "fixture-rect", hash, fill: "norm", hasStroke: false,
+      scale: { x: 1, y: 1 }, path: `M 0,0 L ${width * 100},0 L ${width * 100},${height * 100} L 0,${height * 100} C 0,0` }] };
+  }
   return data;
 }
 async function start() {
@@ -406,7 +414,7 @@ async function playing(pages, backend) {
             s.isPlaying &&
             Number.isFinite(s.audioTime) &&
             s.audioPaused === false &&
-            (s.mediaType !== "video" || s.videoPaused === false) &&
+            (s.mediaType !== "video" || s.videoPaused === false && s.videoSpriteVisible && s.videoWorldVisible) &&
             s.engineMediaState?.type === "play" &&
             s.storageMediaState?.type === "play"
             ? s

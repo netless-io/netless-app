@@ -257,6 +257,8 @@ function sample() {
     webAudioSourceActive: h?._webAudio ? !!sound?._node?.bufferSource : undefined,
     videoPaused: m?.videoElement?.paused,
     videoTime: m?.videoElement?.currentTime,
+    videoSpriteVisible: m?.sprite?.visible,
+    videoWorldVisible: m?.sprite?.worldVisible,
     engineMediaState: m && slide?.slideState.mediaState[m.id],
     storageMediaState: m && c?.context.storage.state.state?.mediaState?.[m.id],
     mainSeqStep: slide?.mainSeqStep,
