@@ -258,14 +258,20 @@ export async function extendedCoverage({
       backend,
       prior
     );
+    // The seek target is approximate: playback and room transport continue
+    // until B's pause is authored. Recovery must use that actual pause time.
+    const authorPausedState = (await sample(b)).storageMediaState;
     await a.waitForFunction(
-      id => appMediaGate.sample().storedMediaStates?.[id]?.type === "pause",
-      before[0].mediaId,
+      ({ id, time }) => {
+        const state = appMediaGate.sample().storedMediaStates?.[id];
+        return state?.type === "pause" && state.time === time;
+      },
+      { id: before[0].mediaId, time: authorPausedState.time },
       { timeout: 15000 }
     );
     const beforeAuthorRelease = await sample(a);
     const authorStarts = beforeAuthorRelease.native.audioStarts;
-    result.authorPauseRelease = { before: beforeAuthorRelease };
+    result.authorPauseRelease = { before: beforeAuthorRelease, expectedPause: authorPausedState };
     await a.evaluate(() => appMediaGate.unfreeze());
     await converged(pages, index);
     // Existing pause signal belongs to B; restoring A must never author a new pause.
@@ -279,7 +285,13 @@ export async function extendedCoverage({
     after = await rows();
     result.authorPauseRelease.after = after[0];
     unchanged(authorWrites, [after[0], after[2]]);
-    assert.ok(after.every(s => Math.abs(s.audioTime - 7) < 0.2));
+    for (const s of after) {
+      assert.deepEqual(s.engineMediaState, authorPausedState);
+      assert.deepEqual(s.storageMediaState, authorPausedState);
+      const expectedPosition = Math.floor(authorPausedState.time) + s.trimStart;
+      assert.ok(Math.abs(s.audioTime - expectedPosition) < 0.2);
+      if (s.mediaType === "video") assert.ok(Math.abs(s.videoTime - expectedPosition) < 0.2);
+    }
     assert.equal(
       after[0].native.audioStarts,
       authorStarts,
