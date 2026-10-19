@@ -227,6 +227,9 @@ function sample() {
     playerPaused: slide?.player?.isPaused,
     stageActive: m?.ctx?.stageClock?.isActive,
     mediaActions: mediaActions.slice(-12),
+    pendingSyncEvents: c?.pendingSyncEvents?.map((event: any) => ({
+      type: event.type, id: event.id, slideIndex: event.slideIndex, state: event.state,
+    })),
     slowResourceLoads: resourceLoads.filter(r => r.durationMs > 1000).slice(-20),
     trimStart: m?.controller?.start || 0,
     needsGesture: m?.needsUserGesture,

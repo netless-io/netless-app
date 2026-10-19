@@ -259,7 +259,9 @@ export async function extendedCoverage({
       before[0].mediaId,
       { timeout: 15000 }
     );
-    const authorStarts = (await sample(a)).native.audioStarts;
+    const beforeAuthorRelease = await sample(a);
+    const authorStarts = beforeAuthorRelease.native.audioStarts;
+    result.authorPauseRelease = { before: beforeAuthorRelease };
     await a.evaluate(() => appMediaGate.unfreeze());
     await converged(pages, index);
     // Existing pause signal belongs to B; restoring A must never author a new pause.
@@ -271,6 +273,7 @@ export async function extendedCoverage({
     );
     await quiet(pages);
     after = await rows();
+    result.authorPauseRelease.after = after[0];
     unchanged(authorWrites, [after[0], after[2]]);
     assert.ok(after.every(s => Math.abs(s.audioTime - 7) < 0.2));
     assert.equal(

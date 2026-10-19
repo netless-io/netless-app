@@ -666,7 +666,7 @@ async function group(mode, backend) {
   if (diagnostic && diagnostic !== "pause") {
     if (diagnostic === "customer") await documents(prefix, pages, backend);
     else
-      await boundaryCoverage({
+      await (diagnostic === "extended" ? extendedCoverage : boundaryCoverage)({
         prefix,
         pages,
         backend,
@@ -994,7 +994,7 @@ try {
   result.browser = browser.version();
   await verifyNativeAudioEnvironment();
   assert.ok(
-    !diagnostic || ["boundaries", "customer", "pause"].includes(diagnostic),
+    !diagnostic || ["boundaries", "customer", "pause", "extended"].includes(diagnostic),
     "Known diagnostic phase"
   );
   for (const mode of diagnostic ? ["1.0"] : ["1.0", "1.5"])

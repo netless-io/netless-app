@@ -141,6 +141,7 @@ export class SlideControllerBase {
   private lifecycleTask: Promise<void> = Promise.resolve();
   private lifecyclePending = 0;
   private pendingSyncEvents: SyncEvent[] = [];
+  private pendingFrozenSyncBatch = false;
   private flushingSyncEvents = false;
 
   protected visible: boolean;
@@ -406,6 +407,20 @@ export class SlideControllerBase {
       return;
     this.flushingSyncEvents = true;
     try {
+      if (this.pendingFrozenSyncBatch) {
+        this.pendingFrozenSyncBatch = false;
+        const receiveBatch = (this.slide as Slide & {
+          receiveSyncEvents?: (events: SyncEvent[], options: { coalesceMedia: boolean }) => void;
+        }).receiveSyncEvents;
+        if (typeof receiveBatch === "function" && this.pendingSyncEvents.length) {
+          const events = this.pendingSyncEvents.splice(0);
+          try {
+            receiveBatch.call(this.slide, events, { coalesceMedia: true });
+          } catch (error) {
+            logger.error("[Slide] recovery sync receive failed", this.context.appId, error);
+          }
+        }
+      }
       while (
         this.pendingSyncEvents.length &&
         !this.storageBlocked &&
@@ -685,6 +700,7 @@ export class SlideControllerBase {
     const previousIsFrozen = this.isFrozen;
     const previousToFreeze = this._toFreeze;
     this.isFrozen = true;
+    if (this.invisibleBehavior === "frozen") this.pendingFrozenSyncBatch = true;
     try {
       if (this.ready) {
         log("[Slide] freeze", this.context.appId);
