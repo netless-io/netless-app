@@ -118,13 +118,17 @@ export async function extendedCoverage({
       await reset(index);
       const counts = await pauseCounts(pages);
       const native = await a.evaluate(() => appMediaGate.cancelUnlockedNativeSeek());
-      assert.equal(native.observed.audioNodeSeeking,true,"Must observe the real native seek");
-      assert.equal(native.observed.howlLock,false,"Howler's play promise must already be unlocked");
+      assert.equal(native.observed.audioNodeSeeking, true, "Must observe the real native seek");
+      assert.equal(
+        native.observed.howlLock,
+        false,
+        "Howler's play promise must already be unlocked"
+      );
       result.nativeSeekWindows ||= [];
-      result.nativeSeekWindows.push({prefix,kind,...native});
-      await stopped(prefix+"/"+kind+"/native-seeking-unlocked-pause",pages,backend,counts);
+      result.nativeSeekWindows.push({ prefix, kind, ...native });
+      await stopped(prefix + "/" + kind + "/native-seeking-unlocked-pause", pages, backend, counts);
       await quiet(pages);
-      await checkpoint(prefix+"/"+kind+"/native-seeking-unlocked-pause",pages);
+      await checkpoint(prefix + "/" + kind + "/native-seeking-unlocked-pause", pages);
     }
     // Passive writable and readonly clients release their own decoders only.
     await reset(index);
@@ -352,10 +356,17 @@ export async function extendedCoverage({
 
     await reset(index);
     before = await rows();
-    assert.ok(before.every(s => Number.isFinite(s.clippedDuration) && s.clippedDuration - s.audioTime > 200),
-      "Reconnect requires more than 200 seconds of remaining real media");
+    assert.ok(
+      before.every(
+        s => Number.isFinite(s.clippedDuration) && s.clippedDuration - s.audioTime > 200
+      ),
+      "Reconnect requires more than 200 seconds of remaining real media"
+    );
     result.mediaPreconditions ||= [];
-    result.mediaPreconditions.push({label:prefix+"/"+kind+"/reconnect", remaining:before.map(s=>s.clippedDuration-s.audioTime)});
+    result.mediaPreconditions.push({
+      label: prefix + "/" + kind + "/reconnect",
+      remaining: before.map(s => s.clippedDuration - s.audioTime),
+    });
     for (const p of [b, reader]) {
       const old = await sample(p);
       await p.evaluate(() => appMediaGate.reconnect());

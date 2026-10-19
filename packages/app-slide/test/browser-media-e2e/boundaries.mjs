@@ -114,8 +114,12 @@ export async function boundaryCoverage({
       }
     })();
     await a.evaluate(() => appMediaGate.play());
-    try { await playing(pages, backend); }
-    finally { observing = false; await observations; }
+    try {
+      await playing(pages, backend);
+    } finally {
+      observing = false;
+      await observations;
+    }
     await Promise.all(
       pages.map(p =>
         p.waitForFunction(

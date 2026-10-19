@@ -120,14 +120,23 @@ function sample() {
     sound = h?._soundById(a.staticEventId);
   const execution = (track: any, owner: any) => {
     const p = track?.pending;
-    return track && {
-      revision: track.revision, desiredPlaying: track.desiredPlaying,
-      suspended: track.isSuspended, pending: p && {
-        revision: p.revision, time: p.time, resume: p.resume, live: p.live,
-        remainingMs: p.deadline - Date.now(), corrections: p.corrections,
-        appliedTime: p.applied?.time, appliedToCurrentOwner: p.applied?.owner === owner,
-      },
-    };
+    return (
+      track && {
+        revision: track.revision,
+        desiredPlaying: track.desiredPlaying,
+        suspended: track.isSuspended,
+        pending: p && {
+          revision: p.revision,
+          time: p.time,
+          resume: p.resume,
+          live: p.live,
+          remainingMs: p.deadline - Date.now(),
+          corrections: p.corrections,
+          appliedTime: p.applied?.time,
+          appliedToCurrentOwner: p.applied?.owner === owner,
+        },
+      }
+    );
   };
   if (slide?.player && !observedPlayers.has(slide.player)) {
     const player = slide.player;
@@ -244,7 +253,10 @@ function sample() {
     stageActive: m?.ctx?.stageClock?.isActive,
     mediaActions: mediaActions.slice(-12),
     pendingSyncEvents: c?.pendingSyncEvents?.map((event: any) => ({
-      type: event.type, id: event.id, slideIndex: event.slideIndex, state: event.state,
+      type: event.type,
+      id: event.id,
+      slideIndex: event.slideIndex,
+      state: event.state,
     })),
     slowResourceLoads: resourceLoads.filter(r => r.durationMs > 1000).slice(-20),
     trimStart: m?.controller?.start || 0,
@@ -452,20 +464,25 @@ setInterval(() => {
     };
   },
   async cancelUnlockedNativeSeek() {
-    const m = media(), audio = m.rtcAudio || m.audioPlayer;
+    const m = media(),
+      audio = m.rtcAudio || m.audioPlayer;
     const pending = m.seek(4);
     const deadline = performance.now() + 3000;
     let observed;
     while (performance.now() < deadline) {
-      const h = audio.howl, node = h?._soundById(audio.staticEventId)?._node;
-      if (node?.seeking && h._playLock === false) { observed = sample(); break; }
+      const h = audio.howl,
+        node = h?._soundById(audio.staticEventId)?._node;
+      if (node?.seeking && h._playLock === false) {
+        observed = sample();
+        break;
+      }
       await new Promise(resolve => setTimeout(resolve, 0));
     }
     if (!observed) throw Error("Real unlocked native seek window was not observed");
     await engine().player.setMediaState(m.id, false, 4);
     await pending;
-    m.ctx.eventHub.emit("mediaPause", {id:m.id,time:4});
-    return {observed,final:sample()};
+    m.ctx.eventHub.emit("mediaPause", { id: m.id, time: 4 });
+    return { observed, final: sample() };
   },
   async removeDocument() {
     await manager.closeApp(appId);

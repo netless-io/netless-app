@@ -359,11 +359,76 @@ async function main() {
     await unfreezing;
     assert.equal(batches.length, 1);
     assert.deepEqual(batches[0].options, { coalesceMedia: true });
-    assert.deepEqual(batches[0].events.map((event: any) => event.index), [3, 4]);
-    assert.deepEqual(f.received.map(event => event.index), [3, 4]);
+    assert.deepEqual(
+      batches[0].events.map((event: any) => event.index),
+      [3, 4]
+    );
+    assert.deepEqual(
+      f.received.map(event => event.index),
+      [3, 4]
+    );
     f.signal(5);
     assert.equal(batches.length, 1, "ordinary live delivery remains the original FIFO path");
-    assert.deepEqual(f.received.map(event => event.index), [3, 4, 5]);
+    assert.deepEqual(
+      f.received.map(event => event.index),
+      [3, 4, 5]
+    );
+    await f.c.destroy();
+  }
+  {
+    const f = fixture();
+    f.installLifecycle();
+    f.restores[0].done.resolve();
+    await tick();
+    const batches: any[] = [];
+    f.c.slide.receiveSyncEvents = (events: any[]) => {
+      batches.push(events);
+      events.forEach(event => f.c.slide.emit("syncReceive", event));
+    };
+    f.c.ready = false;
+    await f.c.freeze();
+    f.signal(3);
+    f.signal(4);
+    assert.deepEqual(f.lifecycle, [], "deferred freeze has not destroyed a Player");
+    assert.deepEqual(
+      batches,
+      [],
+      "a freeze request before ready must not enable recovery batching"
+    );
+    assert.deepEqual(
+      f.received.map(event => event.index),
+      [3, 4]
+    );
+    f.c.ready = true;
+    f.c.slide.frozen = async () => {
+      throw new Error("controlled freeze failure");
+    };
+    await assert.rejects(f.c.freeze(), /controlled freeze failure/);
+    f.signal(5);
+    assert.deepEqual(
+      f.received.map(event => event.index),
+      [3, 4],
+      "unknown resources retain events until recovery"
+    );
+    const retry = f.c.unfreeze();
+    await tick();
+    f.restores[1].done.resolve();
+    await tick();
+    f.restores[2].done.resolve();
+    await retry;
+    assert.equal(
+      batches.length,
+      1,
+      "completed recovery after a failed freeze still batches its backlog"
+    );
+    assert.deepEqual(
+      batches[0].map((event: any) => event.index),
+      [5]
+    );
+    assert.deepEqual(
+      f.received.map(event => event.index),
+      [3, 4, 5]
+    );
     await f.c.destroy();
   }
   {

@@ -67,19 +67,36 @@ let server, browser, origin;
 const appDist = path.join(project, "packages/app-slide/dist");
 
 async function verifyNativeAudioEnvironment() {
-  const context=await browser.newContext();
-  const page=await context.newPage();
-  const sampleNative=()=>page.evaluate(()=>({time:window.a.currentTime,paused:window.a.paused,ready:window.a.readyState,playState:window.playState}));
+  const context = await browser.newContext();
+  const page = await context.newPage();
+  const sampleNative = () =>
+    page.evaluate(() => ({
+      time: window.a.currentTime,
+      paused: window.a.paused,
+      ready: window.a.readyState,
+      playState: window.playState,
+    }));
   try {
-    await page.goto(origin+"/media-environment-check");
+    await page.goto(origin + "/media-environment-check");
     await page.click("#play");
-    await page.waitForFunction(()=>window.a.currentTime>0.1&&!window.a.paused,null,{timeout:15000,polling:50});
-    result.nativeEnvironment={passed:true,observed:await sampleNative()};
-  } catch(error) {
-    result.nativeEnvironment={passed:false,observed:await sampleNative()};
-    throw Error("Native audio environment did not advance before any room was created: "+error.message);
+    await page.waitForFunction(() => window.a.currentTime > 0.1 && !window.a.paused, null, {
+      timeout: 15000,
+      polling: 50,
+    });
+    result.nativeEnvironment = { passed: true, observed: await sampleNative() };
+  } catch (error) {
+    result.nativeEnvironment = { passed: false, observed: await sampleNative() };
+    throw Error(
+      "Native audio environment did not advance before any room was created: " + error.message
+    );
   } finally {
-    await page.evaluate(()=>{window.a?.pause();window.a?.removeAttribute("src");window.a?.load();}).catch(()=>{});
+    await page
+      .evaluate(() => {
+        window.a?.pause();
+        window.a?.removeAttribute("src");
+        window.a?.load();
+      })
+      .catch(() => {});
     await context.close();
   }
 }
@@ -154,8 +171,21 @@ function fixture(index, scenario = "") {
   for (const picture of data.children) {
     const { width, height } = picture;
     const hash = `fixture-${width}-${height}`;
-    picture.geometry = { hash, paths: [{ id: "fixture-rect", hash, fill: "norm", hasStroke: false,
-      scale: { x: 1, y: 1 }, path: `M 0,0 L ${width * 100},0 L ${width * 100},${height * 100} L 0,${height * 100} C 0,0` }] };
+    picture.geometry = {
+      hash,
+      paths: [
+        {
+          id: "fixture-rect",
+          hash,
+          fill: "norm",
+          hasStroke: false,
+          scale: { x: 1, y: 1 },
+          path: `M 0,0 L ${width * 100},0 L ${width * 100},${height * 100} L 0,${
+            height * 100
+          } C 0,0`,
+        },
+      ],
+    };
   }
   return data;
 }
@@ -220,8 +250,10 @@ async function start() {
       }
       const index = url.pathname.match(/\/slide-([123])\.json$/)?.[1];
       if (url.pathname === "/media-environment-check") {
-        res.setHeader("Content-Type","text/html; charset=utf-8");
-        return res.end('<button id="play">play</button><script>window.a=new Audio("/fixture/media.mp3");a.preload="auto";document.querySelector("button").onclick=()=>{window.playState="pending";a.play().then(()=>window.playState="resolved",e=>window.playState=e.name)};</script>');
+        res.setHeader("Content-Type", "text/html; charset=utf-8");
+        return res.end(
+          '<button id="play">play</button><script>window.a=new Audio("/fixture/media.mp3");a.preload="auto";document.querySelector("button").onclick=()=>{window.playState="pending";a.play().then(()=>window.playState="resolved",e=>window.playState=e.name)};</script>'
+        );
       }
       if (url.pathname.startsWith("/fixture/") && index) {
         res.setHeader("Content-Type", "application/json");
@@ -271,7 +303,12 @@ async function start() {
           return res.end("Intentional media failure");
         }
         const data = await fs.readFile(
-          path.join(root, "fixtures", (url.pathname.startsWith("/fixture/short.") ? "short" : "media") + path.extname(url.pathname))
+          path.join(
+            root,
+            "fixtures",
+            (url.pathname.startsWith("/fixture/short.") ? "short" : "media") +
+              path.extname(url.pathname)
+          )
         );
         res.setHeader("Content-Type", url.pathname.endsWith("mp4") ? "video/mp4" : "audio/mpeg");
         res.setHeader("Accept-Ranges", "bytes");
@@ -415,7 +452,8 @@ async function playing(pages, backend) {
             s.isPlaying &&
             Number.isFinite(s.audioTime) &&
             s.audioPaused === false &&
-            (s.mediaType !== "video" || s.videoPaused === false && s.videoSpriteVisible && s.videoWorldVisible) &&
+            (s.mediaType !== "video" ||
+              (s.videoPaused === false && s.videoSpriteVisible && s.videoWorldVisible)) &&
             s.engineMediaState?.type === "play" &&
             s.storageMediaState?.type === "play"
             ? s
@@ -521,7 +559,10 @@ async function stopped(label, pages, backend, previousPauses) {
         s.storageMediaState?.type === "pause" &&
         Math.abs(s.engineMediaState.time - s.storageMediaState.time) < 0.001 &&
         Math.abs(s.audioTime - (Math.floor(s.storageMediaState.time) + s.trimStart)) < 0.2 &&
-        (backend !== "html5" || (!s.audioNodeSeeking && Math.abs(s.audioNodeTime - (Math.floor(s.storageMediaState.time) + s.trimStart)) < 0.2)) &&
+        (backend !== "html5" ||
+          (!s.audioNodeSeeking &&
+            Math.abs(s.audioNodeTime - (Math.floor(s.storageMediaState.time) + s.trimStart)) <
+              0.2)) &&
         (s.mediaType !== "video" ||
           Math.abs(s.videoTime - (Math.floor(s.storageMediaState.time) + s.trimStart)) < 0.2)
     );
@@ -965,8 +1006,11 @@ try {
     "APP_SLIDE_E2E_CONFIG requires private test credentials and previous IIFE"
   );
   if (!process.env.SLIDE_CANDIDATE_DIR) {
-    assert.equal(slidePkg.version, pkg.devDependencies["@netless/slide"],
-      "Installed npm Slide must match the app's exact dependency pin");
+    assert.equal(
+      slidePkg.version,
+      pkg.devDependencies["@netless/slide"],
+      "Installed npm Slide must match the app's exact dependency pin"
+    );
   }
   // Bind the reported Slide input to the app actually served to the browser.
   // A prior candidate build must not survive a later installed-npm test run.

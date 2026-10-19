@@ -409,9 +409,11 @@ export class SlideControllerBase {
     try {
       if (this.pendingFrozenSyncBatch) {
         this.pendingFrozenSyncBatch = false;
-        const receiveBatch = (this.slide as Slide & {
-          receiveSyncEvents?: (events: SyncEvent[], options: { coalesceMedia: boolean }) => void;
-        }).receiveSyncEvents;
+        const receiveBatch = (
+          this.slide as Slide & {
+            receiveSyncEvents?: (events: SyncEvent[], options: { coalesceMedia: boolean }) => void;
+          }
+        ).receiveSyncEvents;
         if (typeof receiveBatch === "function" && this.pendingSyncEvents.length) {
           const events = this.pendingSyncEvents.splice(0);
           try {
@@ -700,7 +702,6 @@ export class SlideControllerBase {
     const previousIsFrozen = this.isFrozen;
     const previousToFreeze = this._toFreeze;
     this.isFrozen = true;
-    if (this.invisibleBehavior === "frozen") this.pendingFrozenSyncBatch = true;
     try {
       if (this.ready) {
         log("[Slide] freeze", this.context.appId);
@@ -820,6 +821,9 @@ export class SlideControllerBase {
           this.storageBlocked = false;
           this.startStorageRestore(true);
           await Promise.race([this.storageRestoreTask, this.destroyedSignal]);
+          // Only a completed recovery enables batching. A deferred freeze
+          // before ready must keep ordinary live delivery on its FIFO path.
+          this.pendingFrozenSyncBatch = true;
         } else {
           this.slide.resume();
           this.slide.notifyFrameResize();
