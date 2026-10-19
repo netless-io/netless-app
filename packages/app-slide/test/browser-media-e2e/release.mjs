@@ -53,6 +53,7 @@ for (const [engine, autoplay] of [
         "multiple-media-rapid-independent-signals",
         "media-http-retry-after-recreate",
         "real-pointer-progress-pause",
+        "animation-step",
       ]) {
         assert.ok(
           report.cases.some(c => c.label === `${mode}/${backend}/${name}`),
@@ -91,6 +92,45 @@ for (const [engine, autoplay] of [
             "Required real-media frozen/release scenario: " + name
           );
         }
+      for (const index of [1, 2]) {
+        const replay = report.trimReplayChecks?.find(
+          c => c.prefix === `${mode}/${backend}` && c.index === index
+        );
+        assert.ok(replay, "Replay needs an independent zero-offset play anchor");
+        assert.ok(
+          replay.request.state.time >= replay.request.requestedAt - 200 &&
+            replay.request.state.time <= replay.request.completedAt + 1
+        );
+        assert.ok(
+          replay.before.every(
+            s =>
+              Math.abs(s.audioTime - s.trimStart) < 0.2 &&
+              (s.mediaType !== "video" || Math.abs(s.videoTime - s.trimStart) < 0.2)
+          )
+        );
+      }
+      const animation = report.cases.find(c => c.label === `${mode}/${backend}/animation-step`);
+      assert.equal(animation.steps?.length, 2, "Two actual animation steps must finish");
+      for (const step of animation.steps) {
+        assert.equal(step.after.length, 3);
+        assert.ok(
+          step.after.every(
+            s =>
+              s.mainSeqStep === step.expected &&
+              s.storageMainSeqStep === step.expected &&
+              s.mainSeqState === "end" &&
+              s.storageMainSeqState === "end"
+          )
+        );
+        assert.ok(
+          step.pixelsBefore.every(
+            (frame, i) =>
+              frame.bytes > 0 &&
+              step.pixelsAfter[i].bytes > 0 &&
+              frame.hash !== step.pixelsAfter[i].hash
+          )
+        );
+      }
     }
   reports.push({
     engine,

@@ -134,7 +134,10 @@ export async function boundaryCoverage({
             return (
               !s.engineMediaState?.type &&
               !s.storageMediaState?.type &&
-              Math.abs(s.audioTime - s.trimStart) < 0.2
+              s.audioPaused &&
+              Math.abs(s.audioTime - s.trimStart) < 0.2 &&
+              (s.mediaType !== "video" ||
+                (s.videoPaused && Math.abs(s.videoTime - s.trimStart) < 0.2))
             );
           },
           null,
@@ -143,9 +146,32 @@ export async function boundaryCoverage({
       )
     );
     await a.waitForTimeout(600);
-    await a.evaluate(() => appMediaGate.play());
+    const replayBefore = await Promise.all(pages.map(sample));
+    for (const s of replayBefore) {
+      assert.ok(s.audioPaused && Math.abs(s.audioTime - s.trimStart) < 0.2);
+      if (s.mediaType === "video")
+        assert.ok(s.videoPaused && Math.abs(s.videoTime - s.trimStart) < 0.2);
+    }
+    const replayRequest = await a.evaluate(() => appMediaGate.play());
+    assert.equal(replayRequest.state.type, "play");
+    assert.ok(
+      replayRequest.state.time >= replayRequest.requestedAt - 200 &&
+        replayRequest.state.time <= replayRequest.completedAt + 1,
+      "A replay must author zero trim-relative offset, independently of received state"
+    );
     await playing(pages, backend);
     const replay = await Promise.all(pages.map(sample));
+    for (const s of replay) {
+      assert.deepEqual(s.storageMediaState, replayRequest.state);
+      assert.deepEqual(s.engineMediaState, replayRequest.state);
+    }
+    (result.trimReplayChecks ||= []).push({
+      prefix,
+      index,
+      request: replayRequest,
+      before: replayBefore,
+      after: replay,
+    });
     assert.ok(
       replay.every(s => {
         const state = s.storageMediaState;

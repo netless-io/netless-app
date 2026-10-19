@@ -22,6 +22,7 @@ const browserEngine = process.env.APP_SLIDE_E2E_BROWSER || "chromium";
 const blockedAutoplay = process.env.APP_SLIDE_E2E_AUTOPLAY === "blocked";
 const diagnostic = process.env.APP_SLIDE_E2E_DIAGNOSTIC;
 const diagnosticBackend = process.env.APP_SLIDE_E2E_DIAGNOSTIC_BACKEND || "html5";
+const diagnosticMode = process.env.APP_SLIDE_E2E_DIAGNOSTIC_MODE || "1.0";
 const output = path.resolve(
   (process.env.APP_SLIDE_E2E_OUTPUT || path.join(root, ".results", String(Date.now()))) +
     (browserEngine !== "chromium"
@@ -761,7 +762,8 @@ async function group(mode, backend) {
     result.activationChecks.push({ prefix, activation });
   }
   if (diagnostic && diagnostic !== "pause") {
-    if (diagnostic === "customer") await documents(prefix, pages, backend);
+    if (diagnostic === "customer" || diagnostic === "animation")
+      await documents(prefix, pages, backend, diagnostic === "animation");
     else
       await (diagnostic === "extended" ? extendedCoverage : boundaryCoverage)({
         prefix,
@@ -938,9 +940,9 @@ async function lifecycle(prefix, pages) {
     assert.ok((await sample(page)).storedSrc?.endsWith("/old/main.iife.js"));
   await checkpoint(prefix + "/historical-registration-rejoin", pages);
 }
-async function documents(prefix, pages, backend) {
+async function documents(prefix, pages, backend, animationOnly = false) {
   const [a] = pages;
-  if (config.customerResource) {
+  if (config.customerResource && !animationOnly) {
     await a.evaluate(
       doc => appMediaGate.selectDocument(doc.taskId, doc.prefix, "Customer media regression"),
       config.customerResource
@@ -1006,9 +1008,11 @@ async function documents(prefix, pages, backend) {
       await checkpoint(prefix + "/customer-page-" + index, pages);
     }
     await a.screenshot({ path: path.join(output, prefix.replace("/", "-") + "-customer.png") });
-  } else result.notRun.push(prefix + "/customer-deck: no customerResource configured");
+  } else if (!animationOnly)
+    result.notRun.push(prefix + "/customer-deck: no customerResource configured");
   if (config.animationResource) {
     if (
+      animationOnly ||
       config.animationResource.taskId !== config.customerResource?.taskId ||
       config.animationResource.prefix !== config.customerResource?.prefix
     ) {
@@ -1020,28 +1024,74 @@ async function documents(prefix, pages, backend) {
     }
     await a.evaluate(index => appMediaGate.page(index), config.animationResource.page || 2);
     await converged(pages, config.animationResource.page || 2);
-    const animationBefore = await sample(a);
-    assert.ok(animationBefore.hasNextAnimation, "Animation fixture needs a remaining click step");
-    const before = animationBefore.mainSeqStep;
-    await a.evaluate(() => appMediaGate.nextStep());
-    await a.waitForFunction(step => appMediaGate.sample().mainSeqStep > step, before, {
-      timeout: 15000,
-    });
-    await Promise.all(
-      pages.map(page =>
-        page.waitForFunction(
-          step => {
-            const s = appMediaGate.sample();
-            return s.mainSeqStep > step && s.storageMainSeqStep === s.mainSeqStep;
-          },
-          before,
-          { timeout: 15000 }
+    const steps = [];
+    for (let click = 0; click < 2; click++) {
+      await Promise.all(
+        pages.map(page =>
+          page.waitForFunction(
+            () => {
+              const s = appMediaGate.sample();
+              return (
+                (s.mainSeqState === "idle" || s.mainSeqState === "end") &&
+                s.mainSeqState === s.storageMainSeqState &&
+                s.mainSeqStep === s.storageMainSeqStep
+              );
+            },
+            null,
+            { timeout: 15000 }
+          )
         )
-      )
-    );
-    const rows = await Promise.all(pages.map(sample));
-    assert.ok(rows.every(s => s.mainSeqStep === rows[0].mainSeqStep));
-    await checkpoint(prefix + "/animation-step", pages);
+      );
+      const before = await Promise.all(pages.map(sample));
+      assert.ok(
+        before.every(s => s.hasNextAnimation && s.mainSeqLength >= 2),
+        "Animation fixture needs at least two real click steps"
+      );
+      assert.ok(before.every(s => s.mainSeqState === "idle" || s.mainSeqState === "end"));
+      assert.ok(
+        before.every(
+          s => s.mainSeqStep === before[0].mainSeqStep && s.mainSeqState === before[0].mainSeqState
+        )
+      );
+      const expected = before[0].mainSeqStep + (before[0].mainSeqState === "idle" ? 0 : 1);
+      const pixelsBefore = await Promise.all(
+        pages.map(p => p.evaluate(() => appMediaGate.frame()))
+      );
+      await a.evaluate(() => appMediaGate.nextStep());
+      await Promise.all(
+        pages.map((page, i) =>
+          page.waitForFunction(
+            ({ expected, count, events }) => {
+              const s = appMediaGate.sample();
+              const currentEvents = s.animationEvents.slice(events);
+              return (
+                s.nextStepCount > count &&
+                s.mainSeqStep === expected &&
+                s.storageMainSeqStep === expected &&
+                s.mainSeqState === "end" &&
+                s.storageMainSeqState === "end" &&
+                currentEvents.some(e => e.type === "mainSeqStepStart" && e.index === expected) &&
+                currentEvents.some(e => e.type === "mainSeqStepEnd" && e.index === expected)
+              );
+            },
+            { expected, count: before[i].nextStepCount, events: before[i].animationEvents.length },
+            { timeout: 15000 }
+          )
+        )
+      );
+      const after = await Promise.all(pages.map(sample));
+      const pixelsAfter = await Promise.all(pages.map(p => p.evaluate(() => appMediaGate.frame())));
+      for (let i = 0; i < pages.length; i++) {
+        assert.ok(pixelsBefore[i].bytes > 0 && pixelsAfter[i].bytes > 0);
+        assert.notEqual(
+          pixelsBefore[i].hash,
+          pixelsAfter[i].hash,
+          "The real rendered animation must change pixels"
+        );
+      }
+      steps.push({ expected, before, after, pixelsBefore, pixelsAfter });
+    }
+    await checkpoint(prefix + "/animation-step", pages, { steps });
   } else result.notRun.push(prefix + "/animation: no animationResource configured");
 }
 try {
@@ -1050,6 +1100,25 @@ try {
     "Set APP_SLIDE_E2E_CONFIG to an external private config.json"
   );
   config = JSON.parse(await fs.readFile(process.env.APP_SLIDE_E2E_CONFIG, "utf8"));
+  if (diagnostic)
+    assert.ok(["1.0", "1.5"].includes(diagnosticMode), "Known diagnostic whiteboard mode");
+  result.harnessSHA256 = crypto
+    .createHash("sha256")
+    .update(
+      Buffer.concat(
+        await Promise.all(
+          [
+            "run.mjs",
+            "coverage.mjs",
+            "boundaries.mjs",
+            "main.ts",
+            "native-probe.mjs",
+            "passive-page.mjs",
+          ].map(file => fs.readFile(path.join(root, file)))
+        )
+      )
+    )
+    .digest("hex");
   assert.ok(
     config.sdkToken && config.appIdentifier && config.oldIifePath,
     "APP_SLIDE_E2E_CONFIG requires private test credentials and previous IIFE"
@@ -1103,10 +1172,11 @@ try {
   result.browser = browser.version();
   await verifyNativeAudioEnvironment();
   assert.ok(
-    !diagnostic || ["boundaries", "customer", "pause", "extended"].includes(diagnostic),
+    !diagnostic ||
+      ["boundaries", "customer", "animation", "pause", "extended"].includes(diagnostic),
     "Known diagnostic phase"
   );
-  for (const mode of diagnostic ? ["1.0"] : ["1.0", "1.5"])
+  for (const mode of diagnostic ? [diagnosticMode] : ["1.0", "1.5"])
     for (const backend of diagnostic ? [diagnosticBackend] : ["html5", "webaudio"])
       await group(mode, backend);
   assert.deepEqual(result.browserErrors, []);
@@ -1118,7 +1188,7 @@ try {
       3,
       "All roles must recover genuinely blocked autoplay"
     );
-    for (const mode of diagnostic ? ["1.0"] : ["1.0", "1.5"])
+    for (const mode of diagnostic ? [diagnosticMode] : ["1.0", "1.5"])
       for (const backend of diagnostic ? [diagnosticBackend] : ["html5", "webaudio"]) {
         assert.equal(
           new Set(

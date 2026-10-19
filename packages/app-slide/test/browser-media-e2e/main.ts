@@ -16,7 +16,13 @@ const config = await (await fetch("/__config?" + query)).json();
 const appBundleUrl = "/app/main.es.js";
 const bundle = registration === "esm" ? await import(/* @vite-ignore */ appBundleUrl) : undefined;
 const errors: string[] = [];
-const signals: { type: string; id?: string; authorId?: number }[] = [];
+const signals: {
+  type: string;
+  id?: string;
+  authorId?: number;
+  state?: { type?: string; time?: number };
+}[] = [];
+const animationEvents: { type: string; index: number; page: number; epoch: number }[] = [];
 const observedMedia = new WeakSet<object>();
 const observedPlayers = new WeakSet<object>();
 const mediaActions: object[] = [];
@@ -102,6 +108,7 @@ function observe() {
     }
   };
   const emit = slide.emit.bind(slide);
+  const eventEpoch = epoch;
   slide.emit = (event: string, ...args: any[]) => {
     if (event === "syncReceive")
       signals.push({
@@ -109,6 +116,13 @@ function observe() {
         id: args[0]?.id,
         authorId: args[0]?.authorId,
         state: args[0]?.state && { ...args[0].state },
+      });
+    if (event === "mainSeqStepStart" || event === "mainSeqStepEnd")
+      animationEvents.push({
+        type: event,
+        index: args[0],
+        page: slide.slideState.currentSlideIndex,
+        epoch: eventEpoch,
       });
     if (event === "renderError") errors.push("Slide renderError");
     return emit(event, ...args);
@@ -298,9 +312,15 @@ function sample() {
     engineMediaState: m && slide?.slideState.mediaState[m.id],
     storageMediaState: m && c?.context.storage.state.state?.mediaState?.[m.id],
     mainSeqStep: slide?.mainSeqStep,
+    mainSeqState: slide?.mainSeqState,
     mainSeqLength: slide?.mainSeqLength,
     hasNextAnimation: slide?.player?.mainSeqHasNextStep(),
     storageMainSeqStep: c?.context.storage.state.state?.mainSeqStep,
+    storageMainSeqState: c?.context.storage.state.state?.mainSeqState,
+    animationEvents: animationEvents.filter(
+      e => e.epoch === epoch && e.page === slide?.slideState.currentSlideIndex
+    ),
+    nextStepCount: signals.filter(e => e.type === "nextStep").length,
     mediaPauseCount: signals.filter(e => e.type === "mediaPause").length,
     mediaSeekCount: signals.filter(e => e.type === "mediaSeek").length,
     receivedSignalCount: signals.length,
@@ -397,11 +417,27 @@ setInterval(() => {
 }, 50);
 (window as any).appMediaGate = {
   sample,
+  frame() {
+    const { renderer, stage } = engine().player.app;
+    renderer.render(stage);
+    const pixels = renderer.plugins.extract.pixels(stage);
+    let hash = 2166136261;
+    for (const byte of pixels) hash = Math.imul(hash ^ byte, 16777619) >>> 0;
+    return { hash, bytes: pixels.length };
+  },
   page(index: number) {
     return app()?.appResult?.jumpToPage(index);
   },
   play() {
-    media().controller.playButton.click();
+    const current = media();
+    const slide = engine();
+    const requestedAt = slide.timestamp();
+    current.controller.playButton.click();
+    return {
+      requestedAt,
+      completedAt: slide.timestamp(),
+      state: { ...slide.slideState.mediaState[current.id] },
+    };
   },
   pause() {
     media().controller.pauseButton.click();
