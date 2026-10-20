@@ -40,7 +40,17 @@ export function installNativeProbe() {
       return source;
     };
   }
+  const sourceActive = source => {
+    const row = sources.get(source);
+    return !!(
+      row?.realMedia &&
+      row.started &&
+      !row.ended &&
+      (row.stoppedAt === undefined || source.context.currentTime < row.stoppedAt)
+    );
+  };
   window.__nativeMediaProbe = {
+    sourceActive,
     nodes: media,
     sample(currentNodes = [], currentSources = []) {
       const nodes = [...media]
@@ -54,13 +64,7 @@ export function installNativeProbe() {
           realMedia: !!node.src && !node.src.startsWith("data:"),
         }))
         .filter(n => n.realMedia);
-      const activeSources = [...sources].filter(
-        ([source, row]) =>
-          row.realMedia &&
-          row.started &&
-          !row.ended &&
-          (row.stoppedAt === undefined || source.context.currentTime < row.stoppedAt)
-      );
+      const activeSources = [...sources].filter(([source]) => sourceActive(source));
       return {
         audioStarts,
         nodes,

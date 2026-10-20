@@ -402,6 +402,7 @@ async function playing(pages, backend) {
           () => {
             const s = appMediaGate.sample();
             return (
+              s.mediaFailure ||
               s.needsGesture ||
               (s.backend === "webaudio" &&
                 s.audioContextState === "suspended" &&
@@ -415,6 +416,7 @@ async function playing(pages, backend) {
           null,
           { timeout: 60000 }
         );
+        assert.ok(!(await sample(page)).mediaFailure, "Media failed before gesture recovery");
         if (
           (await sample(page)).needsGesture ||
           (await sample(page)).audioContextState === "suspended"
@@ -449,8 +451,16 @@ async function playing(pages, backend) {
       const handle = await page.waitForFunction(
         backend => {
           const s = appMediaGate.sample();
+          if (s.mediaFailure) return s;
           return s.backend === backend &&
             s.isPlaying &&
+            !s.audioNodeSeeking &&
+            !s.videoSeeking &&
+            !s.audioExecution?.pending &&
+            !s.videoExecution?.pending &&
+            (backend === "html5"
+              ? s.audioNodePaused === false
+              : s.webAudioSourceActive && s.audioContextState === "running") &&
             Number.isFinite(s.audioTime) &&
             s.audioPaused === false &&
             (s.mediaType !== "video" ||
@@ -471,20 +481,49 @@ async function playing(pages, backend) {
     })
   );
   try {
+    assert.ok(
+      before.every(s => !s.mediaFailure),
+      "Media preparation failed"
+    );
     await Promise.all(
-      pages.map((page, i) =>
-        page.waitForFunction(
+      pages.map(async (page, i) => {
+        const handle = await page.waitForFunction(
           before => {
             const s = appMediaGate.sample();
-            return (
+            if (s.mediaFailure) return s;
+            return s.epoch === before.epoch &&
+              s.mediaId === before.mediaId &&
+              s.audioSoundId === before.audioSoundId &&
+              s.audioExecution?.revision === before.audioExecution?.revision &&
+              s.videoExecution?.revision === before.videoExecution?.revision &&
+              !s.audioExecution?.pending &&
+              !s.videoExecution?.pending &&
+              !s.audioNodeSeeking &&
+              !s.videoSeeking &&
+              s.isPlaying &&
+              s.audioPaused === false &&
+              (s.backend === "html5"
+                ? s.audioNodePaused === false
+                : s.webAudioSourceActive && s.audioContextState === "running") &&
+              s.engineMediaState?.type === "play" &&
+              s.storageMediaState?.type === "play" &&
+              s.engineMediaState.time === before.engineMediaState.time &&
+              s.storageMediaState.time === before.storageMediaState.time &&
               s.audioTime > before.audioTime + 0.1 &&
-              (s.mediaType !== "video" || s.videoTime > before.videoTime + 0.1)
-            );
+              (s.mediaType !== "video" ||
+                (s.videoPaused === false && s.videoTime > before.videoTime + 0.1))
+              ? s
+              : false;
           },
           before[i],
           { timeout: 15000 }
-        )
-      )
+        );
+        try {
+          assert.ok(!(await handle.jsonValue()).mediaFailure, "Native playback failed");
+        } finally {
+          await handle.dispose();
+        }
+      })
     );
   } catch (error) {
     result.playFailure = { before, after: await Promise.all(pages.map(sample)) };
@@ -665,6 +704,9 @@ async function stopped(label, pages, backend, previousPauses) {
 async function group(mode, backend) {
   const room = await api("rooms", "POST", { isRecord: false, limit: 0 });
   rooms.set(mode + "/" + backend, { uuid: room.uuid });
+  // Persist ownership before the next API/browser await. Abrupt shutdown or
+  // power loss must not make these dedicated test rooms unidentifiable.
+  await writeRoomJournal();
   const roomToken = await api("tokens/rooms/" + room.uuid, "POST", {
     role: "admin",
     lifespan: 7200000,
@@ -704,6 +746,13 @@ async function group(mode, backend) {
         path: new URL(request.url()).pathname,
         error: request.failure()?.errorText,
       });
+    });
+    page.on("requestfinished", request => {
+      const pathname = new URL(request.url()).pathname;
+      if (/\.mp[34]$/.test(pathname)) {
+        result.mediaResourceTimings ||= [];
+        result.mediaResourceTimings.push({ role, path: pathname, timing: request.timing() });
+      }
     });
     page.on("framenavigated", frame => {
       if (frame === page.mainFrame()) {
@@ -1094,6 +1143,21 @@ async function documents(prefix, pages, backend, animationOnly = false) {
     await checkpoint(prefix + "/animation-step", pages, { steps });
   } else result.notRun.push(prefix + "/animation: no animationResource configured");
 }
+async function writeRoomJournal() {
+  const filename = path.join(output, "owned-rooms.json");
+  const journal = {
+    startedAt: result.startedAt,
+    rooms: [...rooms.entries()].map(([cohort, room]) => ({
+      cohort,
+      uuid: room.uuid,
+      isRecord: false,
+    })),
+    cleanup: result.cleanup,
+  };
+  await fs.writeFile(filename + ".tmp", JSON.stringify(journal, null, 2) + "\n");
+  await fs.rename(filename + ".tmp", filename);
+}
+
 try {
   assert.ok(
     process.env.APP_SLIDE_E2E_CONFIG,
@@ -1292,6 +1356,14 @@ try {
     } catch (error) {
       result.passed = false;
       result.cleanup.push({ cohort, uuid: room.uuid, failed: true, error: error.message });
+      process.exitCode = 1;
+    }
+    try {
+      await writeRoomJournal();
+    } catch (error) {
+      result.passed = false;
+      result.journalErrors ||= [];
+      result.journalErrors.push({ cohort, error: error.message });
       process.exitCode = 1;
     }
   }

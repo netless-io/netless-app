@@ -40,7 +40,7 @@ app-slide 的 `prepublishOnly` 会依次执行单测、生命周期测试、正�
 
 运行环境需安装 Playwright 与 Chrome；可通过 APP_SLIDE_PLAYWRIGHT 指定本机 Playwright 模块路径、SLIDE_CHROMIUM_EXECUTABLE 指定 Chrome。HTML5 是当前 Slide 的默认实际后端，WebAudio 通过透传 appOptions.enableWebAudio=false 配置。测试每次核对实际后端。
 
-暂停验收检查 App storage 和 Slide 状态、原生音视频的 paused 标记、WebAudio BufferSource，以及连续采样的时间停止推进。播放验收要求实际音频和视频时间推进，不能仅靠 play 状态通过。就绪状态与时间基线在同一次浏览器读取中获取，避免 SDK 重建 App 导致基线失效。功能验收对远端 CDN 资源显式设置 60 秒等待并记录慢下载耗时，原生播放时间推进仍须在 15 秒内出现；此处不验收默认资源下载超时性能。
+暂停验收检查 App storage 和 Slide 状态、原生音视频的 paused 标记、WebAudio BufferSource，以及连续采样的时间停止推进。播放验收先等待原生 seek 和两轨执行请求完成，再要求实际音频和视频时间推进；WebAudio 必须有已启动、未停止的真实 BufferSource。采样期间保持同一播放器和定位代次，不能用 seek 跳变或逻辑 play 状态代替播放。就绪状态与时间基线在同一次浏览器读取中获取，避免 SDK 重建 App 导致基线失效。功能验收对远端 CDN 资源显式设置 60 秒等待并记录慢下载耗时，原生播放时间推进仍须在 15 秒内出现；此处不验收默认资源下载超时性能。
 
 裁剪视频再次播放时另记录原生视频 seeking、两轨待处理目标和操作代次，保留从暂停到恢复的采样，区分逻辑 play、音频已启动和视频仍在等待定位三种情况。
 
@@ -55,6 +55,8 @@ app-slide 的 `prepublishOnly` 会依次执行单测、生命周期测试、正�
 未处理异常、资源 HTTP/传输失败和非预期 console error 均使验收失败。白名单仅包括当前 SDK 的日志 Worker 降级、主动断线错误、切页/销毁的 ERR_ABORTED（WebKit 仅对 MP3/MP4 允许对应 cancelled）、以及有独立 HTTP/传输门禁覆盖的受控 HTTP503 浏览器资源错误消息。另允许 `Warning: render(...): Replacing React-rendered children with a new root component.`：已使用 npm app-slide 0.2.107 在同一白板 1.5 重连/重入路径独立复现，属于现有 WindowManager/Appliance React View 重挂载警告；其他 React 错误仍会阻止验收。
 
 失败同样精确停用本次创建的房间并回读确认 isBan=true、isRecord=false。结果不记录 SDK/Room Token。合成 MP4/MP3 fixture 来自 Slide 的本地 ffmpeg 测试图与正弦音，不含客户内容。
+
+每个房间创建后立即写入不含 token 的 `owned-rooms.json`，在清理后更新回读结果；进程中断或断电后可据此精确恢复清理。媒体失败快照记录执行阶段和错误原因，成功的 MP3/MP4 请求另保存不含查询参数的耗时，用来区分资源准备和原生播放等待。
 
 桌面浏览器 E2E 不替代移动设备、录制回放与 RTC/PCM 的独立验收。
 
@@ -77,3 +79,5 @@ app-slide 的 `prepublishOnly` 会依次执行单测、生命周期测试、正�
 创建任何房间前，独立页面以真实点击启动原生 Audio，要求 15 秒内时钟实际推进；该页面不加载 Slide/White SDK，失败会中止且不创建房间。它的 Context 随后销毁，正式权限测试仍使用全新、无用户激活的 Context。
 
 新增 `native-seeking-unlocked-pause`：作者端实测原生 seeking=true 且 Howler 播放锁已解除后立即暂停，暂停事件仍经真实房间传播；三端检查共享位置、原生位置、seeking 结束和 900ms 静止。原 pending-play 用例仍通过真实未完成的原生 play Promise 触发，不等待定位完成后再制造取消。
+
+新增视频释放慢音轨验收：只读端冻结后恢复，拦截真实 MP3 请求；在视频元数据就绪、共享播放意图成立后继续扣留音频响应至少 18 秒。期间不得被 15 秒原生播放截止时间误杀，放行真实字节后两轨跟随房间时钟，可写接收端和只读端均无回写，旧节点保持静音。每种浏览器、白板配置和实际音频后端均执行，发布门禁独立核对该前提和结果。

@@ -396,8 +396,14 @@ export async function extendedCoverage({
   let delayedMetadataRequests = 0;
   await reader.route("**/fixture/media.mp3", async route => {
     delayedMetadataRequests++;
-    await reader.waitForTimeout(1800);
-    await route.continue();
+    try {
+      await reader.waitForTimeout(1800);
+      await route.continue();
+    } catch (error) {
+      // Browser shutdown already fails the owning test. A pending delay must
+      // not crash Node before the runner can execute its room-cleanup finally.
+      if (!reader.isClosed() && reader.context().browser()?.isConnected()) throw error;
+    }
   });
   await Promise.all([b, reader].map(p => p.evaluate(() => appMediaGate.unfreeze())));
   await converged(pages, 2);
@@ -413,6 +419,105 @@ export async function extendedCoverage({
   );
   await checkpoint(prefix + "/frozen-release-delayed-metadata-follows-room-clock", pages);
   await pauseAll("page-change-release-pause");
+
+  // Keep real MP3 bytes unavailable after video metadata is ready. Resource
+  // preparation must outlive the separate 15s native playback deadline.
+  await reset(1);
+  before = await rows();
+  await reader.evaluate(() => appMediaGate.freeze());
+  await quiet([reader], true);
+  let releaseAudio;
+  const audioGate = new Promise(resolve => {
+    releaseAudio = resolve;
+  });
+  let delayedAudioRequests = 0;
+  const delayedAudioRoute = async route => {
+    delayedAudioRequests++;
+    try {
+      await audioGate;
+      await route.continue();
+    } catch (error) {
+      if (!reader.isClosed() && reader.context().browser()?.isConnected())
+        result.browserErrors.push("Delayed video audio route: " + error.message);
+    }
+  };
+  await reader.route("**/fixture/media.mp3", delayedAudioRoute);
+  let restore;
+  try {
+    // Consume rejection immediately, then assert it after releasing the bytes.
+    restore = reader
+      .evaluate(() => appMediaGate.unfreeze())
+      .then(
+        () => ({ passed: true }),
+        error => ({ passed: false, error })
+      );
+    await reader.waitForFunction(
+      () => {
+        const s = appMediaGate.sample();
+        return (
+          s.mediaFailure ||
+          (s.mediaType === "video" &&
+            s.videoReadyState >= 1 &&
+            s.videoDuration > 0 &&
+            s.howlState === "loading" &&
+            s.audioPaused === true &&
+            s.audioExecution?.desiredPlaying === true &&
+            s.engineMediaState?.type === "play" &&
+            s.storageMediaState?.type === "play")
+        );
+      },
+      null,
+      { timeout: 15000 }
+    );
+    const ready = await sample(reader);
+    assert.ok(!ready.mediaFailure, "Video audio must still be preparing");
+    assert.ok(delayedAudioRequests > 0, "Intercept a real independent MP3 request");
+    const readyAt = Date.now();
+    await reader.waitForTimeout(18000);
+    const beforeBytes = await sample(reader);
+    const delayMs = Date.now() - readyAt;
+    assert.ok(delayMs >= 18000);
+    assert.equal(beforeBytes.howlState, "loading");
+    assert.ok(
+      !beforeBytes.mediaFailure,
+      "Resource preparation must not use the native 15s deadline"
+    );
+    assert.equal(beforeBytes.audioPaused, true);
+    assert.equal(beforeBytes.audioExecution?.desiredPlaying, true);
+    assert.equal(beforeBytes.engineMediaState?.type, "play");
+    assert.equal(beforeBytes.storageMediaState?.type, "play");
+    releaseAudio();
+    let restoreTimer;
+    try {
+      const restored = await Promise.race([
+        restore,
+        new Promise((_, reject) => {
+          restoreTimer = setTimeout(
+            () => reject(Error("Delayed-audio release did not finish")),
+            60000
+          );
+        }),
+      ]);
+      if (!restored.passed) throw restored.error;
+    } finally {
+      clearTimeout(restoreTimer);
+    }
+    await converged(pages, 1);
+    await playing(pages, backend);
+    await syncPosition([b, reader]);
+    await quiet(pages);
+    unchanged(writes(before.slice(1)), (await rows()).slice(1));
+    await checkpoint(prefix + "/video-release-delayed-audio-follows-room-clock", pages, {
+      delayMs,
+      delayedAudioRequests,
+      ready,
+      beforeBytes,
+    });
+  } finally {
+    releaseAudio();
+    await reader.unroute("**/fixture/media.mp3", delayedAudioRoute);
+  }
+  await pauseAll("video-release-delayed-audio-pause");
 
   // Real pointer events traverse hit testing and the native progress controller.
   await reset(1);

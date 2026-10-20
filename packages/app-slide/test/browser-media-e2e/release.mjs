@@ -53,12 +53,28 @@ for (const [engine, autoplay] of [
         "multiple-media-rapid-independent-signals",
         "media-http-retry-after-recreate",
         "real-pointer-progress-pause",
+        "video-release-delayed-audio-follows-room-clock",
+        "video-release-delayed-audio-pause",
         "animation-step",
       ]) {
         assert.ok(
           report.cases.some(c => c.label === `${mode}/${backend}/${name}`),
           "Required real-room scenario: " + name
         );
+      }
+      const delayedAudio = report.cases.find(
+        c => c.label === `${mode}/${backend}/video-release-delayed-audio-follows-room-clock`
+      );
+      assert.ok(delayedAudio.delayMs >= 18000 && delayedAudio.delayedAudioRequests > 0);
+      for (const s of [delayedAudio.ready, delayedAudio.beforeBytes]) {
+        assert.equal(s.mediaType, "video");
+        assert.ok(s.videoReadyState >= 1 && s.videoDuration > 0);
+        assert.equal(s.howlState, "loading");
+        assert.equal(s.audioPaused, true);
+        assert.equal(s.audioExecution?.desiredPlaying, true);
+        assert.equal(s.engineMediaState?.type, "play");
+        assert.equal(s.storageMediaState?.type, "play");
+        assert.ok(!s.mediaFailure);
       }
       if (backend === "html5")
         for (const kind of ["audio", "video"]) {
