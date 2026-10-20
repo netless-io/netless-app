@@ -56,7 +56,7 @@ app-slide 的 `prepublishOnly` 会依次执行单测、生命周期测试、正�
 
 失败同样精确停用本次创建的房间并回读确认 isBan=true、isRecord=false。结果不记录 SDK/Room Token。合成 MP4/MP3 fixture 来自 Slide 的本地 ffmpeg 测试图与正弦音，不含客户内容。
 
-每个房间创建后立即写入不含 token 的 `owned-rooms.json`，在清理后更新回读结果；进程中断或断电后可据此精确恢复清理。媒体失败快照记录执行阶段和错误原因，成功的 MP3/MP4 请求另保存不含查询参数的耗时，用来区分资源准备和原生播放等待。
+每个房间创建后立即写入不含 token 的 `owned-rooms.json`，在清理后更新回读结果；进程中断或断电后可据此精确恢复清理。媒体失败快照记录执行阶段和错误原因，并在原生 error 事件中保留错误码、原始 message、readyState 和 networkState。MP3/MP4 请求保存角色、Range/响应状态/类型/长度和成功耗时（不含查询参数），用来区分资源响应、解码失败与原生播放等待。
 
 桌面浏览器 E2E 不替代移动设备、录制回放与 RTC/PCM 的独立验收。
 

@@ -3,6 +3,29 @@
 export function installNativeProbe() {
   const media = new Set();
   const sources = new Map();
+  const observedLoads = new WeakSet();
+  const errors = [];
+  const originalLoad = HTMLMediaElement.prototype.load;
+  HTMLMediaElement.prototype.load = function (...args) {
+    if (!observedLoads.has(this)) {
+      observedLoads.add(this);
+      this.addEventListener("error", () => {
+        const src = this.currentSrc || this.src;
+        if (src && !src.startsWith("data:"))
+          errors.push({
+            at: Date.now(),
+            kind: this.tagName,
+            path: new URL(src, location.href).pathname,
+            code: this.error?.code,
+            message: this.error?.message,
+            readyState: this.readyState,
+            networkState: this.networkState,
+            time: this.currentTime,
+          });
+      });
+    }
+    return originalLoad.apply(this, args);
+  };
   let audioStarts = 0;
   const originalPlay = HTMLMediaElement.prototype.play;
   HTMLMediaElement.prototype.play = function (...args) {
@@ -67,6 +90,7 @@ export function installNativeProbe() {
       const activeSources = [...sources].filter(([source]) => sourceActive(source));
       return {
         audioStarts,
+        errors: errors.slice(),
         nodes,
         activeRetiredNodes: nodes.filter(n => !n.current && !n.paused && !n.ended).length,
         activeRetiredSources: activeSources.filter(([source]) => !currentSources.includes(source))

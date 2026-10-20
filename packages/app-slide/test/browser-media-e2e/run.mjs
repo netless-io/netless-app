@@ -743,9 +743,28 @@ async function group(mode, backend) {
     page.on("requestfailed", request => {
       result.requestFailures ||= [];
       result.requestFailures.push({
+        role,
+        at: Date.now(),
         path: new URL(request.url()).pathname,
         error: request.failure()?.errorText,
       });
+    });
+    page.on("response", response => {
+      const pathname = new URL(response.url()).pathname;
+      if (/\.mp[34]$/.test(pathname)) {
+        const headers = response.headers();
+        result.mediaResourceResponses ||= [];
+        result.mediaResourceResponses.push({
+          role,
+          at: Date.now(),
+          path: pathname,
+          status: response.status(),
+          range: response.request().headers().range,
+          contentType: headers["content-type"],
+          contentLength: headers["content-length"],
+          contentRange: headers["content-range"],
+        });
+      }
     });
     page.on("requestfinished", request => {
       const pathname = new URL(request.url()).pathname;
