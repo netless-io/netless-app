@@ -541,7 +541,11 @@ setInterval(() => {
     while (performance.now() < deadline) {
       const h = audio.howl,
         node = h?._soundById(audio.staticEventId)?._node;
-      if (node?.seeking && h._playLock === false) {
+      if (
+        node?.seeking &&
+        h._playLock === false &&
+        (m.type !== "video" || m.videoElement?.seeking)
+      ) {
         observed = sample();
         break;
       }

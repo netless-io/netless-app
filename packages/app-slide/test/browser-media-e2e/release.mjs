@@ -122,6 +122,7 @@ try {
               w => w.prefix === `${mode}/${backend}` && w.kind === kind
             );
             assert.equal(window?.observed.audioNodeSeeking, true);
+            if (kind === "video") assert.equal(window?.observed.videoSeeking, true);
             assert.equal(window?.observed.howlLock, false);
           }
         for (const kind of ["audio", "video"])

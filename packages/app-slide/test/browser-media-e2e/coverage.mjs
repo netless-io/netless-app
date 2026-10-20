@@ -120,6 +120,7 @@ export async function extendedCoverage({
       const counts = await pauseCounts(pages);
       const native = await a.evaluate(() => appMediaGate.cancelUnlockedNativeSeek());
       assert.equal(native.observed.audioNodeSeeking, true, "Must observe the real native seek");
+      if (kind === "video") assert.equal(native.observed.videoSeeking, true);
       assert.equal(
         native.observed.howlLock,
         false,
