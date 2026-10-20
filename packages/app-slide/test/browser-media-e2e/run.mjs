@@ -674,14 +674,22 @@ async function stopped(label, pages, backend, previousPauses) {
     );
     const rows = await Promise.all(pages.map(sample));
     for (const s of rows) {
+      assert.ok(!s.mediaFailure, label + " media failed: " + s.mediaFailure);
       assert.equal(s.backend, backend, label + " requested real backend");
       assert.equal(s.audioPaused, true, label + " audio must stop");
       if (backend === "html5") assert.equal(s.audioNodePaused, true);
       else assert.equal(s.webAudioSourceActive, false);
-      if (s.mediaType === "video") assert.equal(s.videoPaused, true);
+      if (s.mediaType === "video")
+        assert.ok(
+          s.videoPaused ||
+            (s.quietVideoSeek && s.videoMuted && s.videoVolume === 0 && !s.isPlaying),
+          label + " pending video positioning must own a muted decode lease"
+        );
     }
     const settled = rows.every(
       s =>
+        !s.audioExecution?.pending &&
+        !s.videoExecution?.pending &&
         s.engineMediaState?.type === "pause" &&
         s.storageMediaState?.type === "pause" &&
         Math.abs(s.engineMediaState.time - s.storageMediaState.time) < 0.001 &&
@@ -691,7 +699,10 @@ async function stopped(label, pages, backend, previousPauses) {
             Math.abs(s.audioNodeTime - (Math.floor(s.storageMediaState.time) + s.trimStart)) <
               0.2)) &&
         (s.mediaType !== "video" ||
-          Math.abs(s.videoTime - (Math.floor(s.storageMediaState.time) + s.trimStart)) < 0.2)
+          (s.videoPaused &&
+            !s.videoSeeking &&
+            !s.quietVideoSeek &&
+            Math.abs(s.videoTime - (Math.floor(s.storageMediaState.time) + s.trimStart)) < 0.2))
     );
     if (!settled) {
       if (transientStorage.length < 10)
