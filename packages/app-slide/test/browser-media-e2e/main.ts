@@ -310,6 +310,9 @@ function sample() {
       time: s._node?.currentTime,
       duration: s._node?.duration,
     })),
+    webAudioSourceId: h?._webAudio
+      ? (window as any).__nativeMediaProbe?.sourceId(sound?._node?.bufferSource)
+      : undefined,
     webAudioSourceActive: h?._webAudio
       ? (window as any).__nativeMediaProbe?.sourceActive(sound?._node?.bufferSource)
       : undefined,

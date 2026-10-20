@@ -40,7 +40,7 @@ app-slide 的 `prepublishOnly` 会依次执行单测、生命周期测试、正�
 
 运行环境需安装 Playwright 与 Chrome；可通过 APP_SLIDE_PLAYWRIGHT 指定本机 Playwright 模块路径、SLIDE_CHROMIUM_EXECUTABLE 指定 Chrome。HTML5 是当前 Slide 的默认实际后端，WebAudio 通过透传 appOptions.enableWebAudio=false 配置。测试每次核对实际后端。
 
-暂停验收检查 App storage 和 Slide 状态、原生音视频的 paused 标记、WebAudio BufferSource，以及连续采样的时间停止推进。播放验收先等待原生 seek 和两轨执行请求完成，再要求实际音频和视频时间推进；WebAudio 必须有已启动、未停止的真实 BufferSource。采样期间保持同一播放器和定位代次，不能用 seek 跳变或逻辑 play 状态代替播放。就绪状态与时间基线在同一次浏览器读取中获取，避免 SDK 重建 App 导致基线失效。功能验收对远端 CDN 资源显式设置 60 秒等待并记录慢下载耗时，原生播放时间推进仍须在 15 秒内出现；此处不验收默认资源下载超时性能。
+暂停验收检查 App storage 和 Slide 状态、原生音视频的 paused 标记、WebAudio BufferSource，以及连续采样的时间停止推进。播放验收先等待原生 seek 和两轨执行请求完成，再要求实际音频和视频时间推进；WebAudio 必须有已启动、未停止的真实 BufferSource。每次 seek、校准、播放器/BufferSource 更换后重新取已稳定的基线，在同一代次内连续观察至少 300ms 并要求两轨时钟推进及对齐，不能用 seek 跳变或逻辑 play 状态代替播放；重新取基线不延长时钟推进验证阶段的 15 秒截止时间。就绪状态与时间基线在同一次浏览器读取中获取，避免 SDK 重建 App 导致基线失效。功能验收对远端 CDN 资源显式设置 60 秒等待并记录慢下载耗时，原生播放时间推进仍须在 15 秒内出现；此处不验收默认资源下载超时性能。
 
 裁剪视频再次播放时另记录原生视频 seeking、两轨待处理目标和操作代次，保留从暂停到恢复的采样，区分逻辑 play、音频已启动和视频仍在等待定位三种情况。
 

@@ -41,7 +41,13 @@ export function installNativeProbe() {
     const create = Context.prototype.createBufferSource;
     Context.prototype.createBufferSource = function (...args) {
       const source = create.apply(this, args);
-      const row = { started: false, ended: false, realMedia: false, stoppedAt: undefined };
+      const row = {
+        id: sources.size + 1,
+        started: false,
+        ended: false,
+        realMedia: false,
+        stoppedAt: undefined,
+      };
       sources.set(source, row);
       const start = source.start;
       source.start = function (...values) {
@@ -74,6 +80,7 @@ export function installNativeProbe() {
   };
   window.__nativeMediaProbe = {
     sourceActive,
+    sourceId: source => sources.get(source)?.id,
     nodes: media,
     sample(currentNodes = [], currentSources = []) {
       const nodes = [...media]

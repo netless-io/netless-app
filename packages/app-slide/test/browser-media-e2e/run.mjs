@@ -480,6 +480,39 @@ async function playing(pages, backend) {
       }
     })
   );
+  const stableBaselines = [];
+  const resets = [];
+  const readyForClock = s =>
+    s.backend === backend &&
+    s.isPlaying &&
+    s.audioPaused === false &&
+    !s.audioNodeSeeking &&
+    !s.videoSeeking &&
+    !s.audioExecution?.pending &&
+    !s.videoExecution?.pending &&
+    (backend === "html5"
+      ? s.audioNodePaused === false
+      : s.webAudioSourceActive && s.audioContextState === "running") &&
+    Number.isFinite(s.audioTime) &&
+    (s.mediaType !== "video" ||
+      (s.videoPaused === false &&
+        s.videoSpriteVisible &&
+        s.videoWorldVisible &&
+        Math.abs(s.videoTime - s.audioTime) < 1.25)) &&
+    s.engineMediaState?.type === "play" &&
+    s.storageMediaState?.type === "play" &&
+    s.engineMediaState.time === s.storageMediaState.time;
+  const identity = s =>
+    JSON.stringify([
+      s.epoch,
+      s.mediaId,
+      s.audioSoundId,
+      s.webAudioSourceId,
+      s.audioExecution?.revision,
+      s.videoExecution?.revision,
+      s.engineMediaState?.time,
+      s.storageMediaState?.time,
+    ]);
   try {
     assert.ok(
       before.every(s => !s.mediaFailure),
@@ -487,46 +520,45 @@ async function playing(pages, backend) {
     );
     await Promise.all(
       pages.map(async (page, i) => {
-        const handle = await page.waitForFunction(
-          before => {
-            const s = appMediaGate.sample();
-            if (s.mediaFailure) return s;
-            return s.epoch === before.epoch &&
-              s.mediaId === before.mediaId &&
-              s.audioSoundId === before.audioSoundId &&
-              s.audioExecution?.revision === before.audioExecution?.revision &&
-              s.videoExecution?.revision === before.videoExecution?.revision &&
-              !s.audioExecution?.pending &&
-              !s.videoExecution?.pending &&
-              !s.audioNodeSeeking &&
-              !s.videoSeeking &&
-              s.isPlaying &&
-              s.audioPaused === false &&
-              (s.backend === "html5"
-                ? s.audioNodePaused === false
-                : s.webAudioSourceActive && s.audioContextState === "running") &&
-              s.engineMediaState?.type === "play" &&
-              s.storageMediaState?.type === "play" &&
-              s.engineMediaState.time === before.engineMediaState.time &&
-              s.storageMediaState.time === before.storageMediaState.time &&
-              s.audioTime > before.audioTime + 0.1 &&
-              (s.mediaType !== "video" ||
-                (s.videoPaused === false && s.videoTime > before.videoTime + 0.1))
-              ? s
-              : false;
-          },
-          before[i],
-          { timeout: 15000 }
-        );
-        try {
-          assert.ok(!(await handle.jsonValue()).mediaFailure, "Native playback failed");
-        } finally {
-          await handle.dispose();
+        const deadline = performance.now() + 15000;
+        let baseline, capturedAt;
+        while (performance.now() < deadline) {
+          const current = await sample(page);
+          assert.ok(!current.mediaFailure, "Native playback failed");
+          if (!readyForClock(current)) {
+            baseline = undefined;
+          } else if (!baseline || identity(current) !== identity(baseline)) {
+            // A real calibration/restore changes the physical attempt. Observe a
+            // new settled interval; never count that seek jump as clock progress.
+            if (baseline)
+              resets.push({
+                role: current.role,
+                before: identity(baseline),
+                after: identity(current),
+              });
+            baseline = current;
+            capturedAt = performance.now();
+            stableBaselines[i] = current;
+          } else if (
+            performance.now() - capturedAt >= 300 &&
+            current.audioTime > baseline.audioTime + 0.1 &&
+            (current.mediaType !== "video" || current.videoTime > baseline.videoTime + 0.1)
+          ) {
+            return;
+          }
+          await page.waitForTimeout(75);
         }
+        throw Error("Settled native playback clocks did not advance within 15 seconds");
       })
     );
+    if (resets.length) (result.playbackBaselineResets ||= []).push(...resets);
   } catch (error) {
-    result.playFailure = { before, after: await Promise.all(pages.map(sample)) };
+    result.playFailure = {
+      before,
+      stableBaselines,
+      resets,
+      after: await Promise.all(pages.map(sample)),
+    };
     throw error;
   }
   for (const { page, before } of recovered) {
