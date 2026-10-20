@@ -234,6 +234,7 @@ function sample() {
       e.getAttribute("data-app-slide-version")
     ),
     page: slide?.slideState.currentSlideIndex,
+    slideCount: slide?.slideCount,
     storagePage: c?.context.storage.state.state?.currentSlideIndex,
     renderedPage: slide?.player?.currentStage?.ctx.slideIndex,
     loading: slide?.isLoading,

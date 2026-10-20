@@ -997,6 +997,26 @@ async function documents(prefix, pages, backend, animationOnly = false) {
       config.customerResource
     );
     await converged(pages, 1, 180000);
+    const deckRows = await Promise.all(pages.map(sample));
+    const actualPageCount = deckRows[0].slideCount;
+    assert.ok(Number.isInteger(actualPageCount) && actualPageCount > 0);
+    assert.ok(
+      deckRows.every(s => s.slideCount === actualPageCount),
+      "All clients need the same deck metadata"
+    );
+    assert.equal(
+      config.customerResource.pageCount,
+      actualPageCount,
+      "Configured customer pages must match the actual deck"
+    );
+    const deckCoverage = {
+      prefix,
+      actualPageCount,
+      expectedPageCount: config.customerResource.pageCount,
+      pages: [1],
+    };
+    result.customerDeckChecks ||= [];
+    result.customerDeckChecks.push(deckCoverage);
     const previousPauses = await pauseCounts(pages);
     await a.evaluate(() => appMediaGate.play());
     await playing(pages, backend);
@@ -1051,10 +1071,11 @@ async function documents(prefix, pages, backend, animationOnly = false) {
       await a.evaluate(() => appMediaGate.pause());
       await stopped(prefix + "/customer-video-release-pause", pages, backend, counts);
     }
-    for (let index = 2; index <= config.customerResource.pageCount; index++) {
+    for (let index = 2; index <= actualPageCount; index++) {
       await a.evaluate(index => appMediaGate.page(index), index);
       await converged(pages, index, 180000);
       await checkpoint(prefix + "/customer-page-" + index, pages);
+      deckCoverage.pages.push(index);
     }
     await a.screenshot({ path: path.join(output, prefix.replace("/", "-") + "-customer.png") });
   } else if (!animationOnly)
@@ -1164,6 +1185,18 @@ try {
     "Set APP_SLIDE_E2E_CONFIG to an external private config.json"
   );
   config = JSON.parse(await fs.readFile(process.env.APP_SLIDE_E2E_CONFIG, "utf8"));
+  if (!diagnostic) {
+    assert.ok(
+      config.customerResource && config.animationResource,
+      "Full acceptance requires customer and animation resources"
+    );
+  }
+  if (config.customerResource) {
+    assert.ok(
+      Number.isInteger(config.customerResource.pageCount) && config.customerResource.pageCount > 0,
+      "Customer pageCount must be a positive integer before creating any room"
+    );
+  }
   if (diagnostic)
     assert.ok(["1.0", "1.5"].includes(diagnosticMode), "Known diagnostic whiteboard mode");
   result.harnessSHA256 = crypto
