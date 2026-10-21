@@ -2,7 +2,7 @@
 // are replaced; every wrapped method preserves its receiver and return value.
 const rows: object[] = [];
 const ids = new WeakMap<object, number>();
-const mediaByTrack = new WeakMap<object, any>();
+const mediaByTrack = new WeakMap<object, { media?: number; mediaId?: string }>();
 const tracks = new WeakSet<object>();
 const prototypes = new WeakSet<object>();
 const nodes = new WeakSet<object>();
@@ -27,8 +27,8 @@ function record(kind: string, track: any, extra: object = {}) {
       track: id(track),
       owner: id(snapshot.owner),
       node: id(node),
-      media: id(media),
-      mediaId: media?.id,
+      media: media?.media,
+      mediaId: media?.mediaId,
       revision: track.revision,
       desiredPlaying: track.desiredPlaying,
       suspended: track.suspended,
@@ -62,22 +62,30 @@ function record(kind: string, track: any, extra: object = {}) {
   }
 }
 
+// The native probe intentionally retains retired nodes to detect ghost audio.
+// Its nodes must not retain an old track/media/renderer through this listener.
+function nativeListener(reference: WeakRef<any>, name: string) {
+  return (event: Event) => {
+    const track = reference.deref();
+    if (!track) return;
+    const target = event.target as HTMLMediaElement;
+    if (name === "timeupdate" && !target.paused && !track.pending) return;
+    record("native:" + name, track, {
+      eventNode: id(target),
+      eventTime: target.currentTime,
+      eventPaused: target.paused,
+      eventSeeking: target.seeking,
+    });
+  };
+}
+
 function observeTrack(track: any) {
   try {
     const node = track.backend.snapshot().node;
     if (node && !nodes.has(node)) {
       nodes.add(node);
       for (const name of ["pause", "play", "playing", "seeking", "seeked", "timeupdate"]) {
-        node.addEventListener(name, (event: Event) => {
-          const target = event.target as HTMLMediaElement;
-          if (name === "timeupdate" && !target.paused && !track.pending) return;
-          record("native:" + name, track, {
-            eventNode: id(target),
-            eventTime: target.currentTime,
-            eventPaused: target.paused,
-            eventSeeking: target.seeking,
-          });
-        });
+        node.addEventListener(name, nativeListener(new WeakRef(track), name));
       }
     }
     if (tracks.has(track)) return;
@@ -87,7 +95,11 @@ function observeTrack(track: any) {
       const original = track.backend[name];
       if (typeof original !== "function") continue;
       track.backend[name] = function (...args: any[]) {
-        record("backend:" + name + ":call", track, { args });
+        record("backend:" + name + ":call", track, {
+          args: args.map(value =>
+            typeof value === "object" || typeof value === "function" ? undefined : value
+          ),
+        });
         try {
           return original.apply(this, args);
         } finally {
@@ -104,7 +116,7 @@ export function observeMediaExecution(media: any) {
   if (!media) return;
   for (const track of [media.videoExecution, (media.rtcAudio || media.audioPlayer)?.execution]) {
     if (!track) continue;
-    mediaByTrack.set(track, media);
+    mediaByTrack.set(track, { media: id(media), mediaId: media.id });
     observeTrack(track);
     const prototype = Object.getPrototypeOf(track);
     if (prototypes.has(prototype)) continue;

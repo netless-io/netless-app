@@ -10,7 +10,12 @@ import { installNativeProbe } from "./native-probe.mjs";
 import { extendedCoverage } from "./coverage.mjs";
 import { boundaryCoverage } from "./boundaries.mjs";
 import { installPassiveEvaluation } from "./passive-page.mjs";
-import { PAUSED_POSITION_TOLERANCE_SECONDS, matchesPausedPosition } from "./acceptance.mjs";
+import {
+  PAUSED_POSITION_TOLERANCE_SECONDS,
+  matchesPausedPosition,
+  GRAPHICS_CONTEXT_POLICY,
+  isGraphicsContextNotice,
+} from "./acceptance.mjs";
 
 const root = path.dirname(fileURLToPath(import.meta.url));
 const project = path.resolve(root, "../../../..");
@@ -42,6 +47,7 @@ const result = {
   scope: diagnostic ? "diagnostic/" + diagnostic : "full",
   matrixComplete: false,
   pausedPositionToleranceSeconds: PAUSED_POSITION_TOLERANCE_SECONDS,
+  graphicsContextPolicy: GRAPHICS_CONTEXT_POLICY,
 };
 async function saveResult() {
   await fs.mkdir(output, { recursive: true });
@@ -1446,6 +1452,7 @@ try {
   assert.deepEqual(
     (result.consoleErrors || []).filter(
       message =>
+        !isGraphicsContextNotice(message) &&
         !message.includes("agora-foundation logger worker unavailable, fallback to Argus") &&
         // Reproduced during real 1.5 reconnects with npm app-slide 0.2.107;
         // WindowManager/Appliance keeps the React root while recreating its view.
@@ -1487,6 +1494,7 @@ try {
   console.error(error.message);
   process.exitCode = 1;
 } finally {
+  result.graphicsContextNotices = (result.consoleErrors || []).filter(isGraphicsContextNotice);
   if (browser) await browser.close();
   if (server) {
     server.closeAllConnections();

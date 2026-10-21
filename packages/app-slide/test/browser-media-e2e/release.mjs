@@ -1,4 +1,4 @@
-import { PAUSED_POSITION_TOLERANCE_SECONDS } from "./acceptance.mjs";
+import { PAUSED_POSITION_TOLERANCE_SECONDS, GRAPHICS_CONTEXT_POLICY } from "./acceptance.mjs";
 import fs from "node:fs/promises";
 import path from "node:path";
 import assert from "node:assert/strict";
@@ -60,6 +60,7 @@ try {
     assert.equal(report.scope, "full");
     assert.equal(report.matrixComplete, true);
     assert.equal(report.pausedPositionToleranceSeconds, PAUSED_POSITION_TOLERANCE_SECONDS);
+    assert.equal(report.graphicsContextPolicy, GRAPHICS_CONTEXT_POLICY);
     assert.equal(report.cleanup.length, 4);
     assert.ok(report.cleanup.every(r => r.isBan && r.isRecord === false));
     for (const mode of ["1.0", "1.5"])
