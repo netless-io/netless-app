@@ -141,6 +141,7 @@ export class SlideControllerBase {
   private lifecycleTask: Promise<void> = Promise.resolve();
   private lifecyclePending = 0;
   private pendingSyncEvents: SyncEvent[] = [];
+  private pendingFrozenSyncBatch = false;
   private flushingSyncEvents = false;
 
   protected visible: boolean;
@@ -406,6 +407,22 @@ export class SlideControllerBase {
       return;
     this.flushingSyncEvents = true;
     try {
+      if (this.pendingFrozenSyncBatch) {
+        this.pendingFrozenSyncBatch = false;
+        const receiveBatch = (
+          this.slide as Slide & {
+            receiveSyncEvents?: (events: SyncEvent[], options: { coalesceMedia: boolean }) => void;
+          }
+        ).receiveSyncEvents;
+        if (typeof receiveBatch === "function" && this.pendingSyncEvents.length) {
+          const events = this.pendingSyncEvents.splice(0);
+          try {
+            receiveBatch.call(this.slide, events, { coalesceMedia: true });
+          } catch (error) {
+            logger.error("[Slide] recovery sync receive failed", this.context.appId, error);
+          }
+        }
+      }
       while (
         this.pendingSyncEvents.length &&
         !this.storageBlocked &&
@@ -499,6 +516,7 @@ export class SlideControllerBase {
       urlInterrupter: options.urlInterrupter,
       resourceTimeout: options.resourceTimeout,
       rtcAudio: options.rtcAudio,
+      enableWebAudio: options.enableWebAudio,
       useLocalCache: options.useLocalCache,
       logger: {
         ...options.logger,
@@ -752,7 +770,8 @@ export class SlideControllerBase {
                   this.slide.release as (
                     onRestored?: () => void,
                     onPlayerCreated?: () => void,
-                    onError?: (error: unknown) => void
+                    onError?: (error: unknown) => void,
+                    getCurrentState?: () => SlideState | undefined
                   ) => void | Promise<void>
                 ).call(
                   this.slide,
@@ -763,7 +782,8 @@ export class SlideControllerBase {
                   error => {
                     rejectRestored(error);
                     reject(error);
-                  }
+                  },
+                  () => (this.destroyed ? undefined : this.context.storage.state.state || undefined)
                 );
                 // Published alpha returns a full-restoration Promise; newer
                 // engines report player creation and restoration separately.
@@ -801,6 +821,9 @@ export class SlideControllerBase {
           this.storageBlocked = false;
           this.startStorageRestore(true);
           await Promise.race([this.storageRestoreTask, this.destroyedSignal]);
+          // Only a completed recovery enables batching. A deferred freeze
+          // before ready must keep ordinary live delivery on its FIFO path.
+          this.pendingFrozenSyncBatch = true;
         } else {
           this.slide.resume();
           this.slide.notifyFrameResize();

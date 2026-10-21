@@ -50,6 +50,7 @@ export interface AppOptions
   extends Pick<
     ISlideConfig,
     | "rtcAudio"
+    | "enableWebAudio"
     | "useLocalCache"
     | "resourceTimeout"
     | "loaderDelegate"
