@@ -113,20 +113,24 @@ try {
           assert.ok(!s.mediaFailure);
         }
         if (backend === "html5")
-          for (const kind of ["audio", "video"]) {
-            assert.ok(
-              report.cases.some(
-                c => c.label === `${mode}/${backend}/${kind}/native-seeking-unlocked-pause`
-              ),
-              "Real unlocked native seeking acceptance is required"
-            );
-            const window = report.nativeSeekWindows?.find(
-              w => w.prefix === `${mode}/${backend}` && w.kind === kind
-            );
-            assert.equal(window?.observed.audioNodeSeeking, true);
-            if (kind === "video") assert.equal(window?.observed.videoSeeking, true);
-            assert.equal(window?.observed.howlLock, false);
-          }
+          for (const kind of ["audio", "video"])
+            for (const track of kind === "video" ? ["audio", "video"] : ["audio"]) {
+              assert.ok(
+                report.cases.some(
+                  c =>
+                    c.label === `${mode}/${backend}/${kind}/native-${track}-seeking-unlocked-pause`
+                ),
+                "Real unlocked native seeking acceptance is required"
+              );
+              const window = report.nativeSeekWindows?.find(
+                w => w.prefix === `${mode}/${backend}` && w.kind === kind && w.track === track
+              );
+              assert.equal(
+                window?.observed[track === "audio" ? "audioNodeSeeking" : "videoSeeking"],
+                true
+              );
+              assert.equal(window?.observed.howlLock, false);
+            }
         for (const kind of ["audio", "video"])
           for (const name of [
             "deterministic-native-seek-cancel",

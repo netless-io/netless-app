@@ -535,30 +535,57 @@ setInterval(() => {
         howl !== audio.howl && node === audio.howl?._soundById(audio.staticEventId)?._node,
     };
   },
-  async cancelUnlockedNativeSeek() {
+  async cancelUnlockedNativeSeek(track: "audio" | "video") {
     const m = media(),
       audio = m.rtcAudio || m.audioPlayer;
-    const pending = m.seek(4);
-    const deadline = performance.now() + 3000;
-    let observed;
-    while (performance.now() < deadline) {
+    const node = audio.howl?._soundById(audio.staticEventId)?._node;
+    const target = track === "audio" ? node : m.videoElement;
+    if (!target) throw Error("Missing native seek target: " + track);
+    let observed, paused: Promise<unknown> | undefined;
+    let resolveWindow: () => void;
+    const found = new Promise<void>(resolve => {
+      resolveWindow = resolve;
+    });
+    // Audio settles before video follows its live clock. Exercise each real
+    // native window independently instead of requiring overlapping seeks.
+    const observe = () => {
+      if (observed) return;
       const h = audio.howl,
-        node = h?._soundById(audio.staticEventId)?._node;
+        currentNode = h?._soundById(audio.staticEventId)?._node;
       if (
-        node?.seeking &&
-        h._playLock === false &&
-        (m.type !== "video" || m.videoElement?.seeking)
+        currentNode === node &&
+        target.seeking &&
+        h?._playLock === false &&
+        Math.abs(target.currentTime - 4) < 0.15
       ) {
         observed = sample();
-        break;
+        paused = Promise.resolve(engine().player.setMediaState(m.id, false, 4));
+        resolveWindow();
       }
-      await new Promise(resolve => setTimeout(resolve, 0));
+    };
+    target.addEventListener("seeking", observe);
+    const poll = setInterval(observe, 0);
+    let timeout: ReturnType<typeof setTimeout>;
+    const expired = new Promise<void>((_, reject) => {
+      timeout = setTimeout(
+        () => reject(Error("Real unlocked native " + track + " seek window was not observed")),
+        3000
+      );
+    });
+    const pending = m.seek(4);
+    // Observe failures through the awaited original promises below.
+    void pending.catch(() => {});
+    try {
+      await Promise.race([found, expired]);
+      await paused;
+      await pending;
+      m.ctx.eventHub.emit("mediaPause", { id: m.id, time: 4 });
+      return { track, observed, final: sample() };
+    } finally {
+      clearInterval(poll);
+      clearTimeout(timeout!);
+      target.removeEventListener("seeking", observe);
     }
-    if (!observed) throw Error("Real unlocked native seek window was not observed");
-    await engine().player.setMediaState(m.id, false, 4);
-    await pending;
-    m.ctx.eventHub.emit("mediaPause", { id: m.id, time: 4 });
-    return { observed, final: sample() };
   },
   async removeDocument() {
     await manager.closeApp(appId);

@@ -116,23 +116,32 @@ export async function extendedCoverage({
       pendingCounts
     );
     await quiet(pages);
-    if (backend === "html5") {
-      await reset(index);
-      const counts = await pauseCounts(pages);
-      const native = await a.evaluate(() => appMediaGate.cancelUnlockedNativeSeek());
-      assert.equal(native.observed.audioNodeSeeking, true, "Must observe the real native seek");
-      if (kind === "video") assert.equal(native.observed.videoSeeking, true);
-      assert.equal(
-        native.observed.howlLock,
-        false,
-        "Howler's play promise must already be unlocked"
-      );
-      result.nativeSeekWindows ||= [];
-      result.nativeSeekWindows.push({ prefix, kind, ...native });
-      await stopped(prefix + "/" + kind + "/native-seeking-unlocked-pause", pages, backend, counts);
-      await quiet(pages);
-      await checkpoint(prefix + "/" + kind + "/native-seeking-unlocked-pause", pages);
-    }
+    if (backend === "html5")
+      for (const track of kind === "video" ? ["audio", "video"] : ["audio"]) {
+        await reset(index);
+        const counts = await pauseCounts(pages);
+        const native = await a.evaluate(
+          track => appMediaGate.cancelUnlockedNativeSeek(track),
+          track
+        );
+        assert.equal(native.track, track);
+        assert.equal(
+          native.observed[track === "audio" ? "audioNodeSeeking" : "videoSeeking"],
+          true,
+          "Must observe the selected real native seek"
+        );
+        assert.equal(
+          native.observed.howlLock,
+          false,
+          "Howler's play promise must already be unlocked"
+        );
+        result.nativeSeekWindows ||= [];
+        result.nativeSeekWindows.push({ prefix, kind, ...native });
+        const label = prefix + "/" + kind + "/native-" + track + "-seeking-unlocked-pause";
+        await stopped(label, pages, backend, counts);
+        await quiet(pages);
+        await checkpoint(label, pages);
+      }
     // Passive writable and readonly clients release their own decoders only.
     await reset(index);
     let before = await rows(),

@@ -78,7 +78,7 @@ app-slide 的 `prepublishOnly` 会依次执行单测、生命周期测试、正�
 
 创建任何房间前，独立页面以真实点击启动原生 Audio，要求 15 秒内时钟实际推进；该页面不加载 Slide/White SDK，失败会中止且不创建房间。它的 Context 随后销毁，正式权限测试仍使用全新、无用户激活的 Context。
 
-新增 `native-seeking-unlocked-pause`：作者端实测原生 seeking=true 且 Howler 播放锁已解除后立即暂停，暂停事件仍经真实房间传播；三端检查共享位置、原生位置、seeking 结束和 900ms 静止。原 pending-play 用例仍通过真实未完成的原生 play Promise 触发，不等待定位完成后再制造取消。
+原生 seek 中暂停分为 `native-audio-seeking-unlocked-pause` 和 `native-video-seeking-unlocked-pause`：视频场景分别在真实音轨和视频 seek 窗口操作，音频场景覆盖音轨窗口。播放中音轨先完成定位，视频再跟随实时音轨，因此不要求两轨同时 seeking。作者端实测指定原生轨道 seeking=true、定位目标为 4 秒且 Howler 播放锁已解除后立即暂停，暂停事件仍经真实房间传播；三端检查共享位置、两轨原生位置、seeking 结束和 900ms 静止。原 pending-play 用例仍通过真实未完成的原生 play Promise 触发，不等待定位完成后再制造取消。
 
 新增视频释放慢音轨验收：只读端冻结后恢复，拦截真实 MP3 请求；在视频元数据就绪、共享播放意图成立后继续扣留音频响应至少 18 秒。期间不得被 15 秒原生播放截止时间误杀，放行真实字节后两轨跟随房间时钟，可写接收端和只读端均无回写，旧节点保持静音。每种浏览器、白板配置和实际音频后端均执行，发布门禁独立核对该前提和结果。
 
