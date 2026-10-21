@@ -5,6 +5,7 @@ import { ApplianceMultiPlugin } from "@netless/appliance-plugin";
 import "@netless/appliance-plugin/dist/style.css";
 import fullWorkerUrl from "@netless/appliance-plugin/dist/fullWorker.js?url";
 import subWorkerUrl from "@netless/appliance-plugin/dist/subWorker.js?url";
+import { mediaExecutionTrace, observeMediaExecution } from "./media-diagnostics";
 
 const query = new URLSearchParams(location.search);
 const mode = query.get("mode") || "1.0";
@@ -134,6 +135,7 @@ function sample() {
     c = proxy?.appResult?.controller(),
     slide = engine(),
     m = media();
+  observeMediaExecution(m);
   const a = m?.rtcAudio || m?.audioPlayer,
     h = a?.howl,
     sound = h?._soundById(a.staticEventId);
@@ -431,6 +433,7 @@ setInterval(() => {
 }, 50);
 (window as any).appMediaGate = {
   sample,
+  executionTrace: mediaExecutionTrace,
   frame() {
     const { renderer, stage } = engine().player.app;
     renderer.render(stage);

@@ -670,7 +670,7 @@ async function stopped(label, pages, backend, previousPauses) {
   while (samples.length < 4) {
     assert.ok(
       Date.now() < deadline,
-      label + " shared pause state must settle and remain consistent for 900ms"
+      label + " shared and native pause state must settle and remain consistent for 900ms"
     );
     const rows = await Promise.all(pages.map(sample));
     for (const s of rows) {
@@ -705,6 +705,20 @@ async function stopped(label, pages, backend, previousPauses) {
             Math.abs(s.videoTime - (Math.floor(s.storageMediaState.time) + s.trimStart)) < 0.2))
     );
     if (!settled) {
+      result.pauseInProgress.lastUnsettled = rows.map(s => ({
+        role: s.role,
+        engine: s.engineMediaState,
+        storage: s.storageMediaState,
+        expected: Math.floor(s.storageMediaState?.time) + s.trimStart,
+        audioTime: s.audioTime,
+        videoTime: s.videoTime,
+        audioPaused: s.audioPaused,
+        videoPaused: s.videoPaused,
+        audioSeeking: s.audioNodeSeeking,
+        videoSeeking: s.videoSeeking,
+        audioExecution: s.audioExecution,
+        videoExecution: s.videoExecution,
+      }));
       if (transientStorage.length < 10)
         transientStorage.push(
           rows.map(s => ({
@@ -1271,6 +1285,7 @@ try {
             "coverage.mjs",
             "boundaries.mjs",
             "main.ts",
+            "media-diagnostics.ts",
             "native-probe.mjs",
             "passive-page.mjs",
           ].map(file => fs.readFile(path.join(root, file)))
@@ -1429,6 +1444,20 @@ try {
         .contexts()
         .flatMap(c => c.pages())
         .map(p => p.evaluate(() => window.appMediaGate?.sample()).catch(() => null))
+    );
+  if (browser)
+    result.executionTraces = await Promise.all(
+      browser
+        .contexts()
+        .flatMap(c => c.pages())
+        .map(p =>
+          p
+            .evaluate(() => ({
+              role: window.appMediaGate?.sample()?.role,
+              events: window.appMediaGate?.executionTrace?.(),
+            }))
+            .catch(() => ({ unavailable: true }))
+        )
     );
   console.error(error.message);
   process.exitCode = 1;
