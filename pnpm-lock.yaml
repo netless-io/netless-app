@@ -260,8 +260,8 @@ importers:
         specifier: 1.1.38
         version: 1.1.38(@netless/window-manager@1.0.23(jspdf@2.5.1)(white-web-sdk@2.16.58))(white-web-sdk@2.16.58)
       '@netless/slide':
-        specifier: 1.4.65-alpha.1
-        version: 1.4.65-alpha.1
+        specifier: 1.4.65
+        version: 1.4.65
       '@types/color-string':
         specifier: ^1.5.2
         version: 1.5.5
@@ -529,8 +529,8 @@ packages:
   '@netless/canvas-polyfill@0.0.4':
     resolution: {integrity: sha512-7NzsJrba0R/mq/l10SkIZQwbrNVJyPxZYrjK6xL3Ts732iWAVuS2UB0u3s6iGeUVcqV39A679yva8APWRl4M0A==}
 
-  '@netless/slide@1.4.65-alpha.1':
-    resolution: {integrity: sha512-3QdNWQZeYE4llMzxQR6A5QT3b54t2oyszZRgV+jeRDbgb7l2dADp39spAG2gbNdstgiTJQ7NJlk7RM+kHLNstQ==}
+  '@netless/slide@1.4.65':
+    resolution: {integrity: sha512-hkJ5/QKlYclomtTxHgiZvNixFdkmENVMkZY8g5JVo5/kwkzgKaN2wfyqN8l3JSZhYdH1bN5XeXj0JnE2sBBaUw==}
 
   '@netless/telebox-insider@0.2.28':
     resolution: {integrity: sha512-UJDCm/f7yjiIaWqbS20LDXfAG6RUxsXSktPDzmEr51MgsevpQ3u241hVlyOpKAXSeTR6B3ioRAKcgflOw5JvTQ==}
@@ -2895,7 +2895,7 @@ snapshots:
 
   '@netless/canvas-polyfill@0.0.4': {}
 
-  '@netless/slide@1.4.65-alpha.1':
+  '@netless/slide@1.4.65':
     dependencies:
       '@juggle/resize-observer': 3.4.0
       '@types/lodash': 4.17.23
