@@ -573,8 +573,8 @@ setInterval(() => {
       );
     });
     const pending = m.seek(4);
-    // Observe failures through the awaited original promises below.
-    void pending.catch(() => {});
+    // Report early rejection while preserving the original promise for the await below.
+    void pending.catch(error => console.error("Native " + track + " seek failed", error));
     try {
       await Promise.race([found, expired]);
       await paused;
