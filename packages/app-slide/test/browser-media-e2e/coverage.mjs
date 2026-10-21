@@ -1,3 +1,4 @@
+import { matchesPausedPosition } from "./acceptance.mjs";
 import assert from "node:assert/strict";
 
 export async function extendedCoverage({
@@ -285,9 +286,9 @@ export async function extendedCoverage({
     for (const s of after) {
       assert.deepEqual(s.engineMediaState, authorPausedState);
       assert.deepEqual(s.storageMediaState, authorPausedState);
-      const expectedPosition = Math.floor(authorPausedState.time) + s.trimStart;
-      assert.ok(Math.abs(s.audioTime - expectedPosition) < 0.2);
-      if (s.mediaType === "video") assert.ok(Math.abs(s.videoTime - expectedPosition) < 0.2);
+      assert.ok(matchesPausedPosition(s.audioTime, authorPausedState.time, s.trimStart));
+      if (s.mediaType === "video")
+        assert.ok(matchesPausedPosition(s.videoTime, authorPausedState.time, s.trimStart));
     }
     assert.equal(
       after[0].native.audioStarts,

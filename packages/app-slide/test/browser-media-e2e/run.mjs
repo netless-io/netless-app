@@ -10,14 +10,10 @@ import { installNativeProbe } from "./native-probe.mjs";
 import { extendedCoverage } from "./coverage.mjs";
 import { boundaryCoverage } from "./boundaries.mjs";
 import { installPassiveEvaluation } from "./passive-page.mjs";
+import { PAUSED_POSITION_TOLERANCE_SECONDS, matchesPausedPosition } from "./acceptance.mjs";
 
 const root = path.dirname(fileURLToPath(import.meta.url));
 const project = path.resolve(root, "../../../..");
-const require = createRequire(path.join(project, "package.json"));
-const { build } = require("vite");
-const engines = process.env.APP_SLIDE_PLAYWRIGHT
-  ? createRequire(import.meta.url)(process.env.APP_SLIDE_PLAYWRIGHT)
-  : require("playwright");
 const browserEngine = process.env.APP_SLIDE_E2E_BROWSER || "chromium";
 const blockedAutoplay = process.env.APP_SLIDE_E2E_AUTOPLAY === "blocked";
 const diagnostic = process.env.APP_SLIDE_E2E_DIAGNOSTIC;
@@ -31,28 +27,12 @@ const output = path.resolve(
       ? "/autoplay-blocked"
       : "")
 );
-let config;
-const pkg = JSON.parse(
-  await fs.readFile(path.join(project, "packages/app-slide/package.json"), "utf8")
-);
-const leaf = createRequire(path.join(project, "packages/app-slide/package.json"));
-const slideEntry = process.env.SLIDE_CANDIDATE_DIR
-  ? path.join(process.env.SLIDE_CANDIDATE_DIR, "lib/Slide.js")
-  : leaf.resolve("@netless/slide");
-const slidePkg = JSON.parse(
-  await fs.readFile(path.join(path.dirname(slideEntry), "../package.json"), "utf8")
-);
+const runId = "app-media-" + Date.now();
 const result = {
   startedAt: new Date().toISOString(),
-  appVersion: pkg.version,
-  slideVersion: slidePkg.version,
-  slideArtifact: process.env.SLIDE_CANDIDATE_DIR ? "local-unreleased-candidate" : "installed-npm",
-  versions: Object.fromEntries(
-    ["white-web-sdk", "@netless/window-manager", "@netless/appliance-plugin"].map(name => [
-      name,
-      leaf(name + "/package.json").version,
-    ])
-  ),
+  runId,
+  passed: false,
+  status: "initializing",
   cases: [],
   cleanup: [],
   browserErrors: [],
@@ -61,9 +41,54 @@ const result = {
   blockedAutoplay,
   scope: diagnostic ? "diagnostic/" + diagnostic : "full",
   matrixComplete: false,
+  pausedPositionToleranceSeconds: PAUSED_POSITION_TOLERANCE_SECONDS,
 };
-const rooms = new Map(),
-  runId = "app-media-" + Date.now();
+async function saveResult() {
+  await fs.mkdir(output, { recursive: true });
+  const file = path.join(output, "results.json");
+  await fs.writeFile(file + ".tmp", JSON.stringify(result, null, 2) + "\n");
+  await fs.rename(file + ".tmp", file);
+}
+// Invalidate an earlier success before resolving dependencies or candidate files.
+await saveResult();
+let config, pkg, leaf, slideEntry, slidePkg, build, engines;
+try {
+  const require = createRequire(path.join(project, "package.json"));
+  ({ build } = require("vite"));
+  engines = process.env.APP_SLIDE_PLAYWRIGHT
+    ? createRequire(import.meta.url)(process.env.APP_SLIDE_PLAYWRIGHT)
+    : require("playwright");
+  pkg = JSON.parse(
+    await fs.readFile(path.join(project, "packages/app-slide/package.json"), "utf8")
+  );
+  leaf = createRequire(path.join(project, "packages/app-slide/package.json"));
+  slideEntry = process.env.SLIDE_CANDIDATE_DIR
+    ? path.join(process.env.SLIDE_CANDIDATE_DIR, "lib/Slide.js")
+    : leaf.resolve("@netless/slide");
+  slidePkg = JSON.parse(
+    await fs.readFile(path.join(path.dirname(slideEntry), "../package.json"), "utf8")
+  );
+  Object.assign(result, {
+    status: "running",
+    appVersion: pkg.version,
+    slideVersion: slidePkg.version,
+    slideArtifact: process.env.SLIDE_CANDIDATE_DIR ? "local-unreleased-candidate" : "installed-npm",
+    versions: Object.fromEntries(
+      ["white-web-sdk", "@netless/window-manager", "@netless/appliance-plugin"].map(name => [
+        name,
+        leaf(name + "/package.json").version,
+      ])
+    ),
+  });
+} catch (error) {
+  result.status = "failed";
+  result.error = error.message;
+  result.finishedAt = new Date().toISOString();
+  await saveResult();
+  throw error;
+}
+await saveResult();
+const rooms = new Map();
 let server, browser, origin;
 const appDist = path.join(project, "packages/app-slide/dist");
 
@@ -389,7 +414,7 @@ async function converged(pages, index, timeout = 90000) {
 async function checkpoint(label, pages, details = {}) {
   const rows = await Promise.all(pages.map(sample));
   result.cases.push({ label, ...details, rows });
-  await fs.writeFile(path.join(output, "results.json"), JSON.stringify(result, null, 2) + "\n");
+  await saveResult();
   console.log("PASS " + label);
   return rows;
 }
@@ -693,23 +718,22 @@ async function stopped(label, pages, backend, previousPauses) {
         s.engineMediaState?.type === "pause" &&
         s.storageMediaState?.type === "pause" &&
         Math.abs(s.engineMediaState.time - s.storageMediaState.time) < 0.001 &&
-        Math.abs(s.audioTime - (Math.floor(s.storageMediaState.time) + s.trimStart)) < 0.2 &&
+        matchesPausedPosition(s.audioTime, s.storageMediaState.time, s.trimStart) &&
         (backend !== "html5" ||
           (!s.audioNodeSeeking &&
-            Math.abs(s.audioNodeTime - (Math.floor(s.storageMediaState.time) + s.trimStart)) <
-              0.2)) &&
+            matchesPausedPosition(s.audioNodeTime, s.storageMediaState.time, s.trimStart))) &&
         (s.mediaType !== "video" ||
           (s.videoPaused &&
             !s.videoSeeking &&
             !s.quietVideoSeek &&
-            Math.abs(s.videoTime - (Math.floor(s.storageMediaState.time) + s.trimStart)) < 0.2))
+            matchesPausedPosition(s.videoTime, s.storageMediaState.time, s.trimStart)))
     );
     if (!settled) {
       result.pauseInProgress.lastUnsettled = rows.map(s => ({
         role: s.role,
         engine: s.engineMediaState,
         storage: s.storageMediaState,
-        expected: Math.floor(s.storageMediaState?.time) + s.trimStart,
+        expected: s.storageMediaState?.time + s.trimStart,
         audioTime: s.audioTime,
         videoTime: s.videoTime,
         audioPaused: s.audioPaused,
@@ -737,7 +761,7 @@ async function stopped(label, pages, backend, previousPauses) {
       assert.equal(s.storageMediaState.type, "pause");
       assert.ok(Math.abs(s.engineMediaState.time - s.storageMediaState.time) < 0.001);
       assert.ok(
-        Math.abs(s.audioTime - (Math.floor(s.storageMediaState.time) + s.trimStart)) < 0.2,
+        matchesPausedPosition(s.audioTime, s.storageMediaState.time, s.trimStart),
         label + " native pause position including trim start"
       );
       assert.ok(s.signals.some(event => event.type === "mediaPause" && event.id === s.mediaId));
@@ -1286,6 +1310,7 @@ try {
             "boundaries.mjs",
             "main.ts",
             "media-diagnostics.ts",
+            "acceptance.mjs",
             "native-probe.mjs",
             "passive-page.mjs",
           ].map(file => fs.readFile(path.join(root, file)))
@@ -1492,8 +1517,8 @@ try {
     }
   }
   result.finishedAt = new Date().toISOString();
-  await fs.mkdir(output, { recursive: true });
-  await fs.writeFile(path.join(output, "results.json"), JSON.stringify(result, null, 2) + "\n");
+  result.status = result.passed ? "passed" : "failed";
+  await saveResult();
   console.log(
     JSON.stringify({
       passed: result.passed,

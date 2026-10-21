@@ -1,3 +1,4 @@
+import { PAUSED_POSITION_TOLERANCE_SECONDS } from "./acceptance.mjs";
 import fs from "node:fs/promises";
 import path from "node:path";
 import assert from "node:assert/strict";
@@ -58,6 +59,7 @@ try {
     assert.equal(report.slideArtifact, "installed-npm");
     assert.equal(report.scope, "full");
     assert.equal(report.matrixComplete, true);
+    assert.equal(report.pausedPositionToleranceSeconds, PAUSED_POSITION_TOLERANCE_SECONDS);
     assert.equal(report.cleanup.length, 4);
     assert.ok(report.cleanup.every(r => r.isBan && r.isRecord === false));
     for (const mode of ["1.0", "1.5"])

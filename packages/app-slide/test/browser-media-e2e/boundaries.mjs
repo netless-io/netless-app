@@ -1,3 +1,4 @@
+import { matchesPausedPosition } from "./acceptance.mjs";
 import assert from "node:assert/strict";
 
 export async function boundaryCoverage({
@@ -94,7 +95,9 @@ export async function boundaryCoverage({
     for (const s of paused) {
       assert.deepEqual(s.storageMediaState, pausedState);
       assert.deepEqual(s.engineMediaState, pausedState);
-      assert.ok(Math.abs(s.audioTime - (Math.floor(pausedState.time) + s.trimStart)) < 0.2);
+      assert.ok(matchesPausedPosition(s.audioTime, pausedState.time, s.trimStart));
+      if (s.mediaType === "video")
+        assert.ok(matchesPausedPosition(s.videoTime, pausedState.time, s.trimStart));
     }
     const resumeTrace = { prefix, index, before: paused, samples: [] };
     (result.trimResumeTraces ||= []).push(resumeTrace);
