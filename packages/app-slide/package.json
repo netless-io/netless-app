@@ -1,6 +1,6 @@
 {
   "name": "@netless/app-slide",
-  "version": "0.2.107",
+  "version": "0.2.108-alpha.0",
   "main": "dist/main.cjs.js",
   "module": "dist/main.es.js",
   "types": "dist/index.d.ts",
@@ -22,7 +22,7 @@
   "devDependencies": {
     "@juggle/resize-observer": "^3.3.1",
     "@netless/appliance-plugin": "1.1.38",
-    "@netless/slide": "1.4.63",
+    "@netless/slide": "1.4.64-alpha.0",
     "@types/color-string": "^1.5.2",
     "color-string": "^1.9.1",
     "jspdf": "2.5.1",
