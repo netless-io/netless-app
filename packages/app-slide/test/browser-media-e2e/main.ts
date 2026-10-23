@@ -21,6 +21,7 @@ const signals: {
   type: string;
   id?: string;
   authorId?: number;
+  volume?: number;
   state?: { type?: string; time?: number };
 }[] = [];
 const animationEvents: { type: string; index: number; page: number; epoch: number }[] = [];
@@ -29,6 +30,7 @@ const observedPlayers = new WeakSet<object>();
 const mediaActions: object[] = [];
 const resourceLoads: { path: string; durationMs: number }[] = [];
 let appId: string, observedController: any, observedProxy: any;
+let volumeSelectedAppId: string | undefined;
 let sceneWrites = 0,
   stateWrites = 0,
   epoch = 0,
@@ -49,7 +51,8 @@ addEventListener("unhandledrejection", () => errors.push("unhandled rejection"))
 
 function app() {
   if (!appId) appId = Object.keys(manager?.apps || {})[0];
-  return appId && manager?.queryOne(appId);
+  const targetId = volumeSelectedAppId || appId;
+  return targetId && manager?.queryOne(targetId);
 }
 function engine() {
   return app()?.appResult?.slide();
@@ -116,6 +119,7 @@ function observe() {
         type: args[0]?.type,
         id: args[0]?.id,
         authorId: args[0]?.authorId,
+        volume: args[0]?.volume,
         state: args[0]?.state && { ...args[0].state },
       });
     if (event === "mainSeqStepStart" || event === "mainSeqStepEnd")
@@ -231,7 +235,7 @@ function sample() {
     phase: room?.phase,
     ready: c?.ready,
     frozen: c?.isFrozen,
-    appId,
+    appId: volumeSelectedAppId || appId,
     appVersions: Array.from(document.querySelectorAll("[data-app-slide-version]"), e =>
       e.getAttribute("data-app-slide-version")
     ),
@@ -256,6 +260,26 @@ function sample() {
     now: slide?.timestamp(),
     native,
     mediaCount: medias.length,
+    sharedVolume: slide?.slideState.mediaVolume,
+    effectiveVolume: slide?.getGlobalVolume(),
+    storedVolume: c?.context.storage.state.state?.mediaVolume,
+    volumeSignals: signals.filter(event => event.type === "mediaVolumeChange"),
+    mediaVolumes: medias.map(item => {
+      const audio = item.rtcAudio || item.audioPlayer;
+      const howl = audio?.howl;
+      const sound = howl?._soundById(audio.staticEventId) || howl?._sounds[0];
+      return {
+        id: item.id,
+        type: item.type,
+        backend: howl?._webAudio ? "webaudio" : howl ? "html5" : "other",
+        loaded: howl?.state() === "loaded",
+        volume: howl?.volume(),
+        soundVolume: sound?._volume,
+        nativeVolume: howl?._webAudio ? sound?._node?.gain?.value : sound?._node?.volume,
+        paused: audio?.isPaused,
+        time: audio?.currentTime,
+      };
+    }),
     allMedias: medias.map(m => ({
       id: m.id,
       playing: m.isPlaying,
@@ -397,7 +421,7 @@ const room = await sdk.joinRoom({
   uuid: config.uuid,
   roomToken: config.roomToken,
   uid: `${config.runId}-${mode}-${backend}-${role}`,
-  isWritable: role !== "reader",
+  isWritable: !role.startsWith("reader"),
   useMultiViews: true,
   disableMagixEventDispatchLimit: true,
   invisiblePlugins: mode === "1.5" ? [WindowManager, ApplianceMultiPlugin] : [WindowManager],
@@ -434,6 +458,69 @@ setInterval(() => {
 (window as any).appMediaGate = {
   sample,
   executionTrace: mediaExecutionTrace,
+  volume(value: number) {
+    const slide = engine();
+    if (typeof slide?.updateSharedMediaVolume !== "function")
+      throw Error("Shared-volume API missing from installed Slide");
+    slide.updateSharedMediaVolume(value);
+  },
+  localVolume(value: number) {
+    engine().updateGlobalVolume(value);
+  },
+  prepareVolumeControls(index = 0) {
+    room.setMemberState({ currentApplianceName: "clicker" });
+    document
+      .querySelectorAll("[data-e2e-volume]")
+      .forEach(element => element.removeAttribute("data-e2e-volume"));
+    const item = (Object.values(engine().player.currentStage.ctx.medias) as any[])[index];
+    item.controller.show();
+    item.controller.volumeControl.element.setAttribute("data-e2e-volume", "active");
+  },
+  setWritable(value: boolean) {
+    return room.setWritable(value);
+  },
+  volumeMediaRect() {
+    const item = media(),
+      rect = engine().player.view.getBoundingClientRect();
+    const point = item.controller.target.getGlobalPosition();
+    return {
+      x: rect.x + ((point.x + item.controller.width / 2) * rect.width) / item.ctx.stageWidth,
+      y: rect.y + ((point.y + item.controller.height / 2) * rect.height) / item.ctx.stageHeight,
+    };
+  },
+  volumeAppIds() {
+    return Object.keys(manager.apps || {});
+  },
+  volumeSelectApp(id: string) {
+    volumeSelectedAppId = id;
+    manager.focusApp(id);
+    observe();
+  },
+  volumeApps() {
+    return Object.keys(manager.apps || {}).map(id => {
+      const proxy = manager.queryOne(id),
+        slide = proxy?.appResult?.slide();
+      const controller = proxy?.appResult?.controller();
+      return {
+        id,
+        sharedVolume: slide?.slideState.mediaVolume,
+        effectiveVolume: slide?.getGlobalVolume(),
+        storedVolume: controller?.context.storage.state.state?.mediaVolume,
+        frozen: controller?.isFrozen,
+      };
+    });
+  },
+  async volumeAddApp() {
+    return manager.addApp({
+      kind: "Slide",
+      options: { scenePath: "/volume-second-ppt", title: "Volume isolation" },
+      attributes: { taskId: "media-fixture", url: location.origin + "/fixture" },
+    });
+  },
+  async volumeCloseApp(id: string) {
+    if (volumeSelectedAppId === id) volumeSelectedAppId = undefined;
+    await manager.closeApp(id);
+  },
   frame() {
     const { renderer, stage } = engine().player.app;
     renderer.render(stage);
