@@ -9,6 +9,7 @@ import { spawnSync } from "node:child_process";
 import { installNativeProbe } from "./native-probe.mjs";
 import { extendedCoverage } from "./coverage.mjs";
 import { boundaryCoverage } from "./boundaries.mjs";
+import { volumeCoverage } from "./volume.mjs";
 import { installPassiveEvaluation } from "./passive-page.mjs";
 import {
   PAUSED_POSITION_TOLERANCE_SECONDS,
@@ -155,6 +156,7 @@ async function api(endpoint, method = "GET", body) {
   }
 }
 function fixture(index, scenario = "") {
+  if (diagnostic === "volume" && index === 2) scenario += "-multiple";
   const type = index === 1 ? "video" : "audio";
   const data = {
     type: "Stage",
@@ -800,7 +802,7 @@ async function group(mode, backend) {
   });
   rooms.set(mode + "/" + backend, { uuid: room.uuid, roomToken });
   const pages = [];
-  for (const role of ["writer-a", "writer-b", "reader"]) {
+  const openRole = async role => {
     const context = await browser.newContext({ viewport: { width: 1280, height: 900 } });
     await context.addInitScript(installNativeProbe);
     const page = await context.newPage();
@@ -808,6 +810,16 @@ async function group(mode, backend) {
     page.on("pageerror", error => result.browserErrors.push(error.message));
     page.on("console", message => {
       if (message.type() === "error") {
+        if (
+          page.__volumeNetworkFault &&
+          /(?:Failed to load resource:|net::ERR_INTERNET_DISCONNECTED|NetworkError|Network request failed|Failed to fetch|WebSocket.*(?:closed|failed|disconnected)|disconnected with code 4000)/i.test(
+            message.text()
+          )
+        ) {
+          result.expectedNetworkErrors ||= [];
+          result.expectedNetworkErrors.push({ role, message: message.text().slice(0, 300) });
+          return;
+        }
         if (
           result.injectMediaFailure &&
           message.text().includes("[media-failure]") &&
@@ -834,6 +846,7 @@ async function group(mode, backend) {
         at: Date.now(),
         path: new URL(request.url()).pathname,
         error: request.failure()?.errorText,
+        expectedNetworkFault: !!page.__volumeNetworkFault,
       });
     });
     page.on("response", response => {
@@ -894,7 +907,9 @@ async function group(mode, backend) {
       throw error;
     }
     pages.push(page);
-  }
+    return page;
+  };
+  for (const role of ["writer-a", "writer-b", "reader"]) await openRole(role);
   const [a, b, r] = pages,
     prefix = mode + "/" + backend;
   if (mode === "1.5" && browserEngine === "chromium")
@@ -917,7 +932,21 @@ async function group(mode, backend) {
     result.activationChecks.push({ prefix, activation });
   }
   if (diagnostic && diagnostic !== "pause") {
-    if (diagnostic === "customer" || diagnostic === "animation")
+    if (diagnostic === "volume")
+      await volumeCoverage({
+        prefix,
+        pages,
+        backend,
+        sample,
+        converged,
+        playing,
+        pauseCounts,
+        stopped,
+        checkpoint,
+        result,
+        openRole,
+      });
+    else if (diagnostic === "customer" || diagnostic === "animation")
       await documents(prefix, pages, backend, diagnostic === "animation");
     else
       await (diagnostic === "extended" ? extendedCoverage : boundaryCoverage)({
@@ -1319,6 +1348,7 @@ try {
             "acceptance.mjs",
             "native-probe.mjs",
             "passive-page.mjs",
+            "volume.mjs",
           ].map(file => fs.readFile(path.join(root, file)))
         )
       )
@@ -1378,7 +1408,7 @@ try {
   await verifyNativeAudioEnvironment();
   assert.ok(
     !diagnostic ||
-      ["boundaries", "customer", "animation", "pause", "extended"].includes(diagnostic),
+      ["boundaries", "customer", "animation", "pause", "extended", "volume"].includes(diagnostic),
     "Known diagnostic phase"
   );
   for (const mode of diagnostic ? [diagnosticMode] : ["1.0", "1.5"])
@@ -1386,7 +1416,12 @@ try {
       await group(mode, backend);
   assert.deepEqual(result.browserErrors, []);
   assert.deepEqual(result.notRun, []);
-  if (blockedAutoplay) {
+  if (blockedAutoplay && diagnostic === "volume") {
+    const roles = new Set((result.permissionChecks || []).map(c => c.role));
+    for (const role of ["writer-a", "writer-b", "reader"])
+      assert.ok(roles.has(role), "Blocked volume suite must recover " + role);
+  }
+  if (blockedAutoplay && diagnostic !== "volume") {
     assert.equal(result.activationChecks.length, diagnostic ? 1 : 4);
     assert.equal(
       new Set((result.permissionChecks || []).map(c => c.role)).size,
@@ -1441,6 +1476,7 @@ try {
   assert.deepEqual(
     (result.requestFailures || []).filter(
       f =>
+        !f.expectedNetworkFault &&
         f.error !== "net::ERR_ABORTED" &&
         // WebKit uses this spelling when freeze/page change unloads native media.
         !(browserEngine === "webkit" && f.error === "cancelled" && /\.mp[34]$/.test(f.path)) &&
