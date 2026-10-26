@@ -46,6 +46,8 @@ const result = {
   browserEngine,
   blockedAutoplay,
   scope: diagnostic ? "diagnostic/" + diagnostic : "full",
+  sharedMediaVolumeMode:
+    process.env.APP_SLIDE_E2E_VOLUME_MODE || (diagnostic === "volume" ? "enabled" : "default"),
   matrixComplete: false,
   pausedPositionToleranceSeconds: PAUSED_POSITION_TOLERANCE_SECONDS,
   graphicsContextPolicy: GRAPHICS_CONTEXT_POLICY,
@@ -267,6 +269,7 @@ async function start() {
         res.setHeader("Content-Type", "application/json");
         return res.end(
           JSON.stringify({
+            sharedMediaVolumeMode: result.sharedMediaVolumeMode,
             appIdentifier: config.appIdentifier,
             region: config.region || "cn-hz",
             runId,
@@ -1332,6 +1335,7 @@ try {
       "Customer pageCount must be a positive integer before creating any room"
     );
   }
+  assert.ok(["enabled", "disabled", "default"].includes(result.sharedMediaVolumeMode));
   if (diagnostic)
     assert.ok(["1.0", "1.5"].includes(diagnosticMode), "Known diagnostic whiteboard mode");
   result.harnessSHA256 = crypto
@@ -1349,6 +1353,7 @@ try {
             "native-probe.mjs",
             "passive-page.mjs",
             "volume.mjs",
+            "volume-disabled.mjs",
           ].map(file => fs.readFile(path.join(root, file)))
         )
       )

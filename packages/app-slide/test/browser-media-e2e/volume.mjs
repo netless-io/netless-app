@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { disabledVolumeCoverage } from "./volume-disabled.mjs";
 
 // Real app-slide, White SDK/Magix, storage and native media. No replacement player.
 export async function volumeCoverage({
@@ -14,6 +15,20 @@ export async function volumeCoverage({
   result,
   openRole,
 }) {
+  if (result.sharedMediaVolumeMode !== "enabled")
+    return disabledVolumeCoverage({
+      prefix,
+      pages,
+      backend,
+      sample,
+      converged,
+      playing,
+      stopped,
+      pauseCounts,
+      checkpoint,
+      result,
+      openRole,
+    });
   const [a, b, r] = pages;
   const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
   const record = (name, details = {}) => checkpoint(prefix + "/volume/" + name, pages, details);
@@ -44,8 +59,39 @@ export async function volumeCoverage({
     }
   }
   const set = (page, value) => page.evaluate(value => appMediaGate.volume(value), value);
+  async function committed(page, value) {
+    const before = (await sample(page)).sharedVolumeRecord?.changeId;
+    const changeId = await set(page, value);
+    assert.ok(changeId && changeId !== before, "Shared request must create a fresh operation");
+    for (const target of pages)
+      await target.waitForFunction(
+        id => appMediaGate.sample().sharedVolumeRecord?.changeId === id,
+        changeId,
+        { timeout: 25000 }
+      );
+    await volumes(pages, value);
+  }
   await volumes(pages, 0.5);
+  assert.ok((await Promise.all(pages.map(sample))).every(s => !s.sharedVolumeRecord));
   await record("default-50-percent");
+  const oldSnapshot = await a.evaluate(() => appMediaGate.volumeSnapshot());
+  await a.evaluate(
+    state => appMediaGate.volumePublishSnapshot({ ...state, mediaVolume: 0.63 }),
+    oldSnapshot
+  );
+  const legacy = await openRole("reader-legacy");
+  await legacy.waitForFunction(
+    () =>
+      appMediaGate.sample().sharedVolume === 0.63 && appMediaGate.sample().effectiveVolume === 0.63
+  );
+  assert.equal((await sample(legacy)).sharedVolumeRecord, undefined);
+  assert.equal((await sample(legacy)).sharedVolumeWrites, 0);
+  await record("legacy-snapshot-read-without-migration");
+  await legacy.evaluate(() => appMediaGate.close());
+  await legacy.context().close();
+  pages.splice(pages.indexOf(legacy), 1);
+  await a.evaluate(state => appMediaGate.volumePublishSnapshot(state), oldSnapshot);
+  await volumes(pages, 0.5);
   for (const value of [0.25, 0, 1, 0.5]) {
     await set(a, value);
     await volumes(pages, value);
@@ -57,6 +103,7 @@ export async function volumeCoverage({
   await sleep(300);
   await volumes(pages, 0.5);
   assert.equal((await sample(r)).stateWrites, readerBefore.stateWrites);
+  assert.equal((await sample(r)).sharedVolumeWrites, readerBefore.sharedVolumeWrites);
   await record("readonly-cannot-write");
 
   await r.evaluate(() => appMediaGate.localVolume(0.07));
@@ -66,6 +113,25 @@ export async function volumeCoverage({
   await set(b, 0.38);
   await volumes(pages, 0.38);
   await record("local-api-then-shared-override");
+  const priorChangeId = (await sample(a)).sharedVolumeRecord.changeId;
+  await r.evaluate(() => appMediaGate.localVolume(0.09));
+  await set(a, 0.38);
+  await volumes(pages, 0.38);
+  assert.notEqual((await sample(a)).sharedVolumeRecord.changeId, priorChangeId);
+  await record("same-value-command-overrides-local-volume");
+  await r.evaluate(() => appMediaGate.localVolume(0.11));
+  await r.evaluate(() => appMediaGate.freeze());
+  await r.waitForFunction(
+    () => appMediaGate.sample().frozen && !appMediaGate.sample().playerExists
+  );
+  await r.evaluate(() => appMediaGate.unfreeze());
+  await converged(pages, 1);
+  const localAfterRestore = await sample(r);
+  assert.equal(localAfterRestore.effectiveVolume, 0.11);
+  assert.equal(localAfterRestore.sharedVolume, 0.38);
+  assert.equal(localAfterRestore.storedVolume, 0.38);
+  await committed(a, 0.38);
+  await record("same-authority-restore-preserves-local-override");
 
   await a.evaluate(() => {
     for (let n = 0; n < 20; n++) appMediaGate.volume(n / 25);
@@ -208,6 +274,39 @@ export async function volumeCoverage({
   assert.ok([0.21, 0.78].includes(final));
   await volumes(pages, final);
   await record("concurrent-writers-converge", { final });
+
+  // Force the ordering that failed before: an old author-owned full snapshot
+  // is actually committed after a newer shared volume. Native players, room
+  // transport and storage remain real; only this host publication is delayed.
+  await committed(b, 0.78);
+  const delayedSnapshot = await b.evaluate(() => appMediaGate.volumeSnapshot());
+  await committed(a, 0.21);
+  await b.evaluate(state => appMediaGate.volumePublishSnapshot(state), delayedSnapshot);
+  for (const page of pages)
+    await page.waitForFunction(() => appMediaGate.sample().legacyStoredVolume === 0.78);
+  await volumes(pages, 0.21);
+  await record("late-legacy-snapshot-cannot-overwrite-authority");
+  await late.reload();
+  await converged([late], 1);
+  await volumes(pages, 0.21);
+  await record("reload-prefers-authority-over-stale-snapshot");
+  await r.evaluate(() => appMediaGate.freeze());
+  await r.waitForFunction(
+    () => appMediaGate.sample().frozen && !appMediaGate.sample().playerExists
+  );
+  await set(a, 0.32);
+  await volumes([a, b, late], 0.32);
+  await r.waitForFunction(
+    () => appMediaGate.sample().sharedVolume === 0.32 && appMediaGate.sample().storedVolume === 0.32
+  );
+  await r.evaluate(() => appMediaGate.unfreeze());
+  await converged(pages, 1);
+  await volumes(pages, 0.32);
+  await record("frozen-authority-survives-stale-full-snapshot");
+  await set(a, final);
+  await volumes(pages, final);
+  assert.ok((await Promise.all(pages.map(sample))).every(s => s.volumeSignals.length === 0));
+  await record("volume-uses-storage-without-magix-echo");
 
   const firstId = (await sample(a)).appId;
   const secondId = await a.evaluate(() => appMediaGate.volumeAddApp());

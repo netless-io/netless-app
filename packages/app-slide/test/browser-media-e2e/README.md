@@ -2,7 +2,9 @@
 
 ## WB-482 共享音量专项
 
-安装 package.json 固定的实际 npm Slide 后，设置仓库外的 `APP_SLIDE_E2E_CONFIG`，在 app-slide 目录执行 `npm run test:volume:matrix`。输出目录可由 `APP_SLIDE_VOLUME_OUTPUT` 指定。矩阵包含 Chromium/WebKit × 白板 1.0/1.5 × HTML5/WebAudio 八组，以及 Chromium 禁止自动播放的四组。每组创建独立、不录制的房间并在结束后禁用，报告核对同一 Slide/app 构建哈希；不接受 `SLIDE_CANDIDATE_DIR` 替代实际 npm 包。
+安装 package.json 固定的实际 npm Slide 后，设置仓库外的 `APP_SLIDE_E2E_CONFIG`，在 app-slide 目录执行 `npm run test:volume:matrix`。输出目录可由 `APP_SLIDE_VOLUME_OUTPUT` 指定。矩阵将原十二组配置分别以功能开启、显式关闭执行（24 组），另补 Chromium/HTML5 与 WebKit/WebAudio 的未传开关默认关闭场景，共 26 组。每组创建独立、不录制的房间并在结束后禁用，报告核对同一 Slide/app 构建哈希；不接受 `SLIDE_CANDIDATE_DIR` 替代实际 npm 包。
+
+开启专项还固定复现旧快照迟到顺序并验证权威字段保持、刷新和冻结恢复；关闭专项检查 DOM 中没有音量控件、共享 API/旧信令不生效、本地 API 与原播放控件正常、旧房间读取且不自动写入新字段。单配置可设置 `APP_SLIDE_E2E_VOLUME_MODE=enabled|disabled|default`。
 
 专项验证默认 0.5、绝对共享音量 0/0.25/0.5/1、只读写入拦截、本地旧 API 与后续共享调整、连续拖动最终值、播放中调整及静音不暂停、视频和音频控制条真实指针操作、只读悬停仍隐藏控件、无媒体页/延迟渲染、冻结恢复、晚加入/刷新、断网重连、写权限移交、多可写端收敛，以及同一转换资源的两个 PPT 实例互不影响。
 

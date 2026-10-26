@@ -20,17 +20,34 @@ await save();
 try {
   assert.ok(process.env.APP_SLIDE_E2E_CONFIG, "Private room config required");
   assert.ok(!process.env.SLIDE_CANDIDATE_DIR, "Use the actual installed npm alpha package");
-  const profiles = [];
+  const baseProfiles = [];
   for (const browser of ["chromium", "webkit"])
     for (const mode of ["1.0", "1.5"])
       for (const backend of ["html5", "webaudio"])
-        profiles.push({ browser, mode, backend, autoplay: "allowed" });
+        baseProfiles.push({ browser, mode, backend, autoplay: "allowed" });
   for (const mode of ["1.0", "1.5"])
     for (const backend of ["html5", "webaudio"])
-      profiles.push({ browser: "chromium", mode, backend, autoplay: "blocked" });
+      baseProfiles.push({ browser: "chromium", mode, backend, autoplay: "blocked" });
+  const profiles = [
+    ...["enabled", "disabled"].flatMap(volumeMode => baseProfiles.map(p => ({ ...p, volumeMode }))),
+    {
+      browser: "chromium",
+      mode: "1.0",
+      backend: "html5",
+      autoplay: "allowed",
+      volumeMode: "default",
+    },
+    {
+      browser: "webkit",
+      mode: "1.0",
+      backend: "webaudio",
+      autoplay: "allowed",
+      volumeMode: "default",
+    },
+  ];
   let artifact;
   for (const profile of profiles) {
-    const name = `${profile.browser}-${profile.mode}-${profile.backend}-${profile.autoplay}`;
+    const name = `${profile.volumeMode}-${profile.browser}-${profile.mode}-${profile.backend}-${profile.autoplay}`;
     const dir = path.join(output, name);
     const log = await fs.open(path.join(output, name + ".log"), "w");
     const code = await new Promise((resolve, reject) => {
@@ -38,6 +55,7 @@ try {
         env: {
           ...process.env,
           APP_SLIDE_E2E_DIAGNOSTIC: "volume",
+          APP_SLIDE_E2E_VOLUME_MODE: profile.volumeMode,
           APP_SLIDE_E2E_DIAGNOSTIC_MODE: profile.mode,
           APP_SLIDE_E2E_DIAGNOSTIC_BACKEND: profile.backend,
           APP_SLIDE_E2E_BROWSER: profile.browser,
@@ -78,7 +96,11 @@ try {
     assert.equal(report.passed, true, name + " acceptance failed");
     assert.equal(report.slideArtifact, "installed-npm");
     assert.equal(report.scope, "diagnostic/volume");
-    assert.ok(report.cases.length >= 25, "Complete volume scenarios required");
+    assert.equal(report.sharedMediaVolumeMode, profile.volumeMode);
+    assert.ok(
+      report.cases.length >= (profile.volumeMode === "enabled" ? 32 : 13),
+      "Complete enabled/disabled volume scenarios required"
+    );
     assert.equal(report.cleanup.length, 1, "One owned room per profile");
     assert.ok(report.cleanup.every(r => r.isBan && !r.isRecord && !r.failed));
     const identity = JSON.stringify([report.slideVersion, report.slideSHA256, report.appSHA256]);
@@ -86,7 +108,7 @@ try {
     assert.equal(identity, artifact, "All profiles must use identical artifacts");
     console.log("PASS " + name + " " + row.cases + " checkpoints; room cleaned");
   }
-  assert.equal(result.profiles.length, 12);
+  assert.equal(result.profiles.length, 26);
   result.passed = true;
 } catch (error) {
   result.error = error.message;

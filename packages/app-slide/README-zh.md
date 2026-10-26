@@ -83,6 +83,24 @@ manager.addApp({
    }
    ```
 
+### PPT 共享音量（按需启用）
+
+`appOptions.enableSharedMediaVolume` 默认 `false`：不显示音量按钮，不发起或跟随共享音量调整，原播放控件和本地音量 API 保持可用。需要此功能时，所有参与端使用配套的新版本并统一设置：
+
+```ts
+appOptions: {
+  enableSharedMediaVolume: true,
+}
+```
+
+开启后默认音量仍为 `0.5`，可写端调整该 PPT 的全部媒体，只读端隐藏控件并跟随。该选项在实例初始化时读取，不是运行中切换开关的 API。
+
+共享音量保存在每个 PPT appId 独立的可选 `sharedMediaVolume` 字段中，通过 storage 变更监听同步，无需轮询。每次调整包含唯一 changeId，因此重新设置相同值也会生效。播放、暂停和翻页沿用原同步方式。
+
+旧房间不需要清空、迁移或重新转换 PPT。没有新字段时，开启功能的实例兼容读取旧快照音量，缺省为 0.5；仅打开房间不写新字段。新字段存在时优先于完整旧快照，防止迟到的旧快照覆盖音量。关闭功能仍保留旧快照数据，但不将共享音量应用到播放器。新旧客户端混用不保证新协议完整同步，应统一升级。
+
+此开发分支要求 Slide 同时提供 `enableSharedMediaVolume`、`applySharedMediaVolume` 与 host authority 回调；旧 `1.4.66-alpha.0` 不包含本节的开关和持久化修复。候选测试可使用 `SLIDE_CANDIDATE_DIR`，正式接入须安装配套发布版本。
+
 ### 更新日志
 
 #### 0.2.108（2026-10-21）

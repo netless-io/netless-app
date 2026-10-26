@@ -40,6 +40,7 @@ let frozenCalls = 0,
   releaseCalls = 0;
 let permissionRequests = 0,
   permissionGestures = 0;
+let sharedVolumeWrites = 0;
 const sockets = new Set<WebSocket>();
 const originalSend = WebSocket.prototype.send;
 WebSocket.prototype.send = function (data) {
@@ -85,6 +86,7 @@ function observe() {
   const setState = context.storage.setState.bind(context.storage);
   context.storage.setState = (...args: any[]) => {
     if (args[0]?.state) stateWrites++;
+    if (args[0]?.sharedMediaVolume) sharedVolumeWrites++;
     return setState(...args);
   };
   const slide = controller.slide;
@@ -132,6 +134,23 @@ function observe() {
     if (event === "renderError") errors.push("Slide renderError");
     return emit(event, ...args);
   };
+}
+function persistedVolume(controller: any, slide: any) {
+  const attrs = controller?.context.storage.state;
+  const record = attrs?.sharedMediaVolume;
+  if (
+    record &&
+    typeof record.changeId === "string" &&
+    record.changeId.length > 0 &&
+    record.taskId === slide?.slideState.taskId &&
+    record.url === slide?.slideState.url &&
+    typeof record.value === "number" &&
+    Number.isFinite(record.value) &&
+    record.value >= 0 &&
+    record.value <= 1
+  )
+    return record.value;
+  return attrs?.state?.mediaVolume ?? 0.5;
 }
 function sample() {
   observe();
@@ -262,7 +281,11 @@ function sample() {
     mediaCount: medias.length,
     sharedVolume: slide?.slideState.mediaVolume,
     effectiveVolume: slide?.getGlobalVolume(),
-    storedVolume: c?.context.storage.state.state?.mediaVolume,
+    storedVolume: persistedVolume(c, slide),
+    legacyStoredVolume: c?.context.storage.state.state?.mediaVolume,
+    sharedVolumeRecord: c?.context.storage.state.sharedMediaVolume,
+    sharedVolumeWrites,
+    sharedMediaVolumeMode: config.sharedMediaVolumeMode,
     volumeSignals: signals.filter(event => event.type === "mediaVolumeChange"),
     mediaVolumes: medias.map(item => {
       const audio = item.rtcAudio || item.audioPlayer;
@@ -377,6 +400,11 @@ await WindowManager.register({
   name: "NetlessAppSlide",
   src: registration === "esm" ? async () => bundle!.default : location.origin + "/app/main.iife.js",
   appOptions: {
+    ...(config.sharedMediaVolumeMode === "default"
+      ? {}
+      : {
+          enableSharedMediaVolume: config.sharedMediaVolumeMode === "enabled",
+        }),
     useLocalCache: false,
     // Functional media acceptance uses live CDN assets; keep download latency
     // separate from the stricter native playback/clock deadlines.
@@ -463,9 +491,33 @@ setInterval(() => {
     if (typeof slide?.updateSharedMediaVolume !== "function")
       throw Error("Shared-volume API missing from installed Slide");
     slide.updateSharedMediaVolume(value);
+    return app().appResult.controller().context.storage.state.sharedMediaVolume?.changeId;
   },
   localVolume(value: number) {
     engine().updateGlobalVolume(value);
+  },
+  volumeSnapshot() {
+    return engine().slideState;
+  },
+  volumePublishSnapshot(state: unknown) {
+    app().appResult.controller().context.storage.setState({ state });
+  },
+  volumePublishRecord(record: unknown) {
+    app().appResult.controller().context.storage.setState({ sharedMediaVolume: record });
+  },
+  volumeLegacySignal(value: number) {
+    const slide = engine(),
+      context = app().appResult.controller().context;
+    context.dispatchMagixEvent("syncDispatch", {
+      type: "syncDispatch",
+      payload: {
+        type: "mediaVolumeChange",
+        volume: value,
+        taskId: slide.slideState.taskId,
+        url: slide.slideState.url,
+        slideIndex: slide.slideState.currentSlideIndex,
+      },
+    });
   },
   prepareVolumeControls(index = 0) {
     room.setMemberState({ currentApplianceName: "clicker" });
@@ -505,7 +557,7 @@ setInterval(() => {
         id,
         sharedVolume: slide?.slideState.mediaVolume,
         effectiveVolume: slide?.getGlobalVolume(),
-        storedVolume: controller?.context.storage.state.state?.mediaVolume,
+        storedVolume: persistedVolume(controller, slide),
         frozen: controller?.isFrozen,
       };
     });

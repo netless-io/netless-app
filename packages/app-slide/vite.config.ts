@@ -14,6 +14,15 @@ export default (env: Parameters<ReturnType<typeof createViteConfig>>[0]) => {
         "Install a release containing it, or set SLIDE_CANDIDATE_DIR to the built Slide package for local validation."
     );
   }
+  if (
+    !declarations.includes("enableSharedMediaVolume?") ||
+    !declarations.includes("applySharedMediaVolume(")
+  ) {
+    throw new Error(
+      "app-slide requires Slide's opt-in shared volume and host authority APIs. " +
+        "Install the matching release or use SLIDE_CANDIDATE_DIR for candidate validation."
+    );
+  }
   const config = createViteConfig()(env);
   return {
     ...config,
