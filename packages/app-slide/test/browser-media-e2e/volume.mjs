@@ -14,6 +14,7 @@ export async function volumeCoverage({
   checkpoint,
   result,
   openRole,
+  reload,
 }) {
   if (result.sharedMediaVolumeMode !== "enabled")
     return disabledVolumeCoverage({
@@ -28,6 +29,7 @@ export async function volumeCoverage({
       checkpoint,
       result,
       openRole,
+      reload,
     });
   const [a, b, r] = pages;
   const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
@@ -229,7 +231,7 @@ export async function volumeCoverage({
   assert.equal((await sample(late)).writable, false);
   assert.equal((await sample(late)).stateWrites, 0);
   await record("late-reader-restores-volume");
-  await late.reload();
+  await reload(late);
   await converged([late], 1);
   await volumes(pages, 0.63);
   await record("reload-restores-volume");
@@ -286,7 +288,7 @@ export async function volumeCoverage({
     await page.waitForFunction(() => appMediaGate.sample().legacyStoredVolume === 0.78);
   await volumes(pages, 0.21);
   await record("late-legacy-snapshot-cannot-overwrite-authority");
-  await late.reload();
+  await reload(late);
   await converged([late], 1);
   await volumes(pages, 0.21);
   await record("reload-prefers-authority-over-stale-snapshot");

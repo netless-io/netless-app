@@ -16,6 +16,8 @@ import {
   matchesPausedPosition,
   GRAPHICS_CONTEXT_POLICY,
   isGraphicsContextNotice,
+  reloadForAcceptance,
+  isExpectedReloadCancellation,
 } from "./acceptance.mjs";
 
 const root = path.dirname(fileURLToPath(import.meta.url));
@@ -850,6 +852,9 @@ async function group(mode, backend) {
         path: new URL(request.url()).pathname,
         error: request.failure()?.errorText,
         expectedNetworkFault: !!page.__volumeNetworkFault,
+        resourceType: request.resourceType(),
+        isNavigationRequest: request.isNavigationRequest(),
+        expectedReloadCancellation: isExpectedReloadCancellation(page, request),
       });
     });
     page.on("response", response => {
@@ -948,6 +953,7 @@ async function group(mode, backend) {
         checkpoint,
         result,
         openRole,
+        reload: reloadForAcceptance,
       });
     else if (diagnostic === "customer" || diagnostic === "animation")
       await documents(prefix, pages, backend, diagnostic === "animation");
@@ -1121,7 +1127,7 @@ async function lifecycle(prefix, pages) {
   await checkpoint(prefix + "/author-handoff", pages);
   await a.evaluate(() => appMediaGate.seedOld());
   await a.waitForTimeout(500);
-  for (const page of pages) await page.reload();
+  for (const page of pages) await reloadForAcceptance(page);
   await converged(pages, 3);
   for (const page of pages)
     assert.ok((await sample(page)).storedSrc?.endsWith("/old/main.iife.js"));
@@ -1482,6 +1488,7 @@ try {
     (result.requestFailures || []).filter(
       f =>
         !f.expectedNetworkFault &&
+        !f.expectedReloadCancellation &&
         f.error !== "net::ERR_ABORTED" &&
         // WebKit uses this spelling when freeze/page change unloads native media.
         !(browserEngine === "webkit" && f.error === "cancelled" && /\.mp[34]$/.test(f.path)) &&

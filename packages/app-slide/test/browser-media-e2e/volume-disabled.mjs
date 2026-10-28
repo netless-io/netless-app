@@ -11,6 +11,7 @@ export async function disabledVolumeCoverage({
   checkpoint,
   result,
   openRole,
+  reload,
 }) {
   const [a, b, r] = pages;
   const record = (name, details = {}) =>
@@ -106,7 +107,7 @@ export async function disabledVolumeCoverage({
   await converged([r], 1);
   await volumes([r], 0.12);
   await record("frozen-restore-preserves-local-api-volume");
-  await late.reload();
+  await reload(late);
   await converged([late], 1);
   await volumes([late], 0.5);
   await record("reload-keeps-default-off");
@@ -134,7 +135,7 @@ export async function disabledVolumeCoverage({
   await a.evaluate(() => appMediaGate.volume(0.2));
   await volumes([a, b, late], 0.5);
   await volumes([r], 0.12);
-  await late.reload();
+  await reload(late);
   await converged([late], 1);
   await volumes([late], 0.5);
   for (const [index, p] of pages.entries()) {
