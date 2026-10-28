@@ -69,6 +69,17 @@
   pointer-events: none;
 }
 
+.plyr-container-youtube-native {
+  .plyr--youtube,
+  .plyr--youtube iframe {
+    pointer-events: auto;
+  }
+  .plyr__poster,
+  .plyr__control--overlaid {
+    pointer-events: none;
+  }
+}
+
 .custom-plyr-controls {
   --plyr-color-main: #00b2ff;
   --plyr-audio-control-color: #fff;

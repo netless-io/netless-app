@@ -22,6 +22,8 @@ export interface Attributes {
   currentTime: number;
   hostTime: number;
   provider?: "youtube" | "vimeo";
+  /** 仅创建时设置；开启 YouTube 原生 CC / 设置入口，默认关闭。 */
+  youtubeNativeControls?: boolean;
   owner?: string;
   iconUrl?: string;
   /** 播放时间状态 */

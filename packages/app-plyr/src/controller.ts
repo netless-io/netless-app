@@ -33,6 +33,19 @@ export type PermissionType = "sync" | "local" | "none";
  */
 export type PlayTimeState = [false, number] | [true, number, number];
 
+interface YouTubeCaptionAPI {
+  getOptions?(module: string): string[];
+  setOption?(module: string, option: string, value: unknown): void;
+}
+
+interface YouTubeVolumeAPI {
+  getVolume(): number;
+  isMuted(): boolean;
+  setVolume(volume: number): void;
+  mute(): void;
+  unMute(): void;
+}
+
 export class Controller {
   public player?: Plyr;
   /** 需要同步的操作, 默认操作都不同步 */
@@ -61,6 +74,9 @@ export class Controller {
   protected checkTimer: number | null = null;
   private isDestroying = false;
   private isLoadDuration = false;
+  private nativePlaybackSyncUntil = 0;
+  private youtubeVolumeTimer?: number;
+  private youtubeVolumeSyncUntil = 0;
   public constructor(context: AppContext<Attributes>, logger: Logger) {
     this.context = context;
     this.logger = logger;
@@ -110,7 +126,7 @@ export class Controller {
   }
 
   get volumeData(): number {
-    return this.context.storage.state.volume || 1;
+    return this.context.storage.state.volume ?? 1;
   }
 
   get mutedData(): boolean {
@@ -118,7 +134,7 @@ export class Controller {
   }
 
   get volume(): number {
-    return this.context.storage.state.volume || 1;
+    return this.context.storage.state.volume ?? 1;
   }
 
   get muted(): boolean {
@@ -222,6 +238,7 @@ export class Controller {
   }) => {
     if (this.player) {
       const { volume, muted, playTimeState } = target;
+      if (isNumber(volume) || isBoolean(muted)) this.youtubeVolumeSyncUntil = Date.now() + 750;
       console.log("[Plyr] willSyncPlayerState", volume, muted, playTimeState);
       if (isNumber(volume)) {
         this.player.volume = volume as number;
@@ -232,7 +249,7 @@ export class Controller {
       if (isBoolean(muted)) {
         this.player.muted = muted as boolean;
         if (this.customControls) {
-          this.customControls.volume(volume || this.player.volume, muted);
+          this.customControls.volume(volume ?? this.player.volume, muted);
         }
       }
       if (playTimeState) {
@@ -242,6 +259,7 @@ export class Controller {
   };
 
   protected willsyncPlayTimeState = async (playTimeState: PlayTimeState) => {
+    this.nativePlaybackSyncUntil = Date.now() + 2000;
     const progressTime = this.progressTime / 1000;
     const resovle = this.syncPromeResolveMap.get(progressTime);
     if (resovle) {
@@ -259,6 +277,7 @@ export class Controller {
       this.syncPlayTimeState(progressTime);
     }).then(() => {
       if (this.player) {
+        this.nativePlaybackSyncUntil = Date.now() + 2000;
         const _progressTime = this.progressTime / 1000;
         this.player.currentTime = _progressTime;
         this.notSyncSeekTimeSet.add(Math.floor(_progressTime));
@@ -298,6 +317,78 @@ export class Controller {
     }
     return;
   };
+
+  private get isYouTubeNativeIntent(): boolean {
+    return this.context.storage.state.provider === "youtube" &&
+      this.context.storage.state.youtubeNativeControls === true &&
+      !this.isDestroying && Date.now() >= this.nativePlaybackSyncUntil;
+  }
+
+  /** 字幕设置是本机偏好；ASR 字幕可能没有可枚举的 tracklist，请使用原生 CC。 */
+  public getYouTubeCaptionOptions(): string[] {
+    if (this.isDestroying || this.context.storage.state.provider !== "youtube") return [];
+    const embed = this.player?.embed as unknown as YouTubeCaptionAPI | undefined;
+    try { return embed?.getOptions?.("captions") || []; } catch { return []; }
+  }
+
+  private setYouTubeCaptionOption(option: string, value: unknown): boolean {
+    if (!this.getYouTubeCaptionOptions().includes(option)) return false;
+    const embed = this.player?.embed as unknown as YouTubeCaptionAPI | undefined;
+    if (!embed?.setOption) return false;
+    try {
+      embed.setOption("captions", option, value);
+      return true;
+    } catch { return false; }
+  }
+
+  public setYouTubeCaptionFontSize(size: number): boolean {
+    if (Math.floor(size) !== size || size < -1 || size > 3) return false;
+    return this.setYouTubeCaptionOption("fontSize", size);
+  }
+
+  public reloadYouTubeCaptions(): boolean {
+    return this.setYouTubeCaptionOption("reload", true);
+  }
+
+  private startYouTubeVolumeSync(): void {
+    if (this.context.storage.state.provider !== "youtube" ||
+      !this.context.storage.state.youtubeNativeControls || this.youtubeVolumeTimer !== undefined) return;
+    // Plyr caches these values and YouTube does not emit a public volume-change event.
+    this.youtubeVolumeSyncUntil = Date.now() + 750;
+    this.youtubeVolumeTimer = window.setInterval(() => {
+      const player = this.player;
+      if (this.isDestroying || !player || Date.now() < this.youtubeVolumeSyncUntil) return;
+      const embed = player.embed as unknown as YouTubeVolumeAPI | undefined;
+      if (!embed?.getVolume || !embed.isMuted) return;
+      try {
+        const rawVolume = embed.getVolume();
+        const muted = embed.isMuted();
+        if (!Number.isFinite(rawVolume) || typeof muted !== "boolean") return;
+        const volume = Math.max(0, Math.min(1, rawVolume / 100));
+        if (Math.abs(volume - player.volume) > 0.001) {
+          const permission = this.hasPermission("volume");
+          if (permission === "none") {
+            embed.setVolume(player.volume * 100);
+          } else {
+            // Update volume before muted: Plyr's muted setter reapplies its cached volume.
+            player.volume = volume;
+            if (permission === "sync") this.setVolumeData(volume);
+          }
+        }
+        if (muted !== player.muted) {
+          const permission = this.hasPermission("muted");
+          if (permission === "none") {
+            player.muted ? embed.mute() : embed.unMute();
+          } else {
+            player.muted = muted;
+            if (permission === "sync") this.setMutedData(muted);
+          }
+        }
+      } catch {
+        // The iframe may be loading or tearing down; retry on the next sample.
+      }
+    }, 250);
+  }
 
   safePlay = async (loop = 0) => {
     if (!this.player) {
@@ -384,6 +475,9 @@ export class Controller {
     if (provider === "youtube") {
       plyrElement = this.createYoutubeContainer(src, poster);
       container.classList.add("plyr-container-video-embed");
+      if (this.context.storage.state.youtubeNativeControls) {
+        container.classList.add("plyr-container-youtube-native");
+      }
     } else if (provider === "vimeo") {
       plyrElement = this.createVimeoContainer(src, poster);
       container.classList.add("plyr-container-video-embed");
@@ -429,6 +523,10 @@ export class Controller {
           clickToPlay: false,
           youtube: {
             autoplay: isAutoPlay,
+            // Keep Plyr's UI lifecycle (ready/events/destroy), but also expose YouTube's CC/settings.
+            ...(provider === "youtube" && this.context.storage.state.youtubeNativeControls
+              ? { controls: 1, fs: 0 }
+              : {}),
           },
           hideControls: false,
           autoplay: isAutoPlay,
@@ -464,6 +562,7 @@ export class Controller {
         });
         this.player.on("ready", () => {
           if (this.player) {
+            this.startYouTubeVolumeSync();
             if (this.duration) {
               this.isLoadDuration = true;
             }
@@ -514,6 +613,9 @@ export class Controller {
           if (this.player) {
             const playPermission = this.hasPermission("play");
             if (playPermission === "sync") {
+              if (this.isYouTubeNativeIntent && this.playTimeState?.[0] !== false) {
+                this.willActiveUpdatePlayTimeState();
+              }
               if (this.forceSyncOperation.has("play")) {
                 this.willActiveUpdatePlayTimeState();
               } else if (isAutoPlay && !this.player.paused && !this.playTimeState) {
@@ -534,6 +636,9 @@ export class Controller {
             const playPermission = this.hasPermission("play");
             if (playPermission === "sync" && this.forceSyncOperation.has("play")) {
               console.log("[Plyr] pause by sync, paused:", this.player?.paused);
+              this.willActiveUpdatePlayTimeState();
+            }
+            if (playPermission === "sync" && this.isYouTubeNativeIntent && this.playTimeState?.[0] === false) {
               this.willActiveUpdatePlayTimeState();
             }
             this.forceSyncOperation.delete("play");
@@ -800,10 +905,12 @@ export class Controller {
     const permission = this.hasPermission("volume");
     switch (permission) {
       case "sync":
+        this.youtubeVolumeSyncUntil = Date.now() + 750;
         this.setVolumeData(volume);
         break;
       case "local": {
         if (this.player) {
+          this.youtubeVolumeSyncUntil = Date.now() + 750;
           this.player.volume = volume;
           if (this.customControls) {
             this.customControls.volume(volume);
@@ -820,10 +927,12 @@ export class Controller {
     const permission = this.hasPermission("muted");
     switch (permission) {
       case "sync":
+        this.youtubeVolumeSyncUntil = Date.now() + 750;
         this.setMutedData(bool);
         break;
       case "local": {
         if (this.player) {
+          this.youtubeVolumeSyncUntil = Date.now() + 750;
           this.player.muted = bool;
           if (this.customControls) {
             this.customControls.volume(this.player.volume, bool);
@@ -1000,6 +1109,10 @@ export class Controller {
 
   public async destroy(): Promise<void> {
     this.isDestroying = true;
+    if (this.youtubeVolumeTimer !== undefined) {
+      window.clearInterval(this.youtubeVolumeTimer);
+      this.youtubeVolumeTimer = undefined;
+    }
     if (this.player) {
       await new Promise<void>(resolve => {
         setTimeout(() => {
