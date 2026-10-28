@@ -29,7 +29,7 @@ function fixture(shared: any, enabled: boolean | undefined, writable = true, id 
   const listeners = new Set<(diff: any) => void>();
   const writes: any[] = [],
     outgoing: any[] = [];
-  let receive = (_: any) => undefined;
+  let receive: (event: unknown) => void = noop;
   const room = {
     uid: "client-" + id,
     observerId: id,
