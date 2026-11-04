@@ -34,6 +34,7 @@ function fixture() {
   const calls: string[] = [];
   const controller = new SlideControllerBase({
     context: {
+      getAppOptions: () => ({}),
       appId: "A",
       isAddApp: false,
       getRoom: () => ({

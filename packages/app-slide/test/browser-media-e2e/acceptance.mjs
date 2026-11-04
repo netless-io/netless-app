@@ -21,3 +21,27 @@ export function matchesPausedPosition(actual, sharedTarget, trimStart = 0) {
     Math.abs(actual - (sharedTarget + trimStart)) <= PAUSED_POSITION_TOLERANCE_SECONDS
   );
 }
+
+// Reload may cancel the previous document request in WebKit. Only classify that
+// exact main-frame navigation while the harness explicitly awaits its reload.
+const expectedReloads = new WeakMap();
+export async function reloadForAcceptance(page) {
+  expectedReloads.set(page, page.url());
+  try {
+    return await page.reload();
+  } finally {
+    expectedReloads.delete(page);
+  }
+}
+
+export function isExpectedReloadCancellation(page, request) {
+  const url = expectedReloads.get(page);
+  return Boolean(
+    url &&
+      request.url() === url &&
+      request.failure()?.errorText === "cancelled" &&
+      request.resourceType() === "document" &&
+      request.isNavigationRequest() &&
+      request.frame() === page.mainFrame()
+  );
+}

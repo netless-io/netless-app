@@ -9,12 +9,15 @@ import { spawnSync } from "node:child_process";
 import { installNativeProbe } from "./native-probe.mjs";
 import { extendedCoverage } from "./coverage.mjs";
 import { boundaryCoverage } from "./boundaries.mjs";
+import { volumeCoverage } from "./volume.mjs";
 import { installPassiveEvaluation } from "./passive-page.mjs";
 import {
   PAUSED_POSITION_TOLERANCE_SECONDS,
   matchesPausedPosition,
   GRAPHICS_CONTEXT_POLICY,
   isGraphicsContextNotice,
+  reloadForAcceptance,
+  isExpectedReloadCancellation,
 } from "./acceptance.mjs";
 
 const root = path.dirname(fileURLToPath(import.meta.url));
@@ -45,6 +48,8 @@ const result = {
   browserEngine,
   blockedAutoplay,
   scope: diagnostic ? "diagnostic/" + diagnostic : "full",
+  sharedMediaVolumeMode:
+    process.env.APP_SLIDE_E2E_VOLUME_MODE || (diagnostic === "volume" ? "enabled" : "default"),
   matrixComplete: false,
   pausedPositionToleranceSeconds: PAUSED_POSITION_TOLERANCE_SECONDS,
   graphicsContextPolicy: GRAPHICS_CONTEXT_POLICY,
@@ -155,6 +160,7 @@ async function api(endpoint, method = "GET", body) {
   }
 }
 function fixture(index, scenario = "") {
+  if (diagnostic === "volume" && index === 2) scenario += "-multiple";
   const type = index === 1 ? "video" : "audio";
   const data = {
     type: "Stage",
@@ -265,6 +271,7 @@ async function start() {
         res.setHeader("Content-Type", "application/json");
         return res.end(
           JSON.stringify({
+            sharedMediaVolumeMode: result.sharedMediaVolumeMode,
             appIdentifier: config.appIdentifier,
             region: config.region || "cn-hz",
             runId,
@@ -800,7 +807,7 @@ async function group(mode, backend) {
   });
   rooms.set(mode + "/" + backend, { uuid: room.uuid, roomToken });
   const pages = [];
-  for (const role of ["writer-a", "writer-b", "reader"]) {
+  const openRole = async role => {
     const context = await browser.newContext({ viewport: { width: 1280, height: 900 } });
     await context.addInitScript(installNativeProbe);
     const page = await context.newPage();
@@ -808,6 +815,16 @@ async function group(mode, backend) {
     page.on("pageerror", error => result.browserErrors.push(error.message));
     page.on("console", message => {
       if (message.type() === "error") {
+        if (
+          page.__volumeNetworkFault &&
+          /(?:Failed to load resource:|net::ERR_INTERNET_DISCONNECTED|NetworkError|Network request failed|Failed to fetch|WebSocket.*(?:closed|failed|disconnected)|disconnected with code 4000)/i.test(
+            message.text()
+          )
+        ) {
+          result.expectedNetworkErrors ||= [];
+          result.expectedNetworkErrors.push({ role, message: message.text().slice(0, 300) });
+          return;
+        }
         if (
           result.injectMediaFailure &&
           message.text().includes("[media-failure]") &&
@@ -834,6 +851,10 @@ async function group(mode, backend) {
         at: Date.now(),
         path: new URL(request.url()).pathname,
         error: request.failure()?.errorText,
+        expectedNetworkFault: !!page.__volumeNetworkFault,
+        resourceType: request.resourceType(),
+        isNavigationRequest: request.isNavigationRequest(),
+        expectedReloadCancellation: isExpectedReloadCancellation(page, request),
       });
     });
     page.on("response", response => {
@@ -894,7 +915,9 @@ async function group(mode, backend) {
       throw error;
     }
     pages.push(page);
-  }
+    return page;
+  };
+  for (const role of ["writer-a", "writer-b", "reader"]) await openRole(role);
   const [a, b, r] = pages,
     prefix = mode + "/" + backend;
   if (mode === "1.5" && browserEngine === "chromium")
@@ -917,7 +940,22 @@ async function group(mode, backend) {
     result.activationChecks.push({ prefix, activation });
   }
   if (diagnostic && diagnostic !== "pause") {
-    if (diagnostic === "customer" || diagnostic === "animation")
+    if (diagnostic === "volume")
+      await volumeCoverage({
+        prefix,
+        pages,
+        backend,
+        sample,
+        converged,
+        playing,
+        pauseCounts,
+        stopped,
+        checkpoint,
+        result,
+        openRole,
+        reload: reloadForAcceptance,
+      });
+    else if (diagnostic === "customer" || diagnostic === "animation")
       await documents(prefix, pages, backend, diagnostic === "animation");
     else
       await (diagnostic === "extended" ? extendedCoverage : boundaryCoverage)({
@@ -1089,7 +1127,7 @@ async function lifecycle(prefix, pages) {
   await checkpoint(prefix + "/author-handoff", pages);
   await a.evaluate(() => appMediaGate.seedOld());
   await a.waitForTimeout(500);
-  for (const page of pages) await page.reload();
+  for (const page of pages) await reloadForAcceptance(page);
   await converged(pages, 3);
   for (const page of pages)
     assert.ok((await sample(page)).storedSrc?.endsWith("/old/main.iife.js"));
@@ -1303,6 +1341,7 @@ try {
       "Customer pageCount must be a positive integer before creating any room"
     );
   }
+  assert.ok(["enabled", "disabled", "default"].includes(result.sharedMediaVolumeMode));
   if (diagnostic)
     assert.ok(["1.0", "1.5"].includes(diagnosticMode), "Known diagnostic whiteboard mode");
   result.harnessSHA256 = crypto
@@ -1319,6 +1358,8 @@ try {
             "acceptance.mjs",
             "native-probe.mjs",
             "passive-page.mjs",
+            "volume.mjs",
+            "volume-disabled.mjs",
           ].map(file => fs.readFile(path.join(root, file)))
         )
       )
@@ -1378,7 +1419,7 @@ try {
   await verifyNativeAudioEnvironment();
   assert.ok(
     !diagnostic ||
-      ["boundaries", "customer", "animation", "pause", "extended"].includes(diagnostic),
+      ["boundaries", "customer", "animation", "pause", "extended", "volume"].includes(diagnostic),
     "Known diagnostic phase"
   );
   for (const mode of diagnostic ? [diagnosticMode] : ["1.0", "1.5"])
@@ -1386,7 +1427,12 @@ try {
       await group(mode, backend);
   assert.deepEqual(result.browserErrors, []);
   assert.deepEqual(result.notRun, []);
-  if (blockedAutoplay) {
+  if (blockedAutoplay && diagnostic === "volume") {
+    const roles = new Set((result.permissionChecks || []).map(c => c.role));
+    for (const role of ["writer-a", "writer-b", "reader"])
+      assert.ok(roles.has(role), "Blocked volume suite must recover " + role);
+  }
+  if (blockedAutoplay && diagnostic !== "volume") {
     assert.equal(result.activationChecks.length, diagnostic ? 1 : 4);
     assert.equal(
       new Set((result.permissionChecks || []).map(c => c.role)).size,
@@ -1441,6 +1487,8 @@ try {
   assert.deepEqual(
     (result.requestFailures || []).filter(
       f =>
+        !f.expectedNetworkFault &&
+        !f.expectedReloadCancellation &&
         f.error !== "net::ERR_ABORTED" &&
         // WebKit uses this spelling when freeze/page change unloads native media.
         !(browserEngine === "webkit" && f.error === "cancelled" && /\.mp[34]$/.test(f.path)) &&

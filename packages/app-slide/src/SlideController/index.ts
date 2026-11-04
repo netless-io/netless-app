@@ -10,6 +10,7 @@
 import type { AppContext, Player, Room } from "@netless/window-manager";
 import type { ISlideConfig, SyncEvent } from "@netless/slide";
 import type { Attributes, MagixEvents, MagixPayload, SlideState } from "../typings";
+import { isMediaVolume, readSharedMediaVolume } from "../typings";
 import type { AppOptions } from "..";
 
 import { SideEffectManager } from "side-effect-manager";
@@ -143,6 +144,9 @@ export class SlideControllerBase {
   private pendingSyncEvents: SyncEvent[] = [];
   private pendingFrozenSyncBatch = false;
   private flushingSyncEvents = false;
+  private readonly sharedMediaVolumeEnabled: boolean;
+  private volumeRequestId = 0;
+  private appliedSharedVolumeKey?: string;
 
   protected visible: boolean;
   protected savedIsFrozen: boolean;
@@ -179,6 +183,7 @@ export class SlideControllerBase {
     this.showRenderError = showRenderError ?? true;
 
     this.context = context;
+    this.sharedMediaVolumeEnabled = context.getAppOptions()?.enableSharedMediaVolume === true;
     this.room = context.getRoom();
     this.player = this.room ? undefined : (context.getDisplayer() as Player);
     setRoomLogger(context);
@@ -241,6 +246,7 @@ export class SlideControllerBase {
     } else {
       slide.setResource(taskId, url || DefaultUrl);
     }
+    this.applyInitialSharedMediaVolume(true);
     if (state) {
       // if we already have state, try restore from it
       log("[Slide] init with state", JSON.stringify(state));
@@ -262,6 +268,17 @@ export class SlideControllerBase {
 
   protected registerEventListeners() {
     const { context, slide } = this;
+    if (this.sharedMediaVolumeEnabled) {
+      // Separate from bootstrap-storage: volume remains authoritative after
+      // live Magix starts and while the Player is frozen/recreated.
+      this.sideEffect.addDisposer(
+        context.storage.addStateChangedListener(changes => {
+          if (!this.destroyed && "sharedMediaVolume" in changes) {
+            this.applyInitialSharedMediaVolume();
+          }
+        })
+      );
+    }
     const sceneSync = new SceneSync(
       context,
       () => slide,
@@ -317,6 +334,30 @@ export class SlideControllerBase {
   }
 
   protected onSyncDispatch = (event: SyncEvent) => {
+    if (event.type === "mediaVolumeChange") {
+      if (
+        this.sharedMediaVolumeEnabled &&
+        this.context.getIsWritable() &&
+        this.room &&
+        !this.destroyed &&
+        isMediaVolume(event.volume)
+      ) {
+        const resource = this.slide.slideState;
+        if (event.taskId === resource.taskId && event.url === resource.url) {
+          this.context.storage.setState({
+            sharedMediaVolume: {
+              value: event.volume,
+              // Same-value commands must still override a follower's local volume.
+              changeId:
+                event.uuid || `${this.room.observerId}:${Date.now()}:${++this.volumeRequestId}`,
+              taskId: event.taskId,
+              url: event.url,
+            },
+          });
+        }
+      }
+      return;
+    }
     if (this.context.getIsWritable() && this.room) {
       const payload: MagixPayload = {
         type: SLIDE_EVENTS.syncDispatch,
@@ -329,6 +370,9 @@ export class SlideControllerBase {
 
   protected magixEventListener: MagixEventListener = ev => {
     const { type, payload } = ev.payload;
+    // Legacy volume Magix must not create a second writer of the authority.
+    // Disabled clients ignore it as well. Mixed app versions must be upgraded.
+    if (type === SLIDE_EVENTS.syncDispatch && payload?.type === "mediaVolumeChange") return;
     if (
       type === SLIDE_EVENTS.syncDispatch &&
       payload &&
@@ -449,6 +493,26 @@ export class SlideControllerBase {
     }
   };
 
+  private applyInitialSharedMediaVolume(force = false): void {
+    if (!this.sharedMediaVolumeEnabled || !this.slide || this.destroyed) return;
+    const { taskId, url } = this.slide.slideState;
+    const attributes = this.context.storage.state;
+    const current = readSharedMediaVolume(attributes.sharedMediaVolume, taskId, url);
+    const key =
+      current === undefined
+        ? undefined
+        : JSON.stringify([taskId, url, attributes.sharedMediaVolume?.changeId, current]);
+    if (!force && (key === undefined || key === this.appliedSharedVolumeKey)) return;
+    this.appliedSharedVolumeKey = key;
+    const legacy = attributes.state;
+    const fallback =
+      legacy && legacy.taskId === taskId && legacy.url === url && isMediaVolume(legacy.mediaVolume)
+        ? legacy.mediaVolume
+        : 0.5;
+    // No stateChange/broadcast: applying the room authority never writes a snapshot.
+    this.slide.applySharedMediaVolume(current ?? fallback);
+  }
+
   protected pollCount = 0;
   protected pollReadyState = () => {
     if (this.ready) {
@@ -497,6 +561,11 @@ export class SlideControllerBase {
       // WhiteLogger records joinRoom's uid as suid. Keep the customer's exact value.
       clientId: this.room?.uid,
       syncEventQueuePolicy: options.syncEventQueuePolicy ?? "fifo",
+      enableSharedMediaVolume: this.sharedMediaVolumeEnabled,
+      getSharedMediaVolume: this.sharedMediaVolumeEnabled
+        ? (taskId, url) =>
+            readSharedMediaVolume(this.context.storage.state.sharedMediaVolume, taskId, url)
+        : undefined,
       controller: false,
       enableGlobalClick: options.enableGlobalClick ?? true,
       renderOptions: {

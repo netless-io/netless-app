@@ -61,6 +61,7 @@ export interface AppOptions
     | "enableGlobalClick"
     | "skipActionWhenFrozen"
     | "syncEventQueuePolicy"
+    | "enableSharedMediaVolume"
   > {
   /** show debug controller */
   debug?: boolean;
