@@ -12,7 +12,10 @@ function definePPT(
   return {
     kind: "Slide",
     src: () => import("./src"),
-    appOptions: { enableScale: true },
+    appOptions: {
+      enableScale: true,
+      enableSharedMediaVolume: true,
+    },
     options: { title, scenePath: `/Slide/${taskId}/${title}` },
     attributes: { taskId, url, customLinks },
     addHooks,
@@ -20,6 +23,11 @@ function definePPT(
 }
 
 const options: PlaygroundConfigs<Attributes> = [
+  definePPT(
+    "音视频测试",
+    "edbec11b18ad496592384d87efd62c4f",
+    "https://dev-common-classroom.educdn.cn/shengwang/test_live_classroom/dynamicConvert"
+  ),
   // 可写 Tab 1 & 2
   definePPT("Writable-1", "9abed6605bbc11ec88a83b917638a00c", "", [
     { pageIndex: 1, shapeId: "slide-19", link: "https://www.baidu.com" },

@@ -253,6 +253,9 @@ importers:
 
   packages/app-slide:
     devDependencies:
+      '@babel/standalone':
+        specifier: 7.29.8
+        version: 7.29.8
       '@juggle/resize-observer':
         specifier: ^3.3.1
         version: 3.4.0
@@ -260,14 +263,23 @@ importers:
         specifier: 1.1.38
         version: 1.1.38(@netless/window-manager@1.0.23(jspdf@2.5.1)(white-web-sdk@2.16.58))(white-web-sdk@2.16.58)
       '@netless/slide':
-        specifier: 1.4.66-alpha.1
-        version: 1.4.66-alpha.1
+        specifier: 1.4.66
+        version: 1.4.66
       '@types/color-string':
         specifier: ^1.5.2
         version: 1.5.5
+      abort-controller:
+        specifier: 3.0.0
+        version: 3.0.0
+      acorn:
+        specifier: 8.15.0
+        version: 8.15.0
       color-string:
         specifier: ^1.9.1
         version: 1.9.1
+      core-js:
+        specifier: 3.47.0
+        version: 3.47.0
       jspdf:
         specifier: 2.5.1
         version: 2.5.1
@@ -277,6 +289,9 @@ importers:
       vanilla-lazyload:
         specifier: ^17.8.3
         version: 17.9.0
+      whatwg-fetch:
+        specifier: 3.6.20
+        version: 3.6.20
 
   packages/app-talkative:
     devDependencies:
@@ -529,8 +544,8 @@ packages:
   '@netless/canvas-polyfill@0.0.4':
     resolution: {integrity: sha512-7NzsJrba0R/mq/l10SkIZQwbrNVJyPxZYrjK6xL3Ts732iWAVuS2UB0u3s6iGeUVcqV39A679yva8APWRl4M0A==}
 
-  '@netless/slide@1.4.66-alpha.1':
-    resolution: {integrity: sha512-ZoIQaeTSYW+/2yzFYqWVaN5tw66OOUVyrOMnrs6ZOxmzmG4UBcr8cr7FdPU8h2C3StaJzKRVey+TUuE1nJyaiw==}
+  '@netless/slide@1.4.66':
+    resolution: {integrity: sha512-FCAiJSVbZXO2IvXVda1zOIfTMqmCX6PK+OFodFJcRYc+XIK3KpXxFpruAnTUNkKPYVpuGE+XKYeqapaT5cBhkw==}
 
   '@netless/telebox-insider@0.2.28':
     resolution: {integrity: sha512-UJDCm/f7yjiIaWqbS20LDXfAG6RUxsXSktPDzmEr51MgsevpQ3u241hVlyOpKAXSeTR6B3ioRAKcgflOw5JvTQ==}
@@ -916,6 +931,10 @@ packages:
   JSONStream@1.3.5:
     resolution: {integrity: sha512-E+iruNOY8VV9s4JEbe1aNEm6MiszPRr/UfcHMz0TQh1BXSxHK+ASV1R6W4HpjBhSeS+54PIsAMCBmwD06LLsqQ==}
     hasBin: true
+
+  abort-controller@3.0.0:
+    resolution: {integrity: sha512-h8lQ8tacZYnR3vNQTgibj+tODHI5/+l06Au2Pcriv/Gmet0eaj4TwWH41sO9wnHDiQsEj19q0drzdWdeAHtweg==}
+    engines: {node: '>=6.5'}
 
   abs-svg-path@0.1.1:
     resolution: {integrity: sha512-d8XPSGjfyzlXC3Xx891DJRyZfqk5JU0BJrDQcsWomFIV1/BIzPW5HDH5iDdWpqWaav0YVIEzT1RHTwWr0FFshA==}
@@ -1472,6 +1491,10 @@ packages:
   esutils@2.0.3:
     resolution: {integrity: sha512-kVscqXk4OCp68SZ0dkgEKVi6/8ij300KBWTJq32P/dYeWTSwK41WyTxalN1eRmA5Z9UU/LX9D7FWSmV9SAYx6g==}
     engines: {node: '>=0.10.0'}
+
+  event-target-shim@5.0.1:
+    resolution: {integrity: sha512-i/2XbnSz/uxRCU6+NdVJgKWDTM427+MqYbkQzD321DuCQJUqOuJKIA0IM2+W2xtYHdKOmZ4dR6fExsd4SXL+WQ==}
+    engines: {node: '>=6'}
 
   eventemitter2@6.4.9:
     resolution: {integrity: sha512-JEPTiaOt9f04oa6NOkc4aH+nVp5I3wEjpHbIPqfgCdD5v5bUzy7xQqwcVO2aDQgOWhI28da57HksMrzK9HlRxg==}
@@ -2589,6 +2612,9 @@ packages:
       stylus:
         optional: true
 
+  whatwg-fetch@3.6.20:
+    resolution: {integrity: sha512-EqhiFU6daOA8kpjOWTL0olhVOF3i7OrFzSYiGsEMB8GcXS+RrzauAERX65xMeNWVqxA6HXH2m69Z9LaKKdisfg==}
+
   which@2.0.2:
     resolution: {integrity: sha512-BLI3Tl1TW3Pvl70l3yq3Y64i+awpwXqsGBYWkkqMtnbXgrMD+yj7rhW0kuEDxzJaYXGjEW5ogapKNMEKNMjibA==}
     engines: {node: '>= 8'}
@@ -2895,7 +2921,7 @@ snapshots:
 
   '@netless/canvas-polyfill@0.0.4': {}
 
-  '@netless/slide@1.4.66-alpha.1':
+  '@netless/slide@1.4.66':
     dependencies:
       '@juggle/resize-observer': 3.4.0
       '@types/lodash': 4.17.23
@@ -3249,6 +3275,10 @@ snapshots:
     dependencies:
       jsonparse: 1.3.1
       through: 2.3.8
+
+  abort-controller@3.0.0:
+    dependencies:
+      event-target-shim: 5.0.1
 
   abs-svg-path@0.1.1: {}
 
@@ -3769,6 +3799,8 @@ snapshots:
   estree-walker@2.0.2: {}
 
   esutils@2.0.3: {}
+
+  event-target-shim@5.0.1: {}
 
   eventemitter2@6.4.9: {}
 
@@ -4871,6 +4903,8 @@ snapshots:
     optionalDependencies:
       fsevents: 2.3.3
       sass: 1.79.3
+
+  whatwg-fetch@3.6.20: {}
 
   which@2.0.2:
     dependencies:

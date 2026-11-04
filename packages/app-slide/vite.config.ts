@@ -1,6 +1,7 @@
 import { createViteConfig } from "../../scripts/create-vite-config";
 import { readFileSync } from "fs";
 import path from "path";
+import type { LibraryFormats } from "vite";
 
 export default (env: Parameters<ReturnType<typeof createViteConfig>>[0]) => {
   const candidate = process.env.SLIDE_CANDIDATE_DIR;
@@ -24,13 +25,27 @@ export default (env: Parameters<ReturnType<typeof createViteConfig>>[0]) => {
     );
   }
   const config = createViteConfig()(env);
+  const appBuild = env.mode === "app";
   return {
     ...config,
     resolve: candidate ? { alias: { "@netless/slide": entry } } : undefined,
     build: {
       ...config.build,
+      ...(appBuild
+        ? {
+            outDir: "dist-app",
+            lib: { ...(config.build?.lib || {}), formats: ["iife"] as LibraryFormats[] },
+            minify: false,
+            sourcemap: false,
+            rollupOptions: {
+              ...config.build?.rollupOptions,
+              // A native IIFE cannot leave optional peers as dynamic imports.
+              plugins: [],
+            },
+          }
+        : {}),
       commonjsOptions: {
-        include: [/node_modules/, /\/slide\/lib\/Slide\.js$/],
+        include: [/node_modules/, /\/lib\/Slide\.js$/],
         transformMixedEsModules: true,
       },
     },
