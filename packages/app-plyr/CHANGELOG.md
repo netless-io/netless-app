@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.2.14 - 2026-11-10
+
+- Route Controller, legacy player, HLS and autoplay diagnostics through the
+  current room logger, with a single `[Plyr]` prefix and a replay logger fallback.
+- Deduplicate unchanged audio observations, consolidate seek and autoplay retry
+  diagnostics, and report sync results instead of intermediate entry traces.
+- Serialize structured details for SDK text logs instead of `[object Object]`.
+
 ## 0.2.13 - 2026-11-10
 
 - Add opt-in YouTube `owner` interaction mode: the writable creator publishes

@@ -3,7 +3,7 @@ import Plyr, { Provider } from "plyr";
 import { cannotPlayHLSNatively, guessTypeFromSrc, hlsTypes, loadHLS } from "./utils";
 import { debounce, isBoolean, isEqual, isNumber } from "lodash";
 import { AppContext, Player, Room } from "@netless/window-manager";
-import type { Logger } from "white-web-sdk";
+import type { PlyrLogger } from "./logger";
 import { YouTubeOverlay, YouTubeOverlayLayout } from "./youtube-overlay";
 import { YouTubeAudioSync } from "./youtube-audio-sync";
 import { YouTubePlaybackSync, YouTubePlaybackTarget } from "./youtube-playback-sync";
@@ -60,10 +60,12 @@ export class Controller {
   public readonly plyrElement!: HTMLAudioElement | HTMLVideoElement | HTMLDivElement;
   public customControls?: CustomPlyrControls;
   protected lastSyncState: Partial<Pick<Attributes, "volume" | "muted" | "playTimeState">> = {};
-  public readonly logger: Logger;
+  public readonly logger: PlyrLogger;
   protected checkTimer: number | null = null;
   private isDestroying = false;
   private isLoadDuration = false;
+  private lastLoggedAudioState?: { volume: number; muted: boolean };
+  private seekingLogPending = false;
   private readonly youtubeOverlayEnabled: boolean;
   private readonly youtubeOwnerMode: boolean;
   private youtubePlaybackSync?: YouTubePlaybackSync;
@@ -74,7 +76,7 @@ export class Controller {
   private youtubePlayerReady = false;
   private youtubeOverlayDisposers: (() => void)[] = [];
   private customControlCursorDisposers: (() => void)[] = [];
-  public constructor(context: AppContext<Attributes>, logger: Logger, layout?: YouTubeOverlayLayout) {
+  public constructor(context: AppContext<Attributes>, logger: PlyrLogger, layout?: YouTubeOverlayLayout) {
     this.context = context;
     this.logger = logger;
     this.youtubeOverlayEnabled = context.storage.state.provider === "youtube" &&
@@ -249,6 +251,7 @@ export class Controller {
       state: paused ? [true, start, now] : [false, start],
     };
     this.context.storage.setState({ youtubePlayback: target, playTimeState: target.state });
+    this.logger.info("[Plyr] YouTube playback target", target);
     return target;
   }
 
@@ -374,15 +377,6 @@ export class Controller {
     if (!this.player.elements) {
       return;
     }
-    this.logger.info(
-      "[Plyr] sync attrsUpdateHandler",
-      "volume:" + this.player.volume,
-      "volumeData:" + this.volumeData,
-      "muted:" + this.player.muted,
-      "mutedData:" + this.mutedData,
-      "paused:" + this.player.paused,
-      "playTimeState:" + this.playTimeState,
-    );
     const willUpdateAttr: {
       volume?: number;
       muted?: boolean;
@@ -437,7 +431,6 @@ export class Controller {
       const { volume, muted, playTimeState } = target;
       const audioMuted = isNumber(volume) && this.syncMuted
         ? this.mutedData : muted;
-      console.log("[Plyr] willSyncPlayerState", volume, muted, playTimeState);
       if (isNumber(volume)) {
         if (this.player.volume !== volume) this.player.volume = volume as number;
         if (this.customControls) {
@@ -453,6 +446,12 @@ export class Controller {
       if (playTimeState) {
         await this.willsyncPlayTimeState(playTimeState);
       }
+      this.logger.info("[Plyr] sync result", {
+        target,
+        actual: { volume: this.player?.volume, muted: this.player?.muted,
+          paused: this.player?.paused, currentTime: this.player?.currentTime },
+        phase: this.youtubePlaybackSync?.phase,
+      });
     }
   };
 
@@ -489,7 +488,6 @@ export class Controller {
       this.customControls.currentTime(progressTime, this.duration);
     }
     if (playTimeState[0]) {
-      console.log("[Plyr] willSyncPlayerState safePause");
       this.safePause();
       if (this.customControls) {
         this.customControls.pause(playTimeState[0]);
@@ -516,30 +514,39 @@ export class Controller {
   };
 
   safePlay = async (loop = 0) => {
-    if (!this.player) {
-      return;
-    }
-    if (loop > 3) {
-      this.logger.error("[Plyr] play error loop overflow", loop);
-      return;
-    }
-    console.log("[Plyr] play error safePlay start", loop);
-    try {
-      loop++;
-      if (this.player.paused) {
-        await this.player.play();
+    const errors: unknown[] = [];
+    let attempts = 0;
+    let exhausted = false;
+    const play = async (attempt: number): Promise<void> => {
+      if (!this.player) return;
+      if (attempt > 3) {
+        exhausted = true;
+        return;
       }
-    } catch (error) {
-      this.logger.warn("[Plyr] play error", (error as Error)?.message ?? error)
-      if (this.player) {
-        this.player.muted = true;
-        if (this.customControls) {
-          this.customControls.volume(this.player.volume, true);
+      try {
+        if (this.player.paused) {
+          attempts++;
+          await this.player.play();
         }
-        await this.safePlay(loop);
+      } catch (error) {
+        errors.push((error as Error)?.message ?? error);
+        if (this.player) {
+          this.player.muted = true;
+          if (this.customControls) {
+            this.customControls.volume(this.player.volume, true);
+          }
+          await play(attempt + 1);
+        }
       }
+    };
+    await play(loop);
+    // Successful ordinary playback is covered by sync/seek completion. Report
+    // all fallback attempts together after the recursive retry has finished.
+    if (errors.length || exhausted) {
+      this.logger[exhausted ? "error" : "warn"]("[Plyr] autoplay result", {
+        attempts, exhausted, errors, paused: this.player?.paused, muted: this.player?.muted,
+      });
     }
-    console.log("[Plyr] play error safePlay end", loop);
   };
 
   protected createYoutubeContainer(src: string, poster?: string): HTMLDivElement {
@@ -632,7 +639,7 @@ export class Controller {
     const isAutoPlay = !paused;
     if (this.plyrElement) {
       if (useHLS && cannotPlayHLSNatively(this.plyrElement)) {
-        const hls = await loadHLS();
+        const hls = await loadHLS(this.logger);
         hls.loadSource(src);
         hls.attachMedia(this.plyrElement);
       }
@@ -654,8 +661,7 @@ export class Controller {
           muted: this.mutedData,
         });
       } catch (error) {
-        console.error("[Plyr] mountPlayer error", error);
-        this.logger.error("[Plyr] mountPlayer error", (error as Error)?.message ?? error);
+        this.logger.error("[Plyr] mountPlayer error", (error as Error)?.message ?? error, error);
         return;
       }
       
@@ -673,7 +679,7 @@ export class Controller {
         this.player.on("ended", () => {
           if (this.player) {
             const currentTime = this.player.currentTime;
-            console.log("[Plyr] ended, currentTime:", currentTime);
+            this.logger.info("[Plyr] ended, currentTime:", currentTime);
             this.player?.pause();
             if (this.customControls) {
               this.customControls.pause(true);
@@ -704,11 +710,11 @@ export class Controller {
             }
           }
           // window.mediaPlayer = this.player;
-          console.log("[Plyr] ready, buffered:", this.player?.buffered, this.player?.duration);
+          this.logger.info("[Plyr] ready, buffered:", this.player?.buffered, this.player?.duration);
         });
         this.player.on("seeking", () => {
           if (this.player) {
-            console.log("[Plyr] seeking:", this.player?.seeking);
+            this.seekingLogPending = true;
             if (this.customControls) {
               this.customControls.isLoading = true;
             }
@@ -726,7 +732,11 @@ export class Controller {
             if (this.notSyncSeekTimeSet.has(key)) {
               this.notSyncSeekTimeSet.delete(key);
             }
-            console.log("[Plyr] seeked, seeking:", this.player?.seeking);
+            this.seekingLogPending = false;
+            this.logger.info("[Plyr] seek completed", {
+              currentTime: this.player.currentTime,
+              paused: this.player.paused, seeking: this.player.seeking,
+            });
             if (this.customControls) {
               this.customControls.isLoading = false;
             }
@@ -743,7 +753,9 @@ export class Controller {
               }
             }
             this.forceSyncOperation.delete("play");
-            console.log("[Plyr] play, paused:", this.player?.paused);
+            if (!this.seekingLogPending && !this.youtubeOwnerMode) {
+              this.logger.info("[Plyr] play, paused:", this.player.paused);
+            }
             this.calibrationProgressTime();
             this.keepCheckPlayerStateInSync();
             if (this.customControls) {
@@ -755,11 +767,12 @@ export class Controller {
           if (this.player) {
             const playPermission = this.hasPermission("play");
             if (!this.youtubeOwnerMode && playPermission === "sync" && this.forceSyncOperation.has("play")) {
-              console.log("[Plyr] pause by sync, paused:", this.player?.paused);
               this.willActiveUpdatePlayTimeState();
             }
             this.forceSyncOperation.delete("play");
-            console.log("[Plyr] pause, paused:", this.player?.paused);
+            if (!this.seekingLogPending && !this.youtubeOwnerMode) {
+              this.logger.info("[Plyr] pause, paused:", this.player.paused);
+            }
             this.cancleCalibrationProgressTime();
             this.keepCheckPlayerStateInSync();
             if (this.customControls) {
@@ -791,12 +804,11 @@ export class Controller {
             }
             this.forceSyncOperation.delete("volume");
             this.forceSyncOperation.delete("muted");
-            console.log(
-              "[Plyr] volumechange, volume:",
-              this.player?.volume,
-              "muted:",
-              this.player?.muted
-            );
+            const audio = { volume: this.player.volume, muted: this.player.muted };
+            if (audio.volume !== this.lastLoggedAudioState?.volume || audio.muted !== this.lastLoggedAudioState?.muted) {
+              this.lastLoggedAudioState = audio;
+              this.logger.info("[Plyr] volumechange", audio);
+            }
           }
         });
         // 监听 Plyr 错误事件
@@ -806,8 +818,7 @@ export class Controller {
           }
           const error = event?.detail || event;
           const errorMessage = error?.message || error?.toString() || "Unknown error";
-          console.error("[Plyr] player error event:", error);
-          this.logger.error("[Plyr] player error event:", errorMessage);
+          this.logger.error("[Plyr] player error event:", errorMessage, error);
         });
         await this.setControlPermission();
         (window as any).__plyr = this.player;
@@ -845,7 +856,6 @@ export class Controller {
 
   protected activeControlDom = (operation: PlayerOperationType) => {
     this.forceSyncOperation.add(operation);
-    console.log("[Plyr] activeControlDom", operation);
   };
 
   public async setControlPermission() {
@@ -889,8 +899,7 @@ export class Controller {
       }
       const playControlDom = controlsDom.querySelector("button.plyr__control") as HTMLButtonElement;
       if (playControlDom) {
-        playControlDom.addEventListener("pointerdown", e => {
-          console.log("[Plyr] playControlDom pointerdown", e.target);
+        playControlDom.addEventListener("pointerdown", () => {
           this.activeControlDom("play");
         });
       }
@@ -974,7 +983,6 @@ export class Controller {
           } else {
             this.player.speed = 1;
           }
-          // console.log("calibrationProgressTime", progressTime - this.player.currentTime, this.player.speed, progressTime, this.player.currentTime);
         }
       }
     }, 4000) as unknown as number;
@@ -1005,23 +1013,23 @@ export class Controller {
   }, 20);
 
   protected setVolumeData(volume: number): void {
-    console.log("[Plyr] setVolumeData", volume);
+    this.logger.info("[Plyr] setVolumeData", volume);
     this.context.storage.setState({ volume });
   }
 
   public setMutedData(muted: boolean): void {
-    console.log("[Plyr] setMutedData", muted);
+    this.logger.info("[Plyr] setMutedData", muted);
     this.context.storage.setState({ muted });
   }
 
   protected setPlayTimeStateData(playTimeState: PlayTimeState): void {
-    console.log("[Plyr] setPlayTimeStateData", playTimeState);
     if (this.youtubeOwnerMode) {
       const seconds = ((playTimeState[0] ? playTimeState[2] : this.calibrationTimestamp) - playTimeState[1]) / 1000;
       this.writeYouTubePlayback(playTimeState[0], seconds, this.context.storage.state.youtubePlayback?.rate || 1, "command");
       this.youtubePlaybackSync?.refresh();
       return;
     }
+    this.logger.info("[Plyr] setPlayTimeStateData", playTimeState);
     this.context.storage.setState({ playTimeState });
   }
 
@@ -1219,7 +1227,6 @@ export class Controller {
           const iframe = this.plyrElement.querySelector("iframe");
           if (!iframe || !iframe.src) {
             const warningMsg = "[Plyr] YouTube iframe not loaded after 10 seconds, may be network issue";
-            console.warn(warningMsg);
             this.logger.warn(warningMsg);
           }
         }

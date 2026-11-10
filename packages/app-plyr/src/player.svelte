@@ -2,6 +2,7 @@
   import type { Storage } from "@netless/window-manager";
   import type { Attributes } from ".";
   import type { Sync } from "./sync";
+  import type { PlyrLogger } from "./logger";
 
   import { onDestroy, onMount } from "svelte";
   import { guessTypeFromSrc, hlsTypes } from "./mime";
@@ -10,6 +11,7 @@
 
   export let storage: Storage<Attributes>;
   export let sync: Sync;
+  export let logger: PlyrLogger = sync.logger;
 
   const type = storage.state.provider
     ? undefined
@@ -25,7 +27,7 @@
     const pcmProxy = (window as any).__pcmProxy;
     if (pcmProxy) {
       if (element instanceof HTMLVideoElement || element instanceof HTMLAudioElement) {
-        console.log("[Plyr] connect pcm");
+        logger.info("[Plyr] connect pcm");
         pcmAudioSource = pcmProxy.connect?.(element);
       }
     }
@@ -36,7 +38,7 @@
       connectToPcmProxyIfPossible(player_element);
 
       if (useHLS && cannotPlayHLSNatively(player_element)) {
-        const hls = await loadHLS();
+        const hls = await loadHLS(logger);
         hls.loadSource(src);
         hls.attachMedia(player_element);
       }
@@ -68,7 +70,7 @@
       player?.destroy();
       pcmAudioSource?.disconnect();
     } catch (e) {
-      console.warn("[Plyr] destroy plyr error", e);
+      logger.warn("[Plyr] destroy plyr error", e);
     }
   });
 </script>

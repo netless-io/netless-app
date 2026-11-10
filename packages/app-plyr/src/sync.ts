@@ -3,6 +3,7 @@ import type { AppContext, Player } from "@netless/window-manager";
 import type { Attributes } from ".";
 
 import { clamp, first, safePlay } from "./utils";
+import { createPlyrLogger, type PlyrLogger } from "./logger";
 
 export class Sync {
   /**
@@ -26,7 +27,7 @@ export class Sync {
   private _buffering_timer = 0;
   private _disposer: (() => void) | null = null;
 
-  constructor(readonly context: AppContext<Attributes>) {
+  constructor(readonly context: AppContext<Attributes>, readonly logger: PlyrLogger = createPlyrLogger(context)) {
     const room = context.getRoom();
     const player = context.getDisplayer() as Player;
 
@@ -71,17 +72,17 @@ export class Sync {
     if (behavior === "owner" && owner === this.uid) return;
 
     if (paused !== player.paused && !this._skip_next_play_pause) {
-      console.log("< sync paused", paused);
-      paused ? player.pause() : safePlay(player);
+      this.logger.info("< sync paused", paused);
+      paused ? player.pause() : safePlay(player, this.logger);
     }
 
     if (muted !== player.muted) {
-      console.log("< sync muted", muted);
+      this.logger.info("< sync muted", muted);
       player.muted = muted;
     }
 
     if (volume !== player.volume) {
-      console.log("< sync volume", volume);
+      this.logger.info("< sync volume", volume);
       player.volume = volume;
     }
     // if buffering, don't sync currentTime in immediate
@@ -89,7 +90,7 @@ export class Sync {
 
     if (paused) {
       if (Math.abs(player.currentTime - currentTime) > 0.5) {
-        console.log("< sync current time (paused)", currentTime);
+        this.logger.debug("< sync current time (paused)", currentTime);
         player.currentTime = currentTime;
       }
     } else {
@@ -168,13 +169,13 @@ export class Sync {
 
   private dispatchOwner() {
     if (this.context.storage.state.owner !== this.uid) {
-      console.log("> set owner", this.uid);
+      this.logger.info("> set owner", this.uid);
       this.context.storage.setState({ owner: this.uid });
     }
   }
 
   private dispatchPlayPause(player: Plyr) {
-    console.log("> set paused", player.paused);
+    this.logger.info("> set paused", player.paused);
     this.context.storage.setState({
       hostTime: this.getTimestamp(),
       currentTime: player.currentTime,
@@ -189,7 +190,7 @@ export class Sync {
   }
 
   private dispatchVolume(player: Plyr) {
-    console.log("> set volume", player.volume);
+    this.logger.info("> set volume", player.volume);
     this.context.storage.setState({
       muted: player.muted,
       volume: player.volume,
@@ -198,7 +199,7 @@ export class Sync {
 
   private dispatchSeek(player: Plyr, $seek: HTMLInputElement) {
     const currentTime = ($seek.valueAsNumber * player.duration) / 100;
-    console.log("> set current time (seek)", currentTime);
+    this.logger.info("> set current time (seek)", currentTime);
     this.context.storage.setState({ hostTime: this.getTimestamp(), currentTime });
   }
 
@@ -207,7 +208,7 @@ export class Sync {
       this._dispatch_time_again = true;
       return;
     }
-    console.log("> set current time", player.currentTime);
+    this.logger.debug("> set current time", player.currentTime);
     this.context.storage.setState({
       hostTime: this.getTimestamp(),
       currentTime: player.currentTime,
@@ -232,7 +233,7 @@ export class Sync {
     if (now && hostTime) {
       const expected = currentTime + (now - hostTime) / 1000;
       if (Math.abs(expected - player.currentTime) > 1) {
-        console.log("< sync current time (playing)", expected);
+        this.logger.debug("< sync current time (playing)", expected);
         player.currentTime = expected;
         this._blink++;
         if (this._blink > 3) {

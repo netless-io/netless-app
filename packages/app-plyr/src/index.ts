@@ -5,6 +5,7 @@ import styles from "./style.scss?inline";
 import { Controller, PlayTimeState } from "./controller";
 import type { YouTubeOverlayLayout } from "./youtube-overlay";
 import type { YouTubePlaybackTarget } from "./youtube-playback-sync";
+import { createPlyrLogger } from "./logger";
 
 export { Controller, CustomPlyrControls } from "./controller";
 export type { PlayTimeState } from "./controller";
@@ -99,7 +100,7 @@ const Plyr: NetlessApp<Attributes, any, AppOptions, AppResult> = {
         }
       }
     }
-    const logger = (context.getDisplayer() as any).logger;
+    const logger = createPlyrLogger(context);
 
     if (!storage.state.src) {
       context.emitter.emit("destroy", {
@@ -110,7 +111,6 @@ const Plyr: NetlessApp<Attributes, any, AppOptions, AppResult> = {
     }
     
     if (!storage.state.type && !storage.state.provider) {
-      console.warn(`[Plyr]: missing "type", will guess from file extension`);
       logger.warn(`[Plyr]: missing "type", will guess from file extension`);
     }
 
@@ -126,7 +126,7 @@ const Plyr: NetlessApp<Attributes, any, AppOptions, AppResult> = {
       controller.mountPlayer();
       context.emitter.on("destroy", async () => {
         await controller.destroy();
-        logger && logger.info(`[Plyr]: appid ${context.appId} destroy`);
+        logger.info(`[Plyr]: appid ${context.appId} destroy`);
       });
       return {
         controller,
@@ -134,10 +134,10 @@ const Plyr: NetlessApp<Attributes, any, AppOptions, AppResult> = {
     }
 
     // old player logic
-    const sync = new Sync(context);
+    const sync = new Sync(context, logger);
     const app = new Player({
       target: box.$content,
-      props: { storage: context.storage, sync },
+      props: { storage: context.storage, sync, logger },
     });
     // sync.behavior = "ideal";
     if (import.meta.env.DEV) {
@@ -151,7 +151,7 @@ const Plyr: NetlessApp<Attributes, any, AppOptions, AppResult> = {
         app.$destroy();
       } catch (err) {
         // ignore
-        // console.warn("[Plyr] destroy failed", err);
+        logger.warn("[Plyr] destroy failed", err);
       }
     });
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -159,16 +159,16 @@ const Plyr: NetlessApp<Attributes, any, AppOptions, AppResult> = {
       let currentApp = app;
       const handleVisibilityChange = () => {
         if (document.visibilityState === "hidden") {
-          console.log("[Plyr] destroy app for pcm proxy.");
+          logger.info("[Plyr] destroy app for pcm proxy.");
           while (box.$content.firstChild) {
             box.$content.removeChild(box.$content.firstChild);
           }
           currentApp.$destroy();
         } else {
-          console.log("[Plyr] recreate app for pcm proxy.");
+          logger.info("[Plyr] recreate app for pcm proxy.");
           currentApp = new Player({
             target: box.$content,
-            props: { storage: context.storage, sync },
+            props: { storage: context.storage, sync, logger },
           });
         }
       };

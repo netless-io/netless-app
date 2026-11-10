@@ -2,6 +2,22 @@
 
 Netless App for playing video and audio.
 
+### Logging
+
+App lifecycle, playback, seek, audio and error logs use the current `room.logger`,
+with one `[Plyr]` prefix (the SDK adds `[White]`). App IDs appear in setup and
+destroy messages. Replay uses its displayer logger.
+Both Controller and legacy players use this pipeline; HLS and autoplay fallback
+diagnostics also use it. Log output and collection follow the host SDK's logger
+configuration. If no SDK logger is available, logging falls back to the console.
+Object details are serialized as JSON so SDK text logs retain their fields;
+errors include name/message/stack, and circular values do not interrupt playback.
+Consecutive identical volume/mute observations are logged once. Seek logs are
+emitted on completion; autoplay retries report one summary after all attempts,
+and normal playback relies on the sync/seek result rather than retry traces.
+Sync results include the requested target and currently observed player state;
+they do not imply the asynchronous iframe has already confirmed the target.
+
 ### Usage
 
 ```ts

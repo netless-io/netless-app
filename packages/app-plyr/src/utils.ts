@@ -3,6 +3,7 @@
 /* eslint-disable @typescript-eslint/no-empty-function */
 import type Plyr from "plyr";
 import type Hls from "hls.js";
+import type { PlyrLogger } from "./logger";
 
 export function importScript(src: string): Promise<void> {
   const script = document.createElement("script");
@@ -13,7 +14,7 @@ export function importScript(src: string): Promise<void> {
     document.head.appendChild(script);
   });
 }
-export async function loadHLS(): Promise<Hls> {
+export async function loadHLS(logger: PlyrLogger = console): Promise<Hls> {
   const fakeHls = {
     loadSource(_src: string) {},
     attachMedia(_el: Element) {},
@@ -31,7 +32,7 @@ export async function loadHLS(): Promise<Hls> {
     try {
       return new hlsClass();
     } catch (err) {
-      console.debug(err);
+      logger.debug("[Plyr] HLS initialization failed", err);
       return fakeHls;
     }
   } else {
@@ -171,14 +172,14 @@ export function youtube_parseId(url: string) {
 /**
  * Return `true` means ok, `false` means some error occurs.
  */
-export async function safePlay(player: Plyr): Promise<boolean> {
+export async function safePlay(player: Plyr, logger: PlyrLogger = console): Promise<boolean> {
   try {
     await player.play();
     return true;
   } catch (err) {
     player.muted = true;
     await player.play();
-    console.debug(err);
+    logger.debug("[Plyr] muted autoplay fallback", err);
     return false;
   }
 }
