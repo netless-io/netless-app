@@ -4,6 +4,9 @@ import { cannotPlayHLSNatively, guessTypeFromSrc, hlsTypes, loadHLS } from "./ut
 import { debounce, isBoolean, isEqual, isNumber } from "lodash";
 import { AppContext, Player, Room } from "@netless/window-manager";
 import type { Logger } from "white-web-sdk";
+import { YouTubeOverlay, YouTubeOverlayLayout } from "./youtube-overlay";
+import { YouTubeAudioSync } from "./youtube-audio-sync";
+import { YouTubePlaybackSync, YouTubePlaybackTarget } from "./youtube-playback-sync";
 
 export interface PlayerOption {
   context: AppContext<Attributes>;
@@ -33,19 +36,6 @@ export type PermissionType = "sync" | "local" | "none";
  */
 export type PlayTimeState = [false, number] | [true, number, number];
 
-interface YouTubeCaptionAPI {
-  getOptions?(module: string): string[];
-  setOption?(module: string, option: string, value: unknown): void;
-}
-
-interface YouTubeVolumeAPI {
-  getVolume(): number;
-  isMuted(): boolean;
-  setVolume(volume: number): void;
-  mute(): void;
-  unMute(): void;
-}
-
 export class Controller {
   public player?: Plyr;
   /** 需要同步的操作, 默认操作都不同步 */
@@ -74,22 +64,217 @@ export class Controller {
   protected checkTimer: number | null = null;
   private isDestroying = false;
   private isLoadDuration = false;
-  private nativePlaybackSyncUntil = 0;
-  private youtubeVolumeTimer?: number;
-  private youtubeVolumeSyncUntil = 0;
-  public constructor(context: AppContext<Attributes>, logger: Logger) {
+  private readonly youtubeOverlayEnabled: boolean;
+  private readonly youtubeOwnerMode: boolean;
+  private youtubePlaybackSync?: YouTubePlaybackSync;
+  private youtubePlaybackSequence = 0;
+  private youtubeOverlay?: YouTubeOverlay;
+  private youtubeAudioSync?: YouTubeAudioSync;
+  private youtubeControlsReady = false;
+  private youtubePlayerReady = false;
+  private youtubeOverlayDisposers: (() => void)[] = [];
+  private customControlCursorDisposers: (() => void)[] = [];
+  public constructor(context: AppContext<Attributes>, logger: Logger, layout?: YouTubeOverlayLayout) {
     this.context = context;
     this.logger = logger;
+    this.youtubeOverlayEnabled = context.storage.state.provider === "youtube" &&
+      context.storage.state.youtubeInteractionMode === "overlay";
+    this.youtubeOwnerMode = context.storage.state.provider === "youtube" &&
+      context.storage.state.youtubeInteractionMode === "owner";
     const { src, provider, type, poster } = this.context.storage.state;
     const _type = provider ? undefined : type || guessTypeFromSrc(src);
     const {plyrElement, playerContainer} = this.createPlayerContainer({ src, poster, provider, type: _type });
     this.plyrElement = plyrElement;
     this.playerContainer = playerContainer;
+    this.updateCustomControlCursor();
+    this.customControlCursorDisposers.push(
+      context.emitter.on("writableChange", this.updateCustomControlCursor),
+      context.storage.addStateChangedListener(this.updateCustomControlCursor),
+    );
+    if (this.youtubeOwnerMode) playerContainer.classList.add("plyr-container-youtube-owner");
+    if (this.youtubeOverlayEnabled) {
+      playerContainer.classList.add("plyr-container-youtube-overlay");
+      this.youtubeOverlay = new YouTubeOverlay(playerContainer, layout, () => ({
+        ready: this.youtubePlayerReady && !this.isDestroying && this.room?.phase === "connected",
+        controlsAvailable: this.youtubeControlsReady,
+        writable: !!this.room?.isWritable && this.context.getIsWritable(),
+        paused: this.playTimeState?.[0] ?? true,
+      }), this.submitYouTubePlaybackToggle);
+      this.youtubeOverlayDisposers.push(
+        context.emitter.on("writableChange", this.updateYouTubeOverlay),
+        context.emitter.on("containerRectUpdate", this.updateYouTubeOverlay),
+        context.storage.addStateChangedListener(this.updateYouTubeOverlay),
+      );
+      const room = this.room;
+      room?.callbacks.on("onPhaseChanged", this.updateYouTubeOverlay);
+      this.youtubeOverlayDisposers.push(() => room?.callbacks.off("onPhaseChanged", this.updateYouTubeOverlay));
+    }
     // (window as any).plyrController = this;
   }
 
   get room(): Room | undefined {
     return this.context.getRoom();
+  }
+
+  private updateCustomControlCursor = (): void => {
+    const operations: PlayerOperationType[] = ["play", "seek", "volume", "muted"];
+    for (const operation of operations) {
+      this.playerContainer.classList.toggle(`plyr-disabled-${operation}`, this.hasPermission(operation) === "none");
+    }
+  };
+
+  /** Only writes shared intent. The unchanged storage listener executes transport. */
+  private submitYouTubePlaybackToggle = (): void => {
+    if (this.isDestroying || !this.youtubePlayerReady || this.room?.phase !== "connected" ||
+        !this.room.isWritable || this.hasPermission("play") !== "sync") return;
+    const previous = this.playTimeState;
+    const paused = previous?.[0] ?? true;
+    let seconds = previous ? this.progressTime / 1000 : this.currentTime;
+    if (paused && this.duration > 0 && seconds >= this.duration) seconds = 0;
+    const now = this.calibrationTimestamp;
+    const start = Math.floor(now - Math.max(0, seconds) * 1000);
+    this.context.storage.setState({ playTimeState: paused ? [false, start] : [true, start, now] });
+  };
+
+  private updateYouTubeOverlay = (): void => {
+    this.youtubeOverlay?.update();
+  };
+
+  private mountYouTubeOverlay(): void {
+    const player = this.player;
+    if (!this.youtubeOverlay || !player) return;
+    const ready = () => {
+      if (this.isDestroying) return;
+      this.youtubePlayerReady = true;
+      this.mountYouTubeAudioSync();
+      // A late join can stay paused forever. Keep its native toolbar usable.
+      this.youtubeControlsReady = true;
+      this.playerContainer.querySelector("iframe")?.setAttribute("tabindex", "-1");
+      this.updateYouTubeOverlay();
+    };
+    const playing = () => {
+      this.youtubeControlsReady = true;
+      this.updateYouTubeOverlay();
+    };
+    const error = () => {
+      this.youtubeControlsReady = false;
+      this.updateYouTubeOverlay();
+    };
+    player.on("ready", ready);
+    player.on("playing", playing);
+    player.on("error", error);
+    this.youtubeOverlayDisposers.push(() => {
+      player.off("ready", ready);
+      player.off("playing", playing);
+      player.off("error", error);
+    });
+  }
+
+  private destroyYouTubeOverlay(): void {
+    this.youtubePlaybackSync?.destroy();
+    this.youtubePlaybackSync = undefined;
+    this.youtubeAudioSync?.destroy();
+    this.youtubeAudioSync = undefined;
+    this.youtubeOverlay?.destroy();
+    this.youtubeOverlay = undefined;
+    this.youtubeOverlayDisposers.forEach(dispose => dispose());
+    this.youtubeOverlayDisposers = [];
+  }
+
+  private mountYouTubeAudioSync(): void {
+    if (this.isDestroying || !this.player || this.youtubeAudioSync || !(this.youtubeOverlayEnabled || this.youtubeOwnerMode)) return;
+    this.youtubeAudioSync = new YouTubeAudioSync(this.player, {
+      render: ({ volume, muted }) => this.customControls?.volume(volume, muted),
+      reconcile: () => {
+        // Shared audio follows the room on non-publishers too. Local-only
+        // fields continue mirroring the native player without a room write.
+        if (!this.youtubeOwnerMode || this.isDestroying || !this.player || this.room?.phase !== "connected" ||
+            this.youtubePlaybackSync?.phase !== "following" || this.youtubePlaybackSync.isPriming ||
+            this.isYouTubePublisher()) return;
+        const volume = this.context.storage.state.syncVolume &&
+          Math.round(this.player.volume * 100) !== Math.round(this.volumeData * 100)
+          ? this.volumeData : undefined;
+        const muted = this.syncMuted && this.player.muted !== this.mutedData ? this.mutedData : undefined;
+        if (volume !== undefined || muted !== undefined) void this.willSyncPlayerState({ volume, muted });
+      },
+      nativeChange: change => {
+        if (this.isDestroying || this.room?.phase !== "connected" || !this.room.isWritable) return;
+        if (this.youtubeOwnerMode && !this.isYouTubePublisher()) return;
+        const state = this.context.storage.state;
+        const update: Partial<Pick<Attributes, "volume" | "muted">> = {};
+        if (change.volume !== undefined && this.hasPermission("volume") === "sync" &&
+            this.lastSyncState.volume === this.volumeData &&
+            Math.round(this.volumeData * 100) !== Math.round(change.volume * 100)) update.volume = change.volume;
+        if (change.muted !== undefined && this.hasPermission("muted") === "sync" &&
+            this.lastSyncState.muted === (state.muted ?? false) &&
+            (state.muted ?? false) !== change.muted) update.muted = change.muted;
+        if (Object.keys(update).length) {
+          this.context.storage.setState(update);
+          // Native audio has already reached this value. Its storage notification
+          // must not execute the same command or interrupt an ongoing native drag.
+          Object.assign(this.lastSyncState, update);
+        }
+      },
+    });
+    let syncVolume = !!this.context.storage.state.syncVolume;
+    let syncMuted = this.syncMuted;
+    this.youtubeOverlayDisposers.push(this.context.storage.addStateChangedListener(() => {
+      const state = this.context.storage.state;
+      const enabled = (state.syncVolume && !syncVolume) || (this.syncMuted && !syncMuted);
+      if (state.syncVolume && !syncVolume) this.lastSyncState.volume = undefined;
+      if (this.syncMuted && !syncMuted) this.lastSyncState.muted = undefined;
+      syncVolume = !!state.syncVolume;
+      syncMuted = this.syncMuted;
+      if (enabled) this.attrsUpdateHandler();
+    }));
+  }
+
+  private isYouTubePublisher = (): boolean => {
+    const room = this.room;
+    if (!room || room.phase !== "connected" || !room.isWritable || !this.context.getIsWritable() ||
+        this.context.storage.state.youtubeOwnerUid !== room.uid) return false;
+    // One publisher per stable UID. The newest live writable connection wins;
+    // the same membership rule is used by window-manager's findMemberByUid.
+    const members = room.state.roomMembers.filter(member => member.payload?.uid === room.uid);
+    return members.length > 0 && Math.max(...members.map(member => member.memberId)) === room.observerId;
+  };
+
+  private writeYouTubePlayback(paused: boolean, seconds: number, rate: number,
+      source: "command" | "native"): YouTubePlaybackTarget {
+    const now = this.calibrationTimestamp;
+    const start = Math.floor(now - Math.max(0, seconds) * 1000 / rate);
+    const target: YouTubePlaybackTarget = {
+      id: `${this.room?.observerId}:${++this.youtubePlaybackSequence}:${Math.random().toString(36).slice(2)}`,
+      author: this.uid, source, rate,
+      state: paused ? [true, start, now] : [false, start],
+    };
+    this.context.storage.setState({ youtubePlayback: target, playTimeState: target.state });
+    return target;
+  }
+
+  private mountYouTubePlaybackSync(): void {
+    if (this.isDestroying || !this.player || !this.youtubeOwnerMode || this.youtubePlaybackSync) return;
+    this.mountYouTubeAudioSync();
+    this.youtubePlaybackSync = new YouTubePlaybackSync(this.player, {
+      now: () => this.calibrationTimestamp,
+      target: () => this.context.storage.state.youtubePlayback,
+      connected: () => !this.isDestroying && this.room?.phase === "connected" &&
+        (this.context.storage.state.allowBackgroundPlayback !== false || document.visibilityState !== "hidden"),
+      publisher: this.isYouTubePublisher,
+      restoreMuted: previous => this.syncMuted ? this.mutedData : previous,
+      publish: (paused, seconds, rate) => {
+        const target = this.writeYouTubePlayback(paused, seconds, rate, "native");
+        this.lastSyncState.playTimeState = target.state;
+        return target;
+      },
+      render: (seconds, paused, loading) => {
+        if (this.customControls) {
+          if (!this.customControls.isDraggingProgress) this.customControls.currentTime(seconds, this.duration);
+          this.customControls.pause(paused);
+          this.customControls.isLoading = loading;
+        }
+      },
+    });
   }
 
   get displayer(): Player | undefined {
@@ -115,6 +300,11 @@ export class Controller {
    * 播放器进度时长,单位毫秒
    */
   get progressTime(): number {
+    if (this.youtubeOwnerMode && this.context.storage.state.youtubePlayback) {
+      const { state, rate } = this.context.storage.state.youtubePlayback;
+      return Math.max(0, Math.min(((state[0] ? state[2] : this.calibrationTimestamp) - state[1]) * rate,
+        this.duration ? this.duration * 1000 : Infinity));
+    }
     if (this.playTimeState) {
       if (this.playTimeState[0] && this.playTimeState[1] && this.playTimeState[2]) {
         return Math.min(this.playTimeState[2] - this.playTimeState[1], this.duration * 1000);
@@ -131,6 +321,12 @@ export class Controller {
 
   get mutedData(): boolean {
     return this.context.storage.state.muted || false;
+  }
+
+  /** Volume synchronization includes mute; syncMuted also works on its own. */
+  get syncMuted(): boolean {
+    const state = this.context.storage.state;
+    return !!(state.syncVolume || state.syncMuted);
   }
 
   get volume(): number {
@@ -153,6 +349,7 @@ export class Controller {
   }
 
   get playTimeState(): PlayTimeState | undefined {
+    if (this.youtubeOwnerMode) return this.context.storage.state.youtubePlayback?.state;
     return this.context.storage.state.playTimeState || undefined;
   }
 
@@ -161,7 +358,7 @@ export class Controller {
     if (_operation === "volume" && !this.context.storage.state.syncVolume) {
       return "local";
     }
-    if (_operation === "muted" && !this.context.storage.state.syncMuted) {
+    if (_operation === "muted" && !this.syncMuted) {
       return "local";
     }
     if (this.context.getIsWritable()) {
@@ -195,7 +392,7 @@ export class Controller {
       willUpdateAttr.volume = this.volumeData;
       this.lastSyncState.volume = this.volumeData;
     }
-    if (this.lastSyncState?.muted !== this.mutedData && this.context.storage.state.syncMuted) {
+    if (this.lastSyncState?.muted !== this.mutedData && this.syncMuted) {
       willUpdateAttr.muted = this.mutedData;
       this.lastSyncState.muted = this.mutedData;
     }
@@ -238,18 +435,19 @@ export class Controller {
   }) => {
     if (this.player) {
       const { volume, muted, playTimeState } = target;
-      if (isNumber(volume) || isBoolean(muted)) this.youtubeVolumeSyncUntil = Date.now() + 750;
+      const audioMuted = isNumber(volume) && this.syncMuted
+        ? this.mutedData : muted;
       console.log("[Plyr] willSyncPlayerState", volume, muted, playTimeState);
       if (isNumber(volume)) {
-        this.player.volume = volume as number;
+        if (this.player.volume !== volume) this.player.volume = volume as number;
         if (this.customControls) {
-          this.customControls.volume(volume);
+          this.customControls.volume(volume, this.player.muted);
         }
       }
-      if (isBoolean(muted)) {
-        this.player.muted = muted as boolean;
+      if (isBoolean(audioMuted)) {
+        if (this.player.muted !== audioMuted) this.player.muted = audioMuted as boolean;
         if (this.customControls) {
-          this.customControls.volume(volume ?? this.player.volume, muted);
+          this.customControls.volume(volume ?? this.player.volume, audioMuted);
         }
       }
       if (playTimeState) {
@@ -259,7 +457,7 @@ export class Controller {
   };
 
   protected willsyncPlayTimeState = async (playTimeState: PlayTimeState) => {
-    this.nativePlaybackSyncUntil = Date.now() + 2000;
+    if (this.youtubeOwnerMode) { this.youtubePlaybackSync?.refresh(); return; }
     const progressTime = this.progressTime / 1000;
     const resovle = this.syncPromeResolveMap.get(progressTime);
     if (resovle) {
@@ -277,7 +475,6 @@ export class Controller {
       this.syncPlayTimeState(progressTime);
     }).then(() => {
       if (this.player) {
-        this.nativePlaybackSyncUntil = Date.now() + 2000;
         const _progressTime = this.progressTime / 1000;
         this.player.currentTime = _progressTime;
         this.notSyncSeekTimeSet.add(Math.floor(_progressTime));
@@ -317,78 +514,6 @@ export class Controller {
     }
     return;
   };
-
-  private get isYouTubeNativeIntent(): boolean {
-    return this.context.storage.state.provider === "youtube" &&
-      this.context.storage.state.youtubeNativeControls === true &&
-      !this.isDestroying && Date.now() >= this.nativePlaybackSyncUntil;
-  }
-
-  /** 字幕设置是本机偏好；ASR 字幕可能没有可枚举的 tracklist，请使用原生 CC。 */
-  public getYouTubeCaptionOptions(): string[] {
-    if (this.isDestroying || this.context.storage.state.provider !== "youtube") return [];
-    const embed = this.player?.embed as unknown as YouTubeCaptionAPI | undefined;
-    try { return embed?.getOptions?.("captions") || []; } catch { return []; }
-  }
-
-  private setYouTubeCaptionOption(option: string, value: unknown): boolean {
-    if (!this.getYouTubeCaptionOptions().includes(option)) return false;
-    const embed = this.player?.embed as unknown as YouTubeCaptionAPI | undefined;
-    if (!embed?.setOption) return false;
-    try {
-      embed.setOption("captions", option, value);
-      return true;
-    } catch { return false; }
-  }
-
-  public setYouTubeCaptionFontSize(size: number): boolean {
-    if (Math.floor(size) !== size || size < -1 || size > 3) return false;
-    return this.setYouTubeCaptionOption("fontSize", size);
-  }
-
-  public reloadYouTubeCaptions(): boolean {
-    return this.setYouTubeCaptionOption("reload", true);
-  }
-
-  private startYouTubeVolumeSync(): void {
-    if (this.context.storage.state.provider !== "youtube" ||
-      !this.context.storage.state.youtubeNativeControls || this.youtubeVolumeTimer !== undefined) return;
-    // Plyr caches these values and YouTube does not emit a public volume-change event.
-    this.youtubeVolumeSyncUntil = Date.now() + 750;
-    this.youtubeVolumeTimer = window.setInterval(() => {
-      const player = this.player;
-      if (this.isDestroying || !player || Date.now() < this.youtubeVolumeSyncUntil) return;
-      const embed = player.embed as unknown as YouTubeVolumeAPI | undefined;
-      if (!embed?.getVolume || !embed.isMuted) return;
-      try {
-        const rawVolume = embed.getVolume();
-        const muted = embed.isMuted();
-        if (!Number.isFinite(rawVolume) || typeof muted !== "boolean") return;
-        const volume = Math.max(0, Math.min(1, rawVolume / 100));
-        if (Math.abs(volume - player.volume) > 0.001) {
-          const permission = this.hasPermission("volume");
-          if (permission === "none") {
-            embed.setVolume(player.volume * 100);
-          } else {
-            // Update volume before muted: Plyr's muted setter reapplies its cached volume.
-            player.volume = volume;
-            if (permission === "sync") this.setVolumeData(volume);
-          }
-        }
-        if (muted !== player.muted) {
-          const permission = this.hasPermission("muted");
-          if (permission === "none") {
-            player.muted ? embed.mute() : embed.unMute();
-          } else {
-            player.muted = muted;
-            if (permission === "sync") this.setMutedData(muted);
-          }
-        }
-      } catch {
-        // The iframe may be loading or tearing down; retry on the next sample.
-      }
-    }, 250);
-  }
 
   safePlay = async (loop = 0) => {
     if (!this.player) {
@@ -475,9 +600,6 @@ export class Controller {
     if (provider === "youtube") {
       plyrElement = this.createYoutubeContainer(src, poster);
       container.classList.add("plyr-container-video-embed");
-      if (this.context.storage.state.youtubeNativeControls) {
-        container.classList.add("plyr-container-youtube-native");
-      }
     } else if (provider === "vimeo") {
       plyrElement = this.createVimeoContainer(src, poster);
       container.classList.add("plyr-container-video-embed");
@@ -501,7 +623,7 @@ export class Controller {
   }
 
   public async mountPlayer(): Promise<void> {
-    const { src, provider, type, paused, customControlsTitle, syncMuted, syncVolume } =
+    const { src, provider, type, paused, customControlsTitle } =
       this.context.storage.state;
     const _type = provider ? undefined : type || guessTypeFromSrc(src);
     const useHLS = hlsTypes.includes(String(_type).toLowerCase());
@@ -523,10 +645,8 @@ export class Controller {
           clickToPlay: false,
           youtube: {
             autoplay: isAutoPlay,
-            // Keep Plyr's UI lifecycle (ready/events/destroy), but also expose YouTube's CC/settings.
-            ...(provider === "youtube" && this.context.storage.state.youtubeNativeControls
-              ? { controls: 1, fs: 0 }
-              : {}),
+            // Preserve Plyr's original lifecycle; expose native CC underneath the shield.
+            ...(this.youtubeOverlayEnabled || this.youtubeOwnerMode ? { controls: 1, fs: 0 } : {}),
           },
           hideControls: false,
           autoplay: isAutoPlay,
@@ -539,6 +659,8 @@ export class Controller {
         return;
       }
       
+      this.mountYouTubeOverlay();
+
       // 如果是 YouTube 视频，添加超时检查和错误监听
       if (provider === "youtube") {
         this.setupYouTubeErrorHandling();
@@ -561,8 +683,9 @@ export class Controller {
           }
         });
         this.player.on("ready", () => {
+          if (this.isDestroying) return;
           if (this.player) {
-            this.startYouTubeVolumeSync();
+            this.mountYouTubePlaybackSync();
             if (this.duration) {
               this.isLoadDuration = true;
             }
@@ -595,7 +718,7 @@ export class Controller {
           if (this.player) {
             const key = Math.floor(this.player.currentTime);
             const playPermission = this.hasPermission("seek");
-            if (playPermission === "sync" && !this.notSyncSeekTimeSet.has(key)) {
+            if (!this.youtubeOwnerMode && playPermission === "sync" && !this.notSyncSeekTimeSet.has(key)) {
               if (key !== Math.floor(this.progressTime / 1000)) {
                 this.willActiveUpdatePlayTimeState();
               }
@@ -612,10 +735,7 @@ export class Controller {
         this.player.on("play", () => {
           if (this.player) {
             const playPermission = this.hasPermission("play");
-            if (playPermission === "sync") {
-              if (this.isYouTubeNativeIntent && this.playTimeState?.[0] !== false) {
-                this.willActiveUpdatePlayTimeState();
-              }
+            if (!this.youtubeOwnerMode && playPermission === "sync") {
               if (this.forceSyncOperation.has("play")) {
                 this.willActiveUpdatePlayTimeState();
               } else if (isAutoPlay && !this.player.paused && !this.playTimeState) {
@@ -634,11 +754,8 @@ export class Controller {
         this.player.on("pause", () => {
           if (this.player) {
             const playPermission = this.hasPermission("play");
-            if (playPermission === "sync" && this.forceSyncOperation.has("play")) {
+            if (!this.youtubeOwnerMode && playPermission === "sync" && this.forceSyncOperation.has("play")) {
               console.log("[Plyr] pause by sync, paused:", this.player?.paused);
-              this.willActiveUpdatePlayTimeState();
-            }
-            if (playPermission === "sync" && this.isYouTubeNativeIntent && this.playTimeState?.[0] === false) {
               this.willActiveUpdatePlayTimeState();
             }
             this.forceSyncOperation.delete("play");
@@ -668,7 +785,7 @@ export class Controller {
               }
             }
             if (this.customControls) {
-              if (!syncVolume || !syncMuted) {
+              if (!this.context.storage.state.syncVolume || !this.syncMuted) {
                 this.customControls.volume(this.player.volume, this.player.muted);
               }
             }
@@ -823,7 +940,7 @@ export class Controller {
   }
 
   protected calibrationProgressTime = (): void => {
-    if (this.isDestroying) {
+    if (this.isDestroying || this.youtubeOwnerMode) {
       return;
     }
     this.cancleCalibrationProgressTime();
@@ -864,6 +981,7 @@ export class Controller {
   };
 
   protected cancleCalibrationProgressTime = (): void => {
+    if (this.youtubeOwnerMode) return;
     if (this.timeIntervaler) {
       clearInterval(this.timeIntervaler);
     }
@@ -898,6 +1016,12 @@ export class Controller {
 
   protected setPlayTimeStateData(playTimeState: PlayTimeState): void {
     console.log("[Plyr] setPlayTimeStateData", playTimeState);
+    if (this.youtubeOwnerMode) {
+      const seconds = ((playTimeState[0] ? playTimeState[2] : this.calibrationTimestamp) - playTimeState[1]) / 1000;
+      this.writeYouTubePlayback(playTimeState[0], seconds, this.context.storage.state.youtubePlayback?.rate || 1, "command");
+      this.youtubePlaybackSync?.refresh();
+      return;
+    }
     this.context.storage.setState({ playTimeState });
   }
 
@@ -905,12 +1029,10 @@ export class Controller {
     const permission = this.hasPermission("volume");
     switch (permission) {
       case "sync":
-        this.youtubeVolumeSyncUntil = Date.now() + 750;
         this.setVolumeData(volume);
         break;
       case "local": {
         if (this.player) {
-          this.youtubeVolumeSyncUntil = Date.now() + 750;
           this.player.volume = volume;
           if (this.customControls) {
             this.customControls.volume(volume);
@@ -927,12 +1049,10 @@ export class Controller {
     const permission = this.hasPermission("muted");
     switch (permission) {
       case "sync":
-        this.youtubeVolumeSyncUntil = Date.now() + 750;
         this.setMutedData(bool);
         break;
       case "local": {
         if (this.player) {
-          this.youtubeVolumeSyncUntil = Date.now() + 750;
           this.player.muted = bool;
           if (this.customControls) {
             this.customControls.volume(this.player.volume, bool);
@@ -1033,7 +1153,7 @@ export class Controller {
   }
 
   protected keepCheckPlayerStateInSync = (): void => {
-    if (this.isDestroying) {
+    if (this.isDestroying || this.youtubeOwnerMode) {
       return;
     }
     this.cancelKeepCheckPlayerStateInSync();
@@ -1109,10 +1229,9 @@ export class Controller {
 
   public async destroy(): Promise<void> {
     this.isDestroying = true;
-    if (this.youtubeVolumeTimer !== undefined) {
-      window.clearInterval(this.youtubeVolumeTimer);
-      this.youtubeVolumeTimer = undefined;
-    }
+    this.customControlCursorDisposers.forEach(dispose => dispose());
+    this.customControlCursorDisposers = [];
+    this.destroyYouTubeOverlay();
     if (this.player) {
       await new Promise<void>(resolve => {
         setTimeout(() => {

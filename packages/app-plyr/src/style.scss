@@ -69,15 +69,37 @@
   pointer-events: none;
 }
 
-.plyr-container-youtube-native {
+.plyr-container-youtube-overlay,
+.plyr-container-youtube-owner {
   .plyr--youtube,
-  .plyr--youtube iframe {
-    pointer-events: auto;
-  }
+  .plyr--youtube iframe { pointer-events: auto; }
   .plyr__poster,
-  .plyr__control--overlaid {
-    pointer-events: none;
-  }
+  .plyr__control--overlaid { pointer-events: none; }
+}
+
+.youtube-interaction-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.youtube-interaction-shield,
+.youtube-interaction-play {
+  position: absolute;
+  pointer-events: auto;
+  touch-action: none;
+  background: transparent;
+  border: 0;
+  padding: 0;
+  margin: 0;
+}
+
+.youtube-interaction-play {
+  cursor: pointer;
+  &:disabled { cursor: default; }
+  &:focus-visible { outline: 2px solid #00b2ff; }
+  &[hidden] { display: none; }
 }
 
 .custom-plyr-controls {
@@ -271,6 +293,15 @@
   pointer-events: auto;
   box-sizing: border-box;
   touch-action: none;
+}
+
+.plyr-disabled-play .custom-plyr-play-button,
+.plyr-disabled-seek .custom-plyr-progress-slider-container,
+.plyr-disabled-seek .custom-plyr-progress-slider-button,
+.plyr-disabled-muted .custom-plyr-mute-button,
+.plyr-disabled-volume .custom-plyr-volume-slider-container,
+.plyr-disabled-volume .custom-plyr-volume-slider-button {
+  cursor: not-allowed;
 }
 
 .custom-plyr-controls{

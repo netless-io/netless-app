@@ -3,9 +3,18 @@ import Player from "./player.svelte";
 import { Sync } from "./sync";
 import styles from "./style.scss?inline";
 import { Controller, PlayTimeState } from "./controller";
+import type { YouTubeOverlayLayout } from "./youtube-overlay";
+import type { YouTubePlaybackTarget } from "./youtube-playback-sync";
 
 export { Controller, CustomPlyrControls } from "./controller";
 export type { PlayTimeState } from "./controller";
+export type { YouTubeOverlayLayout } from "./youtube-overlay";
+export type { YouTubePlaybackTarget } from "./youtube-playback-sync";
+
+export interface AppOptions {
+  /** Local geometry calibrated for a supported YouTube layout. */
+  youtubeOverlayLayout?: YouTubeOverlayLayout;
+}
 
 export interface Attributes {
   /** can only set once */
@@ -22,8 +31,12 @@ export interface Attributes {
   currentTime: number;
   hostTime: number;
   provider?: "youtube" | "vimeo";
-  /** 仅创建时设置；开启 YouTube 原生 CC / 设置入口，默认关闭。 */
-  youtubeNativeControls?: boolean;
+  /** owner: native controls stay open; only the writable creator publishes transport. */
+  youtubeInteractionMode?: "legacy" | "overlay" | "owner";
+  /** Stable creation-time identity, independent of the current connection. */
+  youtubeOwnerUid?: string;
+  /** Atomic, versioned playback target used in owner mode. */
+  youtubePlayback?: YouTubePlaybackTarget;
   owner?: string;
   iconUrl?: string;
   /** 播放时间状态 */
@@ -32,9 +45,9 @@ export interface Attributes {
   useNewPlayer: boolean;
   /** 是否使用自定义播控组件, 默认使用自定义播控页 */
   useCustomControls?: boolean;
-  /** 是否同步音量数据，默认不同步 */
+  /** 是否同步音量及静音，默认不同步 */
   syncVolume?: boolean;
-  /** 是否同步静音数据，默认不同步 */
+  /** 单独同步静音；syncVolume 开启时静音也同步，默认不同步 */
   syncMuted?: boolean;
   /** 自定义播控组件标题 */
   customControlsTitle?: string;
@@ -64,7 +77,7 @@ const DefaultAttributes: Pick<
   keepPlayerStateInSync: true,
 };
 
-const Plyr: NetlessApp<Attributes, any, any, AppResult> = {
+const Plyr: NetlessApp<Attributes, any, AppOptions, AppResult> = {
   kind: "Plyr",
   config: {
     minwidth: 300,
@@ -74,6 +87,17 @@ const Plyr: NetlessApp<Attributes, any, any, AppResult> = {
     const storage = context.storage;
     if (context.getIsWritable()) {
       storage.ensureState(DefaultAttributes);
+      if (storage.state.provider === "youtube" && storage.state.youtubeInteractionMode === "owner" && context.isAddApp) {
+        const room = context.getRoom();
+        if (room) {
+          const now = room.calibrationTimestamp;
+          storage.ensureState({
+            youtubeOwnerUid: room.uid,
+            youtubePlayback: { id: `${room.observerId}:initial`, author: room.uid, source: "command",
+              state: storage.state.playTimeState || (storage.state.paused ? [true, now, now] : [false, now]), rate: 1 },
+          });
+        }
+      }
     }
     const logger = (context.getDisplayer() as any).logger;
 
@@ -97,7 +121,7 @@ const Plyr: NetlessApp<Attributes, any, any, AppResult> = {
     box.mountStyles(styles);
 
     if (storage.state.useNewPlayer) {
-      const controller = new Controller(context, logger);
+      const controller = new Controller(context, logger, context.getAppOptions()?.youtubeOverlayLayout);
       box.$content.appendChild(controller.playerContainer);
       controller.mountPlayer();
       context.emitter.on("destroy", async () => {
