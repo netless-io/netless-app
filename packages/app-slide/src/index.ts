@@ -91,6 +91,8 @@ export interface AppOptions
   invisibleBehavior?: "frozen" | "pause";
   /** just readonly, no operate silder */
   justSildeReadonly?: true;
+  /** enable arrow-key navigation @default true */
+  enableHotKey?: boolean;
   /** footer navigation button behavior @default 'page' */
   navigationButtonMode?: NavigationButtonMode;
   enableScale?: boolean;
@@ -228,6 +230,7 @@ const SlideApp: NetlessApp<Attributes, MagixEvents, AppOptions, AppResult> = {
       baseScenePath,
       appId: context.appId,
       urlInterrupter: context.getAppOptions()?.urlInterrupter,
+      enableHotKey: context.getAppOptions()?.enableHotKey,
       enableScale: context.getAppOptions()?.enableScale ?? false,
       navigationButtonMode: context.getAppOptions()?.navigationButtonMode,
       onPagesReady: ({ length }) => {
