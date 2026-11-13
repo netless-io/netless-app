@@ -83,6 +83,18 @@ manager.addApp({
    }
    ```
 
+6. (可选) `enableHotKey`
+
+   是否启用上下左右方向键快捷键，默认值为 `true`。设为 `false` 时仅关闭快捷键，鼠标点击、底部按钮、API 翻页和动画步进仍按原有规则工作。
+
+   ```ts
+   appOptions: {
+     enableHotKey: false,
+   }
+   ```
+
+   该选项在 App 初始化时读取。
+
 ### PPT 共享音量（按需启用）
 
 `appOptions.enableSharedMediaVolume` 默认 `false`：不显示音量按钮，不发起或跟随共享音量调整，原播放控件和本地音量 API 保持可用。需要此功能时，所有参与端使用配套的新版本并统一设置：

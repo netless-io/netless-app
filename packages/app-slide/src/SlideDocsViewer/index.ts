@@ -55,6 +55,7 @@ export interface SlideDocsViewerConfig {
   baseScenePath: string;
   appId: string;
   urlInterrupter?: (url: string) => Promise<string>;
+  enableHotKey?: boolean;
   enableScale?: boolean;
   navigationButtonMode?: NavigationButtonMode;
   onPagesReady?: (pages: DocsViewerPage[]) => void;
@@ -82,6 +83,7 @@ export class SlideDocsViewer {
   protected justSildeReadonly = false;
   protected syncEventQueuePolicy: SyncEventQueuePolicy = "fifo";
   private readonly navigationButtonMode: NavigationButtonMode;
+  private readonly enableHotKey: boolean;
   private enableScale: boolean;
   private boxSizeEventCount = 0;
   private latestBoxSize: BoxSize | undefined;
@@ -100,6 +102,7 @@ export class SlideDocsViewer {
     baseScenePath,
     appId,
     urlInterrupter,
+    enableHotKey,
     enableScale,
     navigationButtonMode,
     onPagesReady,
@@ -112,6 +115,7 @@ export class SlideDocsViewer {
     this.mountWhiteboard = mountWhiteboard;
     this.onNavigate = onNavigate || noop;
     this.baseScenePath = baseScenePath;
+    this.enableHotKey = enableHotKey ?? true;
     this.enableScale = enableScale ?? false;
     this.navigationButtonMode = resolveNavigationButtonMode(navigationButtonMode);
     this.appId = appId;
@@ -250,7 +254,7 @@ export class SlideDocsViewer {
     this.resizableContainer.addWhiteboardContainer(this.$whiteboardView);
     this.viewer.$content.appendChild(this.$overlay);
     this.sideEffect.addEventListener(window, "keydown", ev => {
-      if (this.justSildeReadonly) {
+      if (!this.enableHotKey || this.justSildeReadonly) {
         return;
       }
       if (this.box.focus && this.slideController && !isEditable(ev.target)) {

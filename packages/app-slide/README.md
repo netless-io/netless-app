@@ -96,6 +96,18 @@ Parameters:
    }
    ```
 
+6. (optional) `enableHotKey`
+
+   Enables the up/down/left/right arrow-key shortcuts. Defaults to `true`. Set it to `false` to disable only these shortcuts; mouse clicks, footer buttons, page navigation APIs, and animation step APIs keep their existing behavior.
+
+   ```ts
+   appOptions: {
+     enableHotKey: false,
+   }
+   ```
+
+   This option is read when the App initializes.
+
 ### Preview
 
 ```ts
