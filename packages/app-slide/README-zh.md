@@ -95,6 +95,30 @@ manager.addApp({
 
    该选项在 App 初始化时读取。
 
+### Slide 播放与渲染选项
+
+以下选项均设置在 `WindowManager.register()` 的 `appOptions` 顶层。app-slide 会将渲染参数组装到 Slide 的 `renderOptions`，其余参数直接传给 Slide。未设置时沿用 Slide 的默认行为。
+
+| 选项                         | 作用                                            | 未设置时的行为                                 |
+| ---------------------------- | ----------------------------------------------- | ---------------------------------------------- |
+| `resize`                     | 缩放时同步调整渲染分辨率                        | `false`；窗口尺寸变化仍由 app-slide 监听和处理 |
+| `disableClickDebounce`       | 关闭 PPT 画面点击防抖                           | `false`，保留 300ms 点击防抖                   |
+| `enableTracking`             | 开启 Slide 内置日志追踪                         | 不启用                                         |
+| `enableAutoForward`          | 根据 PPT 的自动换片时间继续播放动画或翻页       | `false`                                        |
+| `transitionResolutionLevel`  | 切页动画截图分辨率等级                          | Android/iOS 为 2，其余平台为 4                 |
+| `antialias`                  | 开启渲染抗锯齿                                  | `true`                                         |
+| `localGifMaxCompressedBytes` | 单个本地解码 GIF 的压缩文件大小上限，单位为字节 | 64 MiB                                         |
+| `localGifMaxWorkingSetBytes` | 单页本地 GIF 的估算工作集上限，单位为字节       | 桌面为 256 MiB，其余平台为 192 MiB             |
+
+```ts
+appOptions: {
+  antialias: false,
+  transitionResolutionLevel: 2,
+  localGifMaxCompressedBytes: 32 * 1024 * 1024,
+  localGifMaxWorkingSetBytes: 128 * 1024 * 1024,
+}
+```
+
 ### PPT 共享音量（按需启用）
 
 `appOptions.enableSharedMediaVolume` 默认 `false`：不显示音量按钮，不发起或跟随共享音量调整，原播放控件和本地音量 API 保持可用。需要此功能时，所有参与端使用配套的新版本并统一设置：
