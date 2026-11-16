@@ -1,6 +1,6 @@
 import type { NetlessApp } from "@netless/window-manager";
 import type { RoomState } from "white-web-sdk";
-import type { ISlideConfig } from "@netless/slide";
+import type { ISlideConfig, ISlideRenderOptions } from "@netless/slide";
 import type { MountSlideOptions } from "./SlideDocsViewer";
 import type { Attributes, MagixEvents } from "./typings";
 import type { AddHooks, FreezableSlide } from "./utils/freezer";
@@ -48,21 +48,32 @@ export type NavigationButtonMode = "page" | "step";
 
 export interface AppOptions
   extends Pick<
-    ISlideConfig,
-    | "rtcAudio"
-    | "enableWebAudio"
-    | "useLocalCache"
-    | "resourceTimeout"
-    | "loaderDelegate"
-    | "urlInterrupter"
-    | "navigatorDelegate"
-    | "fixedFrameSize"
-    | "logger"
-    | "enableGlobalClick"
-    | "skipActionWhenFrozen"
-    | "syncEventQueuePolicy"
-    | "enableSharedMediaVolume"
-  > {
+      ISlideConfig,
+      | "rtcAudio"
+      | "enableWebAudio"
+      | "enableAutoForward"
+      | "useLocalCache"
+      | "resourceTimeout"
+      | "loaderDelegate"
+      | "urlInterrupter"
+      | "navigatorDelegate"
+      | "fixedFrameSize"
+      | "resize"
+      | "logger"
+      | "enableTracking"
+      | "enableGlobalClick"
+      | "disableClickDebounce"
+      | "skipActionWhenFrozen"
+      | "syncEventQueuePolicy"
+      | "enableSharedMediaVolume"
+    >,
+    Pick<
+      ISlideRenderOptions,
+      | "transitionResolutionLevel"
+      | "antialias"
+      | "localGifMaxCompressedBytes"
+      | "localGifMaxWorkingSetBytes"
+    > {
   /** show debug controller */
   debug?: boolean;
   /** scale */
