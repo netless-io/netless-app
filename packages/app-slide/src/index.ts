@@ -46,6 +46,17 @@ export { setFreezerLength, getFreezerLength, onCreated, onDestroyed } from "./ut
 
 export type NavigationButtonMode = "page" | "step";
 
+export interface ResourceRetryInfo {
+  /** One-based target page. Null means the failing resource is not tied to a page. */
+  pageIndex: number | null;
+  /** True when the resource failure did not block an active page render. */
+  isPreload: boolean;
+  /** Slide instance identifier supplied by the underlying Slide runtime. */
+  slideId?: string;
+}
+
+export type SlideRenderError = Error & { errorType?: string };
+
 export interface AppOptions
   extends Pick<
       ISlideConfig,
@@ -95,7 +106,7 @@ export interface AppOptions
   /** fix windows 11 nvidia rendering bug, downside: render next page slows down */
   enableNvidiaDetect?: boolean;
   /** custom error handler */
-  onRenderError?: (error: Error, pageIndex: number) => void;
+  onRenderError?: (error: SlideRenderError, pageIndex: number) => void;
   /** whether to show an overlay of error message @default: true */
   showRenderError?: boolean;
   /** Specify the behavior after hiding the slide; Freeze will destroy the slide and replace it with a snapshot, while Pause simply pauses the slide @default: 'frozen' */
@@ -108,7 +119,7 @@ export interface AppOptions
   navigationButtonMode?: NavigationButtonMode;
   enableScale?: boolean;
   resourceMaxRetries?: number;
-  onResourceMaxRetries: (url: string, error: Error) => void;
+  onResourceMaxRetries: (url: string, error: Error, info: ResourceRetryInfo) => void;
   /**
    * First-render warning threshold in ms. Default: 5_000. New lazy hosts
    * continue awaiting real readiness; legacy/eager hosts resolve on timeout.
@@ -180,6 +191,7 @@ const SlideApp: NetlessApp<Attributes, MagixEvents, AppOptions, AppResult> = {
     // its first render before WindowManager starts the next app's setup.
     let slideControllerRef: SlideController | null | undefined;
     let firstRenderFailed = false;
+    let firstRenderResourceFailed = false;
 
     const onPageChanged = (page: number) => {
       if (docsViewer && docsViewer.slideController) {
@@ -202,10 +214,15 @@ const SlideApp: NetlessApp<Attributes, MagixEvents, AppOptions, AppResult> = {
         ...options,
         onPageChanged,
         onNavigate: options.onNavigate,
-        // Wrap the user callback: a render failure before the first
-        // renderEnd also fails the setup wait (serial setup queue).
         onRenderError: (error, pageIndex) => {
-          firstRenderFailed = true;
+          if (!slideControllerRef?.ready) {
+            if (error.errorType === "RESOURCE_ERROR" && pageIndex > 0) {
+              // Return the existing AppResult so the client can retry on the same Slide.
+              firstRenderResourceFailed = true;
+            } else {
+              firstRenderFailed = true;
+            }
+          }
           appOptions.onRenderError?.(error, pageIndex);
         },
         showRenderError: appOptions.showRenderError,
@@ -370,7 +387,7 @@ const SlideApp: NetlessApp<Attributes, MagixEvents, AppOptions, AppResult> = {
           }
         );
         const pollTimer = window.setInterval(() => {
-          if (disposed || firstRenderFailed) settle(false);
+          if (disposed || firstRenderFailed || firstRenderResourceFailed) settle(false);
           else if (timedOut && !(context as any).waitForActualSetupReady) settle(false);
         }, 100);
       });
@@ -522,7 +539,7 @@ const SlideApp: NetlessApp<Attributes, MagixEvents, AppOptions, AppResult> = {
         if (firstRenderFailed) {
           throw new Error("[Slide] first render failed before ready");
         }
-        if (!disposed && !slideControllerRef?.ready) {
+        if (!firstRenderResourceFailed && !slideControllerRef?.ready) {
           log("[Slide] setup ready wait timed out, slide keeps loading in background");
         }
         return appResult;
