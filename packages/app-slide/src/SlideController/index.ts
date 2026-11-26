@@ -11,7 +11,7 @@ import type { AppContext, Player, Room } from "@netless/window-manager";
 import type { ISlideConfig, SyncEvent } from "@netless/slide";
 import type { Attributes, MagixEvents, MagixPayload, SlideState } from "../typings";
 import { isMediaVolume, readSharedMediaVolume } from "../typings";
-import type { AppOptions } from "..";
+import type { AppOptions, ResourceRetryInfo, SlideRenderError } from "..";
 
 import { SideEffectManager } from "side-effect-manager";
 import { Slide, SLIDE_EVENTS } from "@netless/slide";
@@ -48,7 +48,7 @@ export interface SlideControllerOptions {
   onTransitionStart: () => void;
   onTransitionEnd: () => void;
   onError: (args: { error: Error; index: number }) => void;
-  onRenderError?: (error: Error, pageIndex: number) => void;
+  onRenderError?: (error: SlideRenderError, pageIndex: number) => void;
   onNavigate?: (index: number, origin?: string) => void;
   showRenderError?: boolean;
   invisibleBehavior?: "frozen" | "pause";
@@ -119,7 +119,7 @@ export class SlideControllerBase {
   public readonly context: SlideControllerOptions["context"];
   public slide!: Slide;
   public readonly showRenderError: boolean;
-  public readonly onRenderError?: (error: Error, pageIndex: number) => void;
+  public readonly onRenderError?: (error: SlideRenderError, pageIndex: number) => void;
   public readonly onNavigate!: (index: number, origin?: string) => void;
 
   protected readonly room?: Room;
@@ -623,7 +623,11 @@ export class SlideControllerBase {
       customLinks: attribute.customLinks,
       skipActionWhenFrozen: options.skipActionWhenFrozen ?? true,
       resourceMaxRetries: options.resourceMaxRetries,
-      onResourceMaxRetries: options.onResourceMaxRetries,
+      onResourceMaxRetries: options.onResourceMaxRetries
+        ? (url: string, error: Error, info?: ResourceRetryInfo) => {
+            options.onResourceMaxRetries(url, error, info ?? { pageIndex: null, isPreload: true });
+          }
+        : undefined,
       // Slide 内部 ResizeObserver 关掉，改由 app-slide 的 observer + boxSizeChange 一起驱动
       disableFrameResizeObserver: true,
     });

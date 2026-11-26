@@ -429,7 +429,8 @@ export class SlideDocsViewer {
   protected onError = ({ error, index }: { error: Error; index: number }) => {
     this.viewer.setPaused();
     if (this.slideController?.showRenderError) {
-      this.$overlay.textContent = `Error on slide[page=${this.slideController.page}]: ${error.message}`;
+      const page = index > 0 ? index : this.slideController.page;
+      this.$overlay.textContent = `Error on slide[page=${page}]: ${error.message}`;
       this.$overlay.style.opacity = "1";
     }
     if (this.slideController?.onRenderError) {
